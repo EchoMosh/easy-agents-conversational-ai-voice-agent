@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
@@ -8,7 +7,7 @@ import { Agent, FlowNode, FlowEdge } from '@/types/agent';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react';
+import { Node, Edge } from '@xyflow/react';
 import { Circle } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -92,7 +91,7 @@ export default function AgentFlowPage() {
     });
   };
 
-  const saveFlowChanges = useCallback(async (nodes: FlowNode[], edges: FlowEdge[]) => {
+  const saveFlowChanges = useCallback(async (nodes: Node[], edges: Edge[]) => {
     if (!agent) return;
 
     const { error } = await supabase
@@ -114,61 +113,16 @@ export default function AgentFlowPage() {
     }
   }, [agent, id, toast]);
 
-  const handleNodesChange = useCallback((changes: NodeChange[]) => {
-    if (!agent?.flow?.nodes) return;
-    
-    const updatedNodes = [...agent.flow.nodes];
-    changes.forEach(change => {
-      if (change.type === 'position' && change.position) {
-        const nodeIndex = updatedNodes.findIndex(n => n.id === change.id);
-        if (nodeIndex !== -1) {
-          updatedNodes[nodeIndex] = {
-            ...updatedNodes[nodeIndex],
-            position: change.position
-          };
-        }
-      } else if (change.type === 'remove') {
-        const nodeIndex = updatedNodes.findIndex(n => n.id === change.id);
-        if (nodeIndex !== -1) {
-          updatedNodes.splice(nodeIndex, 1);
-        }
-      }
-    });
-    
-    saveFlowChanges(updatedNodes, agent.flow?.edges || []);
-  }, [agent?.flow, saveFlowChanges]);
+  const handleNodesChange = useCallback((nodes: Node[]) => {
+    saveFlowChanges(nodes, agent?.flow?.edges || []);
+  }, [agent?.flow?.edges, saveFlowChanges]);
 
-  const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
-    if (!agent?.flow?.edges) return;
-    
-    const updatedEdges = [...agent.flow.edges];
-    changes.forEach(change => {
-      if (change.type === 'remove') {
-        const edgeIndex = updatedEdges.findIndex(e => e.id === change.id);
-        if (edgeIndex !== -1) {
-          updatedEdges.splice(edgeIndex, 1);
-        }
-      }
-    });
-    
-    saveFlowChanges(agent.flow?.nodes || [], updatedEdges);
-  }, [agent?.flow, saveFlowChanges]);
+  const handleEdgesChange = useCallback((edges: Edge[]) => {
+    saveFlowChanges(agent?.flow?.nodes || [], edges);
+  }, [agent?.flow?.nodes, saveFlowChanges]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-lg">Loading agent...</p>
-      </div>
-    );
-  }
-
-  if (error || !agent) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-lg text-destructive">Failed to load agent</p>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="flex items-center justify-center h-screen"><p className="text-lg">Loading agent...</p></div>;
+  if (error || !agent) return <div className="flex items-center justify-center h-screen"><p className="text-lg text-destructive">Failed to load agent</p></div>;
 
   return (
     <DragProvider>

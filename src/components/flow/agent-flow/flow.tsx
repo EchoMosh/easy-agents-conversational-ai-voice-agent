@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
@@ -73,7 +72,18 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
   const onConnect = useCallback((connection: Connection) => {
     setEdges(eds => addEdge(connection, eds));
-  }, [setEdges]);
+    onEdgesChange([...edges, addEdge(connection, edges)]);
+  }, [edges, onEdgesChange]);
+
+  const handleNodesChange = useCallback((changes: any) => {
+    onNodesChangeInternal(changes);
+    onNodesChange(nodes);
+  }, [nodes, onNodesChange, onNodesChangeInternal]);
+
+  const handleEdgesChange = useCallback((changes: any) => {
+    onEdgesChangeInternal(changes);
+    onEdgesChange(edges);
+  }, [edges, onEdgesChange, onEdgesChangeInternal]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -131,8 +141,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChangeInternal}
-        onEdgesChange={onEdgesChangeInternal}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={handleEdgesChange}
         onConnect={onConnect}
         onDragOver={onDragOver}
         onDrop={onDrop}
