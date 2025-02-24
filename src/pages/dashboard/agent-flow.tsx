@@ -291,21 +291,12 @@ function Flow() {
           </div>
         </div>
 
-        <div className="relative w-full h-16 overflow-hidden">
-          <div className="absolute inset-x-0 bottom-0 h-full">
-            <div className="absolute inset-0 animate-[wave_8s_ease-in-out_infinite] opacity-50">
-              <div className="absolute inset-x-0 top-1/2 h-[100px] bg-gradient-to-r from-amber-500/10 via-amber-400/10 to-amber-500/10 blur-2xl transform -translate-y-1/2" />
-            </div>
-            <div className="absolute inset-0 animate-[wave_12s_ease-in-out_infinite] opacity-30 delay-100">
-              <div className="absolute inset-x-0 top-1/2 h-[100px] bg-gradient-to-r from-amber-400/10 via-amber-500/10 to-amber-400/10 blur-2xl transform -translate-y-1/2" />
-            </div>
-          </div>
-
-          <div className={`absolute inset-x-0 bottom-0 h-full transition-opacity duration-500 ${isToolbarVisible ? 'opacity-0' : 'opacity-100'}`}>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-gray-400/50 dark:text-gray-500/50 animate-pulse">
-                Hover to add nodes
-              </div>
+        <div className="relative w-full h-12 flex items-center justify-center">
+          <div 
+            className={`px-3 py-1.5 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-sm transition-all duration-300 ${isToolbarVisible ? 'opacity-30' : 'opacity-60 hover:opacity-100'}`}
+          >
+            <div className="text-xs text-gray-500 dark:text-gray-400 select-none">
+              {isToolbarVisible ? 'Release to hide nodes' : 'Hover to add nodes'}
             </div>
           </div>
         </div>
