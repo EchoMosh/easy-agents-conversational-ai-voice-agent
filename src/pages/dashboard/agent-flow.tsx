@@ -216,7 +216,11 @@ function Flow() {
         />
       </ReactFlow>
 
-      <div className="fixed inset-x-0 bottom-12 z-50 flex flex-col items-center pointer-events-none">
+      <div 
+        className="fixed inset-x-0 bottom-12 z-50 flex flex-col items-center pointer-events-none"
+        onMouseEnter={showToolbar}
+        onMouseLeave={hideToolbar}
+      >
         <div className={`w-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isToolbarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="flex items-center justify-center gap-4 p-3 mb-3">
             <div className="flex items-center gap-4 p-3 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl pointer-events-auto">
@@ -288,8 +292,6 @@ function Flow() {
         </div>
 
         <button
-          onMouseEnter={showToolbar}
-          onMouseLeave={hideToolbar}
           onClick={() => setIsToolbarVisible(!isToolbarVisible)}
           className="group h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-sm transition-all duration-300 hover:scale-110 hover:shadow-lg pointer-events-auto"
         >
