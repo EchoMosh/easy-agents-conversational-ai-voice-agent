@@ -4,7 +4,6 @@ import { Handle, Position } from '@xyflow/react';
 export function GreetingNode({ data }: { data: { greeting: string } }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-4 min-w-[200px]">
-      <Handle type="target" position={Position.Left} className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800" />
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <span className="text-blue-500">
