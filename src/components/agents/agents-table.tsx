@@ -66,7 +66,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate(`/dashboard/agents/${agent.id}/flow`)}>
+                    <DropdownMenuItem onClick={() => navigate(`/dashboard/agents/flow/${agent.id}`)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit Flow
                     </DropdownMenuItem>

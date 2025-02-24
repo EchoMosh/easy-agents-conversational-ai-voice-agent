@@ -58,7 +58,7 @@ function App() {
 
                 {/* Flow editor route without sidebar */}
                 <Route
-                  path="/dashboard/agents/:id/flow"
+                  path="/dashboard/agents/flow/:id"
                   element={
                     <FlowLayout>
                       <AgentFlowPage />
