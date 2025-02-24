@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, Wand2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -12,13 +13,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Agent, AGENT_ROLES, NodeData } from "@/types/agent";
+import { Agent, AGENT_ROLES, AGENT_TEMPLATES, NodeData } from "@/types/agent";
 import { motion } from "framer-motion";
 import { CreateAgentProgress } from "./create-agent-progress";
 
 interface CreateAgentFormProps {
-  onSuccess: () => void;
+  onSuccess: (agentId: string) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -110,6 +118,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [newAgent, setNewAgent] = useState({
     name: '',
     role: 'virtual_assistant' as Agent['role'],
@@ -141,39 +150,41 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('agents')
-      .insert({
-        name: newAgent.name,
-        role: newAgent.role,
-        user_id: session.user.id,
-        flow: getDefaultFlow(newAgent.platform, newAgent.action),
-        is_active: true,
-      })
-      .select()
-      .single();
+    try {
+      let flow;
+      if (selectedTemplate) {
+        const template = AGENT_TEMPLATES.find(t => t.id === selectedTemplate);
+        flow = template ? template.flow : getDefaultFlow(newAgent.platform, newAgent.action);
+      } else {
+        flow = getDefaultFlow(newAgent.platform, newAgent.action);
+      }
 
-    if (error) {
+      const { data, error } = await supabase
+        .from('agents')
+        .insert({
+          name: newAgent.name,
+          role: newAgent.role,
+          user_id: session.user.id,
+          flow,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await onSuccess(data.id);
+      navigate(`/dashboard/agents/flow/${data.id}`, { replace: true });
+    } catch (error) {
       console.error('Error creating agent:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to create agent",
       });
+    } finally {
       setIsCreating(false);
-      return;
     }
-
-    toast({
-      title: "Success",
-      description: "Agent created successfully",
-    });
-
-    setTimeout(() => {
-      setIsCreating(false);
-      onSuccess();
-      navigate(`/dashboard/agents/flow/${data.id}`, { replace: true });
-    }, 1500);
   };
 
   return (
@@ -223,29 +234,48 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             className="space-y-6"
           >
             <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold">Choose Agent Role</h2>
-              <p className="text-muted-foreground">Select the role that best matches your needs</p>
+              <h2 className="text-2xl font-bold">Choose Template</h2>
+              <p className="text-muted-foreground">Start from scratch or use a pre-built template</p>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="role">What role will this agent have?</Label>
-              <Select
-                value={newAgent.role}
-                onValueChange={(value: Agent['role']) => 
-                  setNewAgent(prev => ({ ...prev, role: value }))
-                }
+
+            <div className="grid gap-4">
+              <Card 
+                className={`cursor-pointer transition-all ${
+                  selectedTemplate === '' ? 'ring-2 ring-primary' : 'hover:border-primary'
+                }`}
+                onClick={() => {
+                  setSelectedTemplate('');
+                  setNewAgent(prev => ({ ...prev, role: 'virtual_assistant' }));
+                }}
               >
-                <SelectTrigger className="text-lg py-6">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AGENT_ROLES.map((role) => (
-                    <SelectItem key={role.value} value={role.value}>
-                      {role.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wand2 className="h-5 w-5" />
+                    Start from Scratch
+                  </CardTitle>
+                  <CardDescription>
+                    Create a custom agent with your own flow
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {AGENT_TEMPLATES.map((template) => (
+                <Card 
+                  key={template.id}
+                  className={`cursor-pointer transition-all ${
+                    selectedTemplate === template.id ? 'ring-2 ring-primary' : 'hover:border-primary'
+                  }`}
+                  onClick={() => {
+                    setSelectedTemplate(template.id);
+                    setNewAgent(prev => ({ ...prev, role: template.role }));
+                  }}
+                >
+                  <CardHeader>
+                    <CardTitle>{template.name}</CardTitle>
+                    <CardDescription>{template.description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
             </div>
 
             <div className="flex gap-3">
@@ -261,7 +291,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
                 className="w-full relative"
                 size="lg"
                 onClick={() => setStep(3)}
-                disabled={!newAgent.role}
               >
                 Continue
                 <ArrowRight className="ml-2 h-4 w-4" />
