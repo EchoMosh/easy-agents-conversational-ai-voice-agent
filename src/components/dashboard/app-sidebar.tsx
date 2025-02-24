@@ -1,4 +1,3 @@
-
 import { Users, Target, Settings, User, Shuffle, LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -21,12 +20,12 @@ const mainMenuItems = [
   {
     title: "Agents",
     icon: Users,
-    url: "/agents",
+    url: "/dashboard/agents",
   },
   {
     title: "Leads",
     icon: Target,
-    url: "/leads",
+    url: "/dashboard/leads",
   },
 ];
 
@@ -34,12 +33,12 @@ const bottomMenuItems = [
   {
     title: "Settings",
     icon: Settings,
-    url: "/settings",
+    url: "/dashboard/settings",
   },
   {
     title: "Profile",
     icon: User,
-    url: "/profile",
+    url: "/dashboard/profile",
   },
 ];
 
