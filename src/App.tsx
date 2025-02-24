@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './components/theme/theme-provider';
 import { Toaster } from './components/ui/toaster';
 import { AppSidebar } from './components/dashboard/app-sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 // Auth and onboarding pages
 import AuthPage from './pages/auth';
@@ -39,31 +40,35 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Navigate to="/auth" replace />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            
-            {/* Dashboard routes with sidebar */}
-            <Route element={<DashboardLayout />}>
-              <Route path="/dashboard/agents" element={<AgentsPage />} />
-              <Route path="/dashboard/leads" element={<LeadsPage />} />
-              <Route path="/dashboard/settings" element={<SettingsPage />} />
-              <Route path="/dashboard/profile" element={<ProfilePage />} />
-            </Route>
+        <SidebarProvider>
+          <div className="flex w-full min-h-screen">
+            <Router>
+              <Routes>
+                <Route path="/" element={<Navigate to="/auth" replace />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/onboarding" element={<OnboardingPage />} />
+                
+                {/* Dashboard routes with sidebar */}
+                <Route element={<DashboardLayout />}>
+                  <Route path="/dashboard/agents" element={<AgentsPage />} />
+                  <Route path="/dashboard/leads" element={<LeadsPage />} />
+                  <Route path="/dashboard/settings" element={<SettingsPage />} />
+                  <Route path="/dashboard/profile" element={<ProfilePage />} />
+                </Route>
 
-            {/* Flow editor route without sidebar */}
-            <Route
-              path="/dashboard/agents/:id/flow"
-              element={
-                <FlowLayout>
-                  <AgentFlowPage />
-                </FlowLayout>
-              }
-            />
-          </Routes>
-        </Router>
+                {/* Flow editor route without sidebar */}
+                <Route
+                  path="/dashboard/agents/:id/flow"
+                  element={
+                    <FlowLayout>
+                      <AgentFlowPage />
+                    </FlowLayout>
+                  }
+                />
+              </Routes>
+            </Router>
+          </div>
+        </SidebarProvider>
         <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
