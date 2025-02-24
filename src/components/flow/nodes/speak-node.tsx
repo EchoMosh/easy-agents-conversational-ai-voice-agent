@@ -88,6 +88,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-4 min-w-[300px]">
       <Handle type="target" position={Position.Left} className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800" />
+      <Handle type="source" position={Position.Right} className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800" />
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <span className="text-purple-500">
