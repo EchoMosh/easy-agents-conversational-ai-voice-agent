@@ -25,6 +25,7 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newContactName, setNewContactName] = useState('');
   const [newContactPhone, setNewContactPhone] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleChange = (field: keyof TransferNodeData, value: string | Contact[]) => {
     const updatedData = {
@@ -82,6 +83,11 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
     const updatedContacts = contacts.filter(contact => contact.id !== id);
     handleChange('contacts', updatedContacts);
   };
+
+  const filteredContacts = contacts.filter(contact => 
+    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.phoneNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <>
@@ -170,36 +176,38 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
             <DialogTitle>Edit Contact List</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          <div className="space-y-4">
             <div className="flex flex-col gap-2 p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100/50 dark:border-emerald-800/20">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
-                  New Contact Name
-                </Label>
-                <Input
-                  value={newContactName}
-                  onChange={(e) => setNewContactName(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
-                  placeholder="Enter contact name..."
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
+                    New Contact Name
+                  </Label>
+                  <Input
+                    value={newContactName}
+                    onChange={(e) => setNewContactName(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
+                    placeholder="Enter contact name..."
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
-                  Phone Number
-                </Label>
-                <PhoneInput
-                  value={newContactPhone}
-                  onChange={setNewContactPhone}
-                  onKeyPress={handleKeyPress}
-                  className="!bg-white/80 dark:!bg-gray-900/50 !border-emerald-100/50 dark:!border-emerald-800/50 shadow-sm"
-                />
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
+                    Phone Number
+                  </Label>
+                  <PhoneInput
+                    value={newContactPhone}
+                    onChange={setNewContactPhone}
+                    onKeyPress={handleKeyPress}
+                    className="!bg-white/80 dark:!bg-gray-900/50 !border-emerald-100/50 dark:!border-emerald-800/50 shadow-sm"
+                  />
+                </div>
               </div>
 
               <Button
@@ -213,42 +221,65 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
               </Button>
             </div>
 
-            {contacts.map((contact) => (
-              <div key={contact.id} className="flex flex-col gap-2 p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100/50 dark:border-emerald-800/20">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
-                      Contact Name
-                    </Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
-                      onClick={() => removeContact(contact.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <Input
-                    value={contact.name}
-                    onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
-                    className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
-                    placeholder="Enter contact name..."
-                  />
-                </div>
+            <div className="space-y-3">
+              <Input
+                placeholder="Search contacts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
+              />
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
-                    Phone Number
-                  </Label>
-                  <PhoneInput
-                    value={contact.phoneNumber}
-                    onChange={(value) => updateContact(contact.id, 'phoneNumber', value)}
-                    className="!bg-white/80 dark:!bg-gray-900/50 !border-emerald-100/50 dark:!border-emerald-800/50 shadow-sm"
-                  />
-                </div>
+              <div className="rounded-lg border border-emerald-100/50 dark:border-emerald-800/50 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">Name</TableHead>
+                      <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">Phone</TableHead>
+                      <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75 w-[100px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredContacts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-sm text-emerald-600/50 dark:text-emerald-300/50">
+                          {contacts.length === 0 ? "No contacts added" : "No contacts match your search"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredContacts.map((contact) => (
+                        <TableRow key={contact.id}>
+                          <TableCell className="py-2">
+                            <Input
+                              value={contact.name}
+                              onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
+                              className="bg-transparent border-transparent hover:border-input focus:border-input h-8"
+                              placeholder="Enter name..."
+                            />
+                          </TableCell>
+                          <TableCell className="py-2">
+                            <PhoneInput
+                              value={contact.phoneNumber}
+                              onChange={(value) => updateContact(contact.id, 'phoneNumber', value)}
+                              className="!bg-transparent !border-transparent hover:!border-input focus:!border-input"
+                            />
+                          </TableCell>
+                          <TableCell className="py-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+                              onClick={() => removeContact(contact.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
-            ))}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
