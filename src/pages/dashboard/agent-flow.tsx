@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Network, MessageCircle, X, Plus } from 'lucide-react';
+import { ArrowLeft, Network, MessageCircle, X, Plus, PhoneForwarded } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, ReactFlowProvider, Node, Edge, NodeTypes, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -61,7 +61,7 @@ function Flow() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const handleDragStart = (event: React.DragEvent, type: 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode') => {
+  const handleDragStart = (event: React.DragEvent, type: 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode') => {
     event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
     setDraggedNodeType(type);
@@ -101,6 +101,9 @@ function Flow() {
           nodeData = { greeting: 'Enter your greeting here', outcomes: [] };
           break;
         case 'triggerNode':
+          nodeData = { platform: undefined, action: undefined };
+          break;
+        case 'transferNode':
           nodeData = { platform: undefined, action: undefined };
           break;
       }
@@ -289,6 +292,19 @@ function Flow() {
                 </span>
                 <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Trigger</span>
               </div>
+
+              <div
+                draggable
+                onDragStart={e => handleDragStart(e, 'transferNode')}
+                onDrag={handleDrag}
+                onDragEnd={() => setDraggedNodeType(null)}
+                className="relative flex flex-col items-center gap-2 cursor-move group transition-transform duration-200 hover:scale-105"
+              >
+                <span className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-b from-emerald-50 to-emerald-100/50 dark:from-emerald-950 dark:to-emerald-900/50 shadow-[0_0px_12px_-1px_rgba(16,185,129,0.2)] transition-all duration-300">
+                  <PhoneForwarded className="h-5 w-5 text-emerald-500" />
+                </span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Transfer Call</span>
+              </div>
             </div>
           </div>
         </div>
@@ -354,6 +370,14 @@ function Flow() {
                 <Network className="h-4 w-4" />
               </span>
               <span className="text-sm text-gray-600 dark:text-gray-300">Trigger Node</span>
+            </div>
+          )}
+          {draggedNodeType === 'transferNode' && (
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/50 p-1.5 rounded-lg">
+                <PhoneForwarded className="h-4 w-4" />
+              </span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Transfer Call Node</span>
             </div>
           )}
         </div>
