@@ -3,7 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Plus, X, Pencil } from 'lucide-react';
+import { Plus, X, Pencil, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
 type SpeakNodeData = {
@@ -15,6 +15,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const [showOutcomeInput, setShowOutcomeInput] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleMessageChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const evt = new CustomEvent('nodeupdate', {
@@ -88,7 +89,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-4 min-w-[300px]">
       <Handle type="target" position={Position.Left} className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800" />
-      <Handle type="source" position={Position.Right} className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800" />
+      
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <span className="text-purple-500">
@@ -115,16 +116,30 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
             <Label className="text-xs text-muted-foreground dark:text-gray-400">
               Possible outcomes ({(data.outcomes || []).length}/5)
             </Label>
-            {!showOutcomeInput && (data.outcomes || []).length < 5 && !editingIndex && (
+            <div className="flex items-center gap-2">
+              {!showOutcomeInput && (data.outcomes || []).length < 5 && !editingIndex && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 hover:bg-purple-50 dark:hover:bg-purple-950"
+                  onClick={() => setShowOutcomeInput(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2 hover:bg-purple-50 dark:hover:bg-purple-950"
-                onClick={() => setShowOutcomeInput(true)}
+                className="h-8 px-2"
+                onClick={() => setIsExpanded(!isExpanded)}
               >
-                <Plus className="h-4 w-4" />
+                {isExpanded ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
               </Button>
-            )}
+            </div>
           </div>
 
           {(showOutcomeInput || editingIndex !== null) && (
@@ -165,7 +180,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
+          <div className={`flex flex-col gap-3 ${isExpanded ? 'block' : 'hidden'}`}>
             {(data.outcomes || []).map((outcome, index) => (
               <div key={index} className="flex items-start gap-2 group">
                 <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg p-3 text-sm relative border shadow-sm">
@@ -188,15 +203,22 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
-                  <Handle
-                    type="source"
-                    position={Position.Right}
-                    id={`outcome-${index}`}
-                    className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800"
-                    style={{ top: '50%' }}
-                  />
                 </div>
               </div>
+            ))}
+          </div>
+
+          {/* Always show handles, even when collapsed */}
+          <div className={`flex flex-col gap-2 ${isExpanded ? 'hidden' : 'block'}`}>
+            {(data.outcomes || []).map((_, index) => (
+              <Handle
+                key={index}
+                type="source"
+                position={Position.Right}
+                id={`outcome-${index}`}
+                className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800"
+                style={{ top: `${20 + (index * 24)}px` }}
+              />
             ))}
           </div>
         </div>
