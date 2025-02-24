@@ -1,7 +1,7 @@
 
-import type { OnboardingData } from "../types";
+import type { Step } from "../types";
 
-export const steps = [
+export const steps: Step[] = [
   {
     id: 1,
     question: "What's your first name?",
@@ -42,4 +42,4 @@ export const steps = [
     type: "select",
     options: ["1-10", "11-50", "51-200", "201-1000", "1000+"],
   },
-] as const;
+];
