@@ -21,6 +21,49 @@ interface CreateAgentFormProps {
   onCancel: () => void;
 }
 
+const DEFAULT_FLOW = {
+  nodes: [
+    {
+      id: 'greeting-1',
+      type: 'greetingNode',
+      position: { x: 100, y: 100 },
+      data: {
+        greeting: "Hello! How can I help you today?",
+        outcomes: ["I need help with a product", "I have a question"]
+      }
+    },
+    {
+      id: 'speak-1',
+      type: 'speakNode',
+      position: { x: 500, y: 100 },
+      data: {
+        message: "I'd be happy to assist you. Please let me know what you need help with.",
+        outcomes: ["Thanks, that's all", "I have another question"]
+      }
+    },
+    {
+      id: 'end-1',
+      type: 'endNode',
+      position: { x: 900, y: 100 },
+      data: {}
+    }
+  ],
+  edges: [
+    {
+      id: 'greeting-to-speak',
+      source: 'greeting-1',
+      target: 'speak-1',
+      sourceHandle: 'outcome-0'
+    },
+    {
+      id: 'speak-to-end',
+      source: 'speak-1',
+      target: 'end-1',
+      sourceHandle: 'outcome-0'
+    }
+  ]
+};
+
 export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -60,6 +103,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         name: newAgent.name,
         role: newAgent.role,
         user_id: session.user.id,
+        flow: DEFAULT_FLOW
       })
       .select()
       .single();

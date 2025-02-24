@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Agent, FlowNode, FlowEdge, NodeData, FlowData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
+import { EndNode } from '@/components/flow/nodes/end-node';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DragProvider, useDrag } from '@/components/flow/drag-context';
@@ -31,7 +32,8 @@ import { Json } from '@/integrations/supabase/types';
 
 const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
-  greetingNode: GreetingNode
+  greetingNode: GreetingNode,
+  endNode: EndNode
 };
 
 function Flow() {
@@ -53,7 +55,7 @@ function Flow() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const handleDragStart = (event: React.DragEvent, type: 'greetingNode' | 'speakNode') => {
+  const handleDragStart = (event: React.DragEvent, type: 'greetingNode' | 'speakNode' | 'endNode') => {
     event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
     setDraggedNodeType(type);
@@ -76,7 +78,7 @@ function Flow() {
         y: event.clientY - bounds.top,
       });
 
-      const newNode: Node<NodeData, 'greetingNode' | 'speakNode'> = {
+      const newNode: Node<NodeData, 'greetingNode' | 'speakNode' | 'endNode'> = {
         id: `${draggedNodeType}-${Math.random()}`,
         type: draggedNodeType,
         position,
@@ -103,7 +105,7 @@ function Flow() {
         const flowData = agent.flow as any as { nodes: FlowNode[]; edges: FlowEdge[] };
         setNodes(flowData.nodes.map(node => ({
           ...node,
-          type: node.type as 'greetingNode' | 'speakNode'
+          type: node.type as 'greetingNode' | 'speakNode' | 'endNode'
         })));
         setEdges(flowData.edges);
       }
@@ -230,6 +232,26 @@ function Flow() {
               Response message to user input
             </TooltipContent>
           </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                draggable
+                onDragStart={(e) => handleDragStart(e, 'endNode')}
+                onDrag={handleDrag}
+                onDragEnd={() => setDraggedNodeType(null)}
+                className="flex flex-col items-center gap-2 p-2 rounded-lg cursor-move hover:bg-accent transition-all duration-200 hover:scale-110 group"
+              >
+                <span className="text-red-500 p-2 rounded-lg bg-red-50 dark:bg-red-950 transition-transform">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                </span>
+                <span className="text-sm font-medium">End</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[200px] text-center">
+              End of conversation
+            </TooltipContent>
+          </Tooltip>
         </div>
       </TooltipProvider>
 
@@ -257,6 +279,13 @@ function Flow() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
               </span>
               <span>Speak Node</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+              </span>
+              <span>End Node</span>
             </div>
           )}
         </div>
