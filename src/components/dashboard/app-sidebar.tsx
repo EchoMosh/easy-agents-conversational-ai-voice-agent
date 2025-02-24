@@ -1,4 +1,3 @@
-
 import { Users, Target, Settings, User, Shuffle, LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -56,7 +55,7 @@ export function AppSidebar() {
 
   const generateRandomAvatar = () => {
     const seed = Math.random().toString(36).substring(7);
-    return `https://source.boringavatars.com/beam/120/${seed}?colors=264653,2a9d8f,e9c46a,f4a261,e76f51`;
+    return `http://source.boringavatars.com/beam/120/${seed}?colors=264653,2a9d8f,e9c46a,f4a261,e76f51`;
   };
 
   const fetchProfile = async () => {
