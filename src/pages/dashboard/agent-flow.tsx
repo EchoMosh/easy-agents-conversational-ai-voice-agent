@@ -26,6 +26,12 @@ import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Json } from '@/integrations/supabase/types';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type GreetingData = {
   greeting: string;
@@ -215,6 +221,52 @@ function Flow() {
           maskColor="hsl(var(--muted))"
         />
       </ReactFlow>
+
+      <TooltipProvider delayDuration={200}>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-8 p-6 rounded-xl bg-background/80 backdrop-blur-md border shadow-lg">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.setData('application/reactflow', 'greetingNode');
+                  event.dataTransfer.effectAllowed = 'move';
+                }}
+                className="flex flex-col items-center gap-2 p-2 rounded-lg cursor-move hover:bg-accent transition-all duration-200 hover:scale-110 group"
+              >
+                <span className="text-blue-500 p-2 rounded-lg bg-blue-50 dark:bg-blue-950 transition-transform">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                </span>
+                <span className="text-sm font-medium">Greeting</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[200px] text-center">
+              Initial message to start the conversation
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.setData('application/reactflow', 'speakNode');
+                  event.dataTransfer.effectAllowed = 'move';
+                }}
+                className="flex flex-col items-center gap-2 p-2 rounded-lg cursor-move hover:bg-accent transition-all duration-200 hover:scale-110 group"
+              >
+                <span className="text-purple-500 p-2 rounded-lg bg-purple-50 dark:bg-purple-950 transition-transform">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                </span>
+                <span className="text-sm font-medium">Speak</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[200px] text-center">
+              Response message to user input
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
     </div>
   );
 }
@@ -291,40 +343,7 @@ export default function AgentFlowPage() {
           <Flow />
         </ReactFlowProvider>
         
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 p-4 rounded-xl bg-background/80 backdrop-blur-md border shadow-lg transition-all duration-200 hover:scale-105">
-          <div
-            draggable
-            onDragStart={(event) => {
-              event.dataTransfer.setData('application/reactflow', 'greetingNode');
-              event.dataTransfer.effectAllowed = 'move';
-            }}
-            className="flex flex-col items-center gap-2 p-3 rounded-lg cursor-move hover:bg-accent transition-colors group"
-          >
-            <span className="text-blue-500 p-3 rounded-lg bg-blue-50 dark:bg-blue-950 group-hover:scale-110 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            </span>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-sm font-medium">Greeting</span>
-              <span className="text-xs text-muted-foreground text-center">Initial message to start the conversation</span>
-            </div>
-          </div>
-          <div
-            draggable
-            onDragStart={(event) => {
-              event.dataTransfer.setData('application/reactflow', 'speakNode');
-              event.dataTransfer.effectAllowed = 'move';
-            }}
-            className="flex flex-col items-center gap-2 p-3 rounded-lg cursor-move hover:bg-accent transition-colors group"
-          >
-            <span className="text-purple-500 p-3 rounded-lg bg-purple-50 dark:bg-purple-950 group-hover:scale-110 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-            </span>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-sm font-medium">Speak</span>
-              <span className="text-xs text-muted-foreground text-center">Response message to user input</span>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </div>
   );

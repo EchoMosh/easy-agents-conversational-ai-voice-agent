@@ -6,19 +6,21 @@ export type Agent = {
   voice_id: string | null;
   is_active: boolean;
   created_at: string;
-  flow?: {
-    nodes: Array<{
-      id: string;
-      type: string;
-      position: { x: number; y: number };
-      data: any;
-    }>;
-    edges: Array<{
-      id: string;
-      source: string;
-      target: string;
-    }>;
-  };
+  flow?: FlowData;
+};
+
+export type FlowData = {
+  nodes: Array<{
+    id: string;
+    type: string;
+    position: { x: number; y: number };
+    data: any;
+  }>;
+  edges: Array<{
+    id: string;
+    source: string;
+    target: string;
+  }>;
 };
 
 export const AGENT_ROLES = [
@@ -30,4 +32,3 @@ export const AGENT_ROLES = [
   { value: 'product_specialist', label: 'Product Specialist' },
   { value: 'virtual_assistant', label: 'Virtual Assistant' },
 ] as const;
-
