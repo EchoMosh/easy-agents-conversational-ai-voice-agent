@@ -43,7 +43,9 @@ const bottomMenuItems = [
   },
 ];
 
-const AVATAR_VARIANT = "beam";
+// Using 'marble' variant for more neutral, abstract designs
+const AVATAR_VARIANT = "marble";
+const AVATAR_COLORS = ["264653", "2a9d8f", "e9c46a", "f4a261", "e76f51"];
 
 export function AppSidebar() {
   const [username, setUsername] = useState<string>("");
@@ -52,6 +54,11 @@ export function AppSidebar() {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const generateRandomAvatar = () => {
+    const randomSeed = Math.random().toString(36).substring(7);
+    return `https://source.boringavatars.com/svg?variant=${AVATAR_VARIANT}&colors=${AVATAR_COLORS.join(",")}&name=${randomSeed}`;
+  };
 
   const fetchProfile = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -72,8 +79,7 @@ export function AppSidebar() {
         if (profile.avatar_url) {
           setAvatarUrl(profile.avatar_url);
         } else {
-          const hash = btoa(email).replace(/[^a-zA-Z0-9]/g, "");
-          const defaultAvatar = `https://source.boringavatars.com/svg?variant=${AVATAR_VARIANT}&name=${hash}`;
+          const defaultAvatar = generateRandomAvatar();
           setAvatarUrl(defaultAvatar);
         }
       }
@@ -84,18 +90,10 @@ export function AppSidebar() {
     fetchProfile();
   }, []);
 
-  const getInitials = () => {
-    if (firstName && lastName) {
-      return `${firstName[0]}${lastName[0]}`.toUpperCase();
-    }
-    return username.slice(0, 2).toUpperCase();
-  };
-
   const handleRandomizeAvatar = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      const randomSeed = Math.random().toString(36).substring(7);
-      const newAvatarUrl = `https://source.boringavatars.com/svg?variant=${AVATAR_VARIANT}&name=${randomSeed}`;
+      const newAvatarUrl = generateRandomAvatar();
       
       const { error } = await supabase
         .from('profiles')
@@ -142,7 +140,9 @@ export function AppSidebar() {
           <div className="relative group">
             <Avatar>
               <AvatarImage src={avatarUrl} alt={username} />
-              <AvatarFallback>{getInitials()}</AvatarFallback>
+              <AvatarFallback>
+                <User className="h-6 w-6" />
+              </AvatarFallback>
             </Avatar>
             <Button
               size="icon"
