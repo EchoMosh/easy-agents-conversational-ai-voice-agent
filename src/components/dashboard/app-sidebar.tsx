@@ -47,6 +47,8 @@ const AVATAR_VARIANT = "beam";
 
 export function AppSidebar() {
   const [username, setUsername] = useState<string>("");
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -60,16 +62,20 @@ export function AppSidebar() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('avatar_url')
+        .select('avatar_url, first_name, last_name')
         .eq('id', session.user.id)
         .single();
 
-      if (profile?.avatar_url) {
-        setAvatarUrl(profile.avatar_url);
-      } else {
-        const hash = btoa(email).replace(/[^a-zA-Z0-9]/g, "");
-        const defaultAvatar = `https://source.boringavatars.com/svg?variant=${AVATAR_VARIANT}&name=${hash}`;
-        setAvatarUrl(defaultAvatar);
+      if (profile) {
+        setFirstName(profile.first_name || "");
+        setLastName(profile.last_name || "");
+        if (profile.avatar_url) {
+          setAvatarUrl(profile.avatar_url);
+        } else {
+          const hash = btoa(email).replace(/[^a-zA-Z0-9]/g, "");
+          const defaultAvatar = `https://source.boringavatars.com/svg?variant=${AVATAR_VARIANT}&name=${hash}`;
+          setAvatarUrl(defaultAvatar);
+        }
       }
     }
   };
@@ -77,6 +83,13 @@ export function AppSidebar() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  const getInitials = () => {
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    return username.slice(0, 2).toUpperCase();
+  };
 
   const handleRandomizeAvatar = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -129,7 +142,7 @@ export function AppSidebar() {
           <div className="relative group">
             <Avatar>
               <AvatarImage src={avatarUrl} alt={username} />
-              <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback>{getInitials()}</AvatarFallback>
             </Avatar>
             <Button
               size="icon"
@@ -142,7 +155,7 @@ export function AppSidebar() {
             </Button>
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-sm">{username}</span>
+            <span className="font-semibold text-sm">{firstName || username}</span>
             <span className="text-xs text-muted-foreground">
               Welcome back!
             </span>
