@@ -11,6 +11,7 @@ export type Agent = {
   flow?: FlowData;
   user_id: string;
   interaction_type: string[];
+  workspace_id?: string;
 };
 
 export type NodeData = {

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight } from "lucide-react";
+import { useWorkspace } from "@/contexts/workspace-context";
 import {
   Select,
   SelectContent,
@@ -14,22 +15,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Agent, AGENT_ROLES } from "@/types/agent";
+import { Agent, AGENT_ROLES, NodeData } from "@/types/agent";
 
 interface CreateAgentFormProps {
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-const DEFAULT_FLOW = {
+const getDefaultFlow = (platform?: string, action?: string) => ({
   nodes: [
     {
       id: 'trigger-1',
       type: 'triggerNode',
       position: { x: 100, y: 100 },
       data: {
-        platform: undefined,
-        action: undefined
+        platform,
+        action
       }
     },
     {
@@ -76,24 +77,62 @@ const DEFAULT_FLOW = {
       sourceHandle: 'outcome-0'
     }
   ]
+});
+
+const platforms = [
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'hubspot', label: 'Hubspot' },
+  { value: 'gohighlevel', label: 'GoHighLevel' },
+  { value: 'activix', label: 'Activix' },
+];
+
+const platformActions: Record<string, { value: string; label: string }[]> = {
+  facebook: [
+    { value: 'new_lead', label: 'New Lead' },
+    { value: 'message_received', label: 'Message Received' },
+  ],
+  hubspot: [
+    { value: 'new_contact', label: 'New Contact' },
+    { value: 'deal_stage_changed', label: 'Deal Stage Changed' },
+  ],
+  gohighlevel: [
+    { value: 'contact_created', label: 'Contact Created' },
+    { value: 'opportunity_won', label: 'Opportunity Won' },
+  ],
+  activix: [
+    { value: 'ticket_created', label: 'Ticket Created' },
+    { value: 'payment_received', label: 'Payment Received' },
+  ],
 };
 
 export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   const [newAgent, setNewAgent] = useState({
     name: '',
     role: 'virtual_assistant' as Agent['role'],
+    platform: '',
+    action: '',
   });
 
   const handleCreateAgent = async () => {
-    if (!newAgent.name || !newAgent.role) {
+    if (!newAgent.name || !newAgent.role || !newAgent.platform || !newAgent.action) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Please fill in all required fields",
+      });
+      return;
+    }
+
+    if (!currentWorkspace?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No workspace selected",
       });
       return;
     }
@@ -118,7 +157,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         name: newAgent.name,
         role: newAgent.role,
         user_id: session.user.id,
-        flow: DEFAULT_FLOW
+        workspace_id: currentWorkspace.id,
+        flow: getDefaultFlow(newAgent.platform, newAgent.action),
+        is_active: true,
       })
       .select()
       .single();
@@ -139,11 +180,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       description: "Agent created successfully",
     });
 
-    // Simulate a loading delay for better UX
     setTimeout(() => {
       setIsCreating(false);
       onSuccess();
-      // Navigate to the flow page with a nice fade animation
       navigate(`/dashboard/agents/flow/${data.id}`, { replace: true });
     }, 1500);
   };
@@ -206,8 +245,76 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
               </Button>
               <Button 
                 className="w-full relative" 
+                onClick={() => setStep(3)}
+                disabled={!newAgent.role}
+              >
+                Continue
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>When would you like this agent to be triggered?</Label>
+                <Select
+                  value={newAgent.platform}
+                  onValueChange={(value) => 
+                    setNewAgent(prev => ({ ...prev, platform: value, action: '' }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {platforms.map((platform) => (
+                      <SelectItem key={platform.value} value={platform.value}>
+                        {platform.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {newAgent.platform && (
+                <div className="space-y-2">
+                  <Label>Select the trigger event</Label>
+                  <Select
+                    value={newAgent.action}
+                    onValueChange={(value) => 
+                      setNewAgent(prev => ({ ...prev, action: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select trigger event" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {platformActions[newAgent.platform].map((action) => (
+                        <SelectItem key={action.value} value={action.value}>
+                          {action.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => setStep(2)}
+              >
+                Back
+              </Button>
+              <Button 
+                className="w-full relative" 
                 onClick={handleCreateAgent} 
-                disabled={isCreating}
+                disabled={isCreating || !newAgent.platform || !newAgent.action}
               >
                 {isCreating ? (
                   <>
