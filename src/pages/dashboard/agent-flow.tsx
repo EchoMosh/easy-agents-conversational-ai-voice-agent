@@ -38,6 +38,11 @@ type CustomNode =
   | Node<GreetingData, 'greetingNode'>
   | Node<SpeakData, 'speakNode'>;
 
+type FlowData = {
+  nodes: CustomNode[];
+  edges: Edge[];
+};
+
 const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
   greetingNode: GreetingNode,
@@ -78,8 +83,9 @@ function Flow() {
         .single();
 
       if (agent?.flow) {
-        setNodes(agent.flow.nodes);
-        setEdges(agent.flow.edges);
+        const flowData = agent.flow as FlowData;
+        setNodes(flowData.nodes);
+        setEdges(flowData.edges);
       }
     };
 
@@ -98,14 +104,14 @@ function Flow() {
           filter: `id=eq.${agentId}`
         },
         (payload) => {
-          const flow = payload.new.flow;
-          if (flow) {
+          const flowData = payload.new.flow as FlowData;
+          if (flowData) {
             // Only update if the changes didn't come from this client
             if (!payload.old || 
-                JSON.stringify(flow.nodes) !== JSON.stringify(nodes) || 
-                JSON.stringify(flow.edges) !== JSON.stringify(edges)) {
-              setNodes(flow.nodes);
-              setEdges(flow.edges);
+                JSON.stringify(flowData.nodes) !== JSON.stringify(nodes) || 
+                JSON.stringify(flowData.edges) !== JSON.stringify(edges)) {
+              setNodes(flowData.nodes);
+              setEdges(flowData.edges);
               toast({
                 title: "Flow Updated",
                 description: "Someone made changes to the flow",
@@ -126,7 +132,7 @@ function Flow() {
     const { error } = await supabase
       .from('agents')
       .update({
-        flow: { nodes, edges }
+        flow: { nodes, edges } as FlowData
       })
       .eq('id', agentId);
 
@@ -234,7 +240,7 @@ export default function AgentFlowPage() {
         throw error;
       }
 
-      return data as Agent;
+      return data as unknown as Agent;
     },
   });
 
@@ -273,34 +279,6 @@ export default function AgentFlowPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex gap-2 border rounded-lg p-2">
-            <div
-              draggable
-              onDragStart={(event) => {
-                event.dataTransfer.setData('application/reactflow', 'greetingNode');
-                event.dataTransfer.effectAllowed = 'move';
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded cursor-move hover:bg-blue-100 transition-colors dark:bg-blue-950 dark:hover:bg-blue-900"
-            >
-              <span className="text-blue-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-              </span>
-              Greeting
-            </div>
-            <div
-              draggable
-              onDragStart={(event) => {
-                event.dataTransfer.setData('application/reactflow', 'speakNode');
-                event.dataTransfer.effectAllowed = 'move';
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded cursor-move hover:bg-purple-100 transition-colors dark:bg-purple-950 dark:hover:bg-purple-900"
-            >
-              <span className="text-purple-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-              </span>
-              Speak
-            </div>
-          </div>
           <ThemeToggle />
           <Button variant="outline">Save Flow</Button>
           <Button>Deploy Agent</Button>
@@ -308,10 +286,40 @@ export default function AgentFlowPage() {
       </div>
 
       {/* Flow Canvas */}
-      <div style={{ flex: 1 }}>
+      <div className="flex-1 relative">
         <ReactFlowProvider>
           <Flow />
         </ReactFlowProvider>
+        
+        {/* Dock */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-xl bg-background/80 backdrop-blur-md border shadow-lg transition-all duration-200 hover:scale-105">
+          <div
+            draggable
+            onDragStart={(event) => {
+              event.dataTransfer.setData('application/reactflow', 'greetingNode');
+              event.dataTransfer.effectAllowed = 'move';
+            }}
+            className="flex flex-col items-center gap-1 p-2 rounded-lg cursor-move hover:bg-accent transition-colors group"
+          >
+            <span className="text-blue-500 p-2 rounded-lg bg-blue-50 dark:bg-blue-950 group-hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            </span>
+            <span className="text-xs font-medium">Greeting</span>
+          </div>
+          <div
+            draggable
+            onDragStart={(event) => {
+              event.dataTransfer.setData('application/reactflow', 'speakNode');
+              event.dataTransfer.effectAllowed = 'move';
+            }}
+            className="flex flex-col items-center gap-1 p-2 rounded-lg cursor-move hover:bg-accent transition-colors group"
+          >
+            <span className="text-purple-500 p-2 rounded-lg bg-purple-50 dark:bg-purple-950 group-hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            </span>
+            <span className="text-xs font-medium">Speak</span>
+          </div>
+        </div>
       </div>
     </div>
   );
