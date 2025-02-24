@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useWorkspace } from "@/contexts/workspace-context";
 import {
   Dialog,
   DialogContent,
@@ -18,18 +17,18 @@ import { Agent } from "@/types/agent";
 
 const AgentsPage = () => {
   const { toast } = useToast();
-  const { currentWorkspace } = useWorkspace();
   const [isCreating, setIsCreating] = useState(false);
 
   const { data: agents, isLoading, refetch } = useQuery({
-    queryKey: ['agents', currentWorkspace?.id],
+    queryKey: ['agents'],
     queryFn: async () => {
-      if (!currentWorkspace) return [];
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) throw new Error('Not authenticated');
       
       const { data, error } = await supabase
         .from('agents')
         .select('*')
-        .eq('workspace_id', currentWorkspace.id)
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -50,7 +49,6 @@ const AgentsPage = () => {
         } : undefined
       })) as Agent[];
     },
-    enabled: !!currentWorkspace,
   });
 
   const handleDeleteAgent = async (agentId: string) => {
