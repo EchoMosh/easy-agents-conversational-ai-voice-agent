@@ -1,5 +1,6 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Network, MessageCircle, X } from 'lucide-react';
+import { ArrowLeft, Network, MessageCircle, X, Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, ReactFlowProvider, Node, Edge, NodeTypes, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
