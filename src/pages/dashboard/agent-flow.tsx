@@ -292,13 +292,14 @@ function Flow() {
         </div>
 
         <div className="relative w-full h-12 flex items-center justify-center">
-          <div 
-            className={`px-3 py-1.5 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-sm transition-all duration-300 ${isToolbarVisible ? 'opacity-30' : 'opacity-60 hover:opacity-100'}`}
+          <button
+            onClick={() => setIsToolbarVisible(!isToolbarVisible)}
+            className="group h-10 w-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-sm transition-all duration-300 hover:scale-110"
           >
-            <div className="text-xs text-gray-500 dark:text-gray-400 select-none">
-              {isToolbarVisible ? 'Release to hide nodes' : 'Hover to add nodes'}
-            </div>
-          </div>
+            <Plus 
+              className={`h-5 w-5 text-gray-600 dark:text-gray-300 transition-all duration-500 transform ${isToolbarVisible ? 'rotate-[135deg]' : ''}`}
+            />
+          </button>
         </div>
       </div>
 
