@@ -229,117 +229,111 @@ function Flow() {
         />
       </ReactFlow>
 
-      <div className="fixed bottom-6 left-[12px] z-50 w-14">
-        <div 
-          className="group relative w-14"
+      <div className="fixed bottom-6 left-[12px] z-50">
+        <button
+          onClick={() => setIsToolbarVisible(!isToolbarVisible)}
           onMouseEnter={showToolbar}
           onMouseLeave={hideToolbar}
+          className="h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
         >
-          <button
-            onClick={() => setIsToolbarVisible(!isToolbarVisible)}
-            className="group h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl pointer-events-auto z-10"
+          <div className="relative w-6 h-6">
+            <Plus 
+              className={`absolute inset-0 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform translate-y-0.5
+                ${isToolbarVisible ? 
+                  'rotate-[135deg] scale-110 hover:rotate-[145deg] opacity-0' : 
+                  'hover:rotate-[15deg] hover:scale-110 opacity-100'
+                }
+              `}
+            />
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`absolute inset-0 w-6 h-6 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform
+                ${isToolbarVisible ? 
+                  'rotate-0 scale-110 opacity-100' : 
+                  '-rotate-180 scale-90 opacity-0'
+                }
+              `}
+            >
+              <path d="M5 12h14m-7-7l7 7-7 7" />
+            </svg>
+          </div>
+        </button>
+
+        <div 
+          className={`absolute bottom-0 left-0 space-x-6 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+            ${isToolbarVisible ? 
+              'opacity-100 translate-x-20 scale-100' : 
+              'opacity-0 -translate-x-8 scale-95 pointer-events-none'
+            }
+          `}
+        >
+          <div 
+            draggable 
+            onDragStart={e => handleDragStart(e, 'greetingNode')} 
+            onDrag={handleDrag} 
+            onDragEnd={() => setDraggedNodeType(null)} 
+            className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
           >
-            <div className="relative w-6 h-6">
-              <Plus 
-                className={`absolute inset-0 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform translate-y-0.5
-                  ${isToolbarVisible ? 
-                    'rotate-[135deg] scale-110 hover:rotate-[145deg] opacity-0' : 
-                    'hover:rotate-[15deg] hover:scale-110 opacity-100'
-                  }
-                `}
-              />
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`absolute inset-0 w-6 h-6 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform
-                  ${isToolbarVisible ? 
-                    'rotate-0 scale-110 opacity-100' : 
-                    '-rotate-180 scale-90 opacity-0'
-                  }
-                `}
-              >
-                <path d="M5 12h14m-7-7l7 7-7 7" />
-              </svg>
-            </div>
-          </button>
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
+              <MessageCircle className="h-5 w-5 text-blue-500" />
+            </span>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Greeting</span>
+          </div>
 
           <div 
-            className={`absolute bottom-0 left-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-left
-              ${isToolbarVisible ? 
-                'opacity-100 translate-x-20 scale-100' : 
-                'opacity-0 -translate-x-8 scale-95 pointer-events-none'
-              }
-            `}
+            draggable 
+            onDragStart={e => handleDragStart(e, 'speakNode')} 
+            onDrag={handleDrag} 
+            onDragEnd={() => setDraggedNodeType(null)} 
+            className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
           >
-            <div className="flex items-center gap-6 p-4 -ml-2 rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl pointer-events-auto">
-              <div 
-                draggable 
-                onDragStart={e => handleDragStart(e, 'greetingNode')} 
-                onDrag={handleDrag} 
-                onDragEnd={() => setDraggedNodeType(null)} 
-                className="relative flex flex-col items-center gap-2 cursor-move group transition-transform duration-200 hover:scale-105"
-              >
-                <span className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-b from-blue-50 to-blue-100/50 dark:from-blue-950 dark:to-blue-900/50 shadow-[0_0px_12px_-1px_rgba(59,130,246,0.2)] transition-all duration-300">
-                  <MessageCircle className="h-5 w-5 text-blue-500" />
-                </span>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Greeting</span>
-              </div>
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
+              <MessageCircle className="h-5 w-5 text-purple-500" />
+            </span>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Speak</span>
+          </div>
 
-              <div 
-                draggable 
-                onDragStart={e => handleDragStart(e, 'speakNode')} 
-                onDrag={handleDrag} 
-                onDragEnd={() => setDraggedNodeType(null)} 
-                className="relative flex flex-col items-center gap-2 cursor-move group transition-transform duration-200 hover:scale-105"
-              >
-                <span className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-b from-purple-50 to-purple-100/50 dark:from-purple-950 dark:to-purple-900/50 shadow-[0_0px_12px_-1px_rgba(168,85,247,0.2)] transition-all duration-300">
-                  <MessageCircle className="h-5 w-5 text-purple-500" />
-                </span>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Speak</span>
-              </div>
+          <div 
+            draggable 
+            onDragStart={e => handleDragStart(e, 'endNode')} 
+            onDrag={handleDrag} 
+            onDragEnd={() => setDraggedNodeType(null)} 
+            className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
+          >
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
+              <X className="h-5 w-5 text-rose-500" />
+            </span>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">End</span>
+          </div>
 
-              <div 
-                draggable 
-                onDragStart={e => handleDragStart(e, 'endNode')} 
-                onDrag={handleDrag} 
-                onDragEnd={() => setDraggedNodeType(null)} 
-                className="relative flex flex-col items-center gap-2 cursor-move group transition-transform duration-200 hover:scale-105"
-              >
-                <span className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-b from-rose-50 to-rose-100/50 dark:from-rose-950 dark:to-rose-900/50 shadow-[0_0px_12px_-1px_rgba(244,63,94,0.2)] transition-all duration-300">
-                  <X className="h-5 w-5 text-rose-500" />
-                </span>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">End</span>
-              </div>
+          <div
+            draggable
+            onDragStart={e => handleDragStart(e, 'triggerNode')}
+            onDrag={handleDrag}
+            onDragEnd={() => setDraggedNodeType(null)}
+            className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
+          >
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
+              <Network className="h-5 w-5 text-amber-500" />
+            </span>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Trigger</span>
+          </div>
 
-              <div
-                draggable
-                onDragStart={e => handleDragStart(e, 'triggerNode')}
-                onDrag={handleDrag}
-                onDragEnd={() => setDraggedNodeType(null)}
-                className="relative flex flex-col items-center gap-2 cursor-move group transition-transform duration-200 hover:scale-105"
-              >
-                <span className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-b from-amber-50 to-amber-100/50 dark:from-amber-950 dark:to-amber-900/50 shadow-[0_0px_12px_-1px_rgba(245,158,11,0.2)] transition-all duration-300">
-                  <Network className="h-5 w-5 text-amber-500" />
-                </span>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Trigger</span>
-              </div>
-
-              <div
-                draggable
-                onDragStart={e => handleDragStart(e, 'transferNode')}
-                onDrag={handleDrag}
-                onDragEnd={() => setDraggedNodeType(null)}
-                className="relative flex flex-col items-center gap-2 cursor-move group transition-transform duration-200 hover:scale-105"
-              >
-                <span className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-b from-emerald-50 to-emerald-100/50 dark:from-emerald-950 dark:to-emerald-900/50 shadow-[0_0px_12px_-1px_rgba(16,185,129,0.2)] transition-all duration-300">
-                  <PhoneForwarded className="h-5 w-5 text-emerald-500" />
-                </span>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Transfer Call</span>
-              </div>
-            </div>
+          <div
+            draggable
+            onDragStart={e => handleDragStart(e, 'transferNode')}
+            onDrag={handleDrag}
+            onDragEnd={() => setDraggedNodeType(null)}
+            className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
+          >
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
+              <PhoneForwarded className="h-5 w-5 text-emerald-500" />
+            </span>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Transfer Call</span>
           </div>
         </div>
       </div>
