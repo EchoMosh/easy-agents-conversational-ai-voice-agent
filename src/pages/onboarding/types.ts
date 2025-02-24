@@ -11,7 +11,7 @@ export type Step = {
   id: number;
   question: string;
   field: keyof OnboardingData;
-  type: "text" | "number" | "select";
-  options?: string[];
+  type: "text" | "select";
   description?: string;
+  options?: string[];
 };
