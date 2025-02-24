@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -61,7 +60,6 @@ const initialEdges: Edge[] = [
   { id: 'e1-2', source: '1', target: '2' },
 ];
 
-// Separate flow component to use hooks inside the ReactFlowProvider
 function Flow() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -81,21 +79,20 @@ function Flow() {
     const type = event.dataTransfer.getData('application/reactflow');
     if (!type || (type !== 'speakNode' && type !== 'greetingNode')) return;
 
-    // Get the current bounds of the ReactFlow wrapper element
     const reactFlowBounds = document.querySelector('.react-flow')?.getBoundingClientRect();
     const position = reactFlowBounds ? {
       x: event.clientX - reactFlowBounds.left,
       y: event.clientY - reactFlowBounds.top,
     } : { x: 0, y: 0 };
 
-    const newNode: CustomNode = {
+    const newNode = {
       id: `${type}-${Math.random()}`,
       type,
       position,
       data: type === 'speakNode' 
-        ? { message: 'Enter your message here' }
-        : { greeting: 'Enter your greeting here' },
-    };
+        ? { message: 'Enter your message here' } as SpeakData
+        : { greeting: 'Enter your greeting here' } as GreetingData,
+    } as CustomNode;
 
     setNodes((nds) => [...nds, newNode]);
   };
@@ -112,10 +109,17 @@ function Flow() {
       nodeTypes={nodeTypes}
       fitView
       defaultEdgeOptions={{ animated: true }}
+      className="bg-background"
     >
-      <Background />
-      <Controls />
-      <MiniMap />
+      <Background className="bg-background" />
+      <Controls className="bg-background border-border" />
+      <MiniMap 
+        className="bg-background !border-border" 
+        nodeColor={(node) => {
+          return node.type === 'speakNode' ? 'hsl(var(--primary))' : 'hsl(var(--secondary))';
+        }}
+        maskColor="hsl(var(--muted))"
+      />
     </ReactFlow>
   );
 }
