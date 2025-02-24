@@ -1,94 +1,80 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AgentsTable } from "@/components/agents/agents-table";
 import { CreateAgentForm } from "@/components/agents/create-agent-form";
 import { Agent } from "@/types/agent";
-
 const AgentsPage = () => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [isCreating, setIsCreating] = useState(false);
-
-  const { data: agents, isLoading, error, refetch } = useQuery({
+  const {
+    data: agents,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
     queryKey: ['agents'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('agents')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('agents').select('*').order('created_at', {
+        ascending: false
+      });
       if (error) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to fetch agents",
+          description: "Failed to fetch agents"
         });
         throw error;
       }
-
       return data as Agent[];
-    },
+    }
   });
-
   const handleDeleteAgent = async (agentId: string) => {
-    const { error } = await supabase
-      .from('agents')
-      .delete()
-      .eq('id', agentId);
-
+    const {
+      error
+    } = await supabase.from('agents').delete().eq('id', agentId);
     if (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete agent",
+        description: "Failed to delete agent"
       });
       return;
     }
-
     toast({
       title: "Success",
-      description: "Agent deleted successfully",
+      description: "Agent deleted successfully"
     });
     refetch();
   };
-
   if (isLoading) {
-    return (
-      <div className="p-8 max-w-[1600px] mx-auto w-full">
+    return <div className="p-8 max-w-[1600px] mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Agents</h1>
         </div>
         <div className="text-center py-8">Loading agents...</div>
-      </div>
-    );
+      </div>;
   }
-
   if (error) {
-    return (
-      <div className="p-8 max-w-[1600px] mx-auto w-full">
+    return <div className="p-8 max-w-[1600px] mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Agents</h1>
         </div>
         <div className="text-center py-8 text-destructive">
           Failed to load agents. Please try again.
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="p-8 max-w-[1600px] mx-auto w-full">
+  return <div className="">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Agents</h1>
         <Button onClick={() => setIsCreating(true)}>
@@ -97,15 +83,9 @@ const AgentsPage = () => {
         </Button>
       </div>
 
-      {agents?.length ? (
-        <div className="rounded-md border">
-          <AgentsTable
-            agents={agents}
-            onDelete={handleDeleteAgent}
-          />
-        </div>
-      ) : (
-        <div className="text-center py-12">
+      {agents?.length ? <div className="rounded-md border">
+          <AgentsTable agents={agents} onDelete={handleDeleteAgent} />
+        </div> : <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-4">No agents found</h2>
           <p className="text-muted-foreground mb-6">
             Create your first voice agent to get started
@@ -114,8 +94,7 @@ const AgentsPage = () => {
             <Plus className="w-4 h-4 mr-2" />
             Create Agent
           </Button>
-        </div>
-      )}
+        </div>}
 
       <Sheet open={isCreating} onOpenChange={setIsCreating}>
         <SheetContent>
@@ -125,17 +104,12 @@ const AgentsPage = () => {
               Add a new voice agent to your team. Fill in the details below.
             </SheetDescription>
           </SheetHeader>
-          <CreateAgentForm
-            onSuccess={() => {
-              setIsCreating(false);
-              refetch();
-            }}
-            onCancel={() => setIsCreating(false)}
-          />
+          <CreateAgentForm onSuccess={() => {
+          setIsCreating(false);
+          refetch();
+        }} onCancel={() => setIsCreating(false)} />
         </SheetContent>
       </Sheet>
-    </div>
-  );
+    </div>;
 };
-
 export default AgentsPage;
