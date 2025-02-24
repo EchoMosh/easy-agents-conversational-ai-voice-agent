@@ -1,10 +1,10 @@
 
 import { Handle, Position } from '@xyflow/react';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export function GreetingNode({ data, id }: { data: { greeting: string }; id: string }) {
-  const handleGreetingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGreetingChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     // We need to manually trigger a node update since we're modifying data
     const evt = new CustomEvent('nodeupdate', {
       detail: { id, data: { greeting: event.target.value } },
@@ -25,11 +25,11 @@ export function GreetingNode({ data, id }: { data: { greeting: string }; id: str
           <Label htmlFor={`greeting-${id}`} className="text-xs text-muted-foreground dark:text-gray-400">
             Enter greeting message
           </Label>
-          <Input 
+          <Textarea 
             id={`greeting-${id}`}
             value={data.greeting}
             onChange={handleGreetingChange}
-            className="nodrag text-sm" // nodrag prevents dragging when interacting with the input
+            className="nodrag text-sm resize-y min-h-[60px]" // Added resize-y for vertical resizing
             placeholder="Type your greeting message..."
           />
         </div>
