@@ -21,9 +21,9 @@ const queryClient = new QueryClient();
 
 // Layout with sidebar for regular dashboard pages
 const DashboardLayout = () => (
-  <div className="min-h-screen flex w-full">
+  <div className="min-h-screen flex w-full bg-background">
     <AppSidebar />
-    <main className="flex-1">
+    <main className="flex-1 bg-background text-foreground">
       <Outlet />
     </main>
   </div>
@@ -31,7 +31,7 @@ const DashboardLayout = () => (
 
 // Clean layout without sidebar for flow editor
 const FlowLayout = () => (
-  <div className="min-h-screen w-full">
+  <div className="min-h-screen w-full bg-background">
     <AgentFlowPage />
   </div>
 );
@@ -39,7 +39,7 @@ const FlowLayout = () => (
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <SidebarProvider>
           <div className="min-h-screen flex w-full">
             <Router>

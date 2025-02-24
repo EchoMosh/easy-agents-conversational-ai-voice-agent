@@ -64,7 +64,7 @@ const AgentsPage = () => {
   };
 
   return (
-    <div className="w-full p-8">
+    <div className="w-full p-8 bg-background text-foreground">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Agents</h1>
         <Button onClick={() => setIsCreating(true)}>
@@ -99,7 +99,7 @@ const AgentsPage = () => {
       )}
 
       {!isLoading && !error && agents?.length > 0 && (
-        <div className="w-full border rounded-lg bg-card">
+        <div className="w-full border rounded-lg bg-card dark:bg-card">
           <AgentsTable agents={agents} onDelete={handleDeleteAgent} />
         </div>
       )}
