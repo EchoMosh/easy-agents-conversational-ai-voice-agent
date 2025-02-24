@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { MoreVertical, Pencil, Trash, CheckSquare, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -40,12 +41,20 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
+  const resetState = () => {
     setSelectedAgents([]);
     setAgentToDelete(null);
     setShowBulkDeleteDialog(false);
     setIsDeleting(false);
+  };
+
+  useEffect(() => {
+    resetState();
   }, [agents]);
+
+  useEffect(() => {
+    return resetState;
+  }, []);
 
   const toggleSelectAll = () => {
     if (selectedAgents.length === agents.length) {
@@ -69,11 +78,9 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     setIsDeleting(true);
     try {
       await onDelete(agentToDelete);
-    } catch (error) {
-      console.error('Delete failed:', error);
+      setAgentToDelete(null); // Close dialog first
     } finally {
       setIsDeleting(false);
-      setAgentToDelete(null);
     }
   };
 
@@ -82,25 +89,13 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     
     setIsDeleting(true);
     try {
-      for (const id of selectedAgents) {
-        await onDelete(id);
-      }
-    } catch (error) {
-      console.error('Bulk delete failed:', error);
+      await Promise.all(selectedAgents.map(id => onDelete(id)));
+      setShowBulkDeleteDialog(false); // Close dialog first
+      setSelectedAgents([]);
     } finally {
       setIsDeleting(false);
-      setSelectedAgents([]);
-      setShowBulkDeleteDialog(false);
     }
   };
-
-  useEffect(() => {
-    return () => {
-      setAgentToDelete(null);
-      setShowBulkDeleteDialog(false);
-      setIsDeleting(false);
-    };
-  }, []);
 
   return (
     <div className="w-full">
@@ -213,18 +208,14 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
       </Table>
 
       <AlertDialog 
-        open={!!agentToDelete} 
-        onOpenChange={(open) => {
-          if (!open && !isDeleting) {
+        open={!!agentToDelete}
+        onOpenChange={(isOpen) => {
+          if (!isOpen && !isDeleting) {
             setAgentToDelete(null);
           }
         }}
       >
-        <AlertDialogContent onPointerDownOutside={(e) => {
-          if (isDeleting) {
-            e.preventDefault();
-          }
-        }}>
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -246,18 +237,14 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
       </AlertDialog>
 
       <AlertDialog 
-        open={showBulkDeleteDialog} 
-        onOpenChange={(open) => {
-          if (!open && !isDeleting) {
+        open={showBulkDeleteDialog}
+        onOpenChange={(isOpen) => {
+          if (!isOpen && !isDeleting) {
             setShowBulkDeleteDialog(false);
           }
         }}
       >
-        <AlertDialogContent onPointerDownOutside={(e) => {
-          if (isDeleting) {
-            e.preventDefault();
-          }
-        }}>
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
