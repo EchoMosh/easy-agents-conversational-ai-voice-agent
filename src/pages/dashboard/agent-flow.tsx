@@ -33,6 +33,7 @@ function Flow() {
   const { screenToFlowPosition } = useReactFlow();
   const [draggedNodeType, setDraggedNodeType] = useDrag();
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [isToolbarOpen, setIsToolbarOpen] = useState(false);
 
   const onConnect = useCallback((connection: Connection) => {
     setEdges(eds => addEdge(connection, eds));
@@ -201,71 +202,97 @@ function Flow() {
         />
       </ReactFlow>
 
-      <TooltipProvider delayDuration={200}>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-8 p-6 rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div draggable onDragStart={e => handleDragStart(e, 'greetingNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-2 p-2 rounded-xl cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
-                <span className="text-blue-500 p-2.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/50 transition-transform">
-                  <MessageCircle className="h-5 w-5" />
-                </span>
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Greeting</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
-              Initial message to start the conversation
-            </TooltipContent>
-          </Tooltip>
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3">
+        {!isToolbarOpen && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsToolbarOpen(true)}
+            className="w-10 h-10 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-300"
+          >
+            <Plus className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+          </Button>
+        )}
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div draggable onDragStart={e => handleDragStart(e, 'speakNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-2 p-2 rounded-xl cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
-                <span className="text-purple-500 p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/50 transition-transform">
-                  <MessageCircle className="h-5 w-5" />
-                </span>
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Speak</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
-              Response message to user input
-            </TooltipContent>
-          </Tooltip>
+        {isToolbarOpen && (
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsToolbarOpen(false)}
+              className="absolute -top-12 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-300"
+            >
+              <X className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+            </Button>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div draggable onDragStart={e => handleDragStart(e, 'endNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-2 p-2 rounded-xl cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
-                <span className="text-rose-500 p-2.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/50 transition-transform">
-                  <X className="h-5 w-5" />
-                </span>
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">End</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
-              End of conversation
-            </TooltipContent>
-          </Tooltip>
+            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl">
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div draggable onDragStart={e => handleDragStart(e, 'greetingNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
+                      <span className="text-blue-500 p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/50 transition-transform">
+                        <MessageCircle className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Greeting</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
+                    Initial message to start the conversation
+                  </TooltipContent>
+                </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                draggable
-                onDragStart={e => handleDragStart(e, 'triggerNode')}
-                onDrag={handleDrag}
-                onDragEnd={() => setDraggedNodeType(null)}
-                className="flex flex-col items-center gap-2 p-2 rounded-xl cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group"
-              >
-                <span className="text-amber-500 p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/50 transition-transform">
-                  <Network className="h-5 w-5" />
-                </span>
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Trigger</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
-              Platform integrations trigger
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div draggable onDragStart={e => handleDragStart(e, 'speakNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
+                      <span className="text-purple-500 p-2 rounded-lg bg-purple-50/50 dark:bg-purple-950/50 transition-transform">
+                        <MessageCircle className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Speak</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
+                    Response message to user input
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div draggable onDragStart={e => handleDragStart(e, 'endNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
+                      <span className="text-rose-500 p-2 rounded-lg bg-rose-50/50 dark:bg-rose-950/50 transition-transform">
+                        <X className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">End</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
+                    End of conversation
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      draggable
+                      onDragStart={e => handleDragStart(e, 'triggerNode')}
+                      onDrag={handleDrag}
+                      onDragEnd={() => setDraggedNodeType(null)}
+                      className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group"
+                    >
+                      <span className="text-amber-500 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/50 transition-transform">
+                        <Network className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Trigger</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
+                    Platform integrations trigger
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        )}
+      </div>
 
       {draggedNodeType && (
         <div 
