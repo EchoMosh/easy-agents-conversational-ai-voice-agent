@@ -221,7 +221,7 @@ function Flow() {
         onMouseEnter={showToolbar}
         onMouseLeave={hideToolbar}
       >
-        <div className={`transition-all duration-300 ease-out ${isToolbarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
+        <div className={`transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isToolbarVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8 pointer-events-none'}`}>
           <div className="flex items-center gap-4 p-3 mb-3 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl">
             <TooltipProvider delayDuration={200}>
               <Tooltip>
@@ -289,13 +289,17 @@ function Flow() {
           </div>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`w-10 h-10 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-300 ${isToolbarVisible ? 'rotate-45' : ''}`}
-        >
-          <Plus className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-        </Button>
+        <div className="relative">
+          <div className="absolute inset-0 -m-3 bg-blue-500/20 dark:bg-blue-400/20 rounded-full blur-xl animate-pulse transition-opacity duration-700 ease-in-out opacity-0 group-hover:opacity-100" />
+          <div className="absolute inset-0 -m-2 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-full blur-md animate-[spin_3s_linear_infinite] transition-opacity duration-700 ease-in-out opacity-0 group-hover:opacity-100" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`group relative w-10 h-10 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 before:absolute before:inset-0 before:-z-10 before:bg-gradient-to-r before:from-blue-500/25 before:via-purple-500/25 before:to-pink-500/25 before:rounded-full before:blur-xl before:opacity-0 before:transition-opacity before:duration-700 hover:before:opacity-100 ${isToolbarVisible ? 'rotate-45 scale-110 before:opacity-100' : ''}`}
+          >
+            <Plus className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+          </Button>
+        </div>
       </div>
 
       {draggedNodeType && (
