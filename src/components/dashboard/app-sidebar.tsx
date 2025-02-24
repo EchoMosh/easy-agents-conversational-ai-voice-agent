@@ -1,6 +1,6 @@
 
-import { Users, Target, Settings, User, Shuffle } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Users, Target, Settings, User, Shuffle, LogOut } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -50,6 +50,7 @@ export function AppSidebar() {
   const [username, setUsername] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const fetchProfile = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -106,6 +107,23 @@ export function AppSidebar() {
           description: "Avatar updated successfully",
         });
       }
+    }
+  };
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign out",
+      });
+    } else {
+      navigate('/auth');
+      toast({
+        title: "Success",
+        description: "Signed out successfully",
+      });
     }
   };
 
@@ -183,6 +201,17 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 px-3 py-2 rounded-md transition-colors text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Log Out</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
