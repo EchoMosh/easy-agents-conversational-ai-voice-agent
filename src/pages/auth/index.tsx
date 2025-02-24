@@ -18,14 +18,12 @@ const AuthPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Update isSignUp when URL parameters change
   useEffect(() => {
     const mode = searchParams.get('mode');
     setIsSignUp(mode === 'signup');
   }, [searchParams]);
 
   const handleToggleMode = () => {
-    // Update the URL when toggling between signup and login
     navigate(`/auth?mode=${isSignUp ? 'login' : 'signup'}`);
   };
 
@@ -81,58 +79,80 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background">
-      <div className="absolute top-4 right-4">
+    <div className="container relative min-h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      <div className="absolute right-4 top-4 md:right-8 md:top-8">
         <ThemeToggle />
       </div>
-      <Card className="w-[400px] backdrop-blur-sm bg-card/50">
-        <CardHeader>
-          <CardTitle>{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
-          <CardDescription>
-            {isSignUp
-              ? "Enter your email below to create your account"
-              : "Enter your email below to login to your account"}
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleAuth}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full"
-              type="button"
-              onClick={handleToggleMode}
-            >
-              {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+      
+      <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
+        <div className="absolute inset-0 bg-zinc-900" />
+        <div className="relative z-20 flex items-center text-lg font-medium">
+          <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=3270&auto=format&fit=crop"
+               alt="Authentication"
+               className="absolute inset-0 h-full w-full object-cover opacity-30" />
+        </div>
+        <div className="relative z-20 mt-auto">
+          <blockquote className="space-y-2">
+            <p className="text-lg">
+              "This platform has completely transformed how we handle customer support. The AI agents are incredibly efficient."
+            </p>
+            <footer className="text-sm">Sarah Johnson, CEO of TechCorp</footer>
+          </blockquote>
+        </div>
+      </div>
+
+      <div className="lg:p-8">
+        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+          <Card className="border-0 shadow-none bg-background">
+            <CardHeader>
+              <CardTitle>{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
+              <CardDescription>
+                {isSignUp
+                  ? "Enter your email below to create your account"
+                  : "Enter your email below to login to your account"}
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleAuth}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-4">
+                <Button className="w-full" type="submit" disabled={isLoading}>
+                  {isLoading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full"
+                  type="button"
+                  onClick={handleToggleMode}
+                >
+                  {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
