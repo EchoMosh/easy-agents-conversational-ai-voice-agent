@@ -1,9 +1,11 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,7 +22,9 @@ interface CreateAgentFormProps {
 }
 
 export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const [isCreating, setIsCreating] = useState(false);
   const [newAgent, setNewAgent] = useState({
     name: '',
     role: 'virtual_assistant' as Agent['role'],
@@ -36,6 +40,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       return;
     }
 
+    setIsCreating(true);
+
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user?.id) {
@@ -44,16 +50,19 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         title: "Error",
         description: "You must be logged in to create an agent",
       });
+      setIsCreating(false);
       return;
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('agents')
       .insert({
         name: newAgent.name,
         role: newAgent.role,
         user_id: session.user.id,
-      });
+      })
+      .select()
+      .single();
 
     if (error) {
       console.error('Error creating agent:', error);
@@ -62,6 +71,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         title: "Error",
         description: "Failed to create agent",
       });
+      setIsCreating(false);
       return;
     }
 
@@ -70,7 +80,13 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       description: "Agent created successfully",
     });
 
-    onSuccess();
+    // Simulate a loading delay for better UX
+    setTimeout(() => {
+      setIsCreating(false);
+      onSuccess();
+      // Navigate to the flow page with a nice fade animation
+      navigate(`/dashboard/agents/flow/${data.id}`, { replace: true });
+    }, 1500);
   };
 
   return (
@@ -106,8 +122,19 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         </Select>
       </div>
 
-      <Button className="w-full" onClick={handleCreateAgent}>
-        Create Agent
+      <Button 
+        className="w-full relative" 
+        onClick={handleCreateAgent} 
+        disabled={isCreating}
+      >
+        {isCreating ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Creating Agent...
+          </>
+        ) : (
+          'Create Agent'
+        )}
       </Button>
     </div>
   );
