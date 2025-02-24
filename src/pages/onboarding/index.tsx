@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -80,6 +79,18 @@ const OnboardingPage = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate("/auth");
+      return;
+    }
+
+    // Check if user has already completed onboarding
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', session.user.id)
+      .maybeSingle();
+
+    if (profile?.onboarding_completed) {
+      navigate("/");
     }
   };
 
@@ -134,9 +145,10 @@ const OnboardingPage = () => {
           title: "Error",
           description: error.message,
         });
+      } finally {
+        setIsCompleting(false);
       }
     }
-    setIsCompleting(false);
   };
 
   const currentQuestion = steps[currentStep - 1];
@@ -215,6 +227,7 @@ const OnboardingPage = () => {
                 onClick={handleNext}
                 className="w-full"
                 size="lg"
+                disabled={isLoading}
               >
                 {currentStep === steps.length ? "Complete Setup" : "Continue"}
               </Button>
@@ -236,3 +249,4 @@ const OnboardingPage = () => {
 };
 
 export default OnboardingPage;
+
