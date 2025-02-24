@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { RealtimeChat } from '@/utils/RealtimeAudio';
+import { RealtimeChat } from '@/utils/audio';
 import { Mic, MicOff } from 'lucide-react';
 
 interface VoiceInterfaceProps {
