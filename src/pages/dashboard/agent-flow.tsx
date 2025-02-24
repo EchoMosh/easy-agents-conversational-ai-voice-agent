@@ -40,7 +40,7 @@ function Flow() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<any>>([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
-  const [draggedNode, setDraggedNode] = useState<string | null>(null);
+  const [draggedNodeType, setDraggedNodeType] = useState<'greetingNode' | 'speakNode' | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -65,14 +65,14 @@ function Flow() {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (draggedNode) {
+      if (draggedNodeType) {
         setDragPosition({ x: e.clientX, y: e.clientY });
       }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [draggedNode]);
+  }, [draggedNodeType]);
 
   useEffect(() => {
     const channel = supabase.channel(`agent-flow-${agentId}`).on('postgres_changes', {
@@ -109,9 +109,9 @@ function Flow() {
 
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    setDraggedNode(null);
+    setDraggedNodeType(null);
 
-    const type = event.dataTransfer.getData('application/reactflow');
+    const type = event.dataTransfer.getData('application/reactflow') as 'greetingNode' | 'speakNode';
     if (!type || (type !== 'speakNode' && type !== 'greetingNode')) return;
 
     if (reactFlowWrapper.current) {
@@ -123,7 +123,7 @@ function Flow() {
 
       const newNode: Node<NodeData, 'greetingNode' | 'speakNode'> = {
         id: `${type}-${Math.random()}`,
-        type: type as 'greetingNode' | 'speakNode',
+        type,
         position,
         data: type === 'speakNode' 
           ? { message: 'Enter your message here' }
@@ -194,7 +194,7 @@ function Flow() {
           maskColor="hsl(var(--muted))"
         />
         
-        {draggedNode && (
+        {draggedNodeType && (
           <div 
             className="absolute pointer-events-none animate-pulse bg-background/80 backdrop-blur-sm border rounded-lg p-4 shadow-lg"
             style={{ 
@@ -204,7 +204,7 @@ function Flow() {
               minWidth: '200px',
             }}
           >
-            {draggedNode === 'greetingNode' ? (
+            {draggedNodeType === 'greetingNode' ? (
               <div className="flex items-center gap-2">
                 <span className="text-blue-500">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -232,9 +232,9 @@ function Flow() {
                 onDragStart={(event) => {
                   event.dataTransfer.setData('application/reactflow', 'greetingNode');
                   event.dataTransfer.effectAllowed = 'move';
-                  setDraggedNode('greetingNode');
+                  setDraggedNodeType('greetingNode');
                 }}
-                onDragEnd={() => setDraggedNode(null)}
+                onDragEnd={() => setDraggedNodeType(null)}
                 className="flex flex-col items-center gap-2 p-2 rounded-lg cursor-move hover:bg-accent transition-all duration-200 hover:scale-110 group"
               >
                 <span className="text-blue-500 p-2 rounded-lg bg-blue-50 dark:bg-blue-950 transition-transform">
@@ -255,9 +255,9 @@ function Flow() {
                 onDragStart={(event) => {
                   event.dataTransfer.setData('application/reactflow', 'speakNode');
                   event.dataTransfer.effectAllowed = 'move';
-                  setDraggedNode('speakNode');
+                  setDraggedNodeType('speakNode');
                 }}
-                onDragEnd={() => setDraggedNode(null)}
+                onDragEnd={() => setDraggedNodeType(null)}
                 className="flex flex-col items-center gap-2 p-2 rounded-lg cursor-move hover:bg-accent transition-all duration-200 hover:scale-110 group"
               >
                 <span className="text-purple-500 p-2 rounded-lg bg-purple-50 dark:bg-purple-950 transition-transform">
