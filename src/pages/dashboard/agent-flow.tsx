@@ -199,11 +199,11 @@ function Flow() {
         
         {draggedNodeType && (
           <div 
-            className="fixed pointer-events-none bg-background/80 backdrop-blur-sm border rounded-lg p-4 shadow-lg"
+            className="pointer-events-none bg-background/80 backdrop-blur-sm border rounded-lg p-4 shadow-lg"
             style={{ 
               position: 'fixed',
-              left: `${dragPosition.x}px`, 
-              top: `${dragPosition.y}px`,
+              left: dragPosition.x,
+              top: dragPosition.y,
               transform: 'translate(-50%, -50%)',
               minWidth: '200px',
               zIndex: 1000,
