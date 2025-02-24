@@ -8,7 +8,7 @@ import { Agent, FlowNode, FlowEdge } from '@/types/agent';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { Node, Edge, OnNodesChange, OnEdgesChange } from '@xyflow/react';
+import { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react';
 import { Circle } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -56,6 +56,7 @@ export default function AgentFlowPage() {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
+          await channel.track({ online: true });
           setIsConnected(true);
         } else {
           setIsConnected(false);
@@ -113,7 +114,7 @@ export default function AgentFlowPage() {
     }
   }, [agent, id, toast]);
 
-  const handleNodesChange: OnNodesChange = useCallback((changes) => {
+  const handleNodesChange = useCallback((changes: NodeChange[]) => {
     if (!agent?.flow?.nodes) return;
     
     const updatedNodes = [...agent.flow.nodes];
@@ -137,7 +138,7 @@ export default function AgentFlowPage() {
     saveFlowChanges(updatedNodes, agent.flow?.edges || []);
   }, [agent?.flow, saveFlowChanges]);
 
-  const handleEdgesChange: OnEdgesChange = useCallback((changes) => {
+  const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     if (!agent?.flow?.edges) return;
     
     const updatedEdges = [...agent.flow.edges];
@@ -177,12 +178,22 @@ export default function AgentFlowPage() {
           onBack={() => navigate('/dashboard/agents')}
           onUpdateSettings={handleUpdateSettings}
         />
-        <div className="absolute top-4 right-4 z-50">
-          <Circle 
-            size={24}
-            className={`${isConnected ? 'text-green-500' : 'text-red-500'} transition-colors duration-200`}
-            fill={isConnected ? 'rgb(34 197 94)' : 'rgb(239 68 68)'}
-          />
+        <div className="absolute top-20 right-4 z-50 flex items-center gap-2">
+          <div className={`relative ${isConnected ? 'animate-pulse' : ''}`}>
+            <div className={`absolute inset-0 rounded-full blur-md ${
+              isConnected ? 'bg-green-500/50' : 'bg-red-500/50'
+            }`} />
+            <Circle 
+              size={24}
+              className={`relative ${
+                isConnected ? 'text-green-500' : 'text-red-500'
+              } transition-colors duration-200`}
+              fill={isConnected ? 'rgb(34 197 94)' : 'rgb(239 68 68)'}
+            />
+          </div>
+          <span className={`text-sm ${isConnected ? 'text-green-500' : 'text-red-500'}`}>
+            {isConnected ? 'Connected' : 'Disconnected'}
+          </span>
         </div>
         <div className="flex-1 relative">
           <ReactFlowProvider>
