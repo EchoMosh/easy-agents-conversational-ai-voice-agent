@@ -60,6 +60,17 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
   const [humorLevel, setHumorLevel] = useState(50);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
 
+  // Change handler for voice selection
+  const handleVoiceChange = (voiceId: string) => {
+    setSelectedVoice(voiceId);
+    // Automatically save when voice changes
+    onUpdateSettings({
+      voiceId,
+      language: selectedLanguage,
+      humorLevel: humorLevel
+    });
+  };
+
   const playVoiceSample = async (e: React.MouseEvent, voiceId: string) => {
     e.preventDefault(); // Prevent the dropdown from closing
     e.stopPropagation(); // Prevent the click from bubbling up
@@ -127,7 +138,7 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
         <div className="space-y-6 py-6">
           <div className="space-y-2">
             <Label>Voice</Label>
-            <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+            <Select value={selectedVoice} onValueChange={handleVoiceChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a voice" />
               </SelectTrigger>
