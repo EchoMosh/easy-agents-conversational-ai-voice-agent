@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Agent, AGENT_ROLES, NodeData } from "@/types/agent";
+import { motion } from "framer-motion";
+import { CreateAgentProgress } from "./create-agent-progress";
 
 interface CreateAgentFormProps {
   onSuccess: () => void;
@@ -177,9 +178,21 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
   return (
     <div className="space-y-6 py-6">
+      <CreateAgentProgress currentStep={step} totalSteps={3} />
+      
       <div className="space-y-6">
         {step === 1 && (
-          <>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Name Your Agent</h2>
+              <p className="text-muted-foreground">Choose a name that reflects your agent's purpose</p>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="name">What would you like to name your agent?</Label>
               <Input
@@ -187,21 +200,33 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
                 placeholder="Enter agent name"
                 value={newAgent.name}
                 onChange={(e) => setNewAgent(prev => ({ ...prev, name: e.target.value }))}
+                className="text-lg py-6"
               />
             </div>
             <Button 
               className="w-full relative" 
+              size="lg"
               onClick={() => setStep(2)}
               disabled={!newAgent.name}
             >
               Continue
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          </>
+          </motion.div>
         )}
 
         {step === 2 && (
-          <>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Choose Agent Role</h2>
+              <p className="text-muted-foreground">Select the role that best matches your needs</p>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="role">What role will this agent have?</Label>
               <Select
@@ -210,7 +235,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
                   setNewAgent(prev => ({ ...prev, role: value }))
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="text-lg py-6">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -227,12 +252,14 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
               <Button 
                 variant="outline" 
                 className="w-full" 
+                size="lg"
                 onClick={() => setStep(1)}
               >
                 Back
               </Button>
               <Button 
-                className="w-full relative" 
+                className="w-full relative"
+                size="lg"
                 onClick={() => setStep(3)}
                 disabled={!newAgent.role}
               >
@@ -240,11 +267,21 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
-          </>
+          </motion.div>
         )}
 
         {step === 3 && (
-          <>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Set Up Triggers</h2>
+              <p className="text-muted-foreground">Configure when your agent should be activated</p>
+            </div>
+            
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>When would you like this agent to be triggered?</Label>
@@ -254,7 +291,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
                     setNewAgent(prev => ({ ...prev, platform: value, action: '' }))
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="text-lg py-6">
                     <SelectValue placeholder="Select platform" />
                   </SelectTrigger>
                   <SelectContent>
@@ -268,7 +305,11 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
               </div>
 
               {newAgent.platform && (
-                <div className="space-y-2">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-2"
+                >
                   <Label>Select the trigger event</Label>
                   <Select
                     value={newAgent.action}
@@ -276,7 +317,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
                       setNewAgent(prev => ({ ...prev, action: value }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-lg py-6">
                       <SelectValue placeholder="Select trigger event" />
                     </SelectTrigger>
                     <SelectContent>
@@ -287,7 +328,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
+                </motion.div>
               )}
             </div>
 
@@ -295,12 +336,14 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
               <Button 
                 variant="outline" 
                 className="w-full" 
+                size="lg"
                 onClick={() => setStep(2)}
               >
                 Back
               </Button>
               <Button 
-                className="w-full relative" 
+                className="w-full relative"
+                size="lg"
                 onClick={handleCreateAgent} 
                 disabled={isCreating || !newAgent.platform || !newAgent.action}
               >
@@ -314,7 +357,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
                 )}
               </Button>
             </div>
-          </>
+          </motion.div>
         )}
       </div>
     </div>
