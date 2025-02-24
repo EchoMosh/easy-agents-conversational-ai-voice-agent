@@ -21,12 +21,10 @@ const queryClient = new QueryClient();
 
 // Layout with sidebar for regular dashboard pages
 const DashboardLayout = () => (
-  <div className="flex min-h-screen">
+  <div className="min-h-screen flex w-full">
     <AppSidebar />
     <main className="flex-1">
-      <div className="min-h-screen w-full">
-        <Outlet />
-      </div>
+      <Outlet />
     </main>
   </div>
 );
@@ -43,25 +41,27 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <SidebarProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<Navigate to="/auth" replace />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/onboarding" element={<OnboardingPage />} />
-              
-              {/* Dashboard routes with sidebar */}
-              <Route path="/dashboard" element={<DashboardLayout />}>
-                <Route index element={<Navigate to="agents" replace />} />
-                <Route path="agents" element={<AgentsPage />} />
-                <Route path="leads" element={<LeadsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="profile" element={<ProfilePage />} />
-              </Route>
+          <div className="min-h-screen flex w-full">
+            <Router>
+              <Routes>
+                <Route path="/" element={<Navigate to="/auth" replace />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/onboarding" element={<OnboardingPage />} />
+                
+                {/* Dashboard routes with sidebar */}
+                <Route path="/dashboard" element={<DashboardLayout />}>
+                  <Route index element={<Navigate to="agents" replace />} />
+                  <Route path="agents" element={<AgentsPage />} />
+                  <Route path="leads" element={<LeadsPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                </Route>
 
-              {/* Flow editor route without sidebar */}
-              <Route path="/dashboard/agents/flow/:id" element={<FlowLayout />} />
-            </Routes>
-          </Router>
+                {/* Flow editor route without sidebar */}
+                <Route path="/dashboard/agents/flow/:id" element={<FlowLayout />} />
+              </Routes>
+            </Router>
+          </div>
           <Toaster />
         </SidebarProvider>
       </ThemeProvider>
