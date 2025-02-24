@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -16,6 +17,7 @@ import {
   NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -61,12 +63,97 @@ const initialEdges: Edge[] = [
 ];
 
 function Flow() {
+  const { id: agentId } = useParams<{ id: string }>();
+  const { toast } = useToast();
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  const onConnect = (connection: Connection) => {
-    setEdges((eds) => addEdge(connection, eds));
-  };
+  // Load initial flow data
+  useEffect(() => {
+    const loadFlow = async () => {
+      const { data: agent } = await supabase
+        .from('agents')
+        .select('flow')
+        .eq('id', agentId)
+        .single();
+
+      if (agent?.flow) {
+        setNodes(agent.flow.nodes);
+        setEdges(agent.flow.edges);
+      }
+    };
+
+    loadFlow();
+  }, [agentId]);
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase.channel(`agent-flow-${agentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'agents',
+          filter: `id=eq.${agentId}`
+        },
+        (payload) => {
+          const flow = payload.new.flow;
+          if (flow) {
+            // Only update if the changes didn't come from this client
+            if (!payload.old || 
+                JSON.stringify(flow.nodes) !== JSON.stringify(nodes) || 
+                JSON.stringify(flow.edges) !== JSON.stringify(edges)) {
+              setNodes(flow.nodes);
+              setEdges(flow.edges);
+              toast({
+                title: "Flow Updated",
+                description: "Someone made changes to the flow",
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [agentId, nodes, edges]);
+
+  // Debounced flow update function
+  const updateFlow = useCallback(async () => {
+    const { error } = await supabase
+      .from('agents')
+      .update({
+        flow: { nodes, edges }
+      })
+      .eq('id', agentId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save flow changes",
+      });
+    }
+  }, [nodes, edges, agentId]);
+
+  // Debounced effect for saving changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      updateFlow();
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [nodes, edges, updateFlow]);
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      setEdges((eds) => addEdge(connection, eds));
+    },
+    [],
+  );
 
   const onDragOver = (event: React.DragEvent) => {
     event.preventDefault();
