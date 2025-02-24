@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import {
   Select,
@@ -61,7 +60,10 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
   const [humorLevel, setHumorLevel] = useState(50);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
 
-  const playVoiceSample = async (voiceId: string) => {
+  const playVoiceSample = async (e: React.MouseEvent, voiceId: string) => {
+    e.preventDefault(); // Prevent the dropdown from closing
+    e.stopPropagation(); // Prevent the click from bubbling up
+    
     try {
       setIsPlayingVoice(true);
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
@@ -125,37 +127,32 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
         <div className="space-y-6 py-6">
           <div className="space-y-2">
             <Label>Voice</Label>
-            <div className="space-y-4">
-              {voices.map((voice) => (
-                <div key={voice.id} className="flex items-center justify-between gap-2 p-2 rounded-lg border">
-                  <div className="flex-1">
-                    <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a voice" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value={voice.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{voice.name}</span>
-                              <span className="text-sm text-muted-foreground">{voice.description}</span>
-                            </div>
-                          </SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => playVoiceSample(voice.id)}
-                    disabled={isPlayingVoice}
-                  >
-                    <Volume2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a voice" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {voices.map((voice) => (
+                    <SelectItem key={voice.id} value={voice.id} className="flex items-center justify-between group">
+                      <div className="flex flex-col flex-1">
+                        <span className="font-medium">{voice.name}</span>
+                        <span className="text-sm text-muted-foreground">{voice.description}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => playVoiceSample(e, voice.id)}
+                        disabled={isPlayingVoice}
+                      >
+                        <Volume2 className="h-4 w-4" />
+                      </Button>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
