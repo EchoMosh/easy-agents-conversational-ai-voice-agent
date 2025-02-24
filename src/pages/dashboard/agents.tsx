@@ -1,68 +1,57 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useWorkspace } from "@/contexts/workspace-context";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { AgentsTable } from "@/components/agents/agents-table";
 import { CreateAgentForm } from "@/components/agents/create-agent-form";
 import { Agent } from "@/types/agent";
 
 const AgentsPage = () => {
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
   const [isCreating, setIsCreating] = useState(false);
 
-  const { data: agents, isLoading, error, refetch } = useQuery({
-    queryKey: ['agents'],
+  const { data: agents, isLoading } = useQuery({
+    queryKey: ['agents', currentWorkspace?.id],
     queryFn: async () => {
+      if (!currentWorkspace) return [];
+      
       const { data, error } = await supabase
         .from('agents')
         .select('*')
+        .eq('workspace_id', currentWorkspace.id)
         .order('created_at', { ascending: false });
 
       if (error) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to fetch agents",
+          description: "Failed to load agents",
         });
         throw error;
       }
 
-      return data.map(agent => ({
-        ...agent,
-        flow: agent.flow ? (agent.flow as any as Agent['flow']) : undefined
-      })) as Agent[];
+      return data as Agent[];
     },
+    enabled: !!currentWorkspace,
   });
 
-  const handleDeleteAgent = async (agentId: string) => {
-    const { error } = await supabase
-      .from('agents')
-      .delete()
-      .eq('id', agentId);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete agent",
-      });
-      return;
-    }
-
+  const handleCreateSuccess = () => {
+    setIsCreating(false);
     toast({
       title: "Success",
-      description: "Agent deleted successfully",
+      description: "Agent created successfully",
     });
-    refetch();
   };
 
   return (
@@ -76,53 +65,21 @@ const AgentsPage = () => {
       </div>
 
       {isLoading && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Loading agents...</p>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       )}
 
-      {error && (
-        <div className="text-center py-8">
-          <p className="text-destructive">Failed to load agents. Please try again.</p>
-        </div>
-      )}
+      {!isLoading && agents && <AgentsTable agents={agents} />}
 
-      {!isLoading && !error && agents?.length === 0 && (
-        <div className="text-center py-12 bg-muted/10 rounded-lg border border-dashed">
-          <h2 className="text-xl font-semibold mb-4">No agents found</h2>
-          <p className="text-muted-foreground mb-6">
-            Create your first voice agent to get started
-          </p>
-          <Button onClick={() => setIsCreating(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Agent
-          </Button>
-        </div>
-      )}
-
-      {!isLoading && !error && agents?.length > 0 && (
-        <div className="w-full border rounded-lg bg-card dark:bg-card">
-          <AgentsTable agents={agents} onDelete={handleDeleteAgent} />
-        </div>
-      )}
-
-      <Sheet open={isCreating} onOpenChange={setIsCreating}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Create New Agent</SheetTitle>
-            <SheetDescription>
-              Add a new voice agent to your team. Fill in the details below.
-            </SheetDescription>
-          </SheetHeader>
-          <CreateAgentForm
-            onSuccess={() => {
-              setIsCreating(false);
-              refetch();
-            }}
-            onCancel={() => setIsCreating(false)}
-          />
-        </SheetContent>
-      </Sheet>
+      <Dialog open={isCreating} onOpenChange={setIsCreating}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Agent</DialogTitle>
+          </DialogHeader>
+          <CreateAgentForm onSuccess={handleCreateSuccess} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
