@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -26,6 +25,7 @@ import { Agent } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
+import { Json } from '@/integrations/supabase/types';
 
 type GreetingData = {
   greeting: string;
@@ -74,9 +74,8 @@ function Flow() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { project } = useReactFlow();
+  const reactFlowInstance = useReactFlow();
 
-  // Load initial flow data
   useEffect(() => {
     const loadFlow = async () => {
       const { data: agent } = await supabase
@@ -95,7 +94,6 @@ function Flow() {
     loadFlow();
   }, [agentId]);
 
-  // Set up real-time subscription
   useEffect(() => {
     const channel = supabase.channel(`agent-flow-${agentId}`)
       .on(
@@ -129,33 +127,6 @@ function Flow() {
     };
   }, [agentId, nodes, edges]);
 
-  // Debounced flow update function
-  const updateFlow = useCallback(async () => {
-    const { error } = await supabase
-      .from('agents')
-      .update({
-        flow: { nodes, edges } as unknown as Json
-      })
-      .eq('id', agentId);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save flow changes",
-      });
-    }
-  }, [nodes, edges, agentId]);
-
-  // Debounced effect for saving changes
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      updateFlow();
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [nodes, edges, updateFlow]);
-
   const onConnect = useCallback(
     (connection: Connection) => {
       setEdges((eds) => addEdge(connection, eds));
@@ -176,10 +147,12 @@ function Flow() {
 
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = project({
+      const screenPosition = {
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
-      });
+      };
+      
+      const position = reactFlowInstance.project(screenPosition);
 
       const newNode = {
         id: `${type}-${Math.random()}`,
@@ -192,7 +165,7 @@ function Flow() {
 
       setNodes((nds) => [...nds, newNode]);
     }
-  }, [project]);
+  }, [reactFlowInstance]);
 
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
@@ -268,7 +241,6 @@ export default function AgentFlowPage() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Top Bar */}
       <div className="h-14 border-b bg-background flex items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <Button 
@@ -291,13 +263,11 @@ export default function AgentFlowPage() {
         </div>
       </div>
 
-      {/* Flow Canvas */}
       <div className="flex-1 relative">
         <ReactFlowProvider>
           <Flow />
         </ReactFlowProvider>
         
-        {/* Dock */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 p-4 rounded-xl bg-background/80 backdrop-blur-md border shadow-lg transition-all duration-200 hover:scale-105">
           <div
             draggable
