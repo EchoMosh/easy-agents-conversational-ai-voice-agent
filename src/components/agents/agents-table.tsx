@@ -27,25 +27,25 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="rounded-md border">
+    <div className="w-full overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="w-[200px]">Name</TableHead>
+            <TableHead className="w-[200px]">Role</TableHead>
+            <TableHead className="w-[120px]">Status</TableHead>
+            <TableHead className="w-[150px]">Created</TableHead>
+            <TableHead className="w-[100px] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {agents.map((agent) => (
             <TableRow key={agent.id}>
-              <TableCell className="font-medium">{agent.name}</TableCell>
-              <TableCell className="capitalize">
+              <TableCell className="font-medium whitespace-nowrap">{agent.name}</TableCell>
+              <TableCell className="capitalize whitespace-nowrap">
                 {agent.role.replace('_', ' ')}
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-nowrap">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   agent.is_active 
                     ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
@@ -54,10 +54,10 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                   {agent.is_active ? 'Active' : 'Inactive'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-nowrap">
                 {new Date(agent.created_at).toLocaleDateString()}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right whitespace-nowrap">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0">
