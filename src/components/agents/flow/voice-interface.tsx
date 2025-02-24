@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { RealtimeChat } from '@/utils/audio';
 import { Mic, MicOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VoiceInterfaceProps {
   agentId: string;
@@ -14,6 +15,24 @@ export function VoiceInterface({ agentId }: VoiceInterfaceProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const chatRef = useRef<RealtimeChat | null>(null);
+  const [agentLanguage, setAgentLanguage] = useState<string>('en');
+
+  useEffect(() => {
+    // Fetch agent's language setting when component mounts
+    const fetchAgentSettings = async () => {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('language')
+        .eq('id', agentId)
+        .single();
+      
+      if (data?.language) {
+        setAgentLanguage(data.language);
+      }
+    };
+
+    fetchAgentSettings();
+  }, [agentId]);
 
   const handleMessage = (event: any) => {
     console.log('Received message:', event);
@@ -27,7 +46,7 @@ export function VoiceInterface({ agentId }: VoiceInterfaceProps) {
 
   const startConversation = async () => {
     try {
-      chatRef.current = new RealtimeChat(handleMessage);
+      chatRef.current = new RealtimeChat(handleMessage, agentLanguage);
       await chatRef.current.init();
       setIsConnected(true);
       

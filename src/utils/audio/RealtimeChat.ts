@@ -1,128 +1,91 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { AudioRecorder } from "./AudioRecorder";
-import { encodeAudioData } from "./audioEncoder";
-
 export class RealtimeChat {
-  private pc: RTCPeerConnection | null = null;
-  private dc: RTCDataChannel | null = null;
-  private audioEl: HTMLAudioElement;
-  private recorder: AudioRecorder | null = null;
+  private mediaRecorder: MediaRecorder | null = null;
+  private chunks: Blob[] = [];
+  private isRecording = false;
+  private onMessage: (message: any) => void;
+  private language: string;
 
-  constructor(private onMessage: (message: any) => void) {
-    this.audioEl = document.createElement("audio");
-    this.audioEl.autoplay = true;
-    this.audioEl.volume = 1.0;
+  constructor(onMessage: (message: any) => void, language: string = 'en') {
+    this.onMessage = onMessage;
+    this.language = language;
   }
 
   async init() {
     try {
-      const tokenResponse = await supabase.functions.invoke("generate-realtime-token");
-      const data = await tokenResponse.data;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.mediaRecorder = new MediaRecorder(stream);
       
-      if (!data?.client_secret?.value) {
-        throw new Error("Failed to get ephemeral token");
-      }
-
-      const EPHEMERAL_KEY = data.client_secret.value;
-
-      this.pc = new RTCPeerConnection();
-
-      this.pc.ontrack = e => {
-        if (!this.audioEl.srcObject) {
-          this.audioEl.srcObject = new MediaStream([e.track]);
+      this.mediaRecorder.ondataavailable = async (e) => {
+        if (e.data.size > 0) {
+          this.chunks.push(e.data);
+          
+          // Convert the audio chunks to base64
+          const blob = new Blob(this.chunks, { type: 'audio/webm' });
+          const reader = new FileReader();
+          
+          reader.onloadend = async () => {
+            const base64Audio = (reader.result as string).split(',')[1];
+            
+            // Send to your voice-to-text endpoint
+            const response = await fetch('/api/voice-to-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                audio: base64Audio,
+                language: this.language, // Pass the language
+              }),
+            });
+            
+            const data = await response.json();
+            if (data.text) {
+              this.onMessage({
+                type: 'transcription',
+                text: data.text,
+              });
+            }
+          };
+          
+          reader.readAsDataURL(blob);
+          this.chunks = []; // Clear the chunks for the next recording
         }
       };
 
-      const ms = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-      const audioTrack = ms.getAudioTracks()[0];
-      this.pc.addTrack(audioTrack, ms);
-
-      this.dc = this.pc.createDataChannel("oai-events");
-      this.dc.addEventListener("message", (e) => {
-        const event = JSON.parse(e.data);
-        console.log("Received event:", event);
-        this.onMessage(event);
-      });
-
-      const offer = await this.pc.createOffer();
-      await this.pc.setLocalDescription(offer);
-
-      // Use the more cost-effective model
-      const baseUrl = "https://api.openai.com/v1/realtime";
-      const model = "gpt-4o-mini"; // Changed to mini version
-      const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${EPHEMERAL_KEY}`,
-          "Content-Type": "application/sdp"
-        },
-      });
-
-      const answer = {
-        type: "answer" as RTCSdpType,
-        sdp: await sdpResponse.text(),
+      this.mediaRecorder.onstart = () => {
+        this.isRecording = true;
       };
-      
-      await this.pc.setRemoteDescription(answer);
-      console.log("WebRTC connection established");
 
-      this.recorder = new AudioRecorder((audioData) => {
-        if (this.dc?.readyState === 'open') {
-          this.dc.send(JSON.stringify({
-            type: 'input_audio_buffer.append',
-            audio: encodeAudioData(audioData)
-          }));
-        }
-      });
-      await this.recorder.start();
+      this.mediaRecorder.onstop = () => {
+        this.isRecording = false;
+      };
 
+      this.startRecording();
     } catch (error) {
-      console.error("Error initializing chat:", error);
+      console.error('Error initializing media recorder:', error);
       throw error;
     }
   }
 
-  async sendMessage(text: string) {
-    if (!this.dc || this.dc.readyState !== 'open') {
-      throw new Error('Data channel not ready');
+  startRecording() {
+    if (this.mediaRecorder && !this.isRecording) {
+      this.mediaRecorder.start(1000); // Capture in 1-second intervals
     }
+  }
 
-    const event = {
-      type: 'conversation.item.create',
-      item: {
-        type: 'message',
-        role: 'user',
-        content: [
-          {
-            type: 'input_text',
-            text
-          }
-        ]
-      }
-    };
-
-    this.dc.send(JSON.stringify(event));
-    this.dc.send(JSON.stringify({type: 'response.create'}));
+  stopRecording() {
+    if (this.mediaRecorder && this.isRecording) {
+      this.mediaRecorder.stop();
+    }
   }
 
   disconnect() {
-    this.recorder?.stop();
-    if (this.audioEl.srcObject instanceof MediaStream) {
-      this.audioEl.srcObject.getTracks().forEach(track => {
-        track.stop();
-        track.enabled = false;
-      });
-      this.audioEl.srcObject = null;
+    if (this.mediaRecorder) {
+      if (this.isRecording) {
+        this.stopRecording();
+      }
+      this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
     }
-    this.dc?.close();
-    this.pc?.close();
   }
 }
