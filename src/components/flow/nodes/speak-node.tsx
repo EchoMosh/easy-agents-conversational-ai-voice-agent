@@ -3,7 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Plus, X, Pencil, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, X, Pencil, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 
 type SpeakNodeData = {
@@ -15,7 +15,6 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const [showOutcomeInput, setShowOutcomeInput] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleMessageChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const evt = new CustomEvent('nodeupdate', {
@@ -87,73 +86,63 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-4 min-w-[300px]">
-      <Handle type="target" position={Position.Left} className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800" />
+    <div className="bg-gradient-to-br from-purple-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-xl border shadow-lg p-4 min-w-[320px]">
+      <Handle 
+        type="target" 
+        position={Position.Left} 
+        className="w-3 h-3 !bg-purple-400 border-2 border-white dark:border-gray-800" 
+      />
       
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-purple-500">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        <div className="flex items-center gap-2 pb-2 border-b border-purple-100 dark:border-gray-700">
+          <span className="text-purple-500 dark:text-purple-400">
+            <MessageCircle className="h-5 w-5" />
           </span>
-          <span className="font-medium dark:text-white">Speak</span>
+          <span className="font-medium text-purple-700 dark:text-purple-300">Speak</span>
         </div>
         
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`message-${id}`} className="text-xs text-muted-foreground dark:text-gray-400">
-            Enter message
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={`message-${id}`} className="text-xs font-medium text-purple-600 dark:text-purple-300">
+            Message
           </Label>
           <Textarea 
             id={`message-${id}`}
             value={data.message}
             onChange={handleMessageChange}
-            className="nodrag text-sm resize-y min-h-[80px] bg-white dark:bg-gray-900 border shadow-sm"
+            className="nodrag text-sm resize-y min-h-[80px] bg-white/50 dark:bg-gray-900/50 border-purple-100 dark:border-gray-700 shadow-sm rounded-lg focus-visible:ring-purple-500"
             placeholder="Type your message..."
           />
         </div>
 
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <Label className="text-xs text-muted-foreground dark:text-gray-400">
+            <Label className="text-xs font-medium text-purple-600 dark:text-purple-300">
               Possible outcomes ({(data.outcomes || []).length}/5)
             </Label>
-            <div className="flex items-center gap-2">
-              {!showOutcomeInput && (data.outcomes || []).length < 5 && !editingIndex && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 hover:bg-purple-50 dark:hover:bg-purple-950"
-                  onClick={() => setShowOutcomeInput(true)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              )}
+            {!showOutcomeInput && (data.outcomes || []).length < 5 && !editingIndex && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2"
-                onClick={() => setIsExpanded(!isExpanded)}
+                className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/50"
+                onClick={() => setShowOutcomeInput(true)}
               >
-                {isExpanded ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
+                <Plus className="h-4 w-4" />
               </Button>
-            </div>
+            )}
           </div>
 
           {(showOutcomeInput || editingIndex !== null) && (
-            <div className="flex gap-3 bg-accent/20 p-4 rounded-lg border border-accent/30">
+            <div className="flex gap-3 bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-100 dark:border-purple-800">
               <Textarea
                 value={newOutcome}
                 onChange={(e) => setNewOutcome(e.target.value)}
                 placeholder="Enter possible response..."
-                className="nodrag text-sm resize-none min-h-[80px]"
+                className="nodrag text-sm resize-none min-h-[80px] bg-white dark:bg-gray-900 border-purple-100 dark:border-purple-800"
               />
               <div className="flex flex-col gap-2">
                 <Button 
                   size="sm" 
-                  className="px-4"
+                  className="px-4 bg-purple-600 hover:bg-purple-700 text-white"
                   onClick={() => {
                     if (editingIndex !== null) {
                       saveEdit(editingIndex);
@@ -167,7 +156,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="px-4"
+                  className="px-4 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/50"
                   onClick={() => {
                     setShowOutcomeInput(false);
                     setEditingIndex(null);
@@ -180,16 +169,18 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
             </div>
           )}
 
-          <div className={`flex flex-col gap-3 ${isExpanded ? 'block' : 'hidden'}`}>
+          <div className="space-y-3">
             {(data.outcomes || []).map((outcome, index) => (
-              <div key={index} className="flex items-start gap-2 group">
-                <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg p-3 text-sm relative border shadow-sm">
-                  {outcome}
-                  <div className="absolute -right-2 -top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div key={index} className="group relative">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg p-3 text-sm border border-purple-100 dark:border-purple-800 shadow-sm">
+                    {outcome}
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 bg-white dark:bg-gray-900 shadow-sm hover:bg-purple-50 dark:hover:bg-purple-950"
+                      className="h-7 w-7 bg-white dark:bg-gray-900 shadow-sm hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/50"
                       onClick={() => startEditing(index)}
                     >
                       <Pencil className="h-3 w-3" />
@@ -197,30 +188,19 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 bg-white dark:bg-gray-900 shadow-sm hover:bg-red-50 dark:hover:bg-red-950"
+                      className="h-7 w-7 bg-white dark:bg-gray-900 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50"
                       onClick={() => removeOutcome(index)}
                     >
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`outcome-${index}`}
+                    className="w-3 h-3 !bg-purple-400 border-2 border-white dark:border-gray-800"
+                  />
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Handles with labels when collapsed */}
-          <div className={`flex flex-col gap-2 ${isExpanded ? 'hidden' : 'block'}`}>
-            {(data.outcomes || []).map((outcome, index) => (
-              <div key={index} className="relative flex items-center h-8">
-                <span className="text-xs text-muted-foreground truncate max-w-[200px] pr-6">
-                  {outcome}
-                </span>
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={`outcome-${index}`}
-                  className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800"
-                />
               </div>
             ))}
           </div>
