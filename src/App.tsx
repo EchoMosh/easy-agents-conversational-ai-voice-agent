@@ -9,6 +9,34 @@ import Index from "./pages/Index";
 import AuthPage from "./pages/auth";
 import OnboardingPage from "./pages/onboarding";
 import NotFound from "./pages/NotFound";
+import confetti from 'canvas-confetti';
+
+export const celebrateLogin = () => {
+  const end = Date.now() + 2000;
+
+  const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
+
+  (function frame() {
+    confetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: 0.8 },
+      colors: colors
+    });
+    confetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: 0.8 },
+      colors: colors
+    });
+
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  }());
+};
 
 const queryClient = new QueryClient();
 
@@ -32,4 +60,3 @@ const App = () => (
 );
 
 export default App;
-

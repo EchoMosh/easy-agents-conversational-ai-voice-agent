@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
+import { celebrateLogin } from "@/App";
 
 const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -51,6 +52,8 @@ const AuthPage = () => {
           .select('onboarding_completed')
           .eq('id', user.id)
           .maybeSingle();
+
+        celebrateLogin(); // Add confetti celebration!
 
         if (profile?.onboarding_completed) {
           navigate("/");
