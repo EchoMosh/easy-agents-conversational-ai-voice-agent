@@ -20,7 +20,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Settings } from "lucide-react";
+import { Settings, Volume2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type AgentSettingsProps = {
   agentId: string;
@@ -42,25 +44,49 @@ const languages = [
   { code: "zh", name: "Chinese", flag: "🇨🇳" }
 ];
 
+const voices = [
+  { id: "alloy", name: "Alloy", description: "Neutral and balanced" },
+  { id: "echo", name: "Echo", description: "Warm and natural" },
+  { id: "fable", name: "Fable", description: "British accent" },
+  { id: "onyx", name: "Onyx", description: "Deep and authoritative" },
+  { id: "nova", name: "Nova", description: "Energetic and engaging" },
+  { id: "shimmer", name: "Shimmer", description: "Clear and expressive" },
+];
+
 export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdateSettings }: AgentSettingsProps) {
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState(currentVoice || "");
+  const [selectedVoice, setSelectedVoice] = useState(currentVoice || "alloy");
   const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage || "en");
   const [humorLevel, setHumorLevel] = useState(50);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
 
-  const voices = [
-    { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel" },
-    { id: "AZnzlk1XvdvUeBnXmlld", name: "Domi" },
-    { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella" },
-    { id: "ThT5KcBeYPX3keUQqHPh", name: "Antoni" },
-    { id: "TxGEqnHWrfWFTfGW9XjX", name: "Josh" },
-  ];
+  const playVoiceSample = async (voiceId: string) => {
+    try {
+      setIsPlayingVoice(true);
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: {
+          text: "Hello! This is a sample of how I would sound as your AI assistant.",
+          voice: voiceId
+        }
+      });
 
-  const filteredLanguages = languages.filter(lang => 
-    lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    lang.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      if (error) throw error;
+
+      const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      await audio.play();
+
+    } catch (error) {
+      console.error('Error playing voice sample:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to play voice sample"
+      });
+    } finally {
+      setIsPlayingVoice(false);
+    }
+  };
 
   const handleSave = async () => {
     await onUpdateSettings({
@@ -99,18 +125,37 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
         <div className="space-y-6 py-6">
           <div className="space-y-2">
             <Label>Voice</Label>
-            <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a voice" />
-              </SelectTrigger>
-              <SelectContent>
-                {voices.map((voice) => (
-                  <SelectItem key={voice.id} value={voice.id}>
-                    {voice.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-4">
+              {voices.map((voice) => (
+                <div key={voice.id} className="flex items-center justify-between gap-2 p-2 rounded-lg border">
+                  <div className="flex-1">
+                    <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a voice" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value={voice.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{voice.name}</span>
+                              <span className="text-sm text-muted-foreground">{voice.description}</span>
+                            </div>
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => playVoiceSample(voice.id)}
+                    disabled={isPlayingVoice}
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -121,7 +166,7 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {filteredLanguages.map((lang) => (
+                  {languages.map((lang) => (
                     <SelectItem key={lang.code} value={lang.code}>
                       <span className="flex items-center gap-2">
                         <span>{lang.flag}</span>

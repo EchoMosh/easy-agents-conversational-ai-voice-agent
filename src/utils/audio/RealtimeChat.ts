@@ -54,8 +54,9 @@ export class RealtimeChat {
       const offer = await this.pc.createOffer();
       await this.pc.setLocalDescription(offer);
 
+      // Use the more cost-effective model
       const baseUrl = "https://api.openai.com/v1/realtime";
-      const model = "gpt-4o-realtime-preview-2024-12-17";
+      const model = "gpt-4o-mini"; // Changed to mini version
       const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
         method: "POST",
         body: offer.sdp,
