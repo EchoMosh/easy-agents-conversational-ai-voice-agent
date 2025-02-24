@@ -1,4 +1,6 @@
 
+import { Json } from '@/integrations/supabase/types';
+
 export type Agent = {
   id: string;
   name: string;
@@ -7,20 +9,31 @@ export type Agent = {
   is_active: boolean;
   created_at: string;
   flow?: FlowData;
+  user_id: string;
+  interaction_type: string[];
+};
+
+export type NodeData = {
+  greeting?: string;
+  message?: string;
+};
+
+export type FlowNode = {
+  id: string;
+  type: 'greetingNode' | 'speakNode';
+  position: { x: number; y: number };
+  data: NodeData;
+};
+
+export type FlowEdge = {
+  id: string;
+  source: string;
+  target: string;
 };
 
 export type FlowData = {
-  nodes: Array<{
-    id: string;
-    type: string;
-    position: { x: number; y: number };
-    data: any;
-  }>;
-  edges: Array<{
-    id: string;
-    source: string;
-    target: string;
-  }>;
+  nodes: FlowNode[];
+  edges: FlowEdge[];
 };
 
 export const AGENT_ROLES = [

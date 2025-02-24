@@ -21,22 +21,12 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Agent, FlowData } from '@/types/agent';
+import { Agent, FlowNode, FlowEdge, NodeData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Json } from '@/integrations/supabase/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-type GreetingData = {
-  greeting: string;
-};
-
-type SpeakData = {
-  message: string;
-};
-
-type CustomNode = Node<GreetingData, 'greetingNode'> | Node<SpeakData, 'speakNode'>;
 
 const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
@@ -46,8 +36,8 @@ const nodeTypes: NodeTypes = {
 function Flow() {
   const { id: agentId } = useParams<{ id: string }>();
   const { toast } = useToast();
-  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeData, string>>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<any>>([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const [draggedNode, setDraggedNode] = useState<string | null>(null);
@@ -62,8 +52,11 @@ function Flow() {
         .single();
 
       if (agent?.flow) {
-        const flowData = agent.flow as FlowData;
-        setNodes(flowData.nodes as CustomNode[]);
+        const flowData = agent.flow as any as { nodes: FlowNode[]; edges: FlowEdge[] };
+        setNodes(flowData.nodes.map(node => ({
+          ...node,
+          type: node.type as 'greetingNode' | 'speakNode'
+        })));
         setEdges(flowData.edges);
       }
     };
@@ -128,24 +121,34 @@ function Flow() {
         y: event.clientY - bounds.top,
       });
 
-      const newNode = {
+      const newNode: Node<NodeData, 'greetingNode' | 'speakNode'> = {
         id: `${type}-${Math.random()}`,
-        type,
+        type: type as 'greetingNode' | 'speakNode',
         position,
         data: type === 'speakNode' 
           ? { message: 'Enter your message here' }
           : { greeting: 'Enter your greeting here' },
-      } as CustomNode;
+      };
 
       setNodes(nds => [...nds, newNode]);
     }
   }, [screenToFlowPosition]);
 
   const updateFlow = useCallback(async () => {
+    const flowData = {
+      nodes: nodes.map(node => ({
+        id: node.id,
+        type: node.type,
+        position: node.position,
+        data: node.data
+      })),
+      edges: edges
+    };
+
     const { error } = await supabase
       .from('agents')
       .update({
-        flow: { nodes, edges } as unknown as Json
+        flow: flowData as unknown as Json
       })
       .eq('id', agentId);
 

@@ -37,7 +37,10 @@ const AgentsPage = () => {
         throw error;
       }
 
-      return data as Agent[];
+      return data.map(agent => ({
+        ...agent,
+        flow: agent.flow ? (agent.flow as any as Agent['flow']) : undefined
+      })) as Agent[];
     },
   });
 
