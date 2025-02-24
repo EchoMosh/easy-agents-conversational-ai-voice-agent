@@ -33,7 +33,8 @@ const AuthPage = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        // Sign up flow
+        const { data: { user }, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -42,29 +43,51 @@ const AuthPage = () => {
             },
           },
         });
-        if (error) throw error;
-        navigate('/onboarding');
-        toast({
-          title: "Account created!",
-          description: "Let's set up your workspace.",
-        });
+
+        if (signUpError) throw signUpError;
+
+        if (user) {
+          // Create initial profile
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: user.id,
+                username: email.split("@")[0],
+                email: email,
+              }
+            ]);
+
+          if (profileError) throw profileError;
+
+          navigate('/onboarding');
+          toast({
+            title: "Account created!",
+            description: "Let's set up your workspace.",
+          });
+        }
       } else {
+        // Sign in flow
         const { data: { user }, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
+        
         if (error) throw error;
 
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', user.id)
-          .maybeSingle();
+        // Check if onboarding is completed
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', user.id)
+            .single();
 
-        if (profile?.onboarding_completed) {
-          navigate("/dashboard/agents");
-        } else {
-          navigate("/onboarding");
+          if (profile?.onboarding_completed) {
+            navigate("/dashboard/agents");
+          } else {
+            navigate("/onboarding");
+          }
         }
       }
     } catch (error: any) {
