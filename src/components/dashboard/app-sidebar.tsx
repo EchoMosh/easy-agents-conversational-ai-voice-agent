@@ -126,37 +126,33 @@ export function AppSidebar() {
 
   const sidebarVariants = {
     hidden: { 
-      x: -500,
+      x: -300,
       opacity: 0,
-      rotate: -10,
     },
     visible: { 
       x: 0,
       opacity: 1,
-      rotate: 0,
       transition: { 
         type: "spring",
-        damping: 20,
-        stiffness: 100,
-        duration: 0.8
+        damping: 30,
+        stiffness: 150,
+        duration: 0.5
       }
     }
   };
 
   const itemVariants = {
     hidden: { 
-      x: -50,
+      x: -20,
       opacity: 0,
-      scale: 0.3,
     },
     visible: { 
       x: 0,
       opacity: 1,
-      scale: 1,
       transition: {
         type: "spring",
-        damping: 12,
-        stiffness: 200,
+        damping: 25,
+        stiffness: 150
       }
     }
   };
@@ -166,8 +162,8 @@ export function AppSidebar() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.6
+        staggerChildren: 0.1,
+        delayChildren: 0.3
       }
     }
   };
@@ -179,36 +175,7 @@ export function AppSidebar() {
       animate="visible"
       variants={itemVariants}
     >
-      <div className="relative z-10">
-        {children}
-      </div>
-      <motion.div
-        className="absolute inset-0 bg-primary/5 rounded-md"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: [0, 0.2, 0] }}
-        transition={{
-          duration: 0.8,
-          ease: "easeOut",
-        }}
-      />
-      {[...Array(6)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute inset-0 bg-primary/5 rounded-md"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{
-            opacity: [0, 0.1, 0],
-            scale: [0.8, 1.2, 1.4],
-            x: [0, (i - 2.5) * 10],
-            y: [0, (i - 2.5) * -10],
-          }}
-          transition={{
-            duration: 1,
-            ease: "easeOut",
-            delay: i * 0.1,
-          }}
-        />
-      ))}
+      {children}
     </motion.div>
   );
 
@@ -220,52 +187,24 @@ export function AppSidebar() {
           animate="visible"
           exit="hidden"
           variants={sidebarVariants}
-          className="will-change-transform"
         >
           <Sidebar>
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1, duration: 0.5 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
               <SidebarHeader className="border-b p-4">
                 <div className="flex items-center gap-3">
-                  <motion.div 
-                    className="relative group"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Avatar>
-                      <AvatarImage src={avatarUrl} alt={username} />
-                      <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="absolute -bottom-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={handleRandomizeAvatar}
-                      title="Randomize avatar"
-                    >
-                      <Shuffle className="h-3 w-3" />
-                    </Button>
-                  </motion.div>
+                  <Avatar>
+                    <AvatarImage src={avatarUrl} alt={username} />
+                    <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
                   <div className="flex flex-col">
-                    <motion.span 
-                      className="font-semibold text-sm"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 1.2 }}
-                    >
-                      {username}
-                    </motion.span>
-                    <motion.span 
-                      className="text-xs text-muted-foreground"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 1.4 }}
-                    >
+                    <span className="font-semibold text-sm">{username}</span>
+                    <span className="text-xs text-muted-foreground">
                       Welcome back!
-                    </motion.span>
+                    </span>
                   </div>
                 </div>
               </SidebarHeader>
@@ -280,7 +219,7 @@ export function AppSidebar() {
                     animate="visible"
                   >
                     <SidebarMenu>
-                      {mainMenuItems.map((item, index) => (
+                      {mainMenuItems.map((item) => (
                         <ParticleEffect key={item.title}>
                           <SidebarMenuItem>
                             <SidebarMenuButton asChild>
@@ -294,12 +233,7 @@ export function AppSidebar() {
                                   }`
                                 }
                               >
-                                <motion.div
-                                  whileHover={{ scale: 1.2, rotate: 10 }}
-                                  whileTap={{ scale: 0.9 }}
-                                >
-                                  <item.icon className="h-4 w-4" />
-                                </motion.div>
+                                <item.icon className="h-4 w-4" />
                                 <span>{item.title}</span>
                               </NavLink>
                             </SidebarMenuButton>
@@ -333,12 +267,7 @@ export function AppSidebar() {
                                   }`
                                 }
                               >
-                                <motion.div
-                                  whileHover={{ scale: 1.2, rotate: 10 }}
-                                  whileTap={{ scale: 0.9 }}
-                                >
-                                  <item.icon className="h-4 w-4" />
-                                </motion.div>
+                                <item.icon className="h-4 w-4" />
                                 <span>{item.title}</span>
                               </NavLink>
                             </SidebarMenuButton>
@@ -352,12 +281,7 @@ export function AppSidebar() {
                               onClick={handleLogout}
                               className="flex w-full items-center gap-3 px-3 py-2 rounded-md transition-colors text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
                             >
-                              <motion.div
-                                whileHover={{ scale: 1.2, rotate: 10 }}
-                                whileTap={{ scale: 0.9 }}
-                              >
-                                <LogOut className="h-4 w-4" />
-                              </motion.div>
+                              <LogOut className="h-4 w-4" />
                               <span>Log Out</span>
                             </button>
                           </SidebarMenuButton>

@@ -46,14 +46,15 @@ const AuthPage = () => {
         });
         if (error) throw error;
 
-        // Check if user has completed onboarding
         const { data: profile } = await supabase
           .from('profiles')
           .select('onboarding_completed')
           .eq('id', user.id)
           .maybeSingle();
 
-        celebrateLogin(); // Add confetti celebration!
+        // Delay navigation slightly to ensure confetti shows
+        celebrateLogin();
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         if (profile?.onboarding_completed) {
           navigate("/");
