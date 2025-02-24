@@ -32,7 +32,7 @@ export class RealtimeChat {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFocG1tZ25ra3NyYnB0aG5pcHRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzNjYyMjYsImV4cCI6MjA1NTk0MjIyNn0.tnI6lc4uDlfDIyF7plIAzK60jEkn8wKEDH1MSAaW29o`,
               },
               body: JSON.stringify({
                 audio: base64Audio,
