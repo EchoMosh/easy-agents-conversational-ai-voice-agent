@@ -8,6 +8,7 @@ import { Agent } from '@/types/agent';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
+import { VoiceInterface } from '@/components/agents/flow/voice-interface';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string; }>();
@@ -96,6 +97,7 @@ export default function AgentFlowPage() {
               onEdgesChange={() => {}}
             />
           </ReactFlowProvider>
+          <VoiceInterface agentId={agent.id} />
         </div>
       </div>
     </DragProvider>
