@@ -56,10 +56,7 @@ function Flow() {
     event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
     setDraggedNodeType(type);
-    setDragPosition({
-      x: event.clientX,
-      y: event.clientY
-    });
+    setDragPosition({ x: event.clientX, y: event.clientY });
   };
 
   const handleDrag = (event: React.DragEvent) => {
@@ -222,32 +219,43 @@ function Flow() {
         </div>
       </TooltipProvider>
 
-      {draggedNodeType && <div className="fixed pointer-events-none bg-background/80 backdrop-blur-sm border rounded-lg p-4 shadow-lg" style={{
-      left: dragPosition.x,
-      top: dragPosition.y,
-      transform: 'translate(-50%, -50%)',
-      minWidth: '200px',
-      zIndex: 9999
-    }}>
-          {draggedNodeType === 'greetingNode' && <div className="flex items-center gap-2">
+      {draggedNodeType && (
+        <div 
+          className="fixed pointer-events-none bg-background/80 backdrop-blur-sm border rounded-lg p-4 shadow-lg"
+          style={{ 
+            left: dragPosition.x,
+            top: dragPosition.y,
+            transform: 'translate(-50%, -50%)',
+            minWidth: '200px',
+            zIndex: 9999,
+          }}
+        >
+          {draggedNodeType === 'greetingNode' && (
+            <div className="flex items-center gap-2">
               <span className="text-blue-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
               </span>
               <span>Greeting Node</span>
-            </div>}
-          {draggedNodeType === 'speakNode' && <div className="flex items-center gap-2">
+            </div>
+          )}
+          {draggedNodeType === 'speakNode' && (
+            <div className="flex items-center gap-2">
               <span className="text-purple-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12" /><path d="M8 10v4" /><path d="M16 10v4" /><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
               </span>
               <span>Speak Node</span>
-            </div>}
-          {draggedNodeType === 'endNode' && <div className="flex items-center gap-2">
+            </div>
+          )}
+          {draggedNodeType === 'endNode' && (
+            <div className="flex items-center gap-2">
               <span className="text-red-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6" /><path d="M9 9l6 6" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg>
               </span>
               <span>End Node</span>
-            </div>}
-        </div>}
+            </div>
+          )}
+        </div>
+      )}
     </div>;
 }
 

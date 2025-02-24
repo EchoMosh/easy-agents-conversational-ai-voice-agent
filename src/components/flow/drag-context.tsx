@@ -1,18 +1,27 @@
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState } from "react";
 
-type DragContextType = ['greetingNode' | 'speakNode' | null, (type: 'greetingNode' | 'speakNode' | null) => void];
+type NodeType = 'greetingNode' | 'speakNode' | 'endNode';
 
-const DragContext = createContext<DragContextType>([null, () => {}]);
+const DragContext = createContext<{
+  draggedNodeType: NodeType | null;
+  setDraggedNodeType: (type: NodeType | null) => void;
+} | null>(null);
 
-export function DragProvider({ children }: { children: ReactNode }) {
-  const [nodeType, setNodeType] = useState<'greetingNode' | 'speakNode' | null>(null);
+export function DragProvider({ children }: { children: React.ReactNode }) {
+  const [draggedNodeType, setDraggedNodeType] = useState<NodeType | null>(null);
 
   return (
-    <DragContext.Provider value={[nodeType, setNodeType]}>
+    <DragContext.Provider value={{ draggedNodeType, setDraggedNodeType }}>
       {children}
     </DragContext.Provider>
   );
 }
 
-export const useDrag = () => useContext(DragContext);
+export function useDrag() {
+  const context = useContext(DragContext);
+  if (!context) {
+    throw new Error("useDrag must be used within a DragProvider");
+  }
+  return [context.draggedNodeType, context.setDraggedNodeType] as const;
+}
