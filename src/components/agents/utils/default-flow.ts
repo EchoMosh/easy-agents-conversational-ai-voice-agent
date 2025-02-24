@@ -1,5 +1,5 @@
 
-import { NodeData, FlowData } from "@/types/agent";
+import { NodeData, FlowData, ContactData } from "@/types/agent";
 
 export const getDefaultFlow = (platform?: string, action?: string, objective?: string): FlowData => {
   const baseFlow = {
@@ -55,7 +55,7 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
       data: {
         message: "I'll transfer you to an available agent now.",
         outcomes: [],
-        contacts: [] as Array<{ id: string; name: string; phoneNumber: string }>
+        contacts: [] as ContactData[]
       }
     });
     baseFlow.edges.push({

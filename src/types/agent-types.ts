@@ -14,6 +14,12 @@ export type Agent = {
   objective?: 'live_transfer' | 'answer_calls';
 };
 
+export type ContactData = {
+  id: string;
+  name: string;
+  phoneNumber: string;
+};
+
 export type NodeData = {
   greeting?: string;
   message?: string;
@@ -28,12 +34,14 @@ export type NodeData = {
     | 'opportunity_won'    // GoHighLevel
     | 'ticket_created'     // Activix
     | 'payment_received';  // Activix
-  contacts?: Array<{ id: string; name: string; phoneNumber: string }>;
+  contacts?: ContactData[];
 };
+
+export type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode';
 
 export type FlowNode = {
   id: string;
-  type: 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode';
+  type: NodeType;
   position: { x: number; y: number };
   data: NodeData;
 };
