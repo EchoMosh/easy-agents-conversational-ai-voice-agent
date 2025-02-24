@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { MoreVertical, Pencil, Trash, CheckSquare, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -41,21 +41,6 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const resetState = () => {
-    setSelectedAgents([]);
-    setAgentToDelete(null);
-    setShowBulkDeleteDialog(false);
-    setIsDeleting(false);
-  };
-
-  useEffect(() => {
-    resetState();
-  }, [agents]);
-
-  useEffect(() => {
-    return resetState;
-  }, []);
-
   const toggleSelectAll = () => {
     if (selectedAgents.length === agents.length) {
       setSelectedAgents([]);
@@ -78,9 +63,9 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     setIsDeleting(true);
     try {
       await onDelete(agentToDelete);
-      setAgentToDelete(null); // Close dialog first
     } finally {
       setIsDeleting(false);
+      setAgentToDelete(null); // Close dialog after state is updated
     }
   };
 
@@ -89,11 +74,14 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     
     setIsDeleting(true);
     try {
-      await Promise.all(selectedAgents.map(id => onDelete(id)));
-      setShowBulkDeleteDialog(false); // Close dialog first
-      setSelectedAgents([]);
+      // Delete one by one to ensure proper state updates
+      for (const id of selectedAgents) {
+        await onDelete(id);
+      }
     } finally {
       setIsDeleting(false);
+      setShowBulkDeleteDialog(false);
+      setSelectedAgents([]);
     }
   };
 
