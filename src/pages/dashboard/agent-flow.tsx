@@ -15,11 +15,13 @@ import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DragProvider, useDrag } from '@/components/flow/drag-context';
 import { Json } from '@/integrations/supabase/types';
+
 const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
   greetingNode: GreetingNode,
   endNode: EndNode
 };
+
 function Flow() {
   const {
     id: agentId
@@ -40,13 +42,16 @@ function Flow() {
     x: 0,
     y: 0
   });
+
   const onConnect = useCallback((connection: Connection) => {
     setEdges(eds => addEdge(connection, eds));
   }, []);
+
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
+
   const handleDragStart = (event: React.DragEvent, type: 'greetingNode' | 'speakNode' | 'endNode') => {
     event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
@@ -56,36 +61,43 @@ function Flow() {
       y: event.clientY
     });
   };
+
   const handleDrag = (event: React.DragEvent) => {
     setDragPosition({
       x: event.clientX,
       y: event.clientY
     });
   };
+
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
+
     if (!draggedNodeType) return;
+
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = screenToFlowPosition({
         x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top
+        y: event.clientY - bounds.top,
       });
+
       const newNode: Node<NodeData, 'greetingNode' | 'speakNode' | 'endNode'> = {
         id: `${draggedNodeType}-${Math.random()}`,
         type: draggedNodeType,
         position,
-        data: draggedNodeType === 'speakNode' ? {
-          message: 'Enter your message here'
-        } : {
-          greeting: 'Enter your greeting here',
-          outcomes: []
-        }
+        data: draggedNodeType === 'speakNode' 
+          ? { message: 'Enter your message here' }
+          : draggedNodeType === 'greetingNode'
+          ? { greeting: 'Enter your greeting here', outcomes: [] }
+          : {}
       };
+
       setNodes(nds => [...nds, newNode]);
     }
+    
     setDraggedNodeType(null);
   }, [draggedNodeType, screenToFlowPosition, setNodes]);
+
   useEffect(() => {
     const loadFlow = async () => {
       const {
@@ -105,6 +117,7 @@ function Flow() {
     };
     loadFlow();
   }, [agentId]);
+
   const updateFlow = useCallback(async () => {
     const flowData = {
       nodes: nodes.map(node => ({
@@ -128,12 +141,14 @@ function Flow() {
       });
     }
   }, [nodes, edges, agentId]);
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       updateFlow();
     }, 1000);
     return () => clearTimeout(timeoutId);
   }, [nodes, edges, updateFlow]);
+
   useEffect(() => {
     const handleNodeUpdate = (event: CustomEvent<{
       id: string;
@@ -149,6 +164,7 @@ function Flow() {
       window.removeEventListener('nodeupdate', handleNodeUpdate as EventListener);
     };
   }, [setNodes]);
+
   return <div ref={reactFlowWrapper} className="w-full h-full">
       <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onDragOver={onDragOver} onDrop={onDrop} nodeTypes={nodeTypes} fitView defaultEdgeOptions={{
       animated: true
@@ -234,6 +250,7 @@ function Flow() {
         </div>}
     </div>;
 }
+
 export default function AgentFlowPage() {
   const {
     id
@@ -266,16 +283,19 @@ export default function AgentFlowPage() {
       return data as unknown as Agent;
     }
   });
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">
         <p className="text-lg">Loading agent...</p>
       </div>;
   }
+
   if (error || !agent) {
     return <div className="flex items-center justify-center h-screen">
         <p className="text-lg text-destructive">Failed to load agent</p>
       </div>;
   }
+
   return <DragProvider>
       <div className="h-screen flex flex-col bg-background">
         <div className="h-14 border-b bg-background flex items-center justify-between px-4">

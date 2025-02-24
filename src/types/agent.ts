@@ -21,7 +21,7 @@ export type NodeData = {
 
 export type FlowNode = {
   id: string;
-  type: 'greetingNode' | 'speakNode';
+  type: 'greetingNode' | 'speakNode' | 'endNode';
   position: { x: number; y: number };
   data: NodeData;
 };
