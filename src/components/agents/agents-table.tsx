@@ -27,39 +27,39 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="relative">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[200px] whitespace-nowrap">Name</TableHead>
-            <TableHead className="w-[200px] whitespace-nowrap">Role</TableHead>
-            <TableHead className="w-[120px] whitespace-nowrap">Status</TableHead>
-            <TableHead className="w-[150px] whitespace-nowrap">Created</TableHead>
-            <TableHead className="w-[100px] text-right whitespace-nowrap">Actions</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {agents.map((agent) => (
             <TableRow key={agent.id}>
-              <TableCell className="font-medium whitespace-nowrap">
-                {agent.name}
-              </TableCell>
-              <TableCell className="capitalize whitespace-nowrap">
+              <TableCell className="font-medium">{agent.name}</TableCell>
+              <TableCell className="capitalize">
                 {agent.role.replace('_', ' ')}
               </TableCell>
-              <TableCell className="whitespace-nowrap">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  agent.is_active 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                }`}>
+              <TableCell>
+                <span 
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    agent.is_active 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                  }`}
+                >
                   {agent.is_active ? 'Active' : 'Inactive'}
                 </span>
               </TableCell>
-              <TableCell className="whitespace-nowrap">
+              <TableCell>
                 {new Date(agent.created_at).toLocaleDateString()}
               </TableCell>
-              <TableCell className="text-right whitespace-nowrap">
+              <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0">
@@ -68,7 +68,9 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate(`/dashboard/agents/flow/${agent.id}`)}>
+                    <DropdownMenuItem 
+                      onClick={() => navigate(`/dashboard/agents/flow/${agent.id}`)}
+                    >
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit Flow
                     </DropdownMenuItem>
