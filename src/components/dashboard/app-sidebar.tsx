@@ -1,4 +1,3 @@
-
 import { Users, Target, Settings, User, Shuffle, LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -43,7 +42,6 @@ const bottomMenuItems = [
   },
 ];
 
-// Using 'marble' variant for more neutral, abstract designs
 const AVATAR_VARIANT = "marble";
 const AVATAR_COLORS = ["264653", "2a9d8f", "e9c46a", "f4a261", "e76f51"];
 
@@ -56,8 +54,9 @@ export function AppSidebar() {
   const navigate = useNavigate();
 
   const generateRandomAvatar = () => {
-    const randomSeed = Math.random().toString(36).substring(7);
-    return `https://source.boringavatars.com/svg?variant=${AVATAR_VARIANT}&colors=${AVATAR_COLORS.join(",")}&name=${randomSeed}`;
+    const seed = Math.random().toString(36).substring(7);
+    const colors = encodeURIComponent(AVATAR_COLORS.join(","));
+    return `https://source.boringavatars.com/beam/120/${seed}?colors=${colors}`;
   };
 
   const fetchProfile = async () => {
@@ -76,12 +75,7 @@ export function AppSidebar() {
       if (profile) {
         setFirstName(profile.first_name || "");
         setLastName(profile.last_name || "");
-        if (profile.avatar_url) {
-          setAvatarUrl(profile.avatar_url);
-        } else {
-          const defaultAvatar = generateRandomAvatar();
-          setAvatarUrl(defaultAvatar);
-        }
+        setAvatarUrl(profile.avatar_url || generateRandomAvatar());
       }
     }
   };
