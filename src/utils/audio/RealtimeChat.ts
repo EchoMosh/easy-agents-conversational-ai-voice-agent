@@ -11,6 +11,23 @@ export class RealtimeChat {
     this.language = language;
   }
 
+  private getSupportedMimeType(): string {
+    const types = [
+      'audio/webm',
+      'audio/webm;codecs=opus',
+      'audio/ogg;codecs=opus',
+      'audio/mp4'
+    ];
+    
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
+    
+    return ''; // Empty string if no supported types found
+  }
+
   async init() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -22,9 +39,14 @@ export class RealtimeChat {
           autoGainControl: true
         }
       });
+
+      const mimeType = this.getSupportedMimeType();
+      if (!mimeType) {
+        throw new Error('No supported audio MIME type found');
+      }
       
       this.mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType
       });
       
       this.mediaRecorder.ondataavailable = async (e) => {
@@ -32,7 +54,7 @@ export class RealtimeChat {
           this.chunks.push(e.data);
           
           // Convert the audio chunks to base64
-          const blob = new Blob(this.chunks, { type: 'audio/webm' });
+          const blob = new Blob(this.chunks, { type: mimeType });
           const reader = new FileReader();
           
           reader.onloadend = async () => {
