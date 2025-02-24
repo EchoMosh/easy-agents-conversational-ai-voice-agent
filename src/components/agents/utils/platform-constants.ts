@@ -23,4 +23,4 @@ export const platformActions = {
     { value: 'ticket_created', label: 'Ticket Created' },
     { value: 'payment_received', label: 'Payment Received' },
   ],
-} as const;
+} as Record<string, Array<{ value: string; label: string }>>;
