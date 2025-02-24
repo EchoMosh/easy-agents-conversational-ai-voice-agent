@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChevronRight, Bot, Zap, Building2, Globe2, MessageSquare, LineChart, Shield } from 'lucide-react';
 
 export default function LandingPage() {
+  const navigate = useNavigate();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -17,6 +18,10 @@ export default function LandingPage() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  const handleAuth = (mode: 'login' | 'signup') => {
+    navigate(`/auth?mode=${mode}`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-slate-950 text-white overflow-hidden">
@@ -58,16 +63,21 @@ export default function LandingPage() {
           transition={{ delay: 0.6 }}
           className="flex flex-col sm:flex-row gap-4 items-center"
         >
-          <Link to="/auth?mode=signup">
-            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 text-lg px-8">
-              Get Started <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-          <Link to="/auth?mode=login">
-            <Button size="lg" variant="outline" className="border-white/20 hover:bg-white/10 text-white text-lg px-8">
-              Login
-            </Button>
-          </Link>
+          <Button 
+            size="lg" 
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 text-lg px-8"
+            onClick={() => handleAuth('signup')}
+          >
+            Get Started <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline" 
+            className="border-white/20 hover:bg-white/10 text-white text-lg px-8"
+            onClick={() => handleAuth('login')}
+          >
+            Login
+          </Button>
         </motion.div>
       </motion.div>
 
