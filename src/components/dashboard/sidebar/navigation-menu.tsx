@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   Dialog,
   DialogContent,
@@ -170,11 +169,6 @@ export function NavigationMenu() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
-            <SidebarMenuItem>
-              <div className="px-3">
-                <ThemeToggle />
-              </div>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
