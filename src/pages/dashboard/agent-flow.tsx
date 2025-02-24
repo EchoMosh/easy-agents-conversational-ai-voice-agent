@@ -14,6 +14,7 @@ import {
   ReactFlowProvider,
   Node,
   Edge,
+  NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,12 +25,24 @@ import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 
-const nodeTypes = {
+type GreetingData = {
+  greeting: string;
+};
+
+type SpeakData = {
+  message: string;
+};
+
+type CustomNode = 
+  | Node<GreetingData, 'greetingNode'>
+  | Node<SpeakData, 'speakNode'>;
+
+const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
   greetingNode: GreetingNode,
 };
 
-const initialNodes = [
+const initialNodes: CustomNode[] = [
   {
     id: '1',
     type: 'greetingNode',
@@ -44,13 +57,13 @@ const initialNodes = [
   },
 ];
 
-const initialEdges = [
+const initialEdges: Edge[] = [
   { id: 'e1-2', source: '1', target: '2' },
 ];
 
 // Separate flow component to use hooks inside the ReactFlowProvider
 function Flow() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = (connection: Connection) => {
@@ -66,7 +79,7 @@ function Flow() {
     event.preventDefault();
 
     const type = event.dataTransfer.getData('application/reactflow');
-    if (!type) return;
+    if (!type || (type !== 'speakNode' && type !== 'greetingNode')) return;
 
     // Get the current bounds of the ReactFlow wrapper element
     const reactFlowBounds = document.querySelector('.react-flow')?.getBoundingClientRect();
@@ -75,7 +88,7 @@ function Flow() {
       y: event.clientY - reactFlowBounds.top,
     } : { x: 0, y: 0 };
 
-    const newNode = {
+    const newNode: CustomNode = {
       id: `${type}-${Math.random()}`,
       type,
       position,
@@ -84,7 +97,7 @@ function Flow() {
         : { greeting: 'Enter your greeting here' },
     };
 
-    setNodes((nds) => [...nds, newNode as Node]);
+    setNodes((nds) => [...nds, newNode]);
   };
 
   return (
