@@ -65,7 +65,7 @@ const AgentsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-8 max-w-[1600px] mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Agents</h1>
         </div>
@@ -76,7 +76,7 @@ const AgentsPage = () => {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="p-8 max-w-[1600px] mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Agents</h1>
         </div>
@@ -88,7 +88,7 @@ const AgentsPage = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-8 max-w-[1600px] mx-auto w-full">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Agents</h1>
         <Button onClick={() => setIsCreating(true)}>

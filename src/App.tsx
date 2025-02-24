@@ -21,10 +21,10 @@ const queryClient = new QueryClient();
 
 // Layout with sidebar for regular dashboard pages
 const DashboardLayout = () => (
-  <div className="flex h-screen overflow-hidden">
+  <div className="flex min-h-screen">
     <AppSidebar />
-    <main className="flex-1">
-      <div className="h-full w-full">
+    <main className="flex-1 w-0">
+      <div className="min-h-screen">
         <Outlet />
       </div>
     </main>
@@ -32,9 +32,9 @@ const DashboardLayout = () => (
 );
 
 // Clean layout without sidebar for flow editor
-const FlowLayout = ({ children }: { children: React.ReactNode }) => (
-  <div className="h-screen">
-    {children}
+const FlowLayout = () => (
+  <div className="min-h-screen w-full">
+    <AgentFlowPage />
   </div>
 );
 
@@ -61,11 +61,7 @@ function App() {
               {/* Flow editor route without sidebar */}
               <Route
                 path="/dashboard/agents/flow/:id"
-                element={
-                  <FlowLayout>
-                    <AgentFlowPage />
-                  </FlowLayout>
-                }
+                element={<FlowLayout />}
               />
             </Routes>
           </Router>
