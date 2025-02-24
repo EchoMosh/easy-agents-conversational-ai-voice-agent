@@ -134,21 +134,27 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
               <SelectContent>
                 <SelectGroup>
                   {voices.map((voice) => (
-                    <SelectItem key={voice.id} value={voice.id} className="flex items-center justify-between group">
-                      <div className="flex flex-col flex-1">
-                        <span className="font-medium">{voice.name}</span>
-                        <span className="text-sm text-muted-foreground">{voice.description}</span>
-                      </div>
+                    <div
+                      key={voice.id}
+                      className="flex items-center justify-between px-2 py-1.5 relative"
+                      role="option"
+                    >
+                      <SelectItem value={voice.id} className="flex-1 p-0">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{voice.name}</span>
+                          <span className="text-sm text-muted-foreground">{voice.description}</span>
+                        </div>
+                      </SelectItem>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
                         onClick={(e) => playVoiceSample(e, voice.id)}
                         disabled={isPlayingVoice}
                       >
                         <Volume2 className="h-4 w-4" />
                       </Button>
-                    </SelectItem>
+                    </div>
                   ))}
                 </SelectGroup>
               </SelectContent>
