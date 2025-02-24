@@ -204,8 +204,8 @@ const OnboardingPage = () => {
   const currentQuestion = steps[currentStep - 1];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-screen-xl mx-auto flex items-center justify-center">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
+      <div className="w-full max-w-md mx-auto px-4">
         <AnimatePresence mode="wait">
           {isCompleting ? (
             <motion.div
@@ -229,7 +229,7 @@ const OnboardingPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-md space-y-8"
+              className="w-full space-y-8"
             >
               <div className="space-y-2 text-center">
                 <motion.h2
