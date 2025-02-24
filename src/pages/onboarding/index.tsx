@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,11 +13,13 @@ type Step = {
   field: keyof OnboardingData;
   type: "text" | "number" | "select";
   options?: string[];
+  description?: string;
 };
 
 type OnboardingData = {
   firstName: string;
   lastName: string;
+  workspaceName: string;
   businessType: string;
   employeeCount: string;
 };
@@ -36,6 +39,13 @@ const steps: Step[] = [
   },
   {
     id: 3,
+    question: "What would you like to name your workspace?",
+    field: "workspaceName",
+    type: "text",
+    description: "Don't worry, you can change this later",
+  },
+  {
+    id: 4,
     question: "What type of business are you in?",
     field: "businessType",
     type: "select",
@@ -49,7 +59,7 @@ const steps: Step[] = [
     ],
   },
   {
-    id: 4,
+    id: 5,
     question: "How many employees do you have?",
     field: "employeeCount",
     type: "select",
@@ -64,6 +74,7 @@ const OnboardingPage = () => {
   const [data, setData] = useState<OnboardingData>({
     firstName: "",
     lastName: "",
+    workspaceName: "",
     businessType: "",
     employeeCount: "",
   });
@@ -81,7 +92,6 @@ const OnboardingPage = () => {
       return;
     }
 
-    // Check if user has already completed onboarding
     const { data: profile } = await supabase
       .from('profiles')
       .select('onboarding_completed')
@@ -129,7 +139,8 @@ const OnboardingPage = () => {
     
     if (session?.user) {
       try {
-        const { error } = await supabase
+        // Update user profile
+        const { error: profileError } = await supabase
           .from("profiles")
           .update({
             first_name: data.firstName,
@@ -140,7 +151,30 @@ const OnboardingPage = () => {
           })
           .eq("id", session.user.id);
 
-        if (error) throw error;
+        if (profileError) throw profileError;
+
+        // Create initial workspace
+        const { data: workspace, error: workspaceError } = await supabase
+          .from("workspaces")
+          .insert({
+            name: data.workspaceName,
+            owner_id: session.user.id,
+          })
+          .select()
+          .single();
+
+        if (workspaceError) throw workspaceError;
+
+        // Add user as workspace member
+        const { error: memberError } = await supabase
+          .from("workspace_members")
+          .insert({
+            workspace_id: workspace.id,
+            user_id: session.user.id,
+            role: "owner",
+          });
+
+        if (memberError) throw memberError;
 
         // Artificial delay for smooth animation
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -195,6 +229,11 @@ const OnboardingPage = () => {
               >
                 {currentQuestion.question}
               </motion.h2>
+              {currentQuestion.description && (
+                <p className="text-muted-foreground text-sm">
+                  {currentQuestion.description}
+                </p>
+              )}
               <p className="text-muted-foreground">
                 Step {currentStep} of {steps.length}
               </p>
