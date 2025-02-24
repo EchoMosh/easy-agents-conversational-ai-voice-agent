@@ -20,7 +20,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'trigger-1',
           type: 'triggerNode',
-          position: { x: 100, y: 100 },
+          position: { x: 50, y: 250 },
           data: {
             platform: 'facebook',
             action: 'message_received'
@@ -29,7 +29,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'greeting-1',
           type: 'greetingNode',
-          position: { x: 400, y: 100 },
+          position: { x: 350, y: 250 },
           data: {
             greeting: "Hello! I'm here to help with any questions or concerns you may have. What brings you here today?",
             outcomes: [
@@ -43,7 +43,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'speak-tech',
           type: 'speakNode',
-          position: { x: 700, y: 0 },
+          position: { x: 750, y: 50 },
           data: {
             message: "I understand you need technical support. Could you please describe the issue you're experiencing?",
             outcomes: ["Explain issue", "Request human agent"]
@@ -52,7 +52,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'speak-billing',
           type: 'speakNode',
-          position: { x: 700, y: 150 },
+          position: { x: 750, y: 250 },
           data: {
             message: "I'll be happy to help with your billing question. Which of these topics best describes your concern?",
             outcomes: ["Recent charge", "Subscription", "Refund status"]
@@ -61,7 +61,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'speak-return',
           type: 'speakNode',
-          position: { x: 700, y: 300 },
+          position: { x: 750, y: 450 },
           data: {
             message: "I can help you process a return. Has the item been opened or used?",
             outcomes: ["Unopened", "Used", "Damaged"]
@@ -70,7 +70,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'end-1',
           type: 'endNode',
-          position: { x: 1000, y: 150 },
+          position: { x: 1150, y: 250 },
           data: {}
         }
       ],
@@ -95,7 +95,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'trigger-1',
           type: 'triggerNode',
-          position: { x: 100, y: 100 },
+          position: { x: 50, y: 250 },
           data: {
             platform: 'hubspot',
             action: 'new_contact'
@@ -104,7 +104,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'greeting-1',
           type: 'greetingNode',
-          position: { x: 400, y: 100 },
+          position: { x: 350, y: 250 },
           data: {
             greeting: "Hi there! Thanks for your interest. To better assist you, could you tell me what brings you to us today?",
             outcomes: [
@@ -118,7 +118,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'speak-pricing',
           type: 'speakNode',
-          position: { x: 700, y: 0 },
+          position: { x: 750, y: 50 },
           data: {
             message: "I'd be happy to discuss our pricing options. What's your typical team size?",
             outcomes: ["1-10", "11-50", "51-200", "201+"]
@@ -127,7 +127,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'speak-demo',
           type: 'speakNode',
-          position: { x: 700, y: 150 },
+          position: { x: 750, y: 250 },
           data: {
             message: "Great! I can help schedule a personalized demo. When would you like to have the demonstration?",
             outcomes: ["This week", "Next week", "Specific date"]
@@ -136,7 +136,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'speak-features',
           type: 'speakNode',
-          position: { x: 700, y: 300 },
+          position: { x: 750, y: 450 },
           data: {
             message: "Which features are you most interested in learning about?",
             outcomes: ["Integration capabilities", "Analytics", "Automation", "Security"]
@@ -145,7 +145,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'end-1',
           type: 'endNode',
-          position: { x: 1000, y: 150 },
+          position: { x: 1150, y: 250 },
           data: {}
         }
       ],
@@ -170,7 +170,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'trigger-1',
           type: 'triggerNode',
-          position: { x: 100, y: 100 },
+          position: { x: 50, y: 250 },
           data: {
             platform: 'gohighlevel',
             action: 'contact_created'
@@ -179,7 +179,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'greeting-1',
           type: 'greetingNode',
-          position: { x: 400, y: 100 },
+          position: { x: 350, y: 250 },
           data: {
             greeting: "Welcome to our scheduling assistant! How may I help you today?",
             outcomes: [
@@ -193,7 +193,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'speak-new',
           type: 'speakNode',
-          position: { x: 700, y: 0 },
+          position: { x: 750, y: 50 },
           data: {
             message: "Let's schedule your appointment. What type of service are you interested in?",
             outcomes: ["Consultation", "Check-up", "Follow-up", "Specialist visit"]
@@ -202,7 +202,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'speak-reschedule',
           type: 'speakNode',
-          position: { x: 700, y: 150 },
+          position: { x: 750, y: 250 },
           data: {
             message: "I can help you reschedule. When was your original appointment scheduled for?",
             outcomes: ["This week", "Next week", "Later", "Not sure"]
@@ -211,7 +211,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'speak-cancel',
           type: 'speakNode',
-          position: { x: 700, y: 300 },
+          position: { x: 750, y: 450 },
           data: {
             message: "I understand you need to cancel. Could you please confirm your appointment details?",
             outcomes: ["Confirm details", "Need to look up", "Request confirmation email"]
@@ -220,7 +220,7 @@ export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
         {
           id: 'end-1',
           type: 'endNode',
-          position: { x: 1000, y: 150 },
+          position: { x: 1150, y: 250 },
           data: {}
         }
       ],
