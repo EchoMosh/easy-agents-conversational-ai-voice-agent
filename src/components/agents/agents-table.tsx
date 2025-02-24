@@ -31,7 +31,7 @@ import { Agent } from "@/types/agent";
 
 interface AgentsTableProps {
   agents: Agent[];
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
 export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
@@ -39,8 +39,8 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Reset selections when agents prop changes
   useEffect(() => {
     setSelectedAgents([]);
     setAgentToDelete(null);
@@ -63,17 +63,31 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     }
   };
 
-  const handleDeleteConfirm = () => {
-    if (agentToDelete) {
-      onDelete(agentToDelete);
-      setAgentToDelete(null);
+  const handleDeleteConfirm = async () => {
+    if (agentToDelete && !isDeleting) {
+      setIsDeleting(true);
+      try {
+        await onDelete(agentToDelete);
+      } finally {
+        setIsDeleting(false);
+        setAgentToDelete(null);
+      }
     }
   };
 
-  const handleBulkDelete = () => {
-    selectedAgents.forEach(id => onDelete(id));
-    setSelectedAgents([]);
-    setShowBulkDeleteDialog(false);
+  const handleBulkDelete = async () => {
+    if (!isDeleting) {
+      setIsDeleting(true);
+      try {
+        for (const id of selectedAgents) {
+          await onDelete(id);
+        }
+        setSelectedAgents([]);
+      } finally {
+        setIsDeleting(false);
+        setShowBulkDeleteDialog(false);
+      }
+    }
   };
 
   return (
@@ -87,6 +101,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
             variant="destructive"
             size="sm"
             onClick={() => setShowBulkDeleteDialog(true)}
+            disabled={isDeleting}
           >
             <Trash className="h-4 w-4 mr-2" />
             Delete Selected
@@ -103,6 +118,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                 size="icon"
                 onClick={toggleSelectAll}
                 className="h-8 w-8"
+                disabled={isDeleting}
               >
                 {selectedAgents.length === agents.length ? (
                   <CheckSquare className="h-4 w-4" />
@@ -127,6 +143,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                   size="icon"
                   onClick={() => toggleSelect(agent.id)}
                   className="h-8 w-8"
+                  disabled={isDeleting}
                 >
                   {selectedAgents.includes(agent.id) ? (
                     <CheckSquare className="h-4 w-4" />
@@ -156,7 +173,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
+                    <Button variant="ghost" className="h-8 w-8 p-0" disabled={isDeleting}>
                       <span className="sr-only">Open menu</span>
                       <MoreVertical className="h-4 w-4" />
                     </Button>
@@ -183,8 +200,12 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
         </TableBody>
       </Table>
 
-      {/* Single Delete Confirmation Dialog */}
-      <AlertDialog open={!!agentToDelete} onOpenChange={() => setAgentToDelete(null)}>
+      <AlertDialog 
+        open={!!agentToDelete} 
+        onOpenChange={(open) => {
+          if (!open) setAgentToDelete(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -194,21 +215,23 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Bulk Delete Confirmation Dialog */}
       <AlertDialog 
         open={showBulkDeleteDialog} 
-        onOpenChange={setShowBulkDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) setShowBulkDeleteDialog(false);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -219,12 +242,13 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleBulkDelete}
               className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
             >
-              Delete All
+              {isDeleting ? "Deleting..." : "Delete All"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
