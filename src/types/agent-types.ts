@@ -1,3 +1,4 @@
+
 import { Json } from '@/integrations/supabase/types';
 
 export type Agent = {
@@ -27,11 +28,12 @@ export type NodeData = {
     | 'opportunity_won'    // GoHighLevel
     | 'ticket_created'     // Activix
     | 'payment_received';  // Activix
+  contacts?: Array<{ id: string; name: string; phoneNumber: string }>;
 };
 
 export type FlowNode = {
   id: string;
-  type: 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode';
+  type: 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode';
   position: { x: number; y: number };
   data: NodeData;
 };

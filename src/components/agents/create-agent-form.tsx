@@ -23,8 +23,8 @@ const getDefaultFlow = (platform?: string, action?: string, objective?: string) 
         type: 'triggerNode',
         position: { x: 100, y: 100 },
         data: {
-          platform,
-          action
+          platform: platform as NodeData['platform'],
+          action: action as NodeData['action']
         }
       },
       {
@@ -69,7 +69,8 @@ const getDefaultFlow = (platform?: string, action?: string, objective?: string) 
       position: { x: 1300, y: 100 },
       data: {
         message: "I'll transfer you to an available agent now.",
-        contacts: []
+        contacts: [] as Array<{ id: string; name: string; phoneNumber: string }>,
+        outcomes: []
       }
     });
     baseFlow.edges.push({
@@ -84,7 +85,10 @@ const getDefaultFlow = (platform?: string, action?: string, objective?: string) 
       id: 'end-1',
       type: 'endNode',
       position: { x: 1300, y: 100 },
-      data: {}
+      data: {
+        message: "Thank you for your time. Goodbye!",
+        outcomes: []
+      }
     });
     baseFlow.edges.push({
       id: 'speak-to-end',
