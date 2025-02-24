@@ -35,6 +35,7 @@ function Flow() {
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
   const [hoverTime, setHoverTime] = useState(0);
+  const [animationTime, setAnimationTime] = useState(0);
   const toolbarTimeout = useRef<number>();
   const hoverIntervalRef = useRef<number>();
 
@@ -181,16 +182,19 @@ function Flow() {
   }, [setNodes]);
 
   useEffect(() => {
-    let interval: number;
-    if (isToolbarVisible) {
-      interval = window.setInterval(() => {
-        setHoverTime(prev => Math.min(prev + 1, 100));
-      }, 50);
-    } else {
-      setHoverTime(0);
-    }
+    const interval = window.setInterval(() => {
+      setAnimationTime(prev => (prev + 1) % 100);
+    }, 50);
     return () => clearInterval(interval);
-  }, [isToolbarVisible]);
+  }, []);
+
+  const getBreathingScale = () => {
+    return 1 + 0.03 * Math.sin(animationTime * 0.1);
+  };
+
+  const getBreathingTranslate = () => {
+    return 2 * Math.sin((animationTime * 0.1) + Math.PI / 4);
+  };
 
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
@@ -253,13 +257,13 @@ function Flow() {
                       onDragStart={e => handleDragStart(e, 'greetingNode')} 
                       onDrag={handleDrag} 
                       onDragEnd={() => setDraggedNodeType(null)} 
-                      className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group"
+                      className="relative flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 group"
                       style={{
-                        transform: `scale(${1 + hoverTime * 0.003})`,
-                        boxShadow: `0 0 ${hoverTime}px rgba(59, 130, 246, ${hoverTime * 0.01})`,
+                        transform: `scale(${getBreathingScale()}) translateY(${getBreathingTranslate()}px)`,
+                        boxShadow: `0 0 ${20 + 10 * Math.sin(animationTime * 0.1)}px rgba(59, 130, 246, 0.2)`,
                       }}
                     >
-                      <span className="text-blue-500 p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/50 transition-transform">
+                      <span className="text-blue-500 p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/50">
                         <MessageCircle className="h-4 w-4" />
                       </span>
                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Greeting</span>
@@ -267,8 +271,9 @@ function Flow() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top"
-                    sideOffset={16}
+                    sideOffset={-45}
                     align="center"
+                    alignOffset={0}
                     className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl"
                   >
                     Initial message to start the conversation
@@ -282,13 +287,13 @@ function Flow() {
                       onDragStart={e => handleDragStart(e, 'speakNode')} 
                       onDrag={handleDrag} 
                       onDragEnd={() => setDraggedNodeType(null)} 
-                      className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group"
+                      className="relative flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 group"
                       style={{
-                        transform: `scale(${1 + hoverTime * 0.003})`,
-                        boxShadow: `0 0 ${hoverTime}px rgba(168, 85, 247, ${hoverTime * 0.01})`,
+                        transform: `scale(${getBreathingScale()}) translateY(${getBreathingTranslate()}px)`,
+                        boxShadow: `0 0 ${20 + 10 * Math.sin(animationTime * 0.1)}px rgba(168, 85, 247, 0.2)`,
                       }}
                     >
-                      <span className="text-purple-500 p-2 rounded-lg bg-purple-50/50 dark:bg-purple-950/50 transition-transform">
+                      <span className="text-purple-500 p-2 rounded-lg bg-purple-50/50 dark:bg-purple-950/50">
                         <MessageCircle className="h-4 w-4" />
                       </span>
                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Speak</span>
@@ -296,8 +301,9 @@ function Flow() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top"
-                    sideOffset={16}
+                    sideOffset={-45}
                     align="center"
+                    alignOffset={0}
                     className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl"
                   >
                     Response message to user input
@@ -311,13 +317,13 @@ function Flow() {
                       onDragStart={e => handleDragStart(e, 'endNode')} 
                       onDrag={handleDrag} 
                       onDragEnd={() => setDraggedNodeType(null)} 
-                      className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group"
+                      className="relative flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 group"
                       style={{
-                        transform: `scale(${1 + hoverTime * 0.003})`,
-                        boxShadow: `0 0 ${hoverTime}px rgba(239, 68, 68, ${hoverTime * 0.01})`,
+                        transform: `scale(${getBreathingScale()}) translateY(${getBreathingTranslate()}px)`,
+                        boxShadow: `0 0 ${20 + 10 * Math.sin(animationTime * 0.1)}px rgba(239, 68, 68, 0.2)`,
                       }}
                     >
-                      <span className="text-rose-500 p-2 rounded-lg bg-rose-50/50 dark:bg-rose-950/50 transition-transform">
+                      <span className="text-rose-500 p-2 rounded-lg bg-rose-50/50 dark:bg-rose-950/50">
                         <X className="h-4 w-4" />
                       </span>
                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300">End</span>
@@ -325,8 +331,9 @@ function Flow() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top"
-                    sideOffset={16}
+                    sideOffset={-45}
                     align="center"
+                    alignOffset={0}
                     className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl"
                   >
                     End of conversation
@@ -340,13 +347,13 @@ function Flow() {
                       onDragStart={e => handleDragStart(e, 'triggerNode')}
                       onDrag={handleDrag}
                       onDragEnd={() => setDraggedNodeType(null)}
-                      className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group"
+                      className="relative flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 group"
                       style={{
-                        transform: `scale(${1 + hoverTime * 0.003})`,
-                        boxShadow: `0 0 ${hoverTime}px rgba(251, 191, 36, ${hoverTime * 0.01})`,
+                        transform: `scale(${getBreathingScale()}) translateY(${getBreathingTranslate()}px)`,
+                        boxShadow: `0 0 ${20 + 10 * Math.sin(animationTime * 0.1)}px rgba(251, 191, 36, 0.2)`,
                       }}
                     >
-                      <span className="text-amber-500 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/50 transition-transform">
+                      <span className="text-amber-500 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/50">
                         <Network className="h-4 w-4" />
                       </span>
                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Trigger</span>
@@ -354,8 +361,9 @@ function Flow() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top"
-                    sideOffset={16}
+                    sideOffset={-45}
                     align="center"
+                    alignOffset={0}
                     className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl"
                   >
                     Platform integrations trigger
