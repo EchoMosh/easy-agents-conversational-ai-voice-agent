@@ -62,10 +62,8 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     try {
       setIsDeleting(true);
       await onDelete(agentToDelete);
-    } catch (error) {
-      console.error('Failed to delete agent:', error);
-    } finally {
       setAgentToDelete(null);
+    } finally {
       setIsDeleting(false);
     }
   };
@@ -78,17 +76,15 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
       for (const id of selectedAgents) {
         await onDelete(id);
       }
-    } catch (error) {
-      console.error('Failed to delete agents:', error);
-    } finally {
       setShowBulkDeleteDialog(false);
       setSelectedAgents([]);
+    } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       {selectedAgents.length > 0 && (
         <div className="mb-4 flex items-center justify-between bg-muted p-4 rounded-lg">
           <span className="text-sm font-medium">
@@ -198,14 +194,14 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
       </Table>
 
       <AlertDialog 
-        open={!!agentToDelete}
+        open={!!agentToDelete} 
         onOpenChange={(open) => {
           if (!open && !isDeleting) {
             setAgentToDelete(null);
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="z-50">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -234,7 +230,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="z-50">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>

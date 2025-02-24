@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AgentsTable } from "@/components/agents/agents-table";
@@ -60,7 +61,6 @@ const AgentsPage = () => {
 
       if (error) throw error;
 
-      // Instead of optimistic updates, we'll wait for the server response
       await queryClient.invalidateQueries({ queryKey: ['agents'] });
 
       toast({
@@ -73,7 +73,7 @@ const AgentsPage = () => {
         title: "Error",
         description: "Failed to delete agent",
       });
-      throw error; // Re-throw to be handled by the UI
+      throw error;
     }
   };
 
@@ -91,7 +91,7 @@ const AgentsPage = () => {
   };
 
   return (
-    <div className="w-full p-8 bg-background text-foreground">
+    <div className="w-full p-8 bg-background text-foreground relative">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Agents</h1>
         <Button onClick={() => setIsCreating(true)}>
@@ -113,10 +113,20 @@ const AgentsPage = () => {
         />
       )}
 
-      <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent>
+      <Dialog 
+        open={isCreating} 
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCancel();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Create Agent</DialogTitle>
+            <DialogDescription>
+              Create a new agent to handle your conversations.
+            </DialogDescription>
           </DialogHeader>
           <CreateAgentForm 
             onSuccess={handleCreateSuccess} 
