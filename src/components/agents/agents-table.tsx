@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { MoreVertical, Pencil, Trash, CheckSquare, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -61,8 +62,10 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     
     try {
       setIsDeleting(true);
-      await onDelete(agentToDelete);
-      setAgentToDelete(null);
+      // Clean up the dialog state before the deletion
+      const idToDelete = agentToDelete;
+      setAgentToDelete(null); // Close dialog first
+      await onDelete(idToDelete);
     } finally {
       setIsDeleting(false);
     }
@@ -73,11 +76,15 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     
     try {
       setIsDeleting(true);
-      for (const id of selectedAgents) {
-        await onDelete(id);
-      }
+      // Clean up the dialog state before the deletion
+      const agentsToDelete = [...selectedAgents];
       setShowBulkDeleteDialog(false);
       setSelectedAgents([]);
+      
+      // Perform deletions after state cleanup
+      for (const id of agentsToDelete) {
+        await onDelete(id);
+      }
     } finally {
       setIsDeleting(false);
     }
