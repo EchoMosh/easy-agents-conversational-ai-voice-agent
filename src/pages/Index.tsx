@@ -1,9 +1,14 @@
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useNavigate, Routes, Route } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import AgentsPage from "./dashboard/agents";
+import LeadsPage from "./dashboard/leads";
+import SettingsPage from "./dashboard/settings";
+import ProfilePage from "./dashboard/profile";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -18,22 +23,24 @@ const Index = () => {
     checkUser();
   }, [navigate]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar />
+        <main className="flex-1">
+          <div className="flex justify-between items-center p-4 border-b">
+            <SidebarTrigger />
+            <ThemeToggle />
+          </div>
+          <Routes>
+            <Route path="agents" element={<AgentsPage />} />
+            <Route path="leads" element={<LeadsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+          </Routes>
+        </main>
       </div>
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your App</h1>
-        <p className="text-xl text-muted-foreground">You are logged in!</p>
-        <Button onClick={handleLogout}>Logout</Button>
-      </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
