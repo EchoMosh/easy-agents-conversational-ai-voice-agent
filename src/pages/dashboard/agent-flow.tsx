@@ -8,6 +8,7 @@ import { Agent } from '@/types/agent';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
+import { Node, Edge } from '@xyflow/react';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string; }>();
@@ -63,6 +64,50 @@ export default function AgentFlowPage() {
     });
   };
 
+  const handleNodesChange = async (nodes: Node[]) => {
+    if (!agent) return;
+
+    const { error } = await supabase
+      .from('agents')
+      .update({
+        flow: {
+          ...agent.flow,
+          nodes
+        }
+      })
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update flow"
+      });
+    }
+  };
+
+  const handleEdgesChange = async (edges: Edge[]) => {
+    if (!agent) return;
+
+    const { error } = await supabase
+      .from('agents')
+      .update({
+        flow: {
+          ...agent.flow,
+          edges
+        }
+      })
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update flow"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -92,8 +137,8 @@ export default function AgentFlowPage() {
             <Flow
               initialNodes={agent.flow?.nodes || []}
               initialEdges={agent.flow?.edges || []}
-              onNodesChange={() => {}}
-              onEdgesChange={() => {}}
+              onNodesChange={handleNodesChange}
+              onEdgesChange={handleEdgesChange}
             />
           </ReactFlowProvider>
         </div>
