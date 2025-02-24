@@ -74,7 +74,7 @@ function Flow() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const reactFlowInstance = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
 
   useEffect(() => {
     const loadFlow = async () => {
@@ -147,12 +147,10 @@ function Flow() {
 
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const screenPosition = {
+      const position = screenToFlowPosition({
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
-      };
-      
-      const position = reactFlowInstance.project(screenPosition);
+      });
 
       const newNode = {
         id: `${type}-${Math.random()}`,
@@ -165,7 +163,32 @@ function Flow() {
 
       setNodes((nds) => [...nds, newNode]);
     }
-  }, [reactFlowInstance]);
+  }, [screenToFlowPosition]);
+
+  const updateFlow = useCallback(async () => {
+    const { error } = await supabase
+      .from('agents')
+      .update({
+        flow: { nodes, edges } as Json
+      })
+      .eq('id', agentId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save flow changes",
+      });
+    }
+  }, [nodes, edges, agentId]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      updateFlow();
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [nodes, edges, updateFlow]);
 
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
