@@ -21,7 +21,7 @@ const AgentsPage = () => {
   const { currentWorkspace } = useWorkspace();
   const [isCreating, setIsCreating] = useState(false);
 
-  const { data: agents, isLoading } = useQuery({
+  const { data: agents, isLoading, refetch } = useQuery({
     queryKey: ['agents', currentWorkspace?.id],
     queryFn: async () => {
       if (!currentWorkspace) return [];
@@ -41,17 +41,52 @@ const AgentsPage = () => {
         throw error;
       }
 
-      return data as Agent[];
+      // Properly map the data to match the Agent type
+      return (data || []).map(agent => ({
+        ...agent,
+        flow: agent.flow ? {
+          nodes: (agent.flow as any).nodes || [],
+          edges: (agent.flow as any).edges || []
+        } : undefined
+      })) as Agent[];
     },
     enabled: !!currentWorkspace,
   });
 
+  const handleDeleteAgent = async (agentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('agents')
+        .delete()
+        .eq('id', agentId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Agent deleted successfully",
+      });
+      refetch();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete agent",
+      });
+    }
+  };
+
   const handleCreateSuccess = () => {
     setIsCreating(false);
+    refetch();
     toast({
       title: "Success",
       description: "Agent created successfully",
     });
+  };
+
+  const handleCancel = () => {
+    setIsCreating(false);
   };
 
   return (
@@ -70,14 +105,17 @@ const AgentsPage = () => {
         </div>
       )}
 
-      {!isLoading && agents && <AgentsTable agents={agents} />}
+      {!isLoading && agents && <AgentsTable agents={agents} onDelete={handleDeleteAgent} />}
 
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create Agent</DialogTitle>
           </DialogHeader>
-          <CreateAgentForm onSuccess={handleCreateSuccess} />
+          <CreateAgentForm 
+            onSuccess={handleCreateSuccess} 
+            onCancel={handleCancel}
+          />
         </DialogContent>
       </Dialog>
     </div>
