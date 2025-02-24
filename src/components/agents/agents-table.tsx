@@ -40,6 +40,13 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
+  // Reset selections when agents prop changes
+  React.useEffect(() => {
+    setSelectedAgents([]);
+    setAgentToDelete(null);
+    setShowBulkDeleteDialog(false);
+  }, [agents]);
+
   const toggleSelectAll = () => {
     if (selectedAgents.length === agents.length) {
       setSelectedAgents([]);

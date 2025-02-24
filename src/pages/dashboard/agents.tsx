@@ -40,7 +40,6 @@ const AgentsPage = () => {
         throw error;
       }
 
-      // Properly map the data to match the Agent type
       return (data || []).map(agent => ({
         ...agent,
         flow: agent.flow ? {
@@ -64,6 +63,8 @@ const AgentsPage = () => {
         title: "Success",
         description: "Agent deleted successfully",
       });
+      
+      // Force a refetch immediately after deletion
       refetch();
     } catch (error) {
       toast({
@@ -103,7 +104,12 @@ const AgentsPage = () => {
         </div>
       )}
 
-      {!isLoading && agents && <AgentsTable agents={agents} onDelete={handleDeleteAgent} />}
+      {!isLoading && agents && (
+        <AgentsTable 
+          agents={agents} 
+          onDelete={handleDeleteAgent}
+        />
+      )}
 
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
         <DialogContent>
