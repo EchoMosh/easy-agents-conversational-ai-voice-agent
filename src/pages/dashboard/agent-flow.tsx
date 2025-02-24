@@ -25,25 +25,14 @@ const nodeTypes: NodeTypes = {
 };
 
 function Flow() {
-  const {
-    id: agentId
-  } = useParams<{
-    id: string;
-  }>();
-  const {
-    toast
-  } = useToast();
+  const { id: agentId } = useParams<{ id: string; }>();
+  const { toast } = useToast();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeData, string>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<any>>([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const {
-    screenToFlowPosition
-  } = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
   const [draggedNodeType, setDraggedNodeType] = useDrag();
-  const [dragPosition, setDragPosition] = useState({
-    x: 0,
-    y: 0
-  });
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
 
   const onConnect = useCallback((connection: Connection) => {
     setEdges(eds => addEdge(connection, eds));
@@ -80,17 +69,25 @@ function Flow() {
         y: event.clientY - bounds.top,
       });
 
-      const newNode: Node<NodeData, 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode'> = {
+      let nodeData: NodeData = {};
+      
+      switch (draggedNodeType) {
+        case 'speakNode':
+          nodeData = { message: 'Enter your message here' };
+          break;
+        case 'greetingNode':
+          nodeData = { greeting: 'Enter your greeting here', outcomes: [] };
+          break;
+        case 'triggerNode':
+          nodeData = { platform: undefined, action: undefined };
+          break;
+      }
+
+      const newNode: Node<NodeData> = {
         id: `${draggedNodeType}-${Math.random()}`,
         type: draggedNodeType,
         position,
-        data: draggedNodeType === 'speakNode' 
-          ? { message: 'Enter your message here' }
-          : draggedNodeType === 'greetingNode'
-          ? { greeting: 'Enter your greeting here', outcomes: [] }
-          : draggedNodeType === 'triggerNode'
-          ? { platform: undefined, action: undefined }
-          : {}
+        data: nodeData
       };
 
       setNodes(nds => [...nds, newNode]);
@@ -166,15 +163,39 @@ function Flow() {
     };
   }, [setNodes]);
 
-  return <div ref={reactFlowWrapper} className="w-full h-full">
-      <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onDragOver={onDragOver} onDrop={onDrop} nodeTypes={nodeTypes} fitView defaultEdgeOptions={{
-      animated: true
-    }} className="bg-background">
+  return (
+    <div ref={reactFlowWrapper} className="w-full h-full">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        nodeTypes={nodeTypes}
+        fitView
+        defaultEdgeOptions={{
+          animated: true
+        }}
+        className="bg-background"
+      >
         <Background className="bg-background" />
         <Controls className="bg-background border-border" />
-        <MiniMap className="bg-background !border-border" nodeColor={node => {
-        return node.type === 'speakNode' ? 'hsl(var(--primary))' : 'hsl(var(--secondary))';
-      }} maskColor="hsl(var(--muted))" />
+        <MiniMap
+          className="bg-background !border-border"
+          nodeColor={node => {
+            switch (node.type) {
+              case 'speakNode':
+                return 'hsl(var(--primary))';
+              case 'triggerNode':
+                return 'hsl(var(--warning))';
+              default:
+                return 'hsl(var(--secondary))';
+            }
+          }}
+          maskColor="hsl(var(--muted))"
+        />
       </ReactFlow>
 
       <TooltipProvider delayDuration={200}>
@@ -288,19 +309,14 @@ function Flow() {
           )}
         </div>
       )}
-    </div>;
+    </div>
+  );
 }
 
 export default function AgentFlowPage() {
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
+  const { id } = useParams<{ id: string; }>();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const {
     data: agent,
     isLoading,
