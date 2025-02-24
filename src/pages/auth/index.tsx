@@ -14,16 +14,20 @@ const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(searchParams.get('mode') === 'signup');
+  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Update isSignUp when URL parameters change
   useEffect(() => {
     const mode = searchParams.get('mode');
-    if (mode) {
-      setIsSignUp(mode === 'signup');
-    }
+    setIsSignUp(mode === 'signup');
   }, [searchParams]);
+
+  const handleToggleMode = () => {
+    // Update the URL when toggling between signup and login
+    navigate(`/auth?mode=${isSignUp ? 'login' : 'signup'}`);
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +126,7 @@ const AuthPage = () => {
               variant="ghost"
               className="w-full"
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={handleToggleMode}
             >
               {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
             </Button>
