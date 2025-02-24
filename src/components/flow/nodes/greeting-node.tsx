@@ -108,7 +108,7 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
           />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <Label className="text-xs text-muted-foreground dark:text-gray-400">
               Possible outcomes ({(data.outcomes || []).length}/5)
@@ -117,7 +117,7 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2"
+                className="h-8 px-2 hover:bg-blue-50 dark:hover:bg-blue-950"
                 onClick={() => setShowOutcomeInput(true)}
               >
                 <Plus className="h-4 w-4" />
@@ -126,16 +126,17 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
           </div>
 
           {(showOutcomeInput || editingIndex !== null) && (
-            <div className="flex gap-2">
+            <div className="flex gap-3 bg-accent/20 p-4 rounded-lg border border-accent/30">
               <Textarea
                 value={newOutcome}
                 onChange={(e) => setNewOutcome(e.target.value)}
                 placeholder="Enter possible response..."
-                className="nodrag text-sm resize-none h-[60px]"
+                className="nodrag text-sm resize-none min-h-[80px]"
               />
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 <Button 
                   size="sm" 
+                  className="px-4"
                   onClick={() => {
                     if (editingIndex !== null) {
                       saveEdit(editingIndex);
@@ -146,25 +147,32 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
                 >
                   {editingIndex !== null ? 'Save' : 'Add'}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => {
-                  setShowOutcomeInput(false);
-                  setEditingIndex(null);
-                  setNewOutcome('');
-                }}>Cancel</Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="px-4"
+                  onClick={() => {
+                    setShowOutcomeInput(false);
+                    setEditingIndex(null);
+                    setNewOutcome('');
+                  }}
+                >
+                  Cancel
+                </Button>
               </div>
             </div>
           )}
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {(data.outcomes || []).map((outcome, index) => (
               <div key={index} className="flex items-start gap-2 group">
-                <div className="flex-1 bg-accent/50 rounded-md p-2 text-sm relative">
+                <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg p-3 text-sm relative border shadow-sm">
                   {outcome}
                   <div className="absolute -right-2 -top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-6 w-6 bg-white dark:bg-gray-900 shadow-sm hover:bg-blue-50 dark:hover:bg-blue-950"
                       onClick={() => startEditing(index)}
                     >
                       <Pencil className="h-3 w-3" />
@@ -172,7 +180,7 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-6 w-6 bg-white dark:bg-gray-900 shadow-sm hover:bg-red-50 dark:hover:bg-red-950"
                       onClick={() => removeOutcome(index)}
                     >
                       <X className="h-3 w-3" />
