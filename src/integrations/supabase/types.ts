@@ -16,6 +16,7 @@ export type Database = {
           id: string
           interaction_type: string[]
           is_active: boolean | null
+          language: string | null
           name: string
           objective: string
           role: Database["public"]["Enums"]["agent_role"]
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           interaction_type?: string[]
           is_active?: boolean | null
+          language?: string | null
           name: string
           objective: string
           role: Database["public"]["Enums"]["agent_role"]
@@ -40,6 +42,7 @@ export type Database = {
           id?: string
           interaction_type?: string[]
           is_active?: boolean | null
+          language?: string | null
           name?: string
           objective?: string
           role?: Database["public"]["Enums"]["agent_role"]

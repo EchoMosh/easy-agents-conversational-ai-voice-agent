@@ -16,7 +16,7 @@ import { TransferNode } from '@/components/flow/nodes/transfer-node';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DragProvider, useDrag } from '@/components/flow/drag-context';
-import { Json } from '@/integrations/supabase/types';
+import { AgentSettings } from '@/components/agents/flow/agent-settings';
 
 const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
@@ -138,6 +138,30 @@ function Flow() {
     
     setDraggedNodeType(null);
   }, [draggedNodeType, screenToFlowPosition, setNodes]);
+
+  const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
+    const { error } = await supabase
+      .from('agents')
+      .update({
+        voice_id: settings.voiceId,
+        language: settings.language,
+      })
+      .eq('id', agentId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update agent settings"
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Agent settings updated successfully"
+    });
+  };
 
   useEffect(() => {
     const loadFlow = async () => {
@@ -511,6 +535,12 @@ export default function AgentFlowPage() {
           </div>
 
           <div className="flex items-center gap-4 relative">
+            <AgentSettings
+              agentId={agent.id}
+              currentVoice={agent.voice_id || undefined}
+              currentLanguage={agent.language}
+              onUpdateSettings={handleUpdateSettings}
+            />
             <ThemeToggle />
             <div className="h-6 w-[1px] bg-gradient-to-b from-gray-200/0 via-gray-200/50 to-gray-200/0 dark:from-gray-700/0 dark:via-gray-700/50 dark:to-gray-700/0" />
             <Button 
