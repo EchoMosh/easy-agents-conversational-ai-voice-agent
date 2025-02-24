@@ -56,7 +56,7 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
         message: "I'll transfer you to an available agent now.",
         outcomes: [],
         contacts: [] as ContactData[]
-      }
+      } as NodeData
     });
     baseFlow.edges.push({
       id: 'speak-to-transfer',
