@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { MoreVertical, Pencil, Trash, CheckSquare, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -60,28 +59,31 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const handleDeleteConfirm = async () => {
     if (!agentToDelete || isDeleting) return;
     
-    setIsDeleting(true);
     try {
+      setIsDeleting(true);
       await onDelete(agentToDelete);
+    } catch (error) {
+      console.error('Failed to delete agent:', error);
     } finally {
+      setAgentToDelete(null);
       setIsDeleting(false);
-      setAgentToDelete(null); // Close dialog after state is updated
     }
   };
 
   const handleBulkDelete = async () => {
     if (isDeleting || selectedAgents.length === 0) return;
     
-    setIsDeleting(true);
     try {
-      // Delete one by one to ensure proper state updates
+      setIsDeleting(true);
       for (const id of selectedAgents) {
         await onDelete(id);
       }
+    } catch (error) {
+      console.error('Failed to delete agents:', error);
     } finally {
-      setIsDeleting(false);
       setShowBulkDeleteDialog(false);
       setSelectedAgents([]);
+      setIsDeleting(false);
     }
   };
 
@@ -197,8 +199,8 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
 
       <AlertDialog 
         open={!!agentToDelete}
-        onOpenChange={(isOpen) => {
-          if (!isOpen && !isDeleting) {
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
             setAgentToDelete(null);
           }
         }}
@@ -226,8 +228,8 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
 
       <AlertDialog 
         open={showBulkDeleteDialog}
-        onOpenChange={(isOpen) => {
-          if (!isOpen && !isDeleting) {
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
             setShowBulkDeleteDialog(false);
           }
         }}
