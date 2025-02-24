@@ -72,10 +72,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const { screenToFlowPosition } = useReactFlow();
 
   const onConnect = useCallback((connection: Connection) => {
-    const newEdge = addEdge(connection, edges);
-    setEdges(newEdge);
-    onEdgesChange(newEdge);
-  }, [edges, onEdgesChange, setEdges]);
+    setEdges(eds => addEdge(connection, eds));
+  }, [setEdges]);
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);

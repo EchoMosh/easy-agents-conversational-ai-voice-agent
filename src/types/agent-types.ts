@@ -11,21 +11,7 @@ export type Agent = {
   humor_level?: number;
   is_active: boolean;
   created_at: string;
-  flow?: {
-    nodes: Array<{
-      id: string;
-      type: string;
-      position: { x: number; y: number };
-      data: Record<string, any>;
-    }>;
-    edges: Array<{
-      id: string;
-      source: string;
-      target: string;
-      sourceHandle?: string;
-      targetHandle?: string;
-    }>;
-  };
+  flow?: FlowData;
   user_id: string;
   interaction_type: string[];
   objective?: 'live_transfer' | 'answer_calls';
