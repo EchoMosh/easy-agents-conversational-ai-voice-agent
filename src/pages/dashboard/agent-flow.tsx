@@ -34,6 +34,7 @@ function Flow() {
   const [draggedNodeType, setDraggedNodeType] = useDrag();
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [isToolbarVisible, setIsToolbarVisible] = useState(false);
+  const [hoverTime, setHoverTime] = useState(0);
   const toolbarTimeout = useRef<number>();
 
   const showToolbar = () => {
@@ -178,8 +179,27 @@ function Flow() {
     };
   }, [setNodes]);
 
+  useEffect(() => {
+    let interval: number;
+    if (isToolbarVisible) {
+      interval = window.setInterval(() => {
+        setHoverTime(prev => Math.min(prev + 1, 100));
+      }, 50);
+    } else {
+      setHoverTime(0);
+    }
+    return () => clearInterval(interval);
+  }, [isToolbarVisible]);
+
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
+      <div 
+        className="absolute inset-0 transition-all duration-1000"
+        style={{
+          backgroundColor: isToolbarVisible ? `rgba(0,0,0,${hoverTime * 0.002})` : 'transparent',
+        }}
+      />
+      
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -227,14 +247,26 @@ function Flow() {
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div draggable onDragStart={e => handleDragStart(e, 'greetingNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
+                    <div 
+                      draggable 
+                      onDragStart={e => handleDragStart(e, 'greetingNode')} 
+                      onDrag={handleDrag} 
+                      onDragEnd={() => setDraggedNodeType(null)} 
+                      className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group"
+                      style={{
+                        transform: `scale(${1 + hoverTime * 0.001})`,
+                      }}
+                    >
                       <span className="text-blue-500 p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/50 transition-transform">
                         <MessageCircle className="h-4 w-4" />
                       </span>
                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Greeting</span>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
+                  <TooltipContent 
+                    side="top" 
+                    className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl"
+                  >
                     Initial message to start the conversation
                   </TooltipContent>
                 </Tooltip>
@@ -294,6 +326,10 @@ function Flow() {
         <button
           onClick={() => setIsToolbarVisible(!isToolbarVisible)}
           className="group h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-sm transition-all duration-300 hover:scale-110 hover:shadow-lg pointer-events-auto"
+          style={{
+            transform: `scale(${1 + hoverTime * 0.002})`,
+            boxShadow: `0 0 ${hoverTime}px rgba(0,0,0,0.1)`,
+          }}
         >
           <div className="relative w-6 h-6">
             <Plus 
