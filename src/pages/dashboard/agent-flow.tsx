@@ -206,7 +206,7 @@ function Flow() {
           animated: true,
           style: { stroke: '#94a3b8', strokeWidth: 1.5 },
         }}
-        className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 to-gray-950"
+        className="bg-white dark:bg-gray-950"
       >
         <Background className="opacity-40" />
         <Controls className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden [&>button]:border-0 [&>button]:bg-transparent [&>button]:hover:bg-black/5 dark:[&>button]:hover:bg-white/5" />
@@ -220,6 +220,8 @@ function Flow() {
                 return '#fbbf24';
               case 'endNode':
                 return '#f87171';
+              case 'transferNode':
+                return '#10b981';
               default:
                 return '#60a5fa';
             }
