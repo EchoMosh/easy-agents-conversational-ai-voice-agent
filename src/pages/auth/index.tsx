@@ -46,18 +46,6 @@ const AuthPage = () => {
         if (signUpError) throw signUpError;
 
         if (user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: user.id,
-                username: email.split("@")[0],
-                email: email,
-              }
-            ]);
-
-          if (profileError) throw profileError;
-
           navigate('/onboarding');
           toast({
             title: "Account created!",
