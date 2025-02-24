@@ -58,12 +58,12 @@ export default function LandingPage() {
           transition={{ delay: 0.6 }}
           className="flex flex-col sm:flex-row gap-4 items-center"
         >
-          <Link to="/auth">
+          <Link to="/auth?mode=signup">
             <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 text-lg px-8">
               Get Started <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-          <Link to="/auth">
+          <Link to="/auth?mode=login">
             <Button size="lg" variant="outline" className="border-white/20 hover:bg-white/10 text-white text-lg px-8">
               Login
             </Button>
