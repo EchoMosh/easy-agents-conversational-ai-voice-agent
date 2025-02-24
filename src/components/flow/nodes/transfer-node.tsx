@@ -230,54 +230,56 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
               />
 
               <div className="rounded-lg border border-emerald-100/50 dark:border-emerald-800/50 overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">Name</TableHead>
-                      <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">Phone</TableHead>
-                      <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75 w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredContacts.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-sm text-emerald-600/50 dark:text-emerald-300/50">
-                          {contacts.length === 0 ? "No contacts added" : "No contacts match your search"}
-                        </TableCell>
+                <div className={`overflow-y-auto ${filteredContacts.length > 4 ? 'max-h-[320px]' : ''}`}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75 sticky top-0 bg-background z-10">Name</TableHead>
+                        <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75 sticky top-0 bg-background z-10">Phone</TableHead>
+                        <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75 w-[100px] sticky top-0 bg-background z-10">Actions</TableHead>
                       </TableRow>
-                    ) : (
-                      filteredContacts.map((contact) => (
-                        <TableRow key={contact.id}>
-                          <TableCell className="py-2">
-                            <Input
-                              value={contact.name}
-                              onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
-                              className="bg-transparent border-transparent hover:border-input focus:border-input h-8"
-                              placeholder="Enter name..."
-                            />
-                          </TableCell>
-                          <TableCell className="py-2">
-                            <PhoneInput
-                              value={contact.phoneNumber}
-                              onChange={(value) => updateContact(contact.id, 'phoneNumber', value)}
-                              className="!bg-transparent !border-transparent hover:!border-input focus:!border-input"
-                            />
-                          </TableCell>
-                          <TableCell className="py-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
-                              onClick={() => removeContact(contact.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredContacts.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-sm text-emerald-600/50 dark:text-emerald-300/50">
+                            {contacts.length === 0 ? "No contacts added" : "No contacts match your search"}
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                      ) : (
+                        filteredContacts.map((contact) => (
+                          <TableRow key={contact.id}>
+                            <TableCell className="py-2">
+                              <Input
+                                value={contact.name}
+                                onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
+                                className="bg-transparent border-transparent hover:border-input focus:border-input h-8"
+                                placeholder="Enter name..."
+                              />
+                            </TableCell>
+                            <TableCell className="py-2">
+                              <PhoneInput
+                                value={contact.phoneNumber}
+                                onChange={(value) => updateContact(contact.id, 'phoneNumber', value)}
+                                className="!bg-transparent !border-transparent hover:!border-input focus:!border-input"
+                              />
+                            </TableCell>
+                            <TableCell className="py-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+                                onClick={() => removeContact(contact.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           </div>
