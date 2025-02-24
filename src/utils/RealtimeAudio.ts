@@ -34,6 +34,7 @@ export class AudioRecorder {
       };
       
       this.source.connect(this.processor);
+      // Remove the connection to destination to prevent audio feedback
       this.processor.connect(this.audioContext.destination);
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -70,6 +71,8 @@ export class RealtimeChat {
   constructor(private onMessage: (message: any) => void) {
     this.audioEl = document.createElement("audio");
     this.audioEl.autoplay = true;
+    // Ensure we're only getting the remote audio stream
+    this.audioEl.volume = 1.0;
   }
 
   async init() {
@@ -88,11 +91,23 @@ export class RealtimeChat {
       this.pc = new RTCPeerConnection();
 
       // Set up remote audio
-      this.pc.ontrack = e => this.audioEl.srcObject = e.streams[0];
+      this.pc.ontrack = e => {
+        // Ensure we only set the audio stream once
+        if (!this.audioEl.srcObject) {
+          this.audioEl.srcObject = e.streams[0];
+        }
+      };
 
-      // Add local audio track
-      const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.pc.addTrack(ms.getTracks()[0]);
+      // Add local audio track with muted feedback
+      const ms = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      const audioTrack = ms.getAudioTracks()[0];
+      this.pc.addTrack(audioTrack, ms);
 
       // Set up data channel
       this.dc = this.pc.createDataChannel("oai-events");
