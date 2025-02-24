@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Network } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, ReactFlowProvider, Node, Edge, NodeTypes, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -11,6 +11,7 @@ import { Agent, FlowNode, FlowEdge, NodeData, FlowData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
+import { TriggerNode } from '@/components/flow/nodes/trigger-node';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DragProvider, useDrag } from '@/components/flow/drag-context';
@@ -19,7 +20,8 @@ import { Json } from '@/integrations/supabase/types';
 const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
   greetingNode: GreetingNode,
-  endNode: EndNode
+  endNode: EndNode,
+  triggerNode: TriggerNode
 };
 
 function Flow() {
@@ -52,7 +54,7 @@ function Flow() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const handleDragStart = (event: React.DragEvent, type: 'greetingNode' | 'speakNode' | 'endNode') => {
+  const handleDragStart = (event: React.DragEvent, type: 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode') => {
     event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
     setDraggedNodeType(type);
@@ -78,7 +80,7 @@ function Flow() {
         y: event.clientY - bounds.top,
       });
 
-      const newNode: Node<NodeData, 'greetingNode' | 'speakNode' | 'endNode'> = {
+      const newNode: Node<NodeData, 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode'> = {
         id: `${draggedNodeType}-${Math.random()}`,
         type: draggedNodeType,
         position,
@@ -86,6 +88,8 @@ function Flow() {
           ? { message: 'Enter your message here' }
           : draggedNodeType === 'greetingNode'
           ? { greeting: 'Enter your greeting here', outcomes: [] }
+          : draggedNodeType === 'triggerNode'
+          ? { platform: undefined, action: undefined }
           : {}
       };
 
@@ -107,7 +111,7 @@ function Flow() {
         };
         setNodes(flowData.nodes.map(node => ({
           ...node,
-          type: node.type as 'greetingNode' | 'speakNode' | 'endNode'
+          type: node.type as 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode'
         })));
         setEdges(flowData.edges);
       }
@@ -216,6 +220,26 @@ function Flow() {
               End of conversation
             </TooltipContent>
           </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                draggable
+                onDragStart={e => handleDragStart(e, 'triggerNode')}
+                onDrag={handleDrag}
+                onDragEnd={() => setDraggedNodeType(null)}
+                className="flex flex-col items-center gap-2 p-2 rounded-lg cursor-move hover:bg-accent transition-all duration-200 hover:scale-110 group"
+              >
+                <span className="text-orange-500 p-2 rounded-lg bg-orange-50 dark:bg-orange-950 transition-transform">
+                  <Network className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-medium">Trigger</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[200px] text-center">
+              Platform integrations trigger
+            </TooltipContent>
+          </Tooltip>
         </div>
       </TooltipProvider>
 
@@ -252,6 +276,14 @@ function Flow() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg>
               </span>
               <span>End Node</span>
+            </div>
+          )}
+          {draggedNodeType === 'triggerNode' && (
+            <div className="flex items-center gap-2">
+              <span className="text-orange-500">
+                <Network className="h-5 w-5" />
+              </span>
+              <span>Trigger Node</span>
             </div>
           )}
         </div>

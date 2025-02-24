@@ -17,11 +17,13 @@ export type NodeData = {
   greeting?: string;
   message?: string;
   outcomes?: string[];
+  platform?: 'facebook' | 'hubspot' | 'gohighlevel' | 'activix';
+  action?: 'new_contact' | 'contact_changed';
 };
 
 export type FlowNode = {
   id: string;
-  type: 'greetingNode' | 'speakNode' | 'endNode';
+  type: 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode';
   position: { x: number; y: number };
   data: NodeData;
 };
@@ -30,6 +32,8 @@ export type FlowEdge = {
   id: string;
   source: string;
   target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
 };
 
 export type FlowData = {
