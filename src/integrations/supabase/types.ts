@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          role: Database["public"]["Enums"]["agent_role"]
+          system_prompt: string | null
+          user_id: string
+          voice_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          role: Database["public"]["Enums"]["agent_role"]
+          system_prompt?: string | null
+          user_id: string
+          voice_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          role?: Database["public"]["Enums"]["agent_role"]
+          system_prompt?: string | null
+          user_id?: string
+          voice_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -53,7 +86,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      agent_role:
+        | "receptionist"
+        | "sales_agent"
+        | "customer_support"
+        | "technical_advisor"
+        | "appointment_scheduler"
+        | "product_specialist"
+        | "virtual_assistant"
     }
     CompositeTypes: {
       [_ in never]: never
