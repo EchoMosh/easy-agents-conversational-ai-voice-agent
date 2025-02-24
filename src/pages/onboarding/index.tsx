@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,7 +89,7 @@ const OnboardingPage = () => {
       .maybeSingle();
 
     if (profile?.onboarding_completed) {
-      navigate("/");
+      navigate("/dashboard/agents");
     }
   };
 
@@ -145,7 +144,7 @@ const OnboardingPage = () => {
 
         // Artificial delay for smooth animation
         await new Promise(resolve => setTimeout(resolve, 2000));
-        navigate("/");
+        navigate("/dashboard/agents");
       } catch (error: any) {
         toast({
           variant: "destructive",
