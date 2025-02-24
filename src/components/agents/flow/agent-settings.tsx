@@ -30,25 +30,16 @@ type AgentSettingsProps = {
 };
 
 const languages = [
-  { code: "ar", name: "Arabic", flag: "🇸🇦" },
-  { code: "bn", name: "Bengali", flag: "🇧🇩" },
-  { code: "zh", name: "Chinese", flag: "🇨🇳" },
-  { code: "nl", name: "Dutch", flag: "🇳🇱" },
   { code: "en", name: "English", flag: "🇬🇧" },
+  { code: "es", name: "Spanish", flag: "🇪🇸" },
   { code: "fr", name: "French", flag: "🇫🇷" },
   { code: "de", name: "German", flag: "🇩🇪" },
-  { code: "hi", name: "Hindi", flag: "🇮🇳" },
-  { code: "id", name: "Indonesian", flag: "🇮🇩" },
   { code: "it", name: "Italian", flag: "🇮🇹" },
   { code: "ja", name: "Japanese", flag: "🇯🇵" },
   { code: "ko", name: "Korean", flag: "🇰🇷" },
   { code: "pt", name: "Portuguese", flag: "🇵🇹" },
   { code: "ru", name: "Russian", flag: "🇷🇺" },
-  { code: "es", name: "Spanish", flag: "🇪🇸" },
-  { code: "sw", name: "Swahili", flag: "🇹🇿" },
-  { code: "tr", name: "Turkish", flag: "🇹🇷" },
-  { code: "ur", name: "Urdu", flag: "🇵🇰" },
-  { code: "vi", name: "Vietnamese", flag: "🇻🇳" }
+  { code: "zh", name: "Chinese", flag: "🇨🇳" }
 ];
 
 export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdateSettings }: AgentSettingsProps) {
@@ -78,6 +69,16 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
       humorLevel: humorLevel
     });
     setIsOpen(false);
+  };
+
+  const getHumorLabel = (value: number) => {
+    if (value === 0) return "Neutral";
+    if (value === 20) return "Slightly Playful";
+    if (value === 40) return "Moderately Humorous";
+    if (value === 60) return "Quite Humorous";
+    if (value === 80) return "Very Humorous";
+    if (value === 100) return "Maximum Humor";
+    return "";
   };
 
   return (
@@ -119,14 +120,6 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
                 <SelectValue placeholder="Select a language" />
               </SelectTrigger>
               <SelectContent>
-                <div className="sticky top-0 p-2 bg-popover">
-                  <Input
-                    placeholder="Search languages..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-8"
-                  />
-                </div>
                 <SelectGroup>
                   {filteredLanguages.map((lang) => (
                     <SelectItem key={lang.code} value={lang.code}>
@@ -148,11 +141,11 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
                 value={[humorLevel]}
                 onValueChange={(values) => setHumorLevel(values[0])}
                 max={100}
-                step={1}
+                step={20}
+                className="mb-4"
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Serious</span>
-                <span>Playful</span>
+              <div className="text-sm text-center text-muted-foreground">
+                {getHumorLabel(humorLevel)}
               </div>
             </div>
           </div>
