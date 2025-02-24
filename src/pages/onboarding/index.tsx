@@ -117,6 +117,13 @@ const OnboardingPage = () => {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleNext();
+    }
+  };
+
   const completeOnboarding = async () => {
     setIsCompleting(true);
     const { data: { session } } = await supabase.auth.getSession();
@@ -218,6 +225,7 @@ const OnboardingPage = () => {
                   type={currentQuestion.type}
                   value={data[currentQuestion.field]}
                   onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={handleKeyPress}
                   placeholder="Type your answer here..."
                   className="text-lg py-6"
                 />
@@ -249,4 +257,3 @@ const OnboardingPage = () => {
 };
 
 export default OnboardingPage;
-
