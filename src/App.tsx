@@ -23,8 +23,10 @@ const queryClient = new QueryClient();
 const DashboardLayout = () => (
   <div className="flex h-screen overflow-hidden">
     <AppSidebar />
-    <main className="flex-1 overflow-x-hidden overflow-y-auto">
-      <Outlet />
+    <main className="flex-1">
+      <div className="h-full w-full">
+        <Outlet />
+      </div>
     </main>
   </div>
 );
@@ -48,11 +50,12 @@ function App() {
               <Route path="/onboarding" element={<OnboardingPage />} />
               
               {/* Dashboard routes with sidebar */}
-              <Route element={<DashboardLayout />}>
-                <Route path="/dashboard/agents" element={<AgentsPage />} />
-                <Route path="/dashboard/leads" element={<LeadsPage />} />
-                <Route path="/dashboard/settings" element={<SettingsPage />} />
-                <Route path="/dashboard/profile" element={<ProfilePage />} />
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<Navigate to="agents" replace />} />
+                <Route path="agents" element={<AgentsPage />} />
+                <Route path="leads" element={<LeadsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
               </Route>
 
               {/* Flow editor route without sidebar */}
