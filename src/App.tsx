@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './components/theme/theme-provider';
 import { Toaster } from './components/ui/toaster';
@@ -19,11 +19,11 @@ import AgentFlowPage from './pages/dashboard/agent-flow';
 const queryClient = new QueryClient();
 
 // Layout with sidebar for regular dashboard pages
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => (
+const DashboardLayout = () => (
   <div className="flex h-screen">
     <AppSidebar />
     <main className="flex-1 overflow-y-auto">
-      {children}
+      <Outlet />
     </main>
   </div>
 );
@@ -46,11 +46,11 @@ function App() {
             <Route path="/onboarding" element={<OnboardingPage />} />
             
             {/* Dashboard routes with sidebar */}
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route path="agents" element={<AgentsPage />} />
-              <Route path="leads" element={<LeadsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="profile" element={<ProfilePage />} />
+            <Route element={<DashboardLayout />}>
+              <Route path="/dashboard/agents" element={<AgentsPage />} />
+              <Route path="/dashboard/leads" element={<LeadsPage />} />
+              <Route path="/dashboard/settings" element={<SettingsPage />} />
+              <Route path="/dashboard/profile" element={<ProfilePage />} />
             </Route>
 
             {/* Flow editor route without sidebar */}
