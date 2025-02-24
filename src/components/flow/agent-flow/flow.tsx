@@ -1,6 +1,6 @@
 
 import { useCallback, useRef } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow } from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
@@ -16,6 +16,14 @@ const nodeTypes: NodeTypes = {
   triggerNode: TriggerNode,
   transferNode: TransferNode
 };
+
+const widgets = [
+  { type: 'speakNode', label: 'Speak' },
+  { type: 'greetingNode', label: 'Greeting' },
+  { type: 'endNode', label: 'End' },
+  { type: 'triggerNode', label: 'Trigger' },
+  { type: 'transferNode', label: 'Transfer' }
+];
 
 interface FlowProps {
   initialNodes: Node[];
@@ -38,6 +46,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
+
+  const onDragStart = (event: React.DragEvent, nodeType: string) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
+  };
 
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -118,6 +131,18 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
           maskColor="rgba(0, 0, 0, 0.05)"
         />
         <Controls />
+        <Panel position="top-left" className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg space-y-2">
+          {widgets.map((widget) => (
+            <div
+              key={widget.type}
+              className="border border-gray-200 dark:border-gray-700 rounded p-2 mb-2 cursor-move bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              onDragStart={(e) => onDragStart(e, widget.type)}
+              draggable
+            >
+              {widget.label}
+            </div>
+          ))}
+        </Panel>
       </ReactFlow>
     </div>
   );

@@ -1,12 +1,12 @@
 
-import { NodeData, FlowData } from "@/types/agent";
+import { NodeData, FlowData, NodeType } from "@/types/agent";
 
 export const getDefaultFlow = (platform?: string, action?: string, objective?: string): FlowData => {
   const baseFlow = {
     nodes: [
       {
         id: 'trigger-1',
-        type: 'triggerNode',
+        type: 'triggerNode' as NodeType,
         position: { x: 100, y: 100 },
         data: {
           platform: platform as NodeData['platform'],
@@ -15,7 +15,7 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
       },
       {
         id: 'greeting-1',
-        type: 'greetingNode',
+        type: 'greetingNode' as NodeType,
         position: { x: 500, y: 100 },
         data: {
           greeting: "Hello! How can I help you today?",
@@ -24,7 +24,7 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
       },
       {
         id: 'speak-1',
-        type: 'speakNode',
+        type: 'speakNode' as NodeType,
         position: { x: 900, y: 100 },
         data: {
           message: "I'd be happy to assist you. Please let me know what you need help with.",
@@ -50,7 +50,7 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
   if (objective === 'live_transfer') {
     baseFlow.nodes.push({
       id: 'transfer-1',
-      type: 'transferNode',
+      type: 'transferNode' as NodeType,
       position: { x: 1300, y: 100 },
       data: {
         message: "I'll transfer you to an available agent now.",
@@ -67,7 +67,7 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
   } else {
     baseFlow.nodes.push({
       id: 'end-1',
-      type: 'endNode',
+      type: 'endNode' as NodeType,
       position: { x: 1300, y: 100 },
       data: {
         message: "Thank you for your time. Goodbye!",
