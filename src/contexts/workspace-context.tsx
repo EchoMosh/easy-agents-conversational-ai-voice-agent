@@ -29,20 +29,40 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   const refreshWorkspaces = async () => {
     try {
-      const { data, error } = await supabase
-        .from('workspaces')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // First, get workspaces where the user is a member
+      const { data: memberWorkspaces, error: memberError } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
 
-      if (error) throw error;
+      if (memberError) throw memberError;
 
-      setWorkspaces(data);
+      // Then get the actual workspace data
+      const workspaceIds = memberWorkspaces.map(w => w.workspace_id);
       
-      // Set first workspace as current if none is selected
-      if (!currentWorkspace && data.length > 0) {
-        setCurrentWorkspace(data[0]);
+      if (workspaceIds.length > 0) {
+        const { data, error } = await supabase
+          .from('workspaces')
+          .select('*')
+          .in('id', workspaceIds)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        setWorkspaces(data);
+        
+        // Set first workspace as current if none is selected
+        if (!currentWorkspace && data.length > 0) {
+          setCurrentWorkspace(data[0]);
+        }
+      } else {
+        setWorkspaces([]);
+        setCurrentWorkspace(null);
       }
+
+      setIsLoading(false);
     } catch (error: any) {
+      console.error('Error fetching workspaces:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -56,6 +76,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // First create the workspace
       const { data: workspace, error: createError } = await supabase
         .from('workspaces')
         .insert({
@@ -67,7 +88,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
       if (createError) throw createError;
 
-      // Add user as workspace owner
+      // Then add the user as a workspace member
       const { error: memberError } = await supabase
         .from('workspace_members')
         .insert({
@@ -86,10 +107,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         description: "Workspace created successfully",
       });
     } catch (error: any) {
+      console.error('Error creating workspace:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create workspace",
       });
     }
   };
