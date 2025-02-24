@@ -209,7 +209,7 @@ function Flow() {
         className="bg-white dark:bg-gray-950"
       >
         <Background className="opacity-40" />
-        <Controls className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden [&>button]:border-0 [&>button]:bg-transparent [&>button]:hover:bg-black/5 dark:[&>button]:hover:bg-white/5" />
+        <Controls className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden [&>button]:border-0 [&>button]:bg-transparent [&>button]:hover:bg-black/5 dark:[&>button]:hover:bg-white/5 mb-20" />
         <MiniMap
           className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
           nodeColor={node => {
@@ -230,7 +230,7 @@ function Flow() {
         />
       </ReactFlow>
 
-      <div className="fixed bottom-[72px] left-[12px] z-50">
+      <div className="fixed bottom-6 left-[12px] z-50">
         <div 
           className="group relative"
           onMouseEnter={showToolbar}
@@ -242,7 +242,7 @@ function Flow() {
           >
             <div className="relative w-6 h-6">
               <Plus 
-                className={`absolute inset-0 text-gray-600 dark:text-gray-300 transition-all duration-500 transform translate-y-0.5
+                className={`absolute inset-0 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform translate-y-0.5
                   ${isToolbarVisible ? 
                     'rotate-[135deg] scale-110 hover:rotate-[145deg] opacity-0' : 
                     'hover:rotate-[15deg] hover:scale-110 opacity-100'
@@ -255,7 +255,7 @@ function Flow() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className={`absolute inset-0 w-6 h-6 text-gray-600 dark:text-gray-300 transition-all duration-500 transform
+                className={`absolute inset-0 w-6 h-6 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform
                   ${isToolbarVisible ? 
                     'rotate-0 scale-110 opacity-100' : 
                     '-rotate-180 scale-90 opacity-0'
