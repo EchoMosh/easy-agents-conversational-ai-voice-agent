@@ -209,7 +209,7 @@ function Flow() {
         className="bg-white dark:bg-gray-950"
       >
         <Background className="opacity-40" />
-        <Controls className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden [&>button]:border-0 [&>button]:bg-transparent [&>button]:hover:bg-black/5 dark:[&>button]:hover:bg-white/5 mb-20" />
+        <Controls className="!absolute !bottom-6 !right-6 !left-auto !top-auto !bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden [&>button]:border-0 [&>button]:bg-transparent [&>button]:hover:bg-black/5 dark:[&>button]:hover:bg-white/5" />
         <MiniMap
           className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
           nodeColor={node => {
