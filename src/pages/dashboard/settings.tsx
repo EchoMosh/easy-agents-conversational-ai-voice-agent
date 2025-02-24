@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut } from "lucide-react";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -49,6 +50,14 @@ const SettingsPage = () => {
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
+        <div className="rounded-lg border p-4">
+          <h2 className="text-lg font-semibold mb-4">Appearance</h2>
+          <div className="flex items-center justify-between">
+            <span className="text-sm">Theme</span>
+            <ThemeToggle />
+          </div>
+        </div>
+
         <div className="rounded-lg border p-4">
           <h2 className="text-lg font-semibold mb-4">Account Settings</h2>
           

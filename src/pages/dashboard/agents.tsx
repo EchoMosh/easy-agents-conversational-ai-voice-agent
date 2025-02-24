@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -15,7 +14,6 @@ import {
 import { AgentsTable } from "@/components/agents/agents-table";
 import { CreateAgentForm } from "@/components/agents/create-agent-form";
 import { Agent } from "@/types/agent";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const AgentsPage = () => {
   const { toast } = useToast();
@@ -71,13 +69,10 @@ const AgentsPage = () => {
     <div className="w-full p-8 bg-background text-foreground">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Agents</h1>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-          <Button onClick={() => setIsCreating(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Agent
-          </Button>
-        </div>
+        <Button onClick={() => setIsCreating(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create Agent
+        </Button>
       </div>
 
       {isLoading && (
