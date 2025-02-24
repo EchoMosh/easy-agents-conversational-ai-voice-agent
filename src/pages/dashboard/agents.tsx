@@ -90,15 +90,29 @@ const AgentsPage = () => {
       return;
     }
 
+    // Get the current user's session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to create an agent",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('agents')
-      .insert([{
+      .insert({
         name: newAgent.name,
         role: newAgent.role,
         system_prompt: newAgent.system_prompt || null,
-      }]);
+        user_id: session.user.id,
+      });
 
     if (error) {
+      console.error('Error creating agent:', error);
       toast({
         variant: "destructive",
         title: "Error",
