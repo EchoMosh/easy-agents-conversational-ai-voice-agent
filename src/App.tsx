@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './components/theme/theme-provider';
@@ -15,24 +16,31 @@ import LeadsPage from './pages/dashboard/leads';
 import SettingsPage from './pages/dashboard/settings';
 import ProfilePage from './pages/dashboard/profile';
 import AgentFlowPage from './pages/dashboard/agent-flow';
+
 const queryClient = new QueryClient();
 
 // Layout with sidebar for regular dashboard pages
-const DashboardLayout = () => <div className="flex min-h-screen">
+const DashboardLayout = () => (
+  <div className="flex min-h-screen">
     <AppSidebar />
     <main className="flex-1">
-      <div className="min-h-screen w-full\n">
+      <div className="min-h-screen w-full">
         <Outlet />
       </div>
     </main>
-  </div>;
+  </div>
+);
 
 // Clean layout without sidebar for flow editor
-const FlowLayout = () => <div className="min-h-screen w-full">
+const FlowLayout = () => (
+  <div className="min-h-screen w-full">
     <AgentFlowPage />
-  </div>;
+  </div>
+);
+
 function App() {
-  return <QueryClientProvider client={queryClient}>
+  return (
+    <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <SidebarProvider>
           <Router>
@@ -57,6 +65,8 @@ function App() {
           <Toaster />
         </SidebarProvider>
       </ThemeProvider>
-    </QueryClientProvider>;
+    </QueryClientProvider>
+  );
 }
+
 export default App;
