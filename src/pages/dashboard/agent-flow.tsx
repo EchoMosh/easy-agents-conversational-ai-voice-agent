@@ -354,31 +354,36 @@ export default function AgentFlowPage() {
 
   return <DragProvider>
       <div className="h-screen flex flex-col bg-background">
-        <div className="h-14 border-b bg-gradient-to-r from-gray-50/90 to-white dark:from-gray-900 dark:to-gray-800 backdrop-blur-sm shadow-sm flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
+        <div className="relative h-14 border-b border-gray-200/20 dark:border-gray-700/20 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl flex items-center justify-between px-6 z-50">
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-50/50 via-white/50 to-gray-50/50 dark:from-gray-900/50 dark:via-gray-800/50 dark:to-gray-900/50 pointer-events-none" />
+          
+          <div className="flex items-center gap-4 relative">
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={() => navigate('/dashboard/agents')} 
-              className="hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+              className="hover:bg-gray-900/5 dark:hover:bg-white/5 transition-colors rounded-full"
             >
-              <ArrowLeft className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+              <ArrowLeft className="h-4 w-4 text-gray-700 dark:text-gray-300" />
             </Button>
+            <div className="h-6 w-[1px] bg-gray-200/50 dark:bg-gray-700/50" />
             <div className="flex flex-col">
-              <h1 className="font-medium text-gray-700 dark:text-gray-200">{agent.name}</h1>
+              <h1 className="font-medium text-gray-800 dark:text-gray-100">{agent.name}</h1>
               <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{agent.role.replace('_', ' ')}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-3 relative">
             <ThemeToggle />
+            <div className="h-6 w-[1px] bg-gray-200/50 dark:bg-gray-700/50" />
             <Button 
-              variant="outline" 
-              className="bg-white/80 dark:bg-gray-900/50 border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors shadow-sm"
+              variant="ghost"
+              className="bg-white/40 dark:bg-gray-800/40 hover:bg-white/80 dark:hover:bg-gray-800/80 text-gray-700 dark:text-gray-300 border border-gray-200/20 dark:border-gray-700/20 shadow-[0_1px_1px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_1px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-all duration-200"
             >
               Save Flow
             </Button>
             <Button 
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md transition-all duration-200 border-none"
+              className="bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg shadow-blue-500/20 dark:shadow-blue-500/10 transition-all duration-200 border-none"
             >
               Deploy Agent
             </Button>
