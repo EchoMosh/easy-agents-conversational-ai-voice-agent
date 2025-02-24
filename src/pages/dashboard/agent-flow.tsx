@@ -15,9 +15,10 @@ import {
   Node,
   Edge,
   NodeTypes,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -72,6 +73,8 @@ function Flow() {
   const { toast } = useToast();
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const { project } = useReactFlow();
 
   // Load initial flow data
   useEffect(() => {
@@ -83,7 +86,7 @@ function Flow() {
         .single();
 
       if (agent?.flow) {
-        const flowData = agent.flow as FlowData;
+        const flowData = agent.flow as unknown as FlowData;
         setNodes(flowData.nodes);
         setEdges(flowData.edges);
       }
@@ -104,9 +107,8 @@ function Flow() {
           filter: `id=eq.${agentId}`
         },
         (payload) => {
-          const flowData = payload.new.flow as FlowData;
+          const flowData = payload.new.flow as unknown as FlowData;
           if (flowData) {
-            // Only update if the changes didn't come from this client
             if (!payload.old || 
                 JSON.stringify(flowData.nodes) !== JSON.stringify(nodes) || 
                 JSON.stringify(flowData.edges) !== JSON.stringify(edges)) {
@@ -132,7 +134,7 @@ function Flow() {
     const { error } = await supabase
       .from('agents')
       .update({
-        flow: { nodes, edges } as FlowData
+        flow: { nodes, edges } as unknown as Json
       })
       .eq('id', agentId);
 
@@ -149,7 +151,7 @@ function Flow() {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       updateFlow();
-    }, 1000); // 1 second debounce
+    }, 1000);
 
     return () => clearTimeout(timeoutId);
   }, [nodes, edges, updateFlow]);
@@ -161,59 +163,63 @@ function Flow() {
     [],
   );
 
-  const onDragOver = (event: React.DragEvent) => {
+  const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  };
+  }, []);
 
-  const onDrop = (event: React.DragEvent) => {
+  const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
 
     const type = event.dataTransfer.getData('application/reactflow');
     if (!type || (type !== 'speakNode' && type !== 'greetingNode')) return;
 
-    const reactFlowBounds = document.querySelector('.react-flow')?.getBoundingClientRect();
-    const position = reactFlowBounds ? {
-      x: event.clientX - reactFlowBounds.left,
-      y: event.clientY - reactFlowBounds.top,
-    } : { x: 0, y: 0 };
+    if (reactFlowWrapper.current) {
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = project({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      });
 
-    const newNode = {
-      id: `${type}-${Math.random()}`,
-      type,
-      position,
-      data: type === 'speakNode' 
-        ? { message: 'Enter your message here' } as SpeakData
-        : { greeting: 'Enter your greeting here' } as GreetingData,
-    } as CustomNode;
+      const newNode = {
+        id: `${type}-${Math.random()}`,
+        type,
+        position,
+        data: type === 'speakNode' 
+          ? { message: 'Enter your message here' } as SpeakData
+          : { greeting: 'Enter your greeting here' } as GreetingData,
+      } as CustomNode;
 
-    setNodes((nds) => [...nds, newNode]);
-  };
+      setNodes((nds) => [...nds, newNode]);
+    }
+  }, [project]);
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      nodeTypes={nodeTypes}
-      fitView
-      defaultEdgeOptions={{ animated: true }}
-      className="bg-background"
-    >
-      <Background className="bg-background" />
-      <Controls className="bg-background border-border" />
-      <MiniMap 
-        className="bg-background !border-border" 
-        nodeColor={(node) => {
-          return node.type === 'speakNode' ? 'hsl(var(--primary))' : 'hsl(var(--secondary))';
-        }}
-        maskColor="hsl(var(--muted))"
-      />
-    </ReactFlow>
+    <div ref={reactFlowWrapper} className="w-full h-full">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        nodeTypes={nodeTypes}
+        fitView
+        defaultEdgeOptions={{ animated: true }}
+        className="bg-background"
+      >
+        <Background className="bg-background" />
+        <Controls className="bg-background border-border" />
+        <MiniMap 
+          className="bg-background !border-border" 
+          nodeColor={(node) => {
+            return node.type === 'speakNode' ? 'hsl(var(--primary))' : 'hsl(var(--secondary))';
+          }}
+          maskColor="hsl(var(--muted))"
+        />
+      </ReactFlow>
+    </div>
   );
 }
 
@@ -292,19 +298,22 @@ export default function AgentFlowPage() {
         </ReactFlowProvider>
         
         {/* Dock */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-xl bg-background/80 backdrop-blur-md border shadow-lg transition-all duration-200 hover:scale-105">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 p-4 rounded-xl bg-background/80 backdrop-blur-md border shadow-lg transition-all duration-200 hover:scale-105">
           <div
             draggable
             onDragStart={(event) => {
               event.dataTransfer.setData('application/reactflow', 'greetingNode');
               event.dataTransfer.effectAllowed = 'move';
             }}
-            className="flex flex-col items-center gap-1 p-2 rounded-lg cursor-move hover:bg-accent transition-colors group"
+            className="flex flex-col items-center gap-2 p-3 rounded-lg cursor-move hover:bg-accent transition-colors group"
           >
-            <span className="text-blue-500 p-2 rounded-lg bg-blue-50 dark:bg-blue-950 group-hover:scale-110 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <span className="text-blue-500 p-3 rounded-lg bg-blue-50 dark:bg-blue-950 group-hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
             </span>
-            <span className="text-xs font-medium">Greeting</span>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm font-medium">Greeting</span>
+              <span className="text-xs text-muted-foreground text-center">Initial message to start the conversation</span>
+            </div>
           </div>
           <div
             draggable
@@ -312,12 +321,15 @@ export default function AgentFlowPage() {
               event.dataTransfer.setData('application/reactflow', 'speakNode');
               event.dataTransfer.effectAllowed = 'move';
             }}
-            className="flex flex-col items-center gap-1 p-2 rounded-lg cursor-move hover:bg-accent transition-colors group"
+            className="flex flex-col items-center gap-2 p-3 rounded-lg cursor-move hover:bg-accent transition-colors group"
           >
-            <span className="text-purple-500 p-2 rounded-lg bg-purple-50 dark:bg-purple-950 group-hover:scale-110 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            <span className="text-purple-500 p-3 rounded-lg bg-purple-50 dark:bg-purple-950 group-hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
             </span>
-            <span className="text-xs font-medium">Speak</span>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm font-medium">Speak</span>
+              <span className="text-xs text-muted-foreground text-center">Response message to user input</span>
+            </div>
           </div>
         </div>
       </div>
