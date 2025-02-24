@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
@@ -71,18 +72,21 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const { screenToFlowPosition } = useReactFlow();
 
   const onConnect = useCallback((connection: Connection) => {
-    setEdges(eds => addEdge(connection, eds));
-    onEdgesChange([...edges, addEdge(connection, edges)]);
-  }, [edges, onEdgesChange]);
+    const newEdge = addEdge(connection, edges);
+    setEdges(newEdge);
+    onEdgesChange(newEdge);
+  }, [edges, onEdgesChange, setEdges]);
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
-    onNodesChange(nodes);
+    const updatedNodes = nodes.map(node => ({ ...node }));
+    onNodesChange(updatedNodes);
   }, [nodes, onNodesChange, onNodesChangeInternal]);
 
   const handleEdgesChange = useCallback((changes: any) => {
     onEdgesChangeInternal(changes);
-    onEdgesChange(edges);
+    const updatedEdges = edges.map(edge => ({ ...edge }));
+    onEdgesChange(updatedEdges);
   }, [edges, onEdgesChange, onEdgesChangeInternal]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {

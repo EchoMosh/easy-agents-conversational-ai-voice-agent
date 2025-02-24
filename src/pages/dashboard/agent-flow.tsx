@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
@@ -94,13 +95,26 @@ export default function AgentFlowPage() {
   const saveFlowChanges = useCallback(async (nodes: Node[], edges: Edge[]) => {
     if (!agent) return;
 
+    const flowData = {
+      nodes: nodes.map(node => ({
+        id: node.id,
+        type: node.type,
+        position: node.position,
+        data: node.data
+      })) as FlowNode[],
+      edges: edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        sourceHandle: edge.sourceHandle,
+        targetHandle: edge.targetHandle
+      })) as FlowEdge[]
+    };
+
     const { error } = await supabase
       .from('agents')
       .update({
-        flow: {
-          nodes,
-          edges
-        }
+        flow: flowData
       })
       .eq('id', id);
 

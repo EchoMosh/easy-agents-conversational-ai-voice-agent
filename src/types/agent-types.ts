@@ -1,5 +1,6 @@
 
 import { Json } from '@/integrations/supabase/types';
+import { Node, Edge } from '@xyflow/react';
 
 export type Agent = {
   id: string;
@@ -10,7 +11,21 @@ export type Agent = {
   humor_level?: number;
   is_active: boolean;
   created_at: string;
-  flow?: FlowData;
+  flow?: {
+    nodes: Array<{
+      id: string;
+      type: string;
+      position: { x: number; y: number };
+      data: Record<string, any>;
+    }>;
+    edges: Array<{
+      id: string;
+      source: string;
+      target: string;
+      sourceHandle?: string;
+      targetHandle?: string;
+    }>;
+  };
   user_id: string;
   interaction_type: string[];
   objective?: 'live_transfer' | 'answer_calls';
