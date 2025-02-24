@@ -33,17 +33,30 @@ const AuthPage = () => {
           },
         });
         if (error) throw error;
+        navigate('/onboarding');
         toast({
-          title: "Success!",
-          description: "Please check your email to verify your account.",
+          title: "Account created!",
+          description: "Let's set up your workspace.",
         });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: { user }, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-        navigate("/");
+
+        // Check if user has completed onboarding
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.onboarding_completed) {
+          navigate("/");
+        } else {
+          navigate("/onboarding");
+        }
       }
     } catch (error: any) {
       toast({
