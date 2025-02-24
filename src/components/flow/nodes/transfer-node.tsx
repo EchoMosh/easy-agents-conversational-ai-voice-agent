@@ -1,26 +1,30 @@
 
 import { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { PhoneForwarded } from 'lucide-react';
+import { PhoneForwarded, Plus, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+
+interface Contact {
+  id: string;
+  name: string;
+  phoneNumber: string;
+}
 
 interface TransferNodeData {
   message?: string;
-  phoneNumber?: string;
-  contactName?: string;
+  contacts: Contact[];
 }
 
 export function TransferNode({ data }: { data: TransferNodeData }) {
   const [message, setMessage] = useState(data.message || "Transferring call now...");
-  const [phoneNumber, setPhoneNumber] = useState(data.phoneNumber || "");
-  const [contactName, setContactName] = useState(data.contactName || "");
+  const [contacts, setContacts] = useState<Contact[]>(data.contacts || []);
 
-  const handleChange = (field: keyof TransferNodeData, value: string) => {
+  const handleChange = (field: keyof TransferNodeData, value: string | Contact[]) => {
     const updatedData = {
       message,
-      phoneNumber,
-      contactName,
+      contacts,
       [field]: value
     };
     
@@ -34,17 +38,33 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
     window.dispatchEvent(evt);
 
     // Update local state
-    switch(field) {
-      case 'message':
-        setMessage(value);
-        break;
-      case 'phoneNumber':
-        setPhoneNumber(value);
-        break;
-      case 'contactName':
-        setContactName(value);
-        break;
+    if (field === 'message') {
+      setMessage(value as string);
+    } else if (field === 'contacts') {
+      setContacts(value as Contact[]);
     }
+  };
+
+  const addContact = () => {
+    const newContact = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: '',
+      phoneNumber: ''
+    };
+    const updatedContacts = [...contacts, newContact];
+    handleChange('contacts', updatedContacts);
+  };
+
+  const updateContact = (id: string, field: keyof Contact, value: string) => {
+    const updatedContacts = contacts.map(contact => 
+      contact.id === id ? { ...contact, [field]: value } : contact
+    );
+    handleChange('contacts', updatedContacts);
+  };
+
+  const removeContact = (id: string) => {
+    const updatedContacts = contacts.filter(contact => contact.id !== id);
+    handleChange('contacts', updatedContacts);
   };
 
   return (
@@ -72,29 +92,62 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
-              Contact Name
-            </Label>
-            <Input
-              value={contactName}
-              onChange={(e) => handleChange('contactName', e.target.value)}
-              className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
-              placeholder="Enter contact name..."
-            />
-          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
+                Contact List
+              </Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
+                onClick={addContact}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Add Contact
+              </Button>
+            </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
-              Phone Number
-            </Label>
-            <Input
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => handleChange('phoneNumber', e.target.value)}
-              className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
-              placeholder="Enter phone number..."
-            />
+            <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
+              {contacts.map((contact) => (
+                <div key={contact.id} className="flex flex-col gap-2 p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100/50 dark:border-emerald-800/20">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
+                        Contact Name
+                      </Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+                        onClick={() => removeContact(contact.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <Input
+                      value={contact.name}
+                      onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
+                      className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
+                      placeholder="Enter contact name..."
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
+                      Phone Number
+                    </Label>
+                    <Input
+                      type="tel"
+                      value={contact.phoneNumber}
+                      onChange={(e) => updateContact(contact.id, 'phoneNumber', e.target.value)}
+                      className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
+                      placeholder="Enter phone number..."
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
