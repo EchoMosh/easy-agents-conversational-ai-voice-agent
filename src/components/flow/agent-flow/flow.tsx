@@ -49,31 +49,31 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         y: event.clientY - bounds.top,
       });
 
-      const type = event.dataTransfer.getData('application/reactflow') as NodeData['type'];
-      if (!type) return;
+      const nodeType = event.dataTransfer.getData('application/reactflow');
+      if (!nodeType) return;
 
-      let nodeData: NodeData = {};
+      let newNodeData: NodeData = {};
       
-      switch (type) {
+      switch (nodeType) {
         case 'speakNode':
-          nodeData = { message: 'Enter your message here' };
+          newNodeData = { message: 'Enter your message here' };
           break;
         case 'greetingNode':
-          nodeData = { greeting: 'Enter your greeting here', outcomes: [] };
+          newNodeData = { greeting: 'Enter your greeting here', outcomes: [] };
           break;
         case 'triggerNode':
-          nodeData = { platform: undefined, action: undefined };
+          newNodeData = { platform: undefined, action: undefined };
           break;
         case 'transferNode':
-          nodeData = { message: 'Transfer to agent', outcomes: [] };
+          newNodeData = { message: 'Transfer to agent', outcomes: [] };
           break;
       }
 
-      const newNode: Node<NodeData> = {
-        id: `${type}-${Math.random()}`,
-        type,
+      const newNode: Node = {
+        id: `${nodeType}-${Math.random()}`,
+        type: nodeType,
         position,
-        data: nodeData
+        data: newNodeData
       };
 
       setNodes(nds => [...nds, newNode]);

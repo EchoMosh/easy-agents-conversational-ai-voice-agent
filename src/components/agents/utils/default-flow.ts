@@ -1,35 +1,35 @@
 
-import { NodeData, FlowData, ContactData, NodeType } from "@/types/agent";
+import { NodeData, FlowData } from "@/types/agent";
 
 export const getDefaultFlow = (platform?: string, action?: string, objective?: string): FlowData => {
   const baseFlow = {
     nodes: [
       {
         id: 'trigger-1',
-        type: 'triggerNode' as NodeType,
+        type: 'triggerNode',
         position: { x: 100, y: 100 },
         data: {
           platform: platform as NodeData['platform'],
           action: action as NodeData['action']
-        }
+        } as NodeData
       },
       {
         id: 'greeting-1',
-        type: 'greetingNode' as NodeType,
+        type: 'greetingNode',
         position: { x: 500, y: 100 },
         data: {
           greeting: "Hello! How can I help you today?",
           outcomes: ["I need help with a product", "I have a question"]
-        }
+        } as NodeData
       },
       {
         id: 'speak-1',
-        type: 'speakNode' as NodeType,
+        type: 'speakNode',
         position: { x: 900, y: 100 },
         data: {
           message: "I'd be happy to assist you. Please let me know what you need help with.",
           outcomes: ["Thanks, that's all", "I have another question"]
-        }
+        } as NodeData
       }
     ],
     edges: [
@@ -50,12 +50,12 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
   if (objective === 'live_transfer') {
     baseFlow.nodes.push({
       id: 'transfer-1',
-      type: 'transferNode' as NodeType,
+      type: 'transferNode',
       position: { x: 1300, y: 100 },
       data: {
         message: "I'll transfer you to an available agent now.",
         outcomes: [],
-        contacts: [] as ContactData[]
+        contacts: []
       } as NodeData
     });
     baseFlow.edges.push({
@@ -67,12 +67,12 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
   } else {
     baseFlow.nodes.push({
       id: 'end-1',
-      type: 'endNode' as NodeType,
+      type: 'endNode',
       position: { x: 1300, y: 100 },
       data: {
         message: "Thank you for your time. Goodbye!",
         outcomes: []
-      }
+      } as NodeData
     });
     baseFlow.edges.push({
       id: 'speak-to-end',
