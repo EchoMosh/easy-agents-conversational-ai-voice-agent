@@ -61,6 +61,7 @@ export type Database = {
           avatar_url: string | null
           business_type: string | null
           created_at: string
+          email: string | null
           employee_count: string | null
           first_name: string | null
           id: string
@@ -72,6 +73,7 @@ export type Database = {
           avatar_url?: string | null
           business_type?: string | null
           created_at?: string
+          email?: string | null
           employee_count?: string | null
           first_name?: string | null
           id: string
@@ -83,6 +85,7 @@ export type Database = {
           avatar_url?: string | null
           business_type?: string | null
           created_at?: string
+          email?: string | null
           employee_count?: string | null
           first_name?: string | null
           id?: string

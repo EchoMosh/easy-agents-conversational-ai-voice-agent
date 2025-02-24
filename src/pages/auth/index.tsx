@@ -52,6 +52,7 @@ const AuthPage = () => {
               {
                 id: user.id,
                 username: email.split("@")[0],
+                email: email,
               }
             ]);
 
