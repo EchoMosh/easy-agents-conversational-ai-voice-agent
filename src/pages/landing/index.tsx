@@ -20,31 +20,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-slate-950 text-white overflow-hidden">
-      {/* Particle effect */}
-      <div className="fixed inset-0 z-0">
-        {Array.from({ length: 30 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-20"
-            animate={{
-              x: [
-                Math.random() * window.innerWidth,
-                Math.random() * window.innerWidth,
-              ],
-              y: [
-                Math.random() * window.innerHeight,
-                Math.random() * window.innerHeight,
-              ],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 15,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          />
-        ))}
-      </div>
-
       {/* Hero Section */}
       <motion.div 
         className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 text-center"
@@ -88,9 +63,11 @@ export default function LandingPage() {
               Get Started <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-          <div className="text-sm text-white/60">
-            No credit card required
-          </div>
+          <Link to="/auth">
+            <Button size="lg" variant="outline" className="border-white/20 hover:bg-white/10 text-white text-lg px-8">
+              Login
+            </Button>
+          </Link>
         </motion.div>
       </motion.div>
 
