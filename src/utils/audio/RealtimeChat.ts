@@ -27,17 +27,23 @@ export class RealtimeChat {
           reader.onloadend = async () => {
             const base64Audio = (reader.result as string).split(',')[1];
             
-            // Send to your voice-to-text endpoint
-            const response = await fetch('/api/voice-to-text', {
+            // Send to Supabase edge function instead of direct API endpoint
+            const response = await fetch('https://ahpmmgnkksrbpthniptg.supabase.co/functions/v1/voice-to-text', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
               },
               body: JSON.stringify({
                 audio: base64Audio,
-                language: this.language, // Pass the language
+                language: this.language,
               }),
             });
+            
+            if (!response.ok) {
+              console.error('Voice-to-text error:', await response.text());
+              return;
+            }
             
             const data = await response.json();
             if (data.text) {
