@@ -41,6 +41,33 @@ function Flow() {
   const toolbarTimeout = useRef<number>();
   const hoverIntervalRef = useRef<number>();
 
+  const handleButtonMouseEnter = () => {
+    clearTimeout(toolbarTimeout.current);
+    setIsToolbarVisible(true);
+  };
+
+  const handleButtonMouseLeave = (e: React.MouseEvent) => {
+    const toolbarArea = document.querySelector('.toolbar-nodes');
+    if (toolbarArea && !toolbarArea.contains(e.relatedTarget as Node)) {
+      toolbarTimeout.current = window.setTimeout(() => {
+        setIsToolbarVisible(false);
+      }, 300);
+    }
+  };
+
+  const handleToolbarMouseEnter = () => {
+    clearTimeout(toolbarTimeout.current);
+  };
+
+  const handleToolbarMouseLeave = (e: React.MouseEvent) => {
+    const button = document.querySelector('.toolbar-button');
+    if (button && !button.contains(e.relatedTarget as Node)) {
+      toolbarTimeout.current = window.setTimeout(() => {
+        setIsToolbarVisible(false);
+      }, 300);
+    }
+  };
+
   const showToolbar = () => {
     if (toolbarTimeout.current) {
       clearTimeout(toolbarTimeout.current);
@@ -232,13 +259,13 @@ function Flow() {
       <div className="fixed bottom-6 left-[12px] z-50">
         <button
           onClick={() => setIsToolbarVisible(!isToolbarVisible)}
-          onMouseEnter={showToolbar}
-          onMouseLeave={hideToolbar}
-          className="h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
+          onMouseEnter={handleButtonMouseEnter}
+          onMouseLeave={handleButtonMouseLeave}
+          className="toolbar-button h-14 w-14 flex items-center justify-center rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#9b87f5]/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl hover:border-[#9b87f5]/40"
         >
           <div className="relative w-6 h-6">
             <Plus 
-              className={`absolute inset-0 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform translate-y-0.5
+              className={`absolute inset-0 stroke-[#9b87f5] transition-all duration-500 transform translate-y-0.5
                 ${isToolbarVisible ? 
                   'rotate-[135deg] scale-110 hover:rotate-[145deg] opacity-0' : 
                   'hover:rotate-[15deg] hover:scale-110 opacity-100'
@@ -251,7 +278,7 @@ function Flow() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`absolute inset-0 w-6 h-6 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform
+              className={`absolute inset-0 w-6 h-6 stroke-[#9b87f5] transition-all duration-500 transform
                 ${isToolbarVisible ? 
                   'rotate-0 scale-110 opacity-100' : 
                   '-rotate-180 scale-90 opacity-0'
@@ -264,9 +291,11 @@ function Flow() {
         </button>
 
         <div 
-          className={`absolute bottom-0 left-0 space-x-6 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+          onMouseEnter={handleToolbarMouseEnter}
+          onMouseLeave={handleToolbarMouseLeave}
+          className={`toolbar-nodes absolute bottom-0 left-0 space-x-8 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
             ${isToolbarVisible ? 
-              'opacity-100 translate-x-20 scale-100' : 
+              'opacity-100 translate-x-24 scale-100' : 
               'opacity-0 -translate-x-8 scale-95 pointer-events-none'
             }
           `}
@@ -278,10 +307,10 @@ function Flow() {
             onDragEnd={() => setDraggedNodeType(null)} 
             className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
           >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
-              <MessageCircle className="h-5 w-5 text-blue-500" />
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#60a5fa]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(96,165,250,0.3)] hover:shadow-[0_0_20px_rgba(96,165,250,0.5)] transition-all duration-300">
+              <MessageCircle className="h-5 w-5 text-[#60a5fa]" />
             </span>
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Greeting</span>
+            <span className="text-xs font-medium text-[#60a5fa] drop-shadow-lg">Greeting</span>
           </div>
 
           <div 
@@ -291,10 +320,10 @@ function Flow() {
             onDragEnd={() => setDraggedNodeType(null)} 
             className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
           >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
-              <MessageCircle className="h-5 w-5 text-purple-500" />
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#c084fc]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(192,132,252,0.3)] hover:shadow-[0_0_20px_rgba(192,132,252,0.5)] transition-all duration-300">
+              <MessageCircle className="h-5 w-5 text-[#c084fc]" />
             </span>
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Speak</span>
+            <span className="text-xs font-medium text-[#c084fc] drop-shadow-lg">Speak</span>
           </div>
 
           <div 
@@ -304,10 +333,10 @@ function Flow() {
             onDragEnd={() => setDraggedNodeType(null)} 
             className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
           >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
-              <X className="h-5 w-5 text-rose-500" />
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#f87171]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(248,113,113,0.3)] hover:shadow-[0_0_20px_rgba(248,113,113,0.5)] transition-all duration-300">
+              <X className="h-5 w-5 text-[#f87171]" />
             </span>
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">End</span>
+            <span className="text-xs font-medium text-[#f87171] drop-shadow-lg">End</span>
           </div>
 
           <div
@@ -317,10 +346,10 @@ function Flow() {
             onDragEnd={() => setDraggedNodeType(null)}
             className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
           >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
-              <Network className="h-5 w-5 text-amber-500" />
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#fbbf24]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(251,191,36,0.3)] hover:shadow-[0_0_20px_rgba(251,191,36,0.5)] transition-all duration-300">
+              <Network className="h-5 w-5 text-[#fbbf24]" />
             </span>
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Trigger</span>
+            <span className="text-xs font-medium text-[#fbbf24] drop-shadow-lg">Trigger</span>
           </div>
 
           <div
@@ -330,10 +359,10 @@ function Flow() {
             onDragEnd={() => setDraggedNodeType(null)}
             className="inline-flex flex-col items-center gap-2 cursor-move transition-transform duration-200 hover:scale-105"
           >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg">
-              <PhoneForwarded className="h-5 w-5 text-emerald-500" />
+            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#10b981]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all duration-300">
+              <PhoneForwarded className="h-5 w-5 text-[#10b981]" />
             </span>
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Transfer Call</span>
+            <span className="text-xs font-medium text-[#10b981] drop-shadow-lg">Transfer Call</span>
           </div>
         </div>
       </div>
