@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -64,7 +65,7 @@ const AgentsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Agents</h1>
         </div>
@@ -75,7 +76,7 @@ const AgentsPage = () => {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Agents</h1>
         </div>
@@ -87,7 +88,7 @@ const AgentsPage = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Agents</h1>
         <Button onClick={() => setIsCreating(true)}>
@@ -97,10 +98,12 @@ const AgentsPage = () => {
       </div>
 
       {agents?.length ? (
-        <AgentsTable
-          agents={agents}
-          onDelete={handleDeleteAgent}
-        />
+        <div className="w-full overflow-hidden">
+          <AgentsTable
+            agents={agents}
+            onDelete={handleDeleteAgent}
+          />
+        </div>
       ) : (
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-4">No agents found</h2>

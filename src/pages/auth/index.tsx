@@ -69,11 +69,11 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background">
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      <Card className="w-[350px] backdrop-blur-sm bg-card/50">
+      <Card className="w-[400px] backdrop-blur-sm bg-card/50">
         <CardHeader>
           <CardTitle>{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
           <CardDescription>
