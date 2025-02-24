@@ -21,9 +21,9 @@ const queryClient = new QueryClient();
 
 // Layout with sidebar for regular dashboard pages
 const DashboardLayout = () => (
-  <div className="flex h-screen">
+  <div className="flex h-screen overflow-hidden">
     <AppSidebar />
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-x-hidden overflow-y-auto">
       <Outlet />
     </main>
   </div>
@@ -41,35 +41,33 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <SidebarProvider>
-          <div className="flex w-full min-h-screen">
-            <Router>
-              <Routes>
-                <Route path="/" element={<Navigate to="/auth" replace />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
-                
-                {/* Dashboard routes with sidebar */}
-                <Route element={<DashboardLayout />}>
-                  <Route path="/dashboard/agents" element={<AgentsPage />} />
-                  <Route path="/dashboard/leads" element={<LeadsPage />} />
-                  <Route path="/dashboard/settings" element={<SettingsPage />} />
-                  <Route path="/dashboard/profile" element={<ProfilePage />} />
-                </Route>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Navigate to="/auth" replace />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              
+              {/* Dashboard routes with sidebar */}
+              <Route element={<DashboardLayout />}>
+                <Route path="/dashboard/agents" element={<AgentsPage />} />
+                <Route path="/dashboard/leads" element={<LeadsPage />} />
+                <Route path="/dashboard/settings" element={<SettingsPage />} />
+                <Route path="/dashboard/profile" element={<ProfilePage />} />
+              </Route>
 
-                {/* Flow editor route without sidebar */}
-                <Route
-                  path="/dashboard/agents/flow/:id"
-                  element={
-                    <FlowLayout>
-                      <AgentFlowPage />
-                    </FlowLayout>
-                  }
-                />
-              </Routes>
-            </Router>
-          </div>
+              {/* Flow editor route without sidebar */}
+              <Route
+                path="/dashboard/agents/flow/:id"
+                element={
+                  <FlowLayout>
+                    <AgentFlowPage />
+                  </FlowLayout>
+                }
+              />
+            </Routes>
+          </Router>
+          <Toaster />
         </SidebarProvider>
-        <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
   );
