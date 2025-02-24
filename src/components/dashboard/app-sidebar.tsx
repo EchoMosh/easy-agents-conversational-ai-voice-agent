@@ -125,13 +125,40 @@ export function AppSidebar() {
   };
 
   const sidebarVariants = {
-    hidden: { x: -300, opacity: 0 },
-    visible: { x: 0, opacity: 1, transition: { duration: 0.5 } }
+    hidden: { 
+      x: -500,
+      opacity: 0,
+      rotate: -10,
+    },
+    visible: { 
+      x: 0,
+      opacity: 1,
+      rotate: 0,
+      transition: { 
+        type: "spring",
+        damping: 20,
+        stiffness: 100,
+        duration: 0.8
+      }
+    }
   };
 
   const itemVariants = {
-    hidden: { x: -20, opacity: 0 },
-    visible: { x: 0, opacity: 1 }
+    hidden: { 
+      x: -50,
+      opacity: 0,
+      scale: 0.3,
+    },
+    visible: { 
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 200,
+      }
+    }
   };
 
   const containerVariants = {
@@ -139,11 +166,51 @@ export function AppSidebar() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3
+        staggerChildren: 0.2,
+        delayChildren: 0.6
       }
     }
   };
+
+  const ParticleEffect = ({ children }: { children: React.ReactNode }) => (
+    <motion.div
+      className="relative"
+      initial="hidden"
+      animate="visible"
+      variants={itemVariants}
+    >
+      <div className="relative z-10">
+        {children}
+      </div>
+      <motion.div
+        className="absolute inset-0 bg-primary/5 rounded-md"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: [0, 0.2, 0] }}
+        transition={{
+          duration: 0.8,
+          ease: "easeOut",
+        }}
+      />
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-0 bg-primary/5 rounded-md"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{
+            opacity: [0, 0.1, 0],
+            scale: [0.8, 1.2, 1.4],
+            x: [0, (i - 2.5) * 10],
+            y: [0, (i - 2.5) * -10],
+          }}
+          transition={{
+            duration: 1,
+            ease: "easeOut",
+            delay: i * 0.1,
+          }}
+        />
+      ))}
+    </motion.div>
+  );
 
   return (
     <AnimatePresence>
@@ -153,16 +220,21 @@ export function AppSidebar() {
           animate="visible"
           exit="hidden"
           variants={sidebarVariants}
+          className="will-change-transform"
         >
           <Sidebar>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 1, duration: 0.5 }}
             >
               <SidebarHeader className="border-b p-4">
                 <div className="flex items-center gap-3">
-                  <div className="relative group">
+                  <motion.div 
+                    className="relative group"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Avatar>
                       <AvatarImage src={avatarUrl} alt={username} />
                       <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -176,10 +248,24 @@ export function AppSidebar() {
                     >
                       <Shuffle className="h-3 w-3" />
                     </Button>
-                  </div>
+                  </motion.div>
                   <div className="flex flex-col">
-                    <span className="font-semibold text-sm">{username}</span>
-                    <span className="text-xs text-muted-foreground">Welcome back!</span>
+                    <motion.span 
+                      className="font-semibold text-sm"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 1.2 }}
+                    >
+                      {username}
+                    </motion.span>
+                    <motion.span 
+                      className="text-xs text-muted-foreground"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 1.4 }}
+                    >
+                      Welcome back!
+                    </motion.span>
                   </div>
                 </div>
               </SidebarHeader>
@@ -195,7 +281,7 @@ export function AppSidebar() {
                   >
                     <SidebarMenu>
                       {mainMenuItems.map((item, index) => (
-                        <motion.div key={item.title} variants={itemVariants}>
+                        <ParticleEffect key={item.title}>
                           <SidebarMenuItem>
                             <SidebarMenuButton asChild>
                               <NavLink
@@ -208,12 +294,17 @@ export function AppSidebar() {
                                   }`
                                 }
                               >
-                                <item.icon className="h-4 w-4" />
+                                <motion.div
+                                  whileHover={{ scale: 1.2, rotate: 10 }}
+                                  whileTap={{ scale: 0.9 }}
+                                >
+                                  <item.icon className="h-4 w-4" />
+                                </motion.div>
                                 <span>{item.title}</span>
                               </NavLink>
                             </SidebarMenuButton>
                           </SidebarMenuItem>
-                        </motion.div>
+                        </ParticleEffect>
                       ))}
                     </SidebarMenu>
                   </motion.div>
@@ -229,7 +320,7 @@ export function AppSidebar() {
                   >
                     <SidebarMenu>
                       {bottomMenuItems.map((item) => (
-                        <motion.div key={item.title} variants={itemVariants}>
+                        <ParticleEffect key={item.title}>
                           <SidebarMenuItem>
                             <SidebarMenuButton asChild>
                               <NavLink
@@ -242,26 +333,36 @@ export function AppSidebar() {
                                   }`
                                 }
                               >
-                                <item.icon className="h-4 w-4" />
+                                <motion.div
+                                  whileHover={{ scale: 1.2, rotate: 10 }}
+                                  whileTap={{ scale: 0.9 }}
+                                >
+                                  <item.icon className="h-4 w-4" />
+                                </motion.div>
                                 <span>{item.title}</span>
                               </NavLink>
                             </SidebarMenuButton>
                           </SidebarMenuItem>
-                        </motion.div>
+                        </ParticleEffect>
                       ))}
-                      <motion.div variants={itemVariants}>
+                      <ParticleEffect>
                         <SidebarMenuItem>
                           <SidebarMenuButton>
                             <button
                               onClick={handleLogout}
                               className="flex w-full items-center gap-3 px-3 py-2 rounded-md transition-colors text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
                             >
-                              <LogOut className="h-4 w-4" />
+                              <motion.div
+                                whileHover={{ scale: 1.2, rotate: 10 }}
+                                whileTap={{ scale: 0.9 }}
+                              >
+                                <LogOut className="h-4 w-4" />
+                              </motion.div>
                               <span>Log Out</span>
                             </button>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
-                      </motion.div>
+                      </ParticleEffect>
                     </SidebarMenu>
                   </motion.div>
                 </SidebarGroupContent>
