@@ -217,88 +217,104 @@ function Flow() {
       </ReactFlow>
 
       <div 
-        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center"
+        className="fixed inset-x-0 bottom-0 z-50 flex flex-col items-center"
         onMouseEnter={showToolbar}
         onMouseLeave={hideToolbar}
       >
-        <div className={`transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isToolbarVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8 pointer-events-none'}`}>
-          <div className="flex items-center gap-4 p-3 mb-3 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl">
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div draggable onDragStart={e => handleDragStart(e, 'greetingNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
-                    <span className="text-blue-500 p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/50 transition-transform">
-                      <MessageCircle className="h-4 w-4" />
-                    </span>
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Greeting</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
-                  Initial message to start the conversation
-                </TooltipContent>
-              </Tooltip>
+        <div className={`w-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isToolbarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
+          <div className="flex items-center justify-center gap-4 p-3 mb-3">
+            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl">
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div draggable onDragStart={e => handleDragStart(e, 'greetingNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
+                      <span className="text-blue-500 p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/50 transition-transform">
+                        <MessageCircle className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Greeting</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
+                    Initial message to start the conversation
+                  </TooltipContent>
+                </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div draggable onDragStart={e => handleDragStart(e, 'speakNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
-                    <span className="text-purple-500 p-2 rounded-lg bg-purple-50/50 dark:bg-purple-950/50 transition-transform">
-                      <MessageCircle className="h-4 w-4" />
-                    </span>
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Speak</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
-                  Response message to user input
-                </TooltipContent>
-              </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div draggable onDragStart={e => handleDragStart(e, 'speakNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
+                      <span className="text-purple-500 p-2 rounded-lg bg-purple-50/50 dark:bg-purple-950/50 transition-transform">
+                        <MessageCircle className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Speak</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
+                    Response message to user input
+                  </TooltipContent>
+                </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div draggable onDragStart={e => handleDragStart(e, 'endNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
-                    <span className="text-rose-500 p-2 rounded-lg bg-rose-50/50 dark:bg-rose-950/50 transition-transform">
-                      <X className="h-4 w-4" />
-                    </span>
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">End</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
-                  End of conversation
-                </TooltipContent>
-              </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div draggable onDragStart={e => handleDragStart(e, 'endNode')} onDrag={handleDrag} onDragEnd={() => setDraggedNodeType(null)} className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group">
+                      <span className="text-rose-500 p-2 rounded-lg bg-rose-50/50 dark:bg-rose-950/50 transition-transform">
+                        <X className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">End</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
+                    End of conversation
+                  </TooltipContent>
+                </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    draggable
-                    onDragStart={e => handleDragStart(e, 'triggerNode')}
-                    onDrag={handleDrag}
-                    onDragEnd={() => setDraggedNodeType(null)}
-                    className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group"
-                  >
-                    <span className="text-amber-500 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/50 transition-transform">
-                      <Network className="h-4 w-4" />
-                    </span>
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Trigger</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
-                  Platform integrations trigger
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      draggable
+                      onDragStart={e => handleDragStart(e, 'triggerNode')}
+                      onDrag={handleDrag}
+                      onDragEnd={() => setDraggedNodeType(null)}
+                      className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg cursor-move hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-300 hover:scale-105 group"
+                    >
+                      <span className="text-amber-500 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/50 transition-transform">
+                        <Network className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Trigger</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-xl">
+                    Platform integrations trigger
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
 
-        <div className="relative">
-          <div className="absolute inset-0 -m-3 bg-blue-500/20 dark:bg-blue-400/20 rounded-full blur-xl animate-pulse transition-opacity duration-700 ease-in-out opacity-0 group-hover:opacity-100" />
-          <div className="absolute inset-0 -m-2 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-full blur-md animate-[spin_3s_linear_infinite] transition-opacity duration-700 ease-in-out opacity-0 group-hover:opacity-100" />
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`group relative w-10 h-10 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 before:absolute before:inset-0 before:-z-10 before:bg-gradient-to-r before:from-blue-500/25 before:via-purple-500/25 before:to-pink-500/25 before:rounded-full before:blur-xl before:opacity-0 before:transition-opacity before:duration-700 hover:before:opacity-100 ${isToolbarVisible ? 'rotate-45 scale-110 before:opacity-100' : ''}`}
-          >
-            <Plus className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          </Button>
+        <div className="relative w-full h-24 overflow-hidden">
+          <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-blue-500/10 to-transparent" />
+          
+          <div className="absolute inset-x-0 bottom-0 h-full">
+            <div className="absolute inset-0 animate-[wave_8s_ease-in-out_infinite] opacity-50">
+              <div className="absolute inset-x-0 top-1/2 h-[200px] bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-2xl transform -translate-y-1/2" />
+            </div>
+            <div className="absolute inset-0 animate-[wave_12s_ease-in-out_infinite] opacity-30 delay-100">
+              <div className="absolute inset-x-0 top-1/2 h-[200px] bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 blur-2xl transform -translate-y-1/2" />
+            </div>
+            <div className="absolute inset-0 animate-[wave_10s_ease-in-out_infinite] opacity-40 delay-200">
+              <div className="absolute inset-x-0 top-1/2 h-[200px] bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-pink-500/20 blur-2xl transform -translate-y-1/2" />
+            </div>
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 h-full bg-white/10 dark:bg-gray-900/10 backdrop-blur-md" />
+
+          <div className={`absolute inset-x-0 bottom-0 h-full transition-opacity duration-500 ${isToolbarVisible ? 'opacity-0' : 'opacity-100'}`}>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-gray-400/50 dark:text-gray-500/50 animate-pulse">
+                Hover to add nodes
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
