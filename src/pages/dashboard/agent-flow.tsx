@@ -11,6 +11,7 @@ import {
   useEdgesState,
   addEdge,
   Connection,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Agent } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 const nodeTypes = {
   speakNode: SpeakNode,
@@ -29,13 +31,13 @@ const initialNodes = [
   {
     id: '1',
     type: 'greetingNode',
-    position: { x: 250, y: 100 },
+    position: { x: 100, y: 100 },
     data: { greeting: 'Welcome! How can I assist you today?' },
   },
   {
     id: '2',
     type: 'speakNode',
-    position: { x: 250, y: 250 },
+    position: { x: 400, y: 100 },
     data: { message: 'I understand your request. Let me help you with that.' },
   },
 ];
@@ -50,6 +52,7 @@ export default function AgentFlowPage() {
   const { toast } = useToast();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { project } = useReactFlow();
 
   const { data: agent, isLoading, error } = useQuery({
     queryKey: ['agent', id],
@@ -88,21 +91,26 @@ export default function AgentFlowPage() {
     const type = event.dataTransfer.getData('application/reactflow');
     if (!type) return;
 
-    const position = {
-      x: event.clientX - 250,
-      y: event.clientY - 100,
-    };
+    // Get the current bounds of the ReactFlow wrapper element
+    const reactFlowBounds = document.querySelector('.react-flow')?.getBoundingClientRect();
+    
+    if (reactFlowBounds) {
+      const position = project({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      });
 
-    const newNode = {
-      id: `${type}-${Math.random()}`,
-      type,
-      position,
-      data: type === 'speakNode' 
-        ? { message: 'Enter your message here' }
-        : { greeting: 'Enter your greeting here' },
-    };
+      const newNode = {
+        id: `${type}-${Math.random()}`,
+        type,
+        position,
+        data: type === 'speakNode' 
+          ? { message: 'Enter your message here' }
+          : { greeting: 'Enter your greeting here' },
+      } as const;
 
-    setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => [...nds, newNode]);
+    }
   };
 
   if (isLoading) {
@@ -147,7 +155,7 @@ export default function AgentFlowPage() {
                 event.dataTransfer.setData('application/reactflow', 'greetingNode');
                 event.dataTransfer.effectAllowed = 'move';
               }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded cursor-move hover:bg-blue-100 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded cursor-move hover:bg-blue-100 transition-colors dark:bg-blue-950 dark:hover:bg-blue-900"
             >
               <span className="text-blue-500">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -160,7 +168,7 @@ export default function AgentFlowPage() {
                 event.dataTransfer.setData('application/reactflow', 'speakNode');
                 event.dataTransfer.effectAllowed = 'move';
               }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded cursor-move hover:bg-purple-100 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded cursor-move hover:bg-purple-100 transition-colors dark:bg-purple-950 dark:hover:bg-purple-900"
             >
               <span className="text-purple-500">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6v12"/><path d="M8 10v4"/><path d="M16 10v4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
@@ -168,6 +176,7 @@ export default function AgentFlowPage() {
               Speak
             </div>
           </div>
+          <ThemeToggle />
           <Button variant="outline">Save Flow</Button>
           <Button>Deploy Agent</Button>
         </div>
@@ -185,6 +194,7 @@ export default function AgentFlowPage() {
           onDrop={onDrop}
           nodeTypes={nodeTypes}
           fitView
+          defaultEdgeOptions={{ animated: true }}
         >
           <Background />
           <Controls />
