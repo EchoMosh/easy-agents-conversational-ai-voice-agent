@@ -52,6 +52,14 @@ const AgentsPage = () => {
   });
 
   const handleDeleteAgent = async (agentId: string) => {
+    // Optimistically update the UI
+    const previousAgents = queryClient.getQueryData(['agents']) as Agent[] | undefined;
+    
+    // Optimistically update the cache
+    queryClient.setQueryData(['agents'], (old: Agent[] | undefined) => 
+      (old || []).filter(agent => agent.id !== agentId)
+    );
+
     try {
       const { error } = await supabase
         .from('agents')
@@ -60,32 +68,29 @@ const AgentsPage = () => {
 
       if (error) throw error;
 
-      // Optimistically update the UI by removing the deleted agent
-      queryClient.setQueryData(['agents'], (oldData: Agent[] | undefined) => {
-        if (!oldData) return [];
-        return oldData.filter(agent => agent.id !== agentId);
-      });
-
-      // Invalidate and refetch to ensure data consistency
-      await queryClient.invalidateQueries({ queryKey: ['agents'] });
-
+      // Only show success toast after successful deletion
       toast({
         title: "Success",
         description: "Agent deleted successfully",
       });
+
+      // Quietly refetch in the background to ensure sync
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
     } catch (error) {
+      // On error, revert to previous state
+      queryClient.setQueryData(['agents'], previousAgents);
+      
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to delete agent",
       });
-      // Refetch on error to ensure UI is in sync
-      queryClient.invalidateQueries({ queryKey: ['agents'] });
     }
   };
 
   const handleCreateSuccess = () => {
     setIsCreating(false);
+    // Quietly invalidate in background
     queryClient.invalidateQueries({ queryKey: ['agents'] });
     toast({
       title: "Success",
