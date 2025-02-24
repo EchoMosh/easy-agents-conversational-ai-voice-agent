@@ -33,6 +33,24 @@ const AuthPage = () => {
 
     try {
       if (isSignUp) {
+        // First, check if the user exists
+        const { data: existingUser, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (!signInError) {
+          toast({
+            variant: "destructive",
+            title: "Account exists",
+            description: "This email is already registered. Please sign in instead.",
+          });
+          navigate('/auth?mode=login', { replace: true });
+          setIsLoading(false);
+          return;
+        }
+
+        // If we get here, the user doesn't exist, so proceed with signup
         const { data: { user }, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -75,11 +93,17 @@ const AuthPage = () => {
         }
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message === "User already registered" 
+          ? "This email is already registered. Please sign in instead."
+          : error.message,
       });
+      if (error.message === "User already registered") {
+        navigate('/auth?mode=login', { replace: true });
+      }
     } finally {
       setIsLoading(false);
     }
