@@ -46,7 +46,7 @@ export type FlowNode = {
   id: string;
   type: NodeType;
   position: { x: number; y: number };
-  data: NodeData;
+  data: Record<string, unknown>;
 };
 
 export type FlowEdge = {

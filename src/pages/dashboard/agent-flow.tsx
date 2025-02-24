@@ -95,25 +95,30 @@ export default function AgentFlowPage() {
   const saveFlowChanges = useCallback(async (nodes: Node[], edges: Edge[]) => {
     if (!agent) return;
 
+    const flowData = {
+      nodes: nodes.map(node => ({
+        id: node.id,
+        type: node.type as NodeType,
+        position: {
+          x: node.position.x,
+          y: node.position.y
+        },
+        data: node.data as Record<string, unknown>
+      })) as FlowNode[],
+      edges: edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        sourceHandle: edge.sourceHandle,
+        targetHandle: edge.targetHandle
+      })) as FlowEdge[]
+    };
+
     const { error } = await supabase
       .from('agents')
       .update({
-        flow: {
-          nodes: nodes.map(node => ({
-            id: node.id,
-            type: node.type,
-            position: node.position,
-            data: node.data
-          })),
-          edges: edges.map(edge => ({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-            sourceHandle: edge.sourceHandle,
-            targetHandle: edge.targetHandle
-          }))
-        }
-      })
+        flow: flowData
+      } as { flow: Json })
       .eq('id', id);
 
     if (error) {
