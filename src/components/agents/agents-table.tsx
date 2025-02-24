@@ -27,7 +27,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="relative">
+    <div className="w-full">
       <Table>
         <TableHeader>
           <TableRow>
