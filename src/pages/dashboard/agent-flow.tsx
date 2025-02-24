@@ -18,6 +18,8 @@ export default function AgentFlowPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   
   const {
     data: agent,
@@ -40,6 +42,13 @@ export default function AgentFlowPage() {
         });
         throw error;
       }
+
+      // Initialize nodes and edges when agent data is loaded
+      if (data.flow) {
+        setNodes(data.flow.nodes);
+        setEdges(data.flow.edges);
+      }
+      
       return data as Agent;
     }
   });
@@ -93,11 +102,11 @@ export default function AgentFlowPage() {
     });
   };
 
-  const saveFlowChanges = useCallback(async (nodes: Node[], edges: Edge[]) => {
+  const saveFlowChanges = useCallback(async (updatedNodes: Node[], updatedEdges: Edge[]) => {
     if (!agent) return;
 
     const flowData = {
-      nodes: nodes.map(node => ({
+      nodes: updatedNodes.map(node => ({
         id: node.id,
         type: node.type as NodeType,
         position: {
@@ -106,7 +115,7 @@ export default function AgentFlowPage() {
         },
         data: node.data as Record<string, unknown>
       })) as FlowNode[],
-      edges: edges.map(edge => ({
+      edges: updatedEdges.map(edge => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
@@ -128,16 +137,40 @@ export default function AgentFlowPage() {
         title: "Error",
         description: "Failed to save flow changes"
       });
+      return;
     }
+
+    // Update local state
+    setNodes(updatedNodes);
+    setEdges(updatedEdges);
   }, [agent, id, toast]);
 
-  const handleNodesChange = useCallback((nodes: Node[]) => {
-    saveFlowChanges(nodes, agent?.flow?.edges || []);
-  }, [agent?.flow?.edges, saveFlowChanges]);
+  const handleNodesChange = useCallback((changes: Node[]) => {
+    setNodes(changes);
+    saveFlowChanges(changes, edges);
+  }, [edges, saveFlowChanges]);
 
-  const handleEdgesChange = useCallback((edges: Edge[]) => {
-    saveFlowChanges(agent?.flow?.nodes || [], edges);
-  }, [agent?.flow?.nodes, saveFlowChanges]);
+  const handleEdgesChange = useCallback((changes: Edge[]) => {
+    setEdges(changes);
+    saveFlowChanges(nodes, changes);
+  }, [nodes, saveFlowChanges]);
+
+  useEffect(() => {
+    // Listen for node updates from other components
+    const handleNodeUpdate = (event: CustomEvent) => {
+      const { id: nodeId, data } = event.detail;
+      setNodes(currentNodes => 
+        currentNodes.map(node => 
+          node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+        )
+      );
+    };
+
+    window.addEventListener('nodeupdate', handleNodeUpdate as EventListener);
+    return () => {
+      window.removeEventListener('nodeupdate', handleNodeUpdate as EventListener);
+    };
+  }, []);
 
   if (isLoading) return <div className="flex items-center justify-center h-screen"><p className="text-lg">Loading agent...</p></div>;
   if (error || !agent) return <div className="flex items-center justify-center h-screen"><p className="text-lg text-destructive">Failed to load agent</p></div>;
@@ -170,8 +203,8 @@ export default function AgentFlowPage() {
         <div className="flex-1 relative">
           <ReactFlowProvider>
             <Flow
-              initialNodes={agent.flow?.nodes || []}
-              initialEdges={agent.flow?.edges || []}
+              initialNodes={nodes}
+              initialEdges={edges}
               onNodesChange={handleNodesChange}
               onEdgesChange={handleEdgesChange}
             />
