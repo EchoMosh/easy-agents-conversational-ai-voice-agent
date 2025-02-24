@@ -1,7 +1,7 @@
 
+import React, { useState, useEffect } from "react";
 import { MoreVertical, Pencil, Trash, CheckSquare, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -41,7 +41,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   // Reset selections when agents prop changes
-  React.useEffect(() => {
+  useEffect(() => {
     setSelectedAgents([]);
     setAgentToDelete(null);
     setShowBulkDeleteDialog(false);
