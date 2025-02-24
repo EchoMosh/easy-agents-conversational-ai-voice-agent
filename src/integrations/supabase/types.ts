@@ -12,20 +12,35 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          business_type: string | null
           created_at: string
+          employee_count: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
+          onboarding_completed: boolean | null
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
+          business_type?: string | null
           created_at?: string
+          employee_count?: string | null
+          first_name?: string | null
           id: string
+          last_name?: string | null
+          onboarding_completed?: boolean | null
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
+          business_type?: string | null
           created_at?: string
+          employee_count?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
+          onboarding_completed?: boolean | null
           username?: string | null
         }
         Relationships: []
