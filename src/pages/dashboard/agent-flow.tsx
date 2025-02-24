@@ -66,6 +66,10 @@ function Flow() {
     event.dataTransfer.effectAllowed = 'move';
     setDraggedNodeType(type);
     setDragPosition({ x: event.clientX, y: event.clientY });
+    
+    const dragImg = new Image();
+    dragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    event.dataTransfer.setDragImage(dragImg, 0, 0);
   };
 
   const handleDrag = (event: React.DragEvent) => {
@@ -219,12 +223,12 @@ function Flow() {
           animated: true,
           style: { stroke: '#94a3b8', strokeWidth: 1.5 },
         }}
-        className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950"
+        className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 to-gray-950"
       >
         <Background className="opacity-40" />
-        <Controls className="!bg-white/60 dark:!bg-gray-950/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden [&>button]:border-0 [&>button]:bg-transparent [&>button:hover]:bg-black/5 dark:[&>button:hover]:bg-white/5" />
+        <Controls className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden [&>button]:border-0 [&>button]:bg-transparent [&>button:hover]:bg-black/5 dark:[&>button:hover]:bg-white/5" />
         <MiniMap
-          className="!bg-white/60 dark:!bg-gray-950/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
+          className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
           nodeColor={node => {
             switch (node.type) {
               case 'speakNode':
@@ -270,7 +274,7 @@ function Flow() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top"
-                    sideOffset={-85}
+                    sideOffset={-95}
                     align="center"
                     className="bg-white/80 dark:bg-gray-950/80"
                   >
@@ -298,7 +302,7 @@ function Flow() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top"
-                    sideOffset={-85}
+                    sideOffset={-95}
                     align="center"
                     className="bg-white/80 dark:bg-gray-950/80"
                   >
@@ -326,7 +330,7 @@ function Flow() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top"
-                    sideOffset={-85}
+                    sideOffset={-95}
                     align="center"
                     className="bg-white/80 dark:bg-gray-950/80"
                   >
@@ -354,7 +358,7 @@ function Flow() {
                   </TooltipTrigger>
                   <TooltipContent 
                     side="top"
-                    sideOffset={-85}
+                    sideOffset={-95}
                     align="center"
                     className="bg-white/80 dark:bg-gray-950/80"
                   >
@@ -375,7 +379,7 @@ function Flow() {
         >
           <div className="relative w-6 h-6">
             <Plus 
-              className={`absolute inset-0 text-gray-600 dark:text-gray-300 transition-all duration-500 transform 
+              className={`absolute inset-0 text-gray-600 dark:text-gray-300 transition-all duration-500 transform translate-y-0.5
                 ${isToolbarVisible ? 
                   'rotate-[135deg] scale-110 hover:rotate-[145deg]' : 
                   'hover:rotate-[15deg] hover:scale-110'
