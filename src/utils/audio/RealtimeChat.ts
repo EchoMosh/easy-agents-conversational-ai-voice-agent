@@ -13,10 +13,11 @@ export class RealtimeChat {
 
   private getSupportedMimeType(): string {
     const types = [
-      'audio/webm',
-      'audio/webm;codecs=opus',
-      'audio/ogg;codecs=opus',
-      'audio/mp4'
+      'audio/mp4',
+      'audio/mpeg',
+      'audio/ogg',
+      'audio/wav',
+      'audio/webm'
     ];
     
     for (const type of types) {
@@ -60,7 +61,7 @@ export class RealtimeChat {
           reader.onloadend = async () => {
             const base64Audio = (reader.result as string).split(',')[1];
             
-            // Send to Supabase edge function instead of direct API endpoint
+            // Send to Supabase edge function
             const response = await fetch('https://ahpmmgnkksrbpthniptg.supabase.co/functions/v1/voice-to-text', {
               method: 'POST',
               headers: {
