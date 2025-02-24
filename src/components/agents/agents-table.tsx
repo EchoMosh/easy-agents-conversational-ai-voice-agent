@@ -27,31 +27,27 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full">
+    <div className="w-full overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="min-w-[200px]">Name</TableHead>
-            <TableHead className="min-w-[200px]">Role</TableHead>
-            <TableHead className="min-w-[120px]">Status</TableHead>
-            <TableHead className="min-w-[150px]">Created</TableHead>
-            <TableHead className="w-[100px] text-right">Actions</TableHead>
+            <TableHead className="w-[200px] whitespace-nowrap">Name</TableHead>
+            <TableHead className="w-[200px] whitespace-nowrap">Role</TableHead>
+            <TableHead className="w-[120px] whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-[150px] whitespace-nowrap">Created</TableHead>
+            <TableHead className="w-[100px] text-right whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {agents.map((agent) => (
             <TableRow key={agent.id}>
-              <TableCell className="font-medium">
-                <div className="truncate max-w-[200px]" title={agent.name}>
-                  {agent.name}
-                </div>
+              <TableCell className="font-medium whitespace-nowrap">
+                {agent.name}
               </TableCell>
-              <TableCell>
-                <div className="truncate max-w-[200px] capitalize" title={agent.role.replace('_', ' ')}>
-                  {agent.role.replace('_', ' ')}
-                </div>
+              <TableCell className="capitalize whitespace-nowrap">
+                {agent.role.replace('_', ' ')}
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-nowrap">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   agent.is_active 
                     ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
@@ -60,10 +56,10 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                   {agent.is_active ? 'Active' : 'Inactive'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-nowrap">
                 {new Date(agent.created_at).toLocaleDateString()}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right whitespace-nowrap">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0">
