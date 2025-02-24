@@ -31,19 +31,19 @@ export function TemplateStep({
         <p className="text-muted-foreground">Start from scratch or use a pre-built template</p>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <Card 
-          className={`cursor-pointer transition-all ${
+          className={`cursor-pointer transition-all h-[140px] flex flex-col justify-center ${
             selectedTemplate === '' ? 'ring-2 ring-primary' : 'hover:border-primary'
           }`}
           onClick={() => onTemplateSelect('', 'virtual_assistant')}
         >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="p-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Wand2 className="h-5 w-5" />
               Start from Scratch
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Create a custom agent with your own flow
             </CardDescription>
           </CardHeader>
@@ -52,14 +52,14 @@ export function TemplateStep({
         {AGENT_TEMPLATES.map((template) => (
           <Card 
             key={template.id}
-            className={`cursor-pointer transition-all ${
+            className={`cursor-pointer transition-all h-[140px] flex flex-col justify-center ${
               selectedTemplate === template.id ? 'ring-2 ring-primary' : 'hover:border-primary'
             }`}
             onClick={() => onTemplateSelect(template.id, template.role)}
           >
-            <CardHeader>
-              <CardTitle>{template.name}</CardTitle>
-              <CardDescription>{template.description}</CardDescription>
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg">{template.name}</CardTitle>
+              <CardDescription className="text-sm">{template.description}</CardDescription>
             </CardHeader>
           </Card>
         ))}
