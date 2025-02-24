@@ -44,20 +44,6 @@ function Flow() {
   const [draggedNodeType, setDraggedNodeType] = useDrag();
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      setDragPosition({ x: event.clientX, y: event.clientY });
-    };
-
-    if (draggedNodeType) {
-      window.addEventListener('mousemove', handleMouseMove);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [draggedNodeType]);
-
   const onConnect = useCallback((connection: Connection) => {
     setEdges(eds => addEdge(connection, eds));
   }, []);
@@ -66,6 +52,17 @@ function Flow() {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
+
+  const handleDragStart = (event: React.DragEvent, type: 'greetingNode' | 'speakNode') => {
+    event.dataTransfer.setData('application/reactflow', type);
+    event.dataTransfer.effectAllowed = 'move';
+    setDraggedNodeType(type);
+    setDragPosition({ x: event.clientX, y: event.clientY });
+  };
+
+  const handleDrag = (event: React.DragEvent) => {
+    setDragPosition({ x: event.clientX, y: event.clientY });
+  };
 
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -181,11 +178,8 @@ function Flow() {
             <TooltipTrigger asChild>
               <div
                 draggable
-                onDragStart={(event) => {
-                  event.dataTransfer.setData('application/reactflow', 'greetingNode');
-                  event.dataTransfer.effectAllowed = 'move';
-                  setDraggedNodeType('greetingNode');
-                }}
+                onDragStart={(e) => handleDragStart(e, 'greetingNode')}
+                onDrag={handleDrag}
                 onDragEnd={() => setDraggedNodeType(null)}
                 className="flex flex-col items-center gap-2 p-2 rounded-lg cursor-move hover:bg-accent transition-all duration-200 hover:scale-110 group"
               >
@@ -204,11 +198,8 @@ function Flow() {
             <TooltipTrigger asChild>
               <div
                 draggable
-                onDragStart={(event) => {
-                  event.dataTransfer.setData('application/reactflow', 'speakNode');
-                  event.dataTransfer.effectAllowed = 'move';
-                  setDraggedNodeType('speakNode');
-                }}
+                onDragStart={(e) => handleDragStart(e, 'speakNode')}
+                onDrag={handleDrag}
                 onDragEnd={() => setDraggedNodeType(null)}
                 className="flex flex-col items-center gap-2 p-2 rounded-lg cursor-move hover:bg-accent transition-all duration-200 hover:scale-110 group"
               >
