@@ -42,6 +42,21 @@ function Flow() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const [draggedNodeType, setDraggedNodeType] = useDrag();
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      setDragPosition({ x: event.clientX, y: event.clientY });
+    };
+
+    if (draggedNodeType) {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [draggedNodeType]);
 
   const onConnect = useCallback((connection: Connection) => {
     setEdges(eds => addEdge(connection, eds));
@@ -214,9 +229,9 @@ function Flow() {
         <div 
           className="fixed pointer-events-none bg-background/80 backdrop-blur-sm border rounded-lg p-4 shadow-lg"
           style={{ 
-            left: 0,
-            top: 0,
-            transform: `translate(${window.event?.clientX ?? 0}px, ${window.event?.clientY ?? 0}px)`,
+            left: dragPosition.x,
+            top: dragPosition.y,
+            transform: 'translate(-50%, -50%)',
             minWidth: '200px',
             zIndex: 9999,
           }}
