@@ -4,7 +4,6 @@ export type Agent = {
   name: string;
   role: 'receptionist' | 'sales_agent' | 'customer_support' | 'technical_advisor' | 'appointment_scheduler' | 'product_specialist' | 'virtual_assistant';
   voice_id: string | null;
-  interaction_type: string[];
   is_active: boolean;
   created_at: string;
 };

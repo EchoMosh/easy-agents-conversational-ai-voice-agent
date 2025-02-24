@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -101,7 +100,6 @@ const AgentsPage = () => {
         <AgentsTable
           agents={agents}
           onDelete={handleDeleteAgent}
-          onEdit={(id) => console.log('Edit', id)}
         />
       ) : (
         <div className="text-center py-12">

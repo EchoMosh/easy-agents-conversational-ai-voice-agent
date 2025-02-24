@@ -1,5 +1,6 @@
 
 import { MoreVertical, Pencil, Trash } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -20,10 +21,11 @@ import { Agent } from "@/types/agent";
 interface AgentsTableProps {
   agents: Agent[];
   onDelete: (id: string) => void;
-  onEdit: (id: string) => void;
 }
 
-export function AgentsTable({ agents, onDelete, onEdit }: AgentsTableProps) {
+export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -31,7 +33,6 @@ export function AgentsTable({ agents, onDelete, onEdit }: AgentsTableProps) {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Role</TableHead>
-            <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Created</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -43,16 +44,6 @@ export function AgentsTable({ agents, onDelete, onEdit }: AgentsTableProps) {
               <TableCell className="font-medium">{agent.name}</TableCell>
               <TableCell className="capitalize">
                 {agent.role.replace('_', ' ')}
-              </TableCell>
-              <TableCell>
-                {agent.interaction_type.map((type) => (
-                  <span
-                    key={type}
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-1"
-                  >
-                    {type}
-                  </span>
-                ))}
               </TableCell>
               <TableCell>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -75,9 +66,9 @@ export function AgentsTable({ agents, onDelete, onEdit }: AgentsTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(agent.id)}>
+                    <DropdownMenuItem onClick={() => navigate(`/dashboard/agents/${agent.id}/flow`)}>
                       <Pencil className="mr-2 h-4 w-4" />
-                      Edit
+                      Edit Flow
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onDelete(agent.id)}

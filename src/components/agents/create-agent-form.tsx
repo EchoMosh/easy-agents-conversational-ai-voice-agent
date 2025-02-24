@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/hooks/use-toast";
 import { Agent, AGENT_ROLES } from "@/types/agent";
 
@@ -25,16 +24,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [newAgent, setNewAgent] = useState({
     name: '',
     role: 'virtual_assistant' as Agent['role'],
-    interaction_type: ['inbound'] as string[],
   });
 
-  const handleInteractionTypeChange = (types: string[]) => {
-    if (types.length === 0) return;
-    setNewAgent(prev => ({ ...prev, interaction_type: types }));
-  };
-
   const handleCreateAgent = async () => {
-    if (!newAgent.name || !newAgent.role || !newAgent.interaction_type.length) {
+    if (!newAgent.name || !newAgent.role) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -59,7 +52,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       .insert({
         name: newAgent.name,
         role: newAgent.role,
-        interaction_type: newAgent.interaction_type,
         user_id: session.user.id,
       });
 
@@ -112,23 +104,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             ))}
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Interaction Type</Label>
-        <ToggleGroup 
-          type="multiple" 
-          value={newAgent.interaction_type}
-          onValueChange={handleInteractionTypeChange}
-          className="justify-start"
-        >
-          <ToggleGroupItem value="inbound" aria-label="Toggle inbound">
-            Inbound
-          </ToggleGroupItem>
-          <ToggleGroupItem value="outbound" aria-label="Toggle outbound">
-            Outbound
-          </ToggleGroupItem>
-        </ToggleGroup>
       </div>
 
       <Button className="w-full" onClick={handleCreateAgent}>
