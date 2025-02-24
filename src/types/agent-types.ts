@@ -1,4 +1,3 @@
-
 import { Json } from '@/integrations/supabase/types';
 
 export type Agent = {
@@ -11,6 +10,7 @@ export type Agent = {
   flow?: FlowData;
   user_id: string;
   interaction_type: string[];
+  objective?: 'live_transfer' | 'answer_calls';
 };
 
 export type NodeData = {

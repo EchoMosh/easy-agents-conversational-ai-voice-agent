@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import { Agent, AGENT_TEMPLATES } from "@/types/agent";
 import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
 import { TemplateStep } from "./form-steps/template-step";
+import { ObjectiveStep } from "./form-steps/objective-step";
 import { TriggerStep } from "./form-steps/trigger-step";
 
 interface CreateAgentFormProps {
@@ -13,62 +15,87 @@ interface CreateAgentFormProps {
   onCancel: () => void;
 }
 
-const getDefaultFlow = (platform?: string, action?: string) => ({
-  nodes: [
-    {
-      id: 'trigger-1',
-      type: 'triggerNode',
-      position: { x: 100, y: 100 },
-      data: {
-        platform,
-        action
+const getDefaultFlow = (platform?: string, action?: string, objective?: string) => {
+  const baseFlow = {
+    nodes: [
+      {
+        id: 'trigger-1',
+        type: 'triggerNode',
+        position: { x: 100, y: 100 },
+        data: {
+          platform,
+          action
+        }
+      },
+      {
+        id: 'greeting-1',
+        type: 'greetingNode',
+        position: { x: 500, y: 100 },
+        data: {
+          greeting: "Hello! How can I help you today?",
+          outcomes: ["I need help with a product", "I have a question"]
+        }
+      },
+      {
+        id: 'speak-1',
+        type: 'speakNode',
+        position: { x: 900, y: 100 },
+        data: {
+          message: "I'd be happy to assist you. Please let me know what you need help with.",
+          outcomes: ["Thanks, that's all", "I have another question"]
+        }
       }
-    },
-    {
-      id: 'greeting-1',
-      type: 'greetingNode',
-      position: { x: 500, y: 100 },
-      data: {
-        greeting: "Hello! How can I help you today?",
-        outcomes: ["I need help with a product", "I have a question"]
+    ],
+    edges: [
+      {
+        id: 'trigger-to-greeting',
+        source: 'trigger-1',
+        target: 'greeting-1'
+      },
+      {
+        id: 'greeting-to-speak',
+        source: 'greeting-1',
+        target: 'speak-1',
+        sourceHandle: 'outcome-0'
       }
-    },
-    {
-      id: 'speak-1',
-      type: 'speakNode',
-      position: { x: 900, y: 100 },
+    ]
+  };
+
+  if (objective === 'live_transfer') {
+    // Add transfer node
+    baseFlow.nodes.push({
+      id: 'transfer-1',
+      type: 'transferNode',
+      position: { x: 1300, y: 100 },
       data: {
-        message: "I'd be happy to assist you. Please let me know what you need help with.",
-        outcomes: ["Thanks, that's all", "I have another question"]
+        message: "I'll transfer you to an available agent now.",
+        contacts: []
       }
-    },
-    {
+    });
+    baseFlow.edges.push({
+      id: 'speak-to-transfer',
+      source: 'speak-1',
+      target: 'transfer-1',
+      sourceHandle: 'outcome-0'
+    });
+  } else {
+    // Add end node
+    baseFlow.nodes.push({
       id: 'end-1',
       type: 'endNode',
       position: { x: 1300, y: 100 },
       data: {}
-    }
-  ],
-  edges: [
-    {
-      id: 'trigger-to-greeting',
-      source: 'trigger-1',
-      target: 'greeting-1'
-    },
-    {
-      id: 'greeting-to-speak',
-      source: 'greeting-1',
-      target: 'speak-1',
-      sourceHandle: 'outcome-0'
-    },
-    {
+    });
+    baseFlow.edges.push({
       id: 'speak-to-end',
       source: 'speak-1',
       target: 'end-1',
       sourceHandle: 'outcome-0'
-    }
-  ]
-});
+    });
+  }
+
+  return baseFlow;
+};
 
 const platforms = [
   { value: 'facebook', label: 'Facebook' },
@@ -107,10 +134,11 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     role: 'virtual_assistant' as Agent['role'],
     platform: '',
     action: '',
+    objective: '' as 'live_transfer' | 'answer_calls' | '',
   });
 
   const handleCreateAgent = async () => {
-    if (!newAgent.name || !newAgent.role || !newAgent.platform || !newAgent.action) {
+    if (!newAgent.name || !newAgent.role || !newAgent.platform || !newAgent.action || !newAgent.objective) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -137,9 +165,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       let flow;
       if (selectedTemplate) {
         const template = AGENT_TEMPLATES.find(t => t.id === selectedTemplate);
-        flow = template ? template.flow : getDefaultFlow(newAgent.platform, newAgent.action);
+        flow = template ? template.flow : getDefaultFlow(newAgent.platform, newAgent.action, newAgent.objective);
       } else {
-        flow = getDefaultFlow(newAgent.platform, newAgent.action);
+        flow = getDefaultFlow(newAgent.platform, newAgent.action, newAgent.objective);
       }
 
       const { data, error } = await supabase
@@ -150,6 +178,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           user_id: session.user.id,
           flow,
           is_active: true,
+          objective: newAgent.objective,
         })
         .select()
         .single();
@@ -172,7 +201,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
   return (
     <div className="space-y-6 py-6">
-      <CreateAgentProgress currentStep={step} totalSteps={3} />
+      <CreateAgentProgress currentStep={step} totalSteps={4} />
       
       <div className="space-y-6">
         {step === 1 && (
@@ -196,6 +225,17 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         )}
 
         {step === 3 && (
+          <ObjectiveStep
+            objective={newAgent.objective}
+            onObjectiveSelect={(objective) => 
+              setNewAgent(prev => ({ ...prev, objective }))
+            }
+            onNext={() => setStep(4)}
+            onBack={() => setStep(2)}
+          />
+        )}
+
+        {step === 4 && (
           <TriggerStep
             platform={newAgent.platform}
             action={newAgent.action}
@@ -205,7 +245,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             onActionChange={(action) => 
               setNewAgent(prev => ({ ...prev, action }))
             }
-            onBack={() => setStep(2)}
+            onBack={() => setStep(3)}
             onSubmit={handleCreateAgent}
             isCreating={isCreating}
             platforms={platforms}
