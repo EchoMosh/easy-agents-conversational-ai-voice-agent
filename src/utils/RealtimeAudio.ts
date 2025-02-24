@@ -52,7 +52,10 @@ export class AudioRecorder {
       this.processor = null;
     }
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
+      this.stream.getTracks().forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
       this.stream = null;
     }
     if (this.audioContext) {
@@ -94,7 +97,7 @@ export class RealtimeChat {
       this.pc.ontrack = e => {
         // Ensure we only set the audio stream once
         if (!this.audioEl.srcObject) {
-          this.audioEl.srcObject = e.streams[0];
+          this.audioEl.srcObject = new MediaStream([e.track]);
         }
       };
 
@@ -202,6 +205,13 @@ export class RealtimeChat {
 
   disconnect() {
     this.recorder?.stop();
+    if (this.audioEl.srcObject instanceof MediaStream) {
+      this.audioEl.srcObject.getTracks().forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
+      this.audioEl.srcObject = null;
+    }
     this.dc?.close();
     this.pc?.close();
   }
