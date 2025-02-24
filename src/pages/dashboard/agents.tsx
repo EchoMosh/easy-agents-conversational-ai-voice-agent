@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -18,8 +18,9 @@ import { Agent } from "@/types/agent";
 const AgentsPage = () => {
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { data: agents, isLoading, refetch } = useQuery({
+  const { data: agents, isLoading } = useQuery({
     queryKey: ['agents'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -59,25 +60,33 @@ const AgentsPage = () => {
 
       if (error) throw error;
 
+      // Optimistically update the UI by removing the deleted agent
+      queryClient.setQueryData(['agents'], (oldData: Agent[] | undefined) => {
+        if (!oldData) return [];
+        return oldData.filter(agent => agent.id !== agentId);
+      });
+
+      // Invalidate and refetch to ensure data consistency
+      await queryClient.invalidateQueries({ queryKey: ['agents'] });
+
       toast({
         title: "Success",
         description: "Agent deleted successfully",
       });
-      
-      // Force a refetch immediately after deletion
-      refetch();
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to delete agent",
       });
+      // Refetch on error to ensure UI is in sync
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
     }
   };
 
   const handleCreateSuccess = () => {
     setIsCreating(false);
-    refetch();
+    queryClient.invalidateQueries({ queryKey: ['agents'] });
     toast({
       title: "Success",
       description: "Agent created successfully",
