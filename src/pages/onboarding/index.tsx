@@ -86,20 +86,30 @@ const OnboardingPage = () => {
   }, []);
 
   const checkSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (profile?.onboarding_completed) {
+        navigate("/dashboard/agents");
+      }
+    } catch (error: any) {
+      console.error('Session check error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to verify your session. Please try logging in again.",
+      });
       navigate("/auth");
-      return;
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('onboarding_completed')
-      .eq('id', session.user.id)
-      .maybeSingle();
-
-    if (profile?.onboarding_completed) {
-      navigate("/dashboard/agents");
     }
   };
 
@@ -180,12 +190,12 @@ const OnboardingPage = () => {
         await new Promise(resolve => setTimeout(resolve, 2000));
         navigate("/dashboard/agents");
       } catch (error: any) {
+        console.error('Onboarding error:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: error.message,
+          description: error.message || "Failed to complete onboarding",
         });
-      } finally {
         setIsCompleting(false);
       }
     }
@@ -195,101 +205,103 @@ const OnboardingPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <AnimatePresence mode="wait">
-        {isCompleting ? (
-          <motion.div
-            key="completing"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="text-center space-y-4"
-          >
+      <div className="w-full max-w-screen-xl mx-auto flex items-center justify-center">
+        <AnimatePresence mode="wait">
+          {isCompleting ? (
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="mx-auto w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
-            />
-            <h2 className="text-2xl font-bold">Setting up your workspace...</h2>
-            <p className="text-muted-foreground">Almost there!</p>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="questions"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-md space-y-8"
-          >
-            <div className="space-y-2 text-center">
-              <motion.h2
-                key={currentStep}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-3xl font-bold tracking-tight"
-              >
-                {currentQuestion.question}
-              </motion.h2>
-              {currentQuestion.description && (
-                <p className="text-muted-foreground text-sm">
-                  {currentQuestion.description}
-                </p>
-              )}
-              <p className="text-muted-foreground">
-                Step {currentStep} of {steps.length}
-              </p>
-            </div>
-
-            <motion.div
-              key={`input-${currentStep}`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-4"
+              key="completing"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="text-center space-y-4"
             >
-              {currentQuestion.type === "select" ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {currentQuestion.options?.map((option) => (
-                    <Button
-                      key={option}
-                      variant={data[currentQuestion.field] === option ? "default" : "outline"}
-                      onClick={() => handleInputChange(option)}
-                      className="h-auto py-4 px-6"
-                    >
-                      {option}
-                    </Button>
-                  ))}
-                </div>
-              ) : (
-                <Input
-                  type={currentQuestion.type}
-                  value={data[currentQuestion.field]}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Type your answer here..."
-                  className="text-lg py-6"
-                />
-              )}
-
-              <Button
-                onClick={handleNext}
-                className="w-full"
-                size="lg"
-                disabled={isLoading}
-              >
-                {currentStep === steps.length ? "Complete Setup" : "Continue"}
-              </Button>
-            </motion.div>
-
-            <div className="w-full bg-muted rounded-full h-2">
               <motion.div
-                className="h-full bg-primary rounded-full"
-                initial={{ width: "0%" }}
-                animate={{ width: `${(currentStep / steps.length) * 100}%` }}
-                transition={{ duration: 0.3 }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="mx-auto w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
               />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <h2 className="text-2xl font-bold">Setting up your workspace...</h2>
+              <p className="text-muted-foreground">Almost there!</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="questions"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full max-w-md space-y-8"
+            >
+              <div className="space-y-2 text-center">
+                <motion.h2
+                  key={currentStep}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-3xl font-bold tracking-tight"
+                >
+                  {currentQuestion.question}
+                </motion.h2>
+                {currentQuestion.description && (
+                  <p className="text-muted-foreground text-sm">
+                    {currentQuestion.description}
+                  </p>
+                )}
+                <p className="text-muted-foreground">
+                  Step {currentStep} of {steps.length}
+                </p>
+              </div>
+
+              <motion.div
+                key={`input-${currentStep}`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-4"
+              >
+                {currentQuestion.type === "select" ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {currentQuestion.options?.map((option) => (
+                      <Button
+                        key={option}
+                        variant={data[currentQuestion.field] === option ? "default" : "outline"}
+                        onClick={() => handleInputChange(option)}
+                        className="h-auto py-4 px-6"
+                      >
+                        {option}
+                      </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <Input
+                    type={currentQuestion.type}
+                    value={data[currentQuestion.field]}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="Type your answer here..."
+                    className="text-lg py-6"
+                  />
+                )}
+
+                <Button
+                  onClick={handleNext}
+                  className="w-full"
+                  size="lg"
+                  disabled={isLoading}
+                >
+                  {currentStep === steps.length ? "Complete Setup" : "Continue"}
+                </Button>
+              </motion.div>
+
+              <div className="w-full bg-muted rounded-full h-2">
+                <motion.div
+                  className="h-full bg-primary rounded-full"
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${(currentStep / steps.length) * 100}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
