@@ -65,7 +65,7 @@ const AgentsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Agents</h1>
         </div>
@@ -76,7 +76,7 @@ const AgentsPage = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Agents</h1>
         </div>
@@ -88,7 +88,7 @@ const AgentsPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Agents</h1>
         <Button onClick={() => setIsCreating(true)}>
@@ -98,7 +98,7 @@ const AgentsPage = () => {
       </div>
 
       {agents?.length ? (
-        <div className="w-full overflow-hidden">
+        <div className="rounded-md border">
           <AgentsTable
             agents={agents}
             onDelete={handleDeleteAgent}
