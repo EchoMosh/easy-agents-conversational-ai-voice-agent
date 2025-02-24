@@ -13,30 +13,30 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          interaction_type: string[]
           is_active: boolean | null
           name: string
           role: Database["public"]["Enums"]["agent_role"]
-          system_prompt: string | null
           user_id: string
           voice_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          interaction_type?: string[]
           is_active?: boolean | null
           name: string
           role: Database["public"]["Enums"]["agent_role"]
-          system_prompt?: string | null
           user_id: string
           voice_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          interaction_type?: string[]
           is_active?: boolean | null
           name?: string
           role?: Database["public"]["Enums"]["agent_role"]
-          system_prompt?: string | null
           user_id?: string
           voice_id?: string | null
         }
