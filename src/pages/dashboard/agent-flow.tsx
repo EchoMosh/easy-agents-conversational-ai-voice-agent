@@ -8,12 +8,15 @@ import { Agent, FlowNode, FlowEdge } from '@/types/agent';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { Node, Edge } from '@xyflow/react';
+import { Node, Edge, OnNodesChange, OnEdgesChange } from '@xyflow/react';
+import { Circle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string; }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isConnected, setIsConnected] = useState(false);
   
   const {
     data: agent,
@@ -40,6 +43,30 @@ export default function AgentFlowPage() {
     }
   });
 
+  useEffect(() => {
+    const channel = supabase.channel('any')
+      .on('presence', { event: 'sync' }, () => {
+        setIsConnected(true);
+      })
+      .on('presence', { event: 'join' }, () => {
+        setIsConnected(true);
+      })
+      .on('presence', { event: 'leave' }, () => {
+        setIsConnected(false);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true);
+        } else {
+          setIsConnected(false);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
     const { error } = await supabase
       .from('agents')
@@ -64,22 +91,15 @@ export default function AgentFlowPage() {
     });
   };
 
-  const handleNodesChange = async (nodes: Node[]) => {
+  const saveFlowChanges = useCallback(async (nodes: FlowNode[], edges: FlowEdge[]) => {
     if (!agent) return;
-
-    const flowNodes = nodes.map(node => ({
-      id: node.id,
-      type: node.type as FlowNode['type'],
-      position: node.position,
-      data: node.data as FlowNode['data']
-    })) as FlowNode[];
 
     const { error } = await supabase
       .from('agents')
       .update({
         flow: {
-          ...agent.flow,
-          nodes: flowNodes
+          nodes,
+          edges
         }
       })
       .eq('id', id);
@@ -88,40 +108,50 @@ export default function AgentFlowPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update flow"
+        description: "Failed to save flow changes"
       });
     }
-  };
+  }, [agent, id, toast]);
 
-  const handleEdgesChange = async (edges: Edge[]) => {
-    if (!agent) return;
-
-    const flowEdges = edges.map(edge => ({
-      id: edge.id,
-      source: edge.source,
-      target: edge.target,
-      sourceHandle: edge.sourceHandle,
-      targetHandle: edge.targetHandle
-    })) as FlowEdge[];
-
-    const { error } = await supabase
-      .from('agents')
-      .update({
-        flow: {
-          ...agent.flow,
-          edges: flowEdges
+  const handleNodesChange: OnNodesChange = useCallback((changes) => {
+    if (!agent?.flow?.nodes) return;
+    
+    const updatedNodes = [...agent.flow.nodes];
+    changes.forEach(change => {
+      if (change.type === 'position' && change.position) {
+        const nodeIndex = updatedNodes.findIndex(n => n.id === change.id);
+        if (nodeIndex !== -1) {
+          updatedNodes[nodeIndex] = {
+            ...updatedNodes[nodeIndex],
+            position: change.position
+          };
         }
-      })
-      .eq('id', id);
+      } else if (change.type === 'remove') {
+        const nodeIndex = updatedNodes.findIndex(n => n.id === change.id);
+        if (nodeIndex !== -1) {
+          updatedNodes.splice(nodeIndex, 1);
+        }
+      }
+    });
+    
+    saveFlowChanges(updatedNodes, agent.flow?.edges || []);
+  }, [agent?.flow, saveFlowChanges]);
 
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update flow"
-      });
-    }
-  };
+  const handleEdgesChange: OnEdgesChange = useCallback((changes) => {
+    if (!agent?.flow?.edges) return;
+    
+    const updatedEdges = [...agent.flow.edges];
+    changes.forEach(change => {
+      if (change.type === 'remove') {
+        const edgeIndex = updatedEdges.findIndex(e => e.id === change.id);
+        if (edgeIndex !== -1) {
+          updatedEdges.splice(edgeIndex, 1);
+        }
+      }
+    });
+    
+    saveFlowChanges(agent.flow?.nodes || [], updatedEdges);
+  }, [agent?.flow, saveFlowChanges]);
 
   if (isLoading) {
     return (
@@ -147,6 +177,13 @@ export default function AgentFlowPage() {
           onBack={() => navigate('/dashboard/agents')}
           onUpdateSettings={handleUpdateSettings}
         />
+        <div className="absolute top-4 right-4 z-50">
+          <Circle 
+            size={24}
+            className={`${isConnected ? 'text-green-500' : 'text-red-500'} transition-colors duration-200`}
+            fill={isConnected ? 'rgb(34 197 94)' : 'rgb(239 68 68)'}
+          />
+        </div>
         <div className="flex-1 relative">
           <ReactFlowProvider>
             <Flow
