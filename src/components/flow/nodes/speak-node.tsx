@@ -208,17 +208,20 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
             ))}
           </div>
 
-          {/* Always show handles, even when collapsed */}
+          {/* Handles with labels when collapsed */}
           <div className={`flex flex-col gap-2 ${isExpanded ? 'hidden' : 'block'}`}>
-            {(data.outcomes || []).map((_, index) => (
-              <Handle
-                key={index}
-                type="source"
-                position={Position.Right}
-                id={`outcome-${index}`}
-                className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800"
-                style={{ top: `${20 + (index * 24)}px` }}
-              />
+            {(data.outcomes || []).map((outcome, index) => (
+              <div key={index} className="relative flex items-center h-8">
+                <span className="text-xs text-muted-foreground truncate max-w-[200px] pr-6">
+                  {outcome}
+                </span>
+                <Handle
+                  type="source"
+                  position={Position.Right}
+                  id={`outcome-${index}`}
+                  className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800"
+                />
+              </div>
             ))}
           </div>
         </div>
