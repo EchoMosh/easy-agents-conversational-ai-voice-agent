@@ -1,10 +1,11 @@
+
 import { Users, Target, Settings, User, Shuffle, LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Sidebar,
   SidebarContent,
@@ -42,7 +43,7 @@ const bottomMenuItems = [
   },
 ];
 
-const AVATAR_VARIANT = "marble";
+const AVATAR_VARIANT = "beam";
 const AVATAR_COLORS = ["264653", "2a9d8f", "e9c46a", "f4a261", "e76f51"];
 
 export function AppSidebar() {
@@ -55,8 +56,7 @@ export function AppSidebar() {
 
   const generateRandomAvatar = () => {
     const seed = Math.random().toString(36).substring(7);
-    const colors = encodeURIComponent(AVATAR_COLORS.join(","));
-    return `https://source.boringavatars.com/beam/120/${seed}?colors=${colors}`;
+    return `https://source.boringavatars.com/beam/120/${seed}?colors=264653,2a9d8f,e9c46a,f4a261,e76f51`;
   };
 
   const fetchProfile = async () => {
