@@ -146,6 +146,23 @@ function Flow() {
     return () => clearTimeout(timeoutId);
   }, [nodes, edges, updateFlow]);
 
+  useEffect(() => {
+    const handleNodeUpdate = (event: CustomEvent<{ id: string; data: NodeData }>) => {
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          node.id === event.detail.id
+            ? { ...node, data: event.detail.data }
+            : node
+        )
+      );
+    };
+
+    window.addEventListener('nodeupdate', handleNodeUpdate as EventListener);
+    return () => {
+      window.removeEventListener('nodeupdate', handleNodeUpdate as EventListener);
+    };
+  }, [setNodes]);
+
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
       <ReactFlow

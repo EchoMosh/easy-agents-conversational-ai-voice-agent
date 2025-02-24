@@ -1,7 +1,17 @@
 
 import { Handle, Position } from '@xyflow/react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
-export function GreetingNode({ data }: { data: { greeting: string } }) {
+export function GreetingNode({ data, id }: { data: { greeting: string }; id: string }) {
+  const handleGreetingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // We need to manually trigger a node update since we're modifying data
+    const evt = new CustomEvent('nodeupdate', {
+      detail: { id, data: { greeting: event.target.value } },
+    });
+    window.dispatchEvent(evt);
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-4 min-w-[200px]">
       <div className="flex flex-col gap-2">
@@ -11,9 +21,24 @@ export function GreetingNode({ data }: { data: { greeting: string } }) {
           </span>
           <span className="font-medium dark:text-white">Greeting</span>
         </div>
-        <p className="text-sm text-muted-foreground dark:text-gray-300">{data.greeting}</p>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`greeting-${id}`} className="text-xs text-muted-foreground dark:text-gray-400">
+            Enter greeting message
+          </Label>
+          <Input 
+            id={`greeting-${id}`}
+            value={data.greeting}
+            onChange={handleGreetingChange}
+            className="nodrag text-sm" // nodrag prevents dragging when interacting with the input
+            placeholder="Type your greeting message..."
+          />
+        </div>
       </div>
-      <Handle type="source" position={Position.Right} className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800" />
+      <Handle 
+        type="source" 
+        position={Position.Right} 
+        className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800" 
+      />
     </div>
   );
 }
