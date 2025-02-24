@@ -21,7 +21,8 @@ const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
   greetingNode: GreetingNode,
   endNode: EndNode,
-  triggerNode: TriggerNode
+  triggerNode: TriggerNode,
+  transferNode: TransferNode
 };
 
 function Flow() {
@@ -240,7 +241,7 @@ function Flow() {
       >
         <div className={`w-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isToolbarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
           <div className="flex items-center justify-center gap-4 p-3 mb-3">
-            <div className="flex items-center gap-6 p-4 rounded-2xl bg-white/60 dark:bg-gray-950/60 backdrop-blur-xl shadow-2xl pointer-events-auto">
+            <div className="flex items-center gap-6 p-4 rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl pointer-events-auto">
               <div 
                 draggable 
                 onDragStart={e => handleDragStart(e, 'greetingNode')} 
@@ -311,7 +312,7 @@ function Flow() {
 
         <button
           onClick={() => setIsToolbarVisible(!isToolbarVisible)}
-          className="group h-14 w-14 flex items-center justify-center rounded-full bg-white/60 dark:bg-gray-950/60 backdrop-blur-xl shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl pointer-events-auto"
+          className="group h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl pointer-events-auto"
           style={{
             transform: `scale(${1 + hoverTime * 0.002})`,
           }}
