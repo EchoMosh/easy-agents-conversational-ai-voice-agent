@@ -82,7 +82,7 @@ function Flow() {
         position,
         data: draggedNodeType === 'speakNode' 
           ? { message: 'Enter your message here' }
-          : { greeting: 'Enter your greeting here' },
+          : { greeting: 'Enter your greeting here', outcomes: [] },
       };
 
       setNodes(nds => [...nds, newNode]);
