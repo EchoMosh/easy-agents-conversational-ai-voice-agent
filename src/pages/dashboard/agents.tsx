@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -29,6 +29,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Agent = {
   id: string;
@@ -90,7 +96,6 @@ const AgentsPage = () => {
       return;
     }
 
-    // Get the current user's session
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user?.id) {
@@ -136,8 +141,30 @@ const AgentsPage = () => {
   };
 
   const handleInteractionTypeChange = (types: string[]) => {
-    if (types.length === 0) return; // Ensure at least one type is selected
+    if (types.length === 0) return;
     setNewAgent(prev => ({ ...prev, interaction_type: types }));
+  };
+
+  const handleDeleteAgent = async (agentId: string) => {
+    const { error } = await supabase
+      .from('agents')
+      .delete()
+      .eq('id', agentId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete agent",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Agent deleted successfully",
+    });
+    refetch();
   };
 
   if (isLoading) {
@@ -217,9 +244,27 @@ const AgentsPage = () => {
                     {new Date(agent.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      Edit
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => console.log('Edit', agent.id)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteAgent(agent.id)}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
