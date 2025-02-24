@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +23,7 @@ const AuthPage = () => {
   }, [searchParams]);
 
   const handleToggleMode = () => {
-    navigate(`/auth?mode=${isSignUp ? 'login' : 'signup'}`);
+    navigate(`/auth?mode=${isSignUp ? 'login' : 'signup'}`, { replace: true });
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -46,7 +45,6 @@ const AuthPage = () => {
         if (signUpError) throw signUpError;
 
         if (user) {
-          // Create initial profile
           const { error: profileError } = await supabase
             .from('profiles')
             .insert([

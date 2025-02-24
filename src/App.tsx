@@ -46,8 +46,11 @@ function App() {
             <div className="min-h-screen flex w-full">
               <Router>
                 <Routes>
-                  <Route path="/" element={<AuthPage />} />
-                  <Route path="/auth" element={<Navigate to="/" replace />} />
+                  {/* Redirect root to auth with login mode by default */}
+                  <Route path="/" element={<Navigate to="/auth?mode=login" replace />} />
+                  
+                  {/* Handle both /auth and /auth?mode=X */}
+                  <Route path="/auth" element={<AuthPage />} />
                   <Route path="/onboarding" element={<OnboardingPage />} />
                   
                   {/* Dashboard routes with sidebar */}
