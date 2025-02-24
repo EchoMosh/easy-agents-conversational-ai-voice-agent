@@ -1,6 +1,7 @@
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel } from '@xyflow/react';
+import { Plus } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
@@ -35,6 +36,7 @@ interface FlowProps {
 export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange }: FlowProps) {
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
+  const [showWidgets, setShowWidgets] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
 
@@ -130,18 +132,27 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
           }}
           maskColor="rgba(0, 0, 0, 0.05)"
         />
-        <Controls />
-        <Panel position="top-left" className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg space-y-2">
-          {widgets.map((widget) => (
-            <div
-              key={widget.type}
-              className="border border-gray-200 dark:border-gray-700 rounded p-2 mb-2 cursor-move bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              onDragStart={(e) => onDragStart(e, widget.type)}
-              draggable
-            >
-              {widget.label}
+        <Panel position="bottom-left" className="space-y-2">
+          <button
+            onClick={() => setShowWidgets(!showWidgets)}
+            className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105"
+          >
+            <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
+          </button>
+          {showWidgets && (
+            <div className="absolute bottom-14 left-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 rounded-lg shadow-lg space-y-2 min-w-[120px]">
+              {widgets.map((widget) => (
+                <div
+                  key={widget.type}
+                  className="px-3 py-2 rounded cursor-move hover:bg-muted"
+                  onDragStart={(e) => onDragStart(e, widget.type)}
+                  draggable
+                >
+                  {widget.label}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </Panel>
       </ReactFlow>
     </div>
