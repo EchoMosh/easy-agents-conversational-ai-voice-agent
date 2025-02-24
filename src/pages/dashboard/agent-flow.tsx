@@ -66,12 +66,18 @@ function Flow() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (draggedNodeType) {
-        setDragPosition({ x: e.clientX, y: e.clientY });
+        const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
+        if (reactFlowBounds) {
+          setDragPosition({
+            x: e.clientX,
+            y: e.clientY
+          });
+        }
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => document.removeEventListener('mousemove', handleMouseMove);
   }, [draggedNodeType]);
 
   useEffect(() => {
@@ -198,8 +204,9 @@ function Flow() {
           <div 
             className="fixed pointer-events-none animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] bg-background/80 backdrop-blur-sm border rounded-lg p-4 shadow-lg transition-all duration-200 scale-105"
             style={{ 
-              left: dragPosition.x, 
-              top: dragPosition.y,
+              position: 'fixed',
+              left: `${dragPosition.x}px`, 
+              top: `${dragPosition.y}px`,
               transform: 'translate(-50%, -50%)',
               minWidth: '200px',
               zIndex: 1000,
