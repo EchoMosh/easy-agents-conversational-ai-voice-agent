@@ -230,14 +230,52 @@ function Flow() {
         />
       </ReactFlow>
 
-      <div 
-        className="fixed inset-x-0 bottom-12 z-50 flex flex-col items-center pointer-events-none"
-        onMouseEnter={showToolbar}
-        onMouseLeave={hideToolbar}
-      >
-        <div className={`w-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isToolbarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
-          <div className="flex items-center justify-center gap-4 p-3 mb-3">
-            <div className="flex items-center gap-6 p-4 rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl pointer-events-auto">
+      <div className="fixed bottom-[72px] left-[12px] z-50">
+        <div 
+          className="group relative"
+          onMouseEnter={showToolbar}
+          onMouseLeave={hideToolbar}
+        >
+          <button
+            onClick={() => setIsToolbarVisible(!isToolbarVisible)}
+            className="group h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl pointer-events-auto z-10"
+          >
+            <div className="relative w-6 h-6">
+              <Plus 
+                className={`absolute inset-0 text-gray-600 dark:text-gray-300 transition-all duration-500 transform translate-y-0.5
+                  ${isToolbarVisible ? 
+                    'rotate-[135deg] scale-110 hover:rotate-[145deg] opacity-0' : 
+                    'hover:rotate-[15deg] hover:scale-110 opacity-100'
+                  }
+                `}
+              />
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`absolute inset-0 w-6 h-6 text-gray-600 dark:text-gray-300 transition-all duration-500 transform
+                  ${isToolbarVisible ? 
+                    'rotate-0 scale-110 opacity-100' : 
+                    '-rotate-180 scale-90 opacity-0'
+                  }
+                `}
+              >
+                <path d="M5 12h14m-7-7l7 7-7 7" />
+              </svg>
+            </div>
+          </button>
+
+          <div 
+            className={`absolute bottom-0 left-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-left
+              ${isToolbarVisible ? 
+                'opacity-100 translate-x-20 scale-100' : 
+                'opacity-0 -translate-x-8 scale-95 pointer-events-none'
+              }
+            `}
+          >
+            <div className="flex items-center gap-6 p-4 -ml-2 rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl pointer-events-auto">
               <div 
                 draggable 
                 onDragStart={e => handleDragStart(e, 'greetingNode')} 
@@ -305,22 +343,6 @@ function Flow() {
             </div>
           </div>
         </div>
-
-        <button
-          onClick={() => setIsToolbarVisible(!isToolbarVisible)}
-          className="group h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl pointer-events-auto"
-        >
-          <div className="relative w-6 h-6">
-            <Plus 
-              className={`absolute inset-0 text-gray-600 dark:text-gray-300 transition-all duration-500 transform translate-y-0.5
-                ${isToolbarVisible ? 
-                  'rotate-[135deg] scale-110 hover:rotate-[145deg]' : 
-                  'hover:rotate-[15deg] hover:scale-110'
-                }
-              `}
-            />
-          </div>
-        </button>
       </div>
 
       {draggedNodeType && (
