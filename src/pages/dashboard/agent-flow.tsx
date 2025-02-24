@@ -245,16 +245,16 @@ function Flow() {
         />
       </ReactFlow>
 
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4">
+      <div className="fixed bottom-6 left-6 z-50 flex items-center gap-4">
         <button
           onClick={() => setIsToolbarVisible(!isToolbarVisible)}
           onMouseEnter={handleButtonMouseEnter}
           onMouseLeave={handleButtonMouseLeave}
-          className="toolbar-button h-14 w-14 flex items-center justify-center rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#9b87f5]/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl hover:border-[#9b87f5]/40"
+          className="toolbar-button h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
         >
           <div className="relative w-6 h-6">
             <Plus 
-              className={`absolute inset-0 stroke-[#9b87f5] transition-all duration-500 transform translate-y-0.5
+              className={`absolute inset-0 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform translate-y-0.5
                 ${isToolbarVisible ? 
                   'rotate-[135deg] scale-110 hover:rotate-[145deg] opacity-0' : 
                   'hover:rotate-[15deg] hover:scale-110 opacity-100'
@@ -267,7 +267,7 @@ function Flow() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`absolute inset-0 w-6 h-6 stroke-[#9b87f5] transition-all duration-500 transform
+              className={`absolute inset-0 w-6 h-6 stroke-gray-600 dark:stroke-gray-300 transition-all duration-500 transform
                 ${isToolbarVisible ? 
                   'rotate-0 scale-110 opacity-100' : 
                   '-rotate-180 scale-90 opacity-0'
@@ -282,72 +282,114 @@ function Flow() {
         <div 
           onMouseEnter={handleToolbarMouseEnter}
           onMouseLeave={handleToolbarMouseLeave}
-          className={`toolbar-nodes flex items-center gap-4 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+          className={`toolbar-nodes flex items-end gap-4 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
             ${isToolbarVisible ? 
               'opacity-100 translate-y-0 scale-100' : 
               'opacity-0 translate-y-4 scale-95 pointer-events-none'
             }
           `}
         >
-          <div 
-            draggable 
-            onDragStart={e => handleDragStart(e, 'greetingNode')} 
-            onDrag={handleDrag} 
-            onDragEnd={() => setDraggedNodeType(null)} 
-            className="cursor-move"
-          >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#60a5fa]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(96,165,250,0.3)] hover:shadow-[0_0_20px_rgba(96,165,250,0.5)] transition-all duration-300">
-              <MessageCircle className="h-5 w-5 text-[#60a5fa]" />
-            </span>
-          </div>
+          <TooltipProvider>
+            <div 
+              draggable 
+              onDragStart={e => handleDragStart(e, 'greetingNode')} 
+              onDrag={handleDrag} 
+              onDragEnd={() => setDraggedNodeType(null)} 
+              className="flex flex-col items-center gap-2 cursor-move"
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl">
+                    <MessageCircle className="h-5 w-5 text-blue-500" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Start your conversation flow with a greeting</p>
+                </TooltipContent>
+              </Tooltip>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Greeting</span>
+            </div>
 
-          <div 
-            draggable 
-            onDragStart={e => handleDragStart(e, 'speakNode')} 
-            onDrag={handleDrag} 
-            onDragEnd={() => setDraggedNodeType(null)} 
-            className="cursor-move"
-          >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#c084fc]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(192,132,252,0.3)] hover:shadow-[0_0_20px_rgba(192,132,252,0.5)] transition-all duration-300">
-              <MessageCircle className="h-5 w-5 text-[#c084fc]" />
-            </span>
-          </div>
+            <div 
+              draggable 
+              onDragStart={e => handleDragStart(e, 'speakNode')} 
+              onDrag={handleDrag} 
+              onDragEnd={() => setDraggedNodeType(null)} 
+              className="flex flex-col items-center gap-2 cursor-move"
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl">
+                    <MessageCircle className="h-5 w-5 text-purple-500" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add a message or response</p>
+                </TooltipContent>
+              </Tooltip>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Speak</span>
+            </div>
 
-          <div 
-            draggable 
-            onDragStart={e => handleDragStart(e, 'endNode')} 
-            onDrag={handleDrag} 
-            onDragEnd={() => setDraggedNodeType(null)} 
-            className="cursor-move"
-          >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#f87171]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(248,113,113,0.3)] hover:shadow-[0_0_20px_rgba(248,113,113,0.5)] transition-all duration-300">
-              <X className="h-5 w-5 text-[#f87171]" />
-            </span>
-          </div>
+            <div 
+              draggable 
+              onDragStart={e => handleDragStart(e, 'endNode')} 
+              onDrag={handleDrag} 
+              onDragEnd={() => setDraggedNodeType(null)} 
+              className="flex flex-col items-center gap-2 cursor-move"
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl">
+                    <X className="h-5 w-5 text-rose-500" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>End the conversation flow</p>
+                </TooltipContent>
+              </Tooltip>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">End</span>
+            </div>
 
-          <div
-            draggable
-            onDragStart={e => handleDragStart(e, 'triggerNode')}
-            onDrag={handleDrag}
-            onDragEnd={() => setDraggedNodeType(null)}
-            className="cursor-move"
-          >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#fbbf24]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(251,191,36,0.3)] hover:shadow-[0_0_20px_rgba(251,191,36,0.5)] transition-all duration-300">
-              <Network className="h-5 w-5 text-[#fbbf24]" />
-            </span>
-          </div>
+            <div
+              draggable
+              onDragStart={e => handleDragStart(e, 'triggerNode')}
+              onDrag={handleDrag}
+              onDragEnd={() => setDraggedNodeType(null)}
+              className="flex flex-col items-center gap-2 cursor-move"
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl">
+                    <Network className="h-5 w-5 text-amber-500" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add an event trigger or condition</p>
+                </TooltipContent>
+              </Tooltip>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Trigger</span>
+            </div>
 
-          <div
-            draggable
-            onDragStart={e => handleDragStart(e, 'transferNode')}
-            onDrag={handleDrag}
-            onDragEnd={() => setDraggedNodeType(null)}
-            className="cursor-move"
-          >
-            <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1F2C]/80 dark:bg-gray-900/80 backdrop-blur-xl border border-[#10b981]/20 dark:border-gray-700/20 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all duration-300">
-              <PhoneForwarded className="h-5 w-5 text-[#10b981]" />
-            </span>
-          </div>
+            <div
+              draggable
+              onDragStart={e => handleDragStart(e, 'transferNode')}
+              onDrag={handleDrag}
+              onDragEnd={() => setDraggedNodeType(null)}
+              className="flex flex-col items-center gap-2 cursor-move"
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl">
+                    <PhoneForwarded className="h-5 w-5 text-emerald-500" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Transfer the call to another agent</p>
+                </TooltipContent>
+              </Tooltip>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Transfer</span>
+            </div>
+          </TooltipProvider>
         </div>
       </div>
 
