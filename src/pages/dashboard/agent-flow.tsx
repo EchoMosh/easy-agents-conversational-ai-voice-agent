@@ -291,22 +291,15 @@ function Flow() {
           </div>
         </div>
 
-        <div className="relative w-full h-24 overflow-hidden">
-          <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-blue-500/10 to-transparent" />
-          
+        <div className="relative w-full h-16 overflow-hidden">
           <div className="absolute inset-x-0 bottom-0 h-full">
             <div className="absolute inset-0 animate-[wave_8s_ease-in-out_infinite] opacity-50">
-              <div className="absolute inset-x-0 top-1/2 h-[200px] bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-2xl transform -translate-y-1/2" />
+              <div className="absolute inset-x-0 top-1/2 h-[100px] bg-gradient-to-r from-amber-500/10 via-amber-400/10 to-amber-500/10 blur-2xl transform -translate-y-1/2" />
             </div>
             <div className="absolute inset-0 animate-[wave_12s_ease-in-out_infinite] opacity-30 delay-100">
-              <div className="absolute inset-x-0 top-1/2 h-[200px] bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 blur-2xl transform -translate-y-1/2" />
-            </div>
-            <div className="absolute inset-0 animate-[wave_10s_ease-in-out_infinite] opacity-40 delay-200">
-              <div className="absolute inset-x-0 top-1/2 h-[200px] bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-pink-500/20 blur-2xl transform -translate-y-1/2" />
+              <div className="absolute inset-x-0 top-1/2 h-[100px] bg-gradient-to-r from-amber-400/10 via-amber-500/10 to-amber-400/10 blur-2xl transform -translate-y-1/2" />
             </div>
           </div>
-
-          <div className="absolute inset-x-0 bottom-0 h-full bg-white/10 dark:bg-gray-900/10 backdrop-blur-md" />
 
           <div className={`absolute inset-x-0 bottom-0 h-full transition-opacity duration-500 ${isToolbarVisible ? 'opacity-0' : 'opacity-100'}`}>
             <div className="absolute inset-0 flex items-center justify-center">
