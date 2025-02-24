@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
-import { Facebook, MessageSquare, Network, XCircle } from 'lucide-react';
+import { Network } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -28,9 +27,9 @@ interface TriggerNodeData {
 }
 
 const platforms: { value: TriggerPlatform; label: string; icon: JSX.Element }[] = [
-  { value: 'facebook', label: 'Facebook', icon: <Facebook className="h-4 w-4" /> },
+  { value: 'facebook', label: 'Facebook', icon: <Network className="h-4 w-4" /> },
   { value: 'hubspot', label: 'Hubspot', icon: <Network className="h-4 w-4" /> },
-  { value: 'gohighlevel', label: 'GoHighLevel', icon: <MessageSquare className="h-4 w-4" /> },
+  { value: 'gohighlevel', label: 'GoHighLevel', icon: <Network className="h-4 w-4" /> },
   { value: 'activix', label: 'Activix', icon: <Network className="h-4 w-4" /> },
 ];
 
@@ -75,21 +74,21 @@ export function TriggerNode({ id, data }: { id: string; data: TriggerNodeData })
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-4 min-w-[300px]">
+    <div className="bg-gradient-to-br from-amber-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-amber-100/50 dark:border-gray-700/50 shadow-xl backdrop-blur-sm p-4 min-w-[300px]">
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-orange-500">
+        <div className="flex items-center gap-2 pb-3 border-b border-amber-100/50 dark:border-gray-700/50">
+          <span className="text-amber-500 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/50 p-1.5 rounded-md">
             <Network className="h-4 w-4" />
           </span>
-          <span className="font-medium dark:text-white">Trigger</span>
+          <span className="font-medium text-amber-700 dark:text-amber-300">Trigger</span>
         </div>
         
         <div className="flex flex-col gap-1.5">
-          <Label className="text-xs text-muted-foreground dark:text-gray-400">
+          <Label className="text-xs font-medium text-amber-600/75 dark:text-amber-300/75">
             Select Platform
           </Label>
           <Select value={platform} onValueChange={handlePlatformChange}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-white/80 dark:bg-gray-900/50 border-amber-100/50 dark:border-amber-800/50 shadow-sm">
               <SelectValue placeholder="Choose platform" />
             </SelectTrigger>
             <SelectContent>
@@ -107,11 +106,11 @@ export function TriggerNode({ id, data }: { id: string; data: TriggerNodeData })
 
         {platform && (
           <div className="flex flex-col gap-1.5">
-            <Label className="text-xs text-muted-foreground dark:text-gray-400">
+            <Label className="text-xs font-medium text-amber-600/75 dark:text-amber-300/75">
               Select Trigger
             </Label>
             <Select value={action} onValueChange={handleActionChange}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white/80 dark:bg-gray-900/50 border-amber-100/50 dark:border-amber-800/50 shadow-sm">
                 <SelectValue placeholder="Choose trigger" />
               </SelectTrigger>
               <SelectContent>
@@ -129,7 +128,7 @@ export function TriggerNode({ id, data }: { id: string; data: TriggerNodeData })
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:border-gray-800"
+        className="w-2 h-4 !bg-amber-400 rounded-sm border-none"
       />
     </div>
   );
