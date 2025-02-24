@@ -20,6 +20,7 @@ export type Database = {
           role: Database["public"]["Enums"]["agent_role"]
           user_id: string
           voice_id: string | null
+          workspace_id: string | null
         }
         Insert: {
           created_at?: string
@@ -31,6 +32,7 @@ export type Database = {
           role: Database["public"]["Enums"]["agent_role"]
           user_id: string
           voice_id?: string | null
+          workspace_id?: string | null
         }
         Update: {
           created_at?: string
@@ -42,8 +44,17 @@ export type Database = {
           role?: Database["public"]["Enums"]["agent_role"]
           user_id?: string
           voice_id?: string | null
+          workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agents_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -78,6 +89,56 @@ export type Database = {
           last_name?: string | null
           onboarding_completed?: boolean | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      workspace_members: {
+        Row: {
+          created_at: string
+          role: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          role: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
         }
         Relationships: []
       }

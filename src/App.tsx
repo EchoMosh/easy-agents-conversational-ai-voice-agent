@@ -5,6 +5,7 @@ import { ThemeProvider } from './components/theme/theme-provider';
 import { Toaster } from './components/ui/toaster';
 import { AppSidebar } from './components/dashboard/app-sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { WorkspaceProvider } from './contexts/workspace-context';
 
 // Auth and onboarding pages
 import AuthPage from './pages/auth';
@@ -40,34 +41,35 @@ function App() {
   return (
     <ThemeProvider defaultTheme="system" attribute="class">
       <QueryClientProvider client={queryClient}>
-        <SidebarProvider>
-          <div className="min-h-screen flex w-full">
-            <Router>
-              <Routes>
-                <Route path="/" element={<AuthPage />} />
-                <Route path="/auth" element={<Navigate to="/" replace />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
-                
-                {/* Dashboard routes with sidebar */}
-                <Route path="/dashboard" element={<DashboardLayout />}>
-                  <Route index element={<Navigate to="agents" replace />} />
-                  <Route path="agents" element={<AgentsPage />} />
-                  <Route path="leads" element={<LeadsPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="profile" element={<ProfilePage />} />
-                </Route>
+        <WorkspaceProvider>
+          <SidebarProvider>
+            <div className="min-h-screen flex w-full">
+              <Router>
+                <Routes>
+                  <Route path="/" element={<AuthPage />} />
+                  <Route path="/auth" element={<Navigate to="/" replace />} />
+                  <Route path="/onboarding" element={<OnboardingPage />} />
+                  
+                  {/* Dashboard routes with sidebar */}
+                  <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<Navigate to="agents" replace />} />
+                    <Route path="agents" element={<AgentsPage />} />
+                    <Route path="leads" element={<LeadsPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                    <Route path="profile" element={<ProfilePage />} />
+                  </Route>
 
-                {/* Flow editor route without sidebar */}
-                <Route path="/dashboard/agents/flow/:id" element={<FlowLayout />} />
-              </Routes>
-            </Router>
-          </div>
-          <Toaster />
-        </SidebarProvider>
+                  {/* Flow editor route without sidebar */}
+                  <Route path="/dashboard/agents/flow/:id" element={<FlowLayout />} />
+                </Routes>
+              </Router>
+            </div>
+            <Toaster />
+          </SidebarProvider>
+        </WorkspaceProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
 }
 
 export default App;
-
