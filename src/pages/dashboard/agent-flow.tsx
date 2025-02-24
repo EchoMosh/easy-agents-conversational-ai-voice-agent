@@ -21,7 +21,7 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Agent, FlowNode, FlowEdge, NodeData } from '@/types/agent';
+import { Agent, FlowNode, FlowEdge, NodeData, FlowData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
@@ -84,7 +84,7 @@ function Flow() {
       const flowData = payload.new.flow as unknown as FlowData;
       if (flowData) {
         if (!payload.old || JSON.stringify(flowData.nodes) !== JSON.stringify(nodes) || JSON.stringify(flowData.edges) !== JSON.stringify(edges)) {
-          setNodes(flowData.nodes);
+          setNodes(flowData.nodes as Node<NodeData, string>[]);
           setEdges(flowData.edges);
           toast({
             title: "Flow Updated",
