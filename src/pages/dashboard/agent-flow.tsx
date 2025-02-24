@@ -66,13 +66,10 @@ function Flow() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (draggedNodeType) {
-        const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-        if (reactFlowBounds) {
-          setDragPosition({
-            x: e.clientX,
-            y: e.clientY
-          });
-        }
+        setDragPosition({
+          x: e.clientX,
+          y: e.clientY
+        });
       }
     };
 
@@ -202,7 +199,7 @@ function Flow() {
         
         {draggedNodeType && (
           <div 
-            className="fixed pointer-events-none animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] bg-background/80 backdrop-blur-sm border rounded-lg p-4 shadow-lg transition-all duration-200 scale-105"
+            className="fixed pointer-events-none bg-background/80 backdrop-blur-sm border rounded-lg p-4 shadow-lg"
             style={{ 
               position: 'fixed',
               left: `${dragPosition.x}px`, 
