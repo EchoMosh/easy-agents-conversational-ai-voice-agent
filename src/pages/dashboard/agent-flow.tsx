@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Agent } from '@/types/agent';
+import { Agent, FlowNode, FlowEdge } from '@/types/agent';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
@@ -67,12 +67,19 @@ export default function AgentFlowPage() {
   const handleNodesChange = async (nodes: Node[]) => {
     if (!agent) return;
 
+    const flowNodes = nodes.map(node => ({
+      id: node.id,
+      type: node.type as FlowNode['type'],
+      position: node.position,
+      data: node.data as FlowNode['data']
+    })) as FlowNode[];
+
     const { error } = await supabase
       .from('agents')
       .update({
         flow: {
           ...agent.flow,
-          nodes
+          nodes: flowNodes
         }
       })
       .eq('id', id);
@@ -89,12 +96,20 @@ export default function AgentFlowPage() {
   const handleEdgesChange = async (edges: Edge[]) => {
     if (!agent) return;
 
+    const flowEdges = edges.map(edge => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      sourceHandle: edge.sourceHandle,
+      targetHandle: edge.targetHandle
+    })) as FlowEdge[];
+
     const { error } = await supabase
       .from('agents')
       .update({
         flow: {
           ...agent.flow,
-          edges
+          edges: flowEdges
         }
       })
       .eq('id', id);
