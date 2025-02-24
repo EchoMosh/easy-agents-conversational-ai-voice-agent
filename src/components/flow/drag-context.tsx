@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState } from "react";
 
-type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode';
+type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode';
 
 const DragContext = createContext<{
   draggedNodeType: NodeType | null;
