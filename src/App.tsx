@@ -1,109 +1,73 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/components/theme/theme-provider";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import AuthPage from "./pages/auth";
-import OnboardingPage from "./pages/onboarding";
-import NotFound from "./pages/NotFound";
-import confetti from 'canvas-confetti';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from './components/theme/theme-provider';
+import { Toaster } from './components/ui/toaster';
+import { AppSidebar } from './components/dashboard/app-sidebar';
 
-export const celebrateLogin = () => {
-  // First burst
-  const count = 200;
-  const defaults = {
-    origin: { y: 0.7 },
-    zIndex: 9999,
-  };
+// Auth and onboarding pages
+import AuthPage from './pages/auth';
+import OnboardingPage from './pages/onboarding';
 
-  function fire(particleRatio: number, opts: any) {
-    confetti({
-      ...defaults,
-      ...opts,
-      particleCount: Math.floor(count * particleRatio),
-    });
-  }
-
-  fire(0.25, {
-    spread: 26,
-    startVelocity: 55,
-  });
-
-  fire(0.2, {
-    spread: 60,
-  });
-
-  fire(0.35, {
-    spread: 100,
-    decay: 0.91,
-    scalar: 0.8,
-  });
-
-  fire(0.1, {
-    spread: 120,
-    startVelocity: 25,
-    decay: 0.92,
-    scalar: 1.2,
-  });
-
-  fire(0.1, {
-    spread: 120,
-    startVelocity: 45,
-  });
-
-  // Follow up with continuous side bursts
-  setTimeout(() => {
-    const duration = 3000;
-    const end = Date.now() + duration;
-
-    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-
-    (function frame() {
-      confetti({
-        particleCount: 2,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.8 },
-        colors: colors,
-      });
-
-      confetti({
-        particleCount: 2,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.8 },
-        colors: colors,
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    })();
-  }, 500);
-};
+// Dashboard pages
+import AgentsPage from './pages/dashboard/agents';
+import LeadsPage from './pages/dashboard/leads';
+import SettingsPage from './pages/dashboard/settings';
+import ProfilePage from './pages/dashboard/profile';
+import AgentFlowPage from './pages/dashboard/agent-flow';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" attribute="class">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+// Layout with sidebar for regular dashboard pages
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex h-screen">
+    <AppSidebar />
+    <main className="flex-1 overflow-y-auto">
+      {children}
+    </main>
+  </div>
+);
+
+// Clean layout without sidebar for flow editor
+const FlowLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="h-screen">
+    {children}
+  </div>
+);
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <Router>
           <Routes>
-            <Route path="/*" element={<Index />} />
+            <Route path="/" element={<Navigate to="/auth" replace />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="*" element={<NotFound />} />
+            
+            {/* Dashboard routes with sidebar */}
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="agents" element={<AgentsPage />} />
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+            </Route>
+
+            {/* Flow editor route without sidebar */}
+            <Route
+              path="/dashboard/agents/:id/flow"
+              element={
+                <FlowLayout>
+                  <AgentFlowPage />
+                </FlowLayout>
+              }
+            />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+        </Router>
+        <Toaster />
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
