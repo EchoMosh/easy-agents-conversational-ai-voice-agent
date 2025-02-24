@@ -354,20 +354,34 @@ export default function AgentFlowPage() {
 
   return <DragProvider>
       <div className="h-screen flex flex-col bg-background">
-        <div className="h-14 border-b bg-background flex items-center justify-between px-4">
+        <div className="h-14 border-b bg-gradient-to-r from-gray-50/90 to-white dark:from-gray-900 dark:to-gray-800 backdrop-blur-sm shadow-sm flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/agents')} className="hover:bg-accent">
-              <ArrowLeft className="h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate('/dashboard/agents')} 
+              className="hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4 text-gray-600 dark:text-gray-300" />
             </Button>
             <div className="flex flex-col">
-              <h1 className="font-semibold">{agent.name}</h1>
-              <p className="text-xs text-muted-foreground capitalize">{agent.role.replace('_', ' ')}</p>
+              <h1 className="font-medium text-gray-700 dark:text-gray-200">{agent.name}</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{agent.role.replace('_', ' ')}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button variant="outline">Save Flow</Button>
-            <Button>Deploy Agent</Button>
+            <Button 
+              variant="outline" 
+              className="bg-white/80 dark:bg-gray-900/50 border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors shadow-sm"
+            >
+              Save Flow
+            </Button>
+            <Button 
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md transition-all duration-200 border-none"
+            >
+              Deploy Agent
+            </Button>
           </div>
         </div>
 
