@@ -60,12 +60,24 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const handleDeleteConfirm = async () => {
     if (!agentToDelete || isDeleting) return;
     
+    setIsDeleting(true);
+    
     try {
-      setIsDeleting(true);
-      // Clean up the dialog state before the deletion
+      // Store the ID before clearing state
       const idToDelete = agentToDelete;
-      setAgentToDelete(null); // Close dialog first
+      
+      // Close dialog with a small delay to ensure proper visual transition
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setAgentToDelete(null);
+      
+      // Wait a bit more to ensure dialog is fully closed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Perform deletion
       await onDelete(idToDelete);
+      
+      // Final cleanup delay
+      await new Promise(resolve => setTimeout(resolve, 100));
     } finally {
       setIsDeleting(false);
     }
@@ -74,21 +86,43 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const handleBulkDelete = async () => {
     if (isDeleting || selectedAgents.length === 0) return;
     
+    setIsDeleting(true);
+    
     try {
-      setIsDeleting(true);
-      // Clean up the dialog state before the deletion
+      // Store IDs before clearing state
       const agentsToDelete = [...selectedAgents];
+      
+      // Close dialog with a small delay to ensure proper visual transition
+      await new Promise(resolve => setTimeout(resolve, 100));
       setShowBulkDeleteDialog(false);
+      
+      // Clear selection with a small delay
+      await new Promise(resolve => setTimeout(resolve, 100));
       setSelectedAgents([]);
       
-      // Perform deletions after state cleanup
+      // Perform deletions one by one
       for (const id of agentsToDelete) {
         await onDelete(id);
       }
+      
+      // Final cleanup delay
+      await new Promise(resolve => setTimeout(resolve, 100));
     } finally {
       setIsDeleting(false);
     }
   };
+
+  if (isDeleting) {
+    return (
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-lg font-medium">Deleting...</p>
+          <p className="text-sm text-muted-foreground">Please wait while we process your request.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full relative">
@@ -208,7 +242,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
           }
         }}
       >
-        <AlertDialogContent className="z-50">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -237,7 +271,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
           }
         }}
       >
-        <AlertDialogContent className="z-50">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
