@@ -72,27 +72,6 @@ export const useOnboarding = () => {
 
         if (profileError) throw profileError;
 
-        const { data: workspace, error: workspaceError } = await supabase
-          .from("workspaces")
-          .insert({
-            name: data.workspaceName,
-            owner_id: session.user.id,
-          })
-          .select()
-          .single();
-
-        if (workspaceError) throw workspaceError;
-
-        const { error: memberError } = await supabase
-          .from("workspace_members")
-          .insert({
-            workspace_id: workspace.id,
-            user_id: session.user.id,
-            role: "owner",
-          });
-
-        if (memberError) throw memberError;
-
         await new Promise(resolve => setTimeout(resolve, 2000));
         navigate("/dashboard/agents");
       } catch (error: any) {

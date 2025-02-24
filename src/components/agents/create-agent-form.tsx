@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowRight } from "lucide-react";
-import { useWorkspace } from "@/contexts/workspace-context";
 import {
   Select,
   SelectContent,
@@ -108,7 +107,6 @@ const platformActions: Record<string, { value: string; label: string }[]> = {
 export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentWorkspace } = useWorkspace();
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   const [newAgent, setNewAgent] = useState({
@@ -124,15 +122,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         variant: "destructive",
         title: "Error",
         description: "Please fill in all required fields",
-      });
-      return;
-    }
-
-    if (!currentWorkspace?.id) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No workspace selected",
       });
       return;
     }
@@ -157,7 +146,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         name: newAgent.name,
         role: newAgent.role,
         user_id: session.user.id,
-        workspace_id: currentWorkspace.id,
         flow: getDefaultFlow(newAgent.platform, newAgent.action),
         is_active: true,
       })
