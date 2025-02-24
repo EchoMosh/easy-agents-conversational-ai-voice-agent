@@ -1,7 +1,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel } from '@xyflow/react';
-import { Plus } from 'lucide-react';
+import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
@@ -9,6 +9,7 @@ import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
 import { TransferNode } from '@/components/flow/nodes/transfer-node';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
@@ -19,11 +20,41 @@ const nodeTypes: NodeTypes = {
 };
 
 const widgets = [
-  { type: 'speakNode', label: 'Speak' },
-  { type: 'greetingNode', label: 'Greeting' },
-  { type: 'endNode', label: 'End' },
-  { type: 'triggerNode', label: 'Trigger' },
-  { type: 'transferNode', label: 'Transfer' }
+  { 
+    type: 'speakNode', 
+    label: 'Speak', 
+    icon: MessageCircle, 
+    color: '#c084fc',
+    description: 'Add a message response with multiple outcome paths'
+  },
+  { 
+    type: 'greetingNode', 
+    label: 'Greeting', 
+    icon: Smile, 
+    color: '#60a5fa',
+    description: 'Start a conversation with customizable responses'
+  },
+  { 
+    type: 'endNode', 
+    label: 'End', 
+    icon: XCircle, 
+    color: '#f87171',
+    description: 'End the conversation flow'
+  },
+  { 
+    type: 'triggerNode', 
+    label: 'Trigger', 
+    icon: Zap, 
+    color: '#fbbf24',
+    description: 'Define when this flow should start'
+  },
+  { 
+    type: 'transferNode', 
+    label: 'Transfer', 
+    icon: PhoneForwarded, 
+    color: '#10b981',
+    description: 'Transfer the conversation to a live agent'
+  }
 ];
 
 interface FlowProps {
@@ -135,22 +166,45 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         <Panel position="bottom-left" className="space-y-2">
           <button
             onClick={() => setShowWidgets(!showWidgets)}
-            className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105"
+            className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl"
           >
             <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
           </button>
           {showWidgets && (
-            <div className="absolute bottom-14 left-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 rounded-lg shadow-lg space-y-2 min-w-[120px]">
-              {widgets.map((widget) => (
-                <div
-                  key={widget.type}
-                  className="px-3 py-2 rounded cursor-move hover:bg-muted"
-                  onDragStart={(e) => onDragStart(e, widget.type)}
-                  draggable
-                >
-                  {widget.label}
-                </div>
-              ))}
+            <div className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20">
+              <TooltipProvider>
+                {widgets.map((widget) => (
+                  <Tooltip key={widget.type}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-move transition-all duration-200"
+                        style={{
+                          background: `color-mix(in srgb, ${widget.color} 10%, transparent)`,
+                        }}
+                        onDragStart={(e) => onDragStart(e, widget.type)}
+                        draggable
+                      >
+                        <span 
+                          className="p-1.5 rounded-lg"
+                          style={{
+                            background: `color-mix(in srgb, ${widget.color} 15%, transparent)`,
+                            color: widget.color
+                          }}
+                        >
+                          <widget.icon className="h-4 w-4" />
+                        </span>
+                        <span className="font-medium text-sm text-foreground/80">{widget.label}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent 
+                      side="right"
+                      className="bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-none shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]"
+                    >
+                      {widget.description}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </TooltipProvider>
             </div>
           )}
         </Panel>
