@@ -43,6 +43,9 @@ const bottomMenuItems = [
   },
 ];
 
+// Available variants: marble, beam, pixel, sunset, ring, bauhaus
+const AVATAR_VARIANT = "beam";
+
 export function AppSidebar() {
   const [username, setUsername] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
@@ -67,7 +70,7 @@ export function AppSidebar() {
       } else {
         // Generate a default avatar if none is saved
         const hash = btoa(email).replace(/[^a-zA-Z0-9]/g, "");
-        const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${hash}`;
+        const defaultAvatar = `https://source.boringavatars.com/svg?variant=${AVATAR_VARIANT}&name=${hash}`;
         setAvatarUrl(defaultAvatar);
       }
     }
@@ -82,7 +85,7 @@ export function AppSidebar() {
     if (session?.user) {
       // Generate a random seed
       const randomSeed = Math.random().toString(36).substring(7);
-      const newAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${randomSeed}`;
+      const newAvatarUrl = `https://source.boringavatars.com/svg?variant=${AVATAR_VARIANT}&name=${randomSeed}`;
       
       // Save the new avatar URL to the profile
       const { error } = await supabase
