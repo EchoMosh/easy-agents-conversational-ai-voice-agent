@@ -11,7 +11,9 @@ import {
   useEdgesState,
   addEdge,
   Connection,
-  useReactFlow,
+  ReactFlowProvider,
+  Node,
+  Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,13 +48,69 @@ const initialEdges = [
   { id: 'e1-2', source: '1', target: '2' },
 ];
 
+// Separate flow component to use hooks inside the ReactFlowProvider
+function Flow() {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  const onConnect = (connection: Connection) => {
+    setEdges((eds) => addEdge(connection, eds));
+  };
+
+  const onDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const onDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+
+    const type = event.dataTransfer.getData('application/reactflow');
+    if (!type) return;
+
+    // Get the current bounds of the ReactFlow wrapper element
+    const reactFlowBounds = document.querySelector('.react-flow')?.getBoundingClientRect();
+    const position = reactFlowBounds ? {
+      x: event.clientX - reactFlowBounds.left,
+      y: event.clientY - reactFlowBounds.top,
+    } : { x: 0, y: 0 };
+
+    const newNode = {
+      id: `${type}-${Math.random()}`,
+      type,
+      position,
+      data: type === 'speakNode' 
+        ? { message: 'Enter your message here' }
+        : { greeting: 'Enter your greeting here' },
+    };
+
+    setNodes((nds) => [...nds, newNode as Node]);
+  };
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      nodeTypes={nodeTypes}
+      fitView
+      defaultEdgeOptions={{ animated: true }}
+    >
+      <Background />
+      <Controls />
+      <MiniMap />
+    </ReactFlow>
+  );
+}
+
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const { project } = useReactFlow();
 
   const { data: agent, isLoading, error } = useQuery({
     queryKey: ['agent', id],
@@ -75,43 +133,6 @@ export default function AgentFlowPage() {
       return data as Agent;
     },
   });
-
-  const onConnect = (connection: Connection) => {
-    setEdges((eds) => addEdge(connection, eds));
-  };
-
-  const onDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  };
-
-  const onDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-
-    const type = event.dataTransfer.getData('application/reactflow');
-    if (!type) return;
-
-    // Get the current bounds of the ReactFlow wrapper element
-    const reactFlowBounds = document.querySelector('.react-flow')?.getBoundingClientRect();
-    
-    if (reactFlowBounds) {
-      const position = project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      });
-
-      const newNode = {
-        id: `${type}-${Math.random()}`,
-        type,
-        position,
-        data: type === 'speakNode' 
-          ? { message: 'Enter your message here' }
-          : { greeting: 'Enter your greeting here' },
-      } as const;
-
-      setNodes((nds) => [...nds, newNode]);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -184,22 +205,9 @@ export default function AgentFlowPage() {
 
       {/* Flow Canvas */}
       <div style={{ flex: 1 }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          nodeTypes={nodeTypes}
-          fitView
-          defaultEdgeOptions={{ animated: true }}
-        >
-          <Background />
-          <Controls />
-          <MiniMap />
-        </ReactFlow>
+        <ReactFlowProvider>
+          <Flow />
+        </ReactFlowProvider>
       </div>
     </div>
   );
