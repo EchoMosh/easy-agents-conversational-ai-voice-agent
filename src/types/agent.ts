@@ -16,6 +16,7 @@ export type Agent = {
 export type NodeData = {
   greeting?: string;
   message?: string;
+  outcomes?: string[];
 };
 
 export type FlowNode = {

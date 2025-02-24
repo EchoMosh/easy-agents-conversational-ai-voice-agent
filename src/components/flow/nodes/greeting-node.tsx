@@ -3,7 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Pencil } from 'lucide-react';
 import { useState } from 'react';
 
 type GreetingNodeData = {
@@ -14,6 +14,7 @@ type GreetingNodeData = {
 export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string }) {
   const [showOutcomeInput, setShowOutcomeInput] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const handleGreetingChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const evt = new CustomEvent('nodeupdate', {
@@ -59,6 +60,31 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
     window.dispatchEvent(evt);
   };
 
+  const startEditing = (index: number) => {
+    setEditingIndex(index);
+    setNewOutcome(data.outcomes[index]);
+  };
+
+  const saveEdit = (index: number) => {
+    if (!newOutcome.trim()) return;
+    
+    const updatedOutcomes = [...data.outcomes];
+    updatedOutcomes[index] = newOutcome;
+
+    const evt = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          outcomes: updatedOutcomes
+        }
+      },
+    });
+    window.dispatchEvent(evt);
+    setEditingIndex(null);
+    setNewOutcome('');
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm p-4 min-w-[300px]">
       <div className="flex flex-col gap-4">
@@ -87,7 +113,7 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
             <Label className="text-xs text-muted-foreground dark:text-gray-400">
               Possible outcomes ({(data.outcomes || []).length}/5)
             </Label>
-            {!showOutcomeInput && (data.outcomes || []).length < 5 && (
+            {!showOutcomeInput && (data.outcomes || []).length < 5 && !editingIndex && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -99,7 +125,7 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
             )}
           </div>
 
-          {showOutcomeInput && (
+          {(showOutcomeInput || editingIndex !== null) && (
             <div className="flex gap-2">
               <Textarea
                 value={newOutcome}
@@ -108,9 +134,21 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
                 className="nodrag text-sm resize-none h-[60px]"
               />
               <div className="flex flex-col gap-1">
-                <Button size="sm" onClick={addOutcome}>Add</Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    if (editingIndex !== null) {
+                      saveEdit(editingIndex);
+                    } else {
+                      addOutcome();
+                    }
+                  }}
+                >
+                  {editingIndex !== null ? 'Save' : 'Add'}
+                </Button>
                 <Button size="sm" variant="ghost" onClick={() => {
                   setShowOutcomeInput(false);
+                  setEditingIndex(null);
                   setNewOutcome('');
                 }}>Cancel</Button>
               </div>
@@ -122,14 +160,24 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
               <div key={index} className="flex items-start gap-2 group">
                 <div className="flex-1 bg-accent/50 rounded-md p-2 text-sm relative">
                   {outcome}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => removeOutcome(index)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
+                  <div className="absolute -right-2 -top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => startEditing(index)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => removeOutcome(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                   <Handle
                     type="source"
                     position={Position.Right}
@@ -143,7 +191,6 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
           </div>
         </div>
       </div>
-      
     </div>
   );
 }
