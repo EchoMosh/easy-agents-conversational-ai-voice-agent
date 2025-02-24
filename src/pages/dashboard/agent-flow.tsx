@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Network, MessageCircle, X, Plus, PhoneForwarded } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -193,13 +192,6 @@ function Flow() {
 
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
-      <div 
-        className="absolute inset-0 transition-all duration-1000"
-        style={{
-          backgroundColor: isToolbarVisible ? `rgba(0,0,0,${hoverTime * 0.002})` : 'transparent',
-        }}
-      />
-      
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -217,7 +209,7 @@ function Flow() {
         className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 to-gray-950"
       >
         <Background className="opacity-40" />
-        <Controls className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden [&>button]:border-0 [&>button]:bg-transparent [&>button:hover]:bg-black/5 dark:[&>button:hover]:bg-white/5" />
+        <Controls className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden [&>button]:border-0 [&>button]:bg-transparent [&>button]:hover:bg-black/5 dark:[&>button]:hover:bg-white/5" />
         <MiniMap
           className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
           nodeColor={node => {
@@ -315,9 +307,6 @@ function Flow() {
         <button
           onClick={() => setIsToolbarVisible(!isToolbarVisible)}
           className="group h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl pointer-events-auto"
-          style={{
-            transform: `scale(${1 + hoverTime * 0.002})`,
-          }}
         >
           <div className="relative w-6 h-6">
             <Plus 
