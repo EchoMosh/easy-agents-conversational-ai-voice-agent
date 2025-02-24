@@ -1,8 +1,8 @@
-
-import { useState } from 'react';
+import { useState, KeyboardEvent } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { PhoneForwarded, Plus, Trash2, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -23,6 +23,8 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
   const [message, setMessage] = useState(data.message || "Transferring call now...");
   const [contacts, setContacts] = useState<Contact[]>(data.contacts || []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newContactName, setNewContactName] = useState('');
+  const [newContactPhone, setNewContactPhone] = useState('');
 
   const handleChange = (field: keyof TransferNodeData, value: string | Contact[]) => {
     const updatedData = {
@@ -47,13 +49,26 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
   };
 
   const addContact = () => {
+    if (!newContactName.trim() || !newContactPhone.trim()) return;
+    
     const newContact = {
       id: Math.random().toString(36).substr(2, 9),
-      name: '',
-      phoneNumber: ''
+      name: newContactName.trim(),
+      phoneNumber: newContactPhone.trim()
     };
+    
     const updatedContacts = [...contacts, newContact];
     handleChange('contacts', updatedContacts);
+    
+    setNewContactName('');
+    setNewContactPhone('');
+  };
+
+  const handleKeyPress = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addContact();
+    }
   };
 
   const updateContact = (id: string, field: keyof Contact, value: string) => {
@@ -161,6 +176,43 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
           </DialogHeader>
           
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+            <div className="flex flex-col gap-2 p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100/50 dark:border-emerald-800/20">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
+                  New Contact Name
+                </Label>
+                <Input
+                  value={newContactName}
+                  onChange={(e) => setNewContactName(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
+                  placeholder="Enter contact name..."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
+                  Phone Number
+                </Label>
+                <PhoneInput
+                  value={newContactPhone}
+                  onChange={setNewContactPhone}
+                  onKeyPress={handleKeyPress}
+                  className="!bg-white/80 dark:!bg-gray-900/50 !border-emerald-100/50 dark:!border-emerald-800/50 shadow-sm"
+                />
+              </div>
+
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={addContact}
+                className="w-full mt-2"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Contact
+              </Button>
+            </div>
+
             {contacts.map((contact) => (
               <div key={contact.id} className="flex flex-col gap-2 p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100/50 dark:border-emerald-800/20">
                 <div className="space-y-1.5">
@@ -189,26 +241,14 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
                   <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
                     Phone Number
                   </Label>
-                  <Input
-                    type="tel"
+                  <PhoneInput
                     value={contact.phoneNumber}
-                    onChange={(e) => updateContact(contact.id, 'phoneNumber', e.target.value)}
-                    className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
-                    placeholder="Enter phone number..."
+                    onChange={(value) => updateContact(contact.id, 'phoneNumber', value)}
+                    className="!bg-white/80 dark:!bg-gray-900/50 !border-emerald-100/50 dark:!border-emerald-800/50 shadow-sm"
                   />
                 </div>
               </div>
             ))}
-
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={addContact}
-              className="w-full"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Contact
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
