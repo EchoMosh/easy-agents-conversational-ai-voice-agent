@@ -8,8 +8,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
-<lov-add-dependency>framer-motion@latest</lov-add-dependency>
-
 type Step = {
   id: number;
   question: string;
@@ -130,11 +128,11 @@ const OnboardingPage = () => {
         // Artificial delay for smooth animation
         await new Promise(resolve => setTimeout(resolve, 2000));
         navigate("/");
-      } catch (error) {
+      } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to save your information. Please try again.",
+          description: error.message,
         });
       }
     }
