@@ -216,14 +216,10 @@ function Flow() {
         />
       </ReactFlow>
 
-      <div 
-        className="fixed inset-x-0 bottom-0 z-50 flex flex-col items-center"
-        onMouseEnter={showToolbar}
-        onMouseLeave={hideToolbar}
-      >
-        <div className={`w-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isToolbarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
+      <div className="fixed inset-x-0 bottom-12 z-50 flex flex-col items-center pointer-events-none">
+        <div className={`w-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isToolbarVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="flex items-center justify-center gap-4 p-3 mb-3">
-            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl">
+            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-2xl pointer-events-auto">
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -291,16 +287,23 @@ function Flow() {
           </div>
         </div>
 
-        <div className="relative w-full h-12 flex items-center justify-center">
-          <button
-            onClick={() => setIsToolbarVisible(!isToolbarVisible)}
-            className="group h-10 w-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-sm transition-all duration-300 hover:scale-110"
-          >
+        <button
+          onMouseEnter={showToolbar}
+          onMouseLeave={hideToolbar}
+          onClick={() => setIsToolbarVisible(!isToolbarVisible)}
+          className="group h-14 w-14 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/20 dark:border-gray-700/20 shadow-sm transition-all duration-300 hover:scale-110 hover:shadow-lg pointer-events-auto"
+        >
+          <div className="relative w-6 h-6">
             <Plus 
-              className={`h-5 w-5 text-gray-600 dark:text-gray-300 transition-all duration-500 transform ${isToolbarVisible ? 'rotate-[135deg]' : ''}`}
+              className={`absolute inset-0 text-gray-600 dark:text-gray-300 transition-all duration-500 transform 
+                ${isToolbarVisible ? 
+                  'rotate-[135deg] scale-110 hover:rotate-[145deg]' : 
+                  'hover:rotate-[15deg] hover:scale-110'
+                }
+              `}
             />
-          </button>
-        </div>
+          </div>
+        </button>
       </div>
 
       {draggedNodeType && (
