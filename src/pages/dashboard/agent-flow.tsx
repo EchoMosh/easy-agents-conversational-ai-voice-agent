@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Network, MessageCircle, X, Plus, PhoneForwarded } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
+import { TransferNode } from '@/components/flow/nodes/transfer-node';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DragProvider, useDrag } from '@/components/flow/drag-context';
