@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -24,9 +24,18 @@ interface CreateAgentFormProps {
 const DEFAULT_FLOW = {
   nodes: [
     {
+      id: 'trigger-1',
+      type: 'triggerNode',
+      position: { x: 100, y: 100 },
+      data: {
+        platform: undefined,
+        action: undefined
+      }
+    },
+    {
       id: 'greeting-1',
       type: 'greetingNode',
-      position: { x: 100, y: 100 },
+      position: { x: 500, y: 100 },
       data: {
         greeting: "Hello! How can I help you today?",
         outcomes: ["I need help with a product", "I have a question"]
@@ -35,7 +44,7 @@ const DEFAULT_FLOW = {
     {
       id: 'speak-1',
       type: 'speakNode',
-      position: { x: 500, y: 100 },
+      position: { x: 900, y: 100 },
       data: {
         message: "I'd be happy to assist you. Please let me know what you need help with.",
         outcomes: ["Thanks, that's all", "I have another question"]
@@ -44,11 +53,16 @@ const DEFAULT_FLOW = {
     {
       id: 'end-1',
       type: 'endNode',
-      position: { x: 900, y: 100 },
+      position: { x: 1300, y: 100 },
       data: {}
     }
   ],
   edges: [
+    {
+      id: 'trigger-to-greeting',
+      source: 'trigger-1',
+      target: 'greeting-1'
+    },
     {
       id: 'greeting-to-speak',
       source: 'greeting-1',
@@ -67,6 +81,7 @@ const DEFAULT_FLOW = {
 export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   const [newAgent, setNewAgent] = useState({
     name: '',
@@ -135,51 +150,78 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
   return (
     <div className="space-y-6 py-6">
-      <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          placeholder="Enter agent name"
-          value={newAgent.name}
-          onChange={(e) => setNewAgent(prev => ({ ...prev, name: e.target.value }))}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="role">Role</Label>
-        <Select
-          value={newAgent.role}
-          onValueChange={(value: Agent['role']) => 
-            setNewAgent(prev => ({ ...prev, role: value }))
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a role" />
-          </SelectTrigger>
-          <SelectContent>
-            {AGENT_ROLES.map((role) => (
-              <SelectItem key={role.value} value={role.value}>
-                {role.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Button 
-        className="w-full relative" 
-        onClick={handleCreateAgent} 
-        disabled={isCreating}
-      >
-        {isCreating ? (
+      <div className="space-y-6">
+        {step === 1 && (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Creating Agent...
+            <div className="space-y-2">
+              <Label htmlFor="name">What would you like to name your agent?</Label>
+              <Input
+                id="name"
+                placeholder="Enter agent name"
+                value={newAgent.name}
+                onChange={(e) => setNewAgent(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <Button 
+              className="w-full relative" 
+              onClick={() => setStep(2)}
+              disabled={!newAgent.name}
+            >
+              Continue
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </>
-        ) : (
-          'Create Agent'
         )}
-      </Button>
+
+        {step === 2 && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="role">What role will this agent have?</Label>
+              <Select
+                value={newAgent.role}
+                onValueChange={(value: Agent['role']) => 
+                  setNewAgent(prev => ({ ...prev, role: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AGENT_ROLES.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => setStep(1)}
+              >
+                Back
+              </Button>
+              <Button 
+                className="w-full relative" 
+                onClick={handleCreateAgent} 
+                disabled={isCreating}
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Agent...
+                  </>
+                ) : (
+                  'Create Agent'
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

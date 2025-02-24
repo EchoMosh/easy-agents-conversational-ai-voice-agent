@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Facebook, MessageSquare, Network, XCircle } from 'lucide-react';
 import {
   Select,
@@ -13,7 +12,15 @@ import {
 } from '@/components/ui/select';
 
 type TriggerPlatform = 'facebook' | 'hubspot' | 'gohighlevel' | 'activix';
-type TriggerAction = 'new_contact' | 'contact_changed';
+type TriggerAction = 
+  | 'new_lead'           // Facebook
+  | 'message_received'   // Facebook
+  | 'new_contact'        // Hubspot
+  | 'deal_stage_changed' // Hubspot
+  | 'contact_created'    // GoHighLevel
+  | 'opportunity_won'    // GoHighLevel
+  | 'ticket_created'     // Activix
+  | 'payment_received';  // Activix
 
 interface TriggerNodeData {
   platform?: TriggerPlatform;
@@ -27,10 +34,24 @@ const platforms: { value: TriggerPlatform; label: string; icon: JSX.Element }[] 
   { value: 'activix', label: 'Activix', icon: <Network className="h-4 w-4" /> },
 ];
 
-const actions: { value: TriggerAction; label: string }[] = [
-  { value: 'new_contact', label: 'New Contact' },
-  { value: 'contact_changed', label: 'Contact Changed' },
-];
+const platformActions: Record<TriggerPlatform, { value: TriggerAction; label: string }[]> = {
+  facebook: [
+    { value: 'new_lead', label: 'New Lead' },
+    { value: 'message_received', label: 'Message Received' },
+  ],
+  hubspot: [
+    { value: 'new_contact', label: 'New Contact' },
+    { value: 'deal_stage_changed', label: 'Deal Stage Changed' },
+  ],
+  gohighlevel: [
+    { value: 'contact_created', label: 'Contact Created' },
+    { value: 'opportunity_won', label: 'Opportunity Won' },
+  ],
+  activix: [
+    { value: 'ticket_created', label: 'Ticket Created' },
+    { value: 'payment_received', label: 'Payment Received' },
+  ],
+};
 
 export function TriggerNode({ id, data }: { id: string; data: TriggerNodeData }) {
   const [platform, setPlatform] = useState<TriggerPlatform | undefined>(data.platform);
@@ -87,14 +108,14 @@ export function TriggerNode({ id, data }: { id: string; data: TriggerNodeData })
         {platform && (
           <div className="flex flex-col gap-1.5">
             <Label className="text-xs text-muted-foreground dark:text-gray-400">
-              Select Action
+              Select Trigger
             </Label>
             <Select value={action} onValueChange={handleActionChange}>
               <SelectTrigger>
-                <SelectValue placeholder="Choose action" />
+                <SelectValue placeholder="Choose trigger" />
               </SelectTrigger>
               <SelectContent>
-                {actions.map((a) => (
+                {platformActions[platform].map((a) => (
                   <SelectItem key={a.value} value={a.value}>
                     {a.label}
                   </SelectItem>

@@ -18,7 +18,15 @@ export type NodeData = {
   message?: string;
   outcomes?: string[];
   platform?: 'facebook' | 'hubspot' | 'gohighlevel' | 'activix';
-  action?: 'new_contact' | 'contact_changed';
+  action?: 
+    | 'new_lead'           // Facebook
+    | 'message_received'   // Facebook
+    | 'new_contact'        // Hubspot
+    | 'deal_stage_changed' // Hubspot
+    | 'contact_created'    // GoHighLevel
+    | 'opportunity_won'    // GoHighLevel
+    | 'ticket_created'     // Activix
+    | 'payment_received';  // Activix
 };
 
 export type FlowNode = {
