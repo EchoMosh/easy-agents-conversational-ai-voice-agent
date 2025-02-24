@@ -23,7 +23,7 @@ const queryClient = new QueryClient();
 const DashboardLayout = () => (
   <div className="flex min-h-screen">
     <AppSidebar />
-    <main className="flex-1 w-0">
+    <main className="flex-1">
       <div className="min-h-screen">
         <Outlet />
       </div>
