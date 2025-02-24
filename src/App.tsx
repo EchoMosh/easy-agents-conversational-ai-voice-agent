@@ -7,6 +7,7 @@ import { AppSidebar } from './components/dashboard/app-sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 // Auth and onboarding pages
+import LandingPage from './pages/landing';
 import AuthPage from './pages/auth';
 import OnboardingPage from './pages/onboarding';
 
@@ -44,7 +45,7 @@ function App() {
           <div className="min-h-screen flex w-full">
             <Router>
               <Routes>
-                <Route path="/" element={<Navigate to="/auth" replace />} />
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 
