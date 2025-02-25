@@ -10,14 +10,15 @@ import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
 import { Circle } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { Node, Edge } from '@xyflow/react';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string; }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
-  const [nodes, setNodes] = useState([]);
-  const [edges, setEdges] = useState([]);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
 
   // 1. WebSocket Connection
   useEffect(() => {
@@ -73,8 +74,24 @@ export default function AgentFlowPage() {
     }
   });
 
-  // 2. Update nodes in Supabase
-  const handleUpdateFlow = useCallback(async (newNodes, newEdges) => {
+  // Add this event listener for node updates
+  useEffect(() => {
+    const handleNodeUpdate = (event: CustomEvent) => {
+      const { id: nodeId, data } = event.detail;
+      setNodes(currentNodes => 
+        currentNodes.map(node => 
+          node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+        )
+      );
+    };
+
+    window.addEventListener('nodeupdate', handleNodeUpdate as EventListener);
+    return () => window.removeEventListener('nodeupdate', handleNodeUpdate as EventListener);
+  }, []);
+
+  // 2. Update nodes in Supabase with debounce
+  const handleUpdateFlow = useCallback(async (newNodes: Node[], newEdges: Edge[]) => {
+    console.log('Updating flow:', { nodes: newNodes, edges: newEdges });
     const { error } = await supabase
       .from('agents')
       .update({
@@ -86,6 +103,7 @@ export default function AgentFlowPage() {
       .eq('id', id);
 
     if (error) {
+      console.error('Error updating flow:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -94,12 +112,14 @@ export default function AgentFlowPage() {
     }
   }, [id, toast]);
 
-  const handleNodesChange = useCallback((newNodes) => {
+  const handleNodesChange = useCallback((newNodes: Node[]) => {
+    console.log('Nodes changed:', newNodes);
     setNodes(newNodes);
     handleUpdateFlow(newNodes, edges);
   }, [edges, handleUpdateFlow]);
 
-  const handleEdgesChange = useCallback((newEdges) => {
+  const handleEdgesChange = useCallback((newEdges: Edge[]) => {
+    console.log('Edges changed:', newEdges);
     setEdges(newEdges);
     handleUpdateFlow(nodes, newEdges);
   }, [nodes, handleUpdateFlow]);
