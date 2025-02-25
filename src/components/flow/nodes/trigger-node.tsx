@@ -74,7 +74,7 @@ export function TriggerNode({ id, data }: { id: string; data: TriggerNodeData })
   };
 
   return (
-    <div className="relative group bg-gradient-to-br from-amber-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-amber-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[300px] transition-all duration-300 bg-[length:200%_200%] animate-breathing hover:shadow-[0_0_30px_-5px_rgba(245,158,11,0.3)] dark:hover:shadow-[0_0_30px_-5px_rgba(245,158,11,0.2)] group-hover:z-10">
+    <div className="relative group bg-gradient-to-br from-amber-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-amber-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[300px] transition-all duration-300 bg-[length:200%_200%] animate-breathing hover:shadow-[0_0_30px_-5px_rgba(245,158,11,0.3)] dark:hover:shadow-[0_0_30px_-5px_rgba(245,158,11,0.2)] hover:translate-y-[-2px] hover:z-10">
       <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] to-transparent dark:from-amber-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
       <div className="fixed inset-0 -z-10 bg-amber-500/[0.01] dark:bg-amber-400/[0.02] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
