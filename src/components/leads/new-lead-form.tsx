@@ -141,53 +141,53 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         </div>
 
         {/* Custom Variables Section */}
-        <div className="pt-4">
-          <div className="flex items-center justify-between mb-4">
-            <Label className="text-lg font-medium">Custom Variables</Label>
+        <div className="pt-8">
+          <div className="flex items-center justify-between mb-6">
+            <Label className="text-xl font-semibold">Custom Variables</Label>
             <Dialog open={isAddingVariable} onOpenChange={setIsAddingVariable}>
               <DialogTrigger asChild>
                 <Button 
                   type="button" 
                   variant="outline" 
                   size="sm"
-                  className="h-9 px-4 rounded-full hover:bg-muted/60 transition-colors"
+                  className="h-10 px-5 rounded-full border border-border/50 bg-background/50 backdrop-blur-sm hover:bg-muted/10 transition-colors"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Variable
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Add Variable</DialogTitle>
+              <DialogContent className="sm:max-w-[425px] p-6 bg-background/95 backdrop-blur-sm">
+                <DialogHeader className="mb-4">
+                  <DialogTitle className="text-xl">Add Variable</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="variableName">Variable name</Label>
+                    <Label htmlFor="variableName" className="text-sm font-medium text-muted-foreground">Variable name</Label>
                     <Input
                       id="variableName"
                       placeholder="e.g., Source"
                       value={newVariable.name}
                       onChange={(e) => setNewVariable({ ...newVariable, name: e.target.value })}
-                      className="border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+                      className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="variableValue">Value</Label>
+                    <Label htmlFor="variableValue" className="text-sm font-medium text-muted-foreground">Value</Label>
                     <Input
                       id="variableValue"
                       placeholder="e.g., Website"
                       value={newVariable.value}
                       onChange={(e) => setNewVariable({ ...newVariable, value: e.target.value })}
-                      className="border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+                      className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end mt-6">
                   <Button 
                     type="button" 
                     onClick={addVariable}
                     disabled={!newVariable.name || !newVariable.value}
-                    className="rounded-full"
+                    className="rounded-full px-6"
                   >
                     Add Variable
                   </Button>
@@ -196,37 +196,42 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
             </Dialog>
           </div>
 
-          <div className="min-h-[100px] bg-muted/30 rounded-lg p-4">
-            {variables.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {variables.map((variable, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="pl-2 pr-1 py-1 h-7 text-sm bg-background/50 hover:bg-background/60 transition-colors"
-                  >
-                    <Tag className="w-3 h-3 mr-1 opacity-50" />
-                    <span className="font-normal">{variable.name}:</span>
-                    <span className="font-medium ml-1">{variable.value}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeVariable(index)}
-                      className="h-5 w-5 ml-1 hover:bg-muted/40 rounded-full"
+          <div className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-b from-background/10 to-background/30 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/25 to-background/50 pointer-events-none" />
+            
+            <div className="relative p-6">
+              {variables.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {variables.map((variable, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="pl-3 pr-2 py-1.5 h-8 text-sm bg-background/60 hover:bg-background/80 transition-all duration-200 backdrop-blur-sm border border-border/50 shadow-sm"
                     >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No variables added yet. Click "Add Variable" to start adding custom fields to this lead.
-              </p>
-            )}
+                      <Tag className="w-3 h-3 mr-2 opacity-50" />
+                      <span className="font-normal">{variable.name}:</span>
+                      <span className="font-medium ml-1">{variable.value}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeVariable(index)}
+                        className="h-5 w-5 ml-2 hover:bg-muted/40 rounded-full"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No variables added yet. Click "Add Variable" to start adding custom fields to this lead.
+                </p>
+              )}
+            </div>
           </div>
         </div>
+
       </div>
 
       <Button 
