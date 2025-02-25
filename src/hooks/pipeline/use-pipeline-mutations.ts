@@ -42,7 +42,9 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
         description: "Pipeline stage has been updated successfully"
       });
 
+      // Update local state immediately
       refetchLeads();
+      refetchPipelines();
     } catch (error) {
       console.error("Error updating pipeline stage:", error);
       toast({
