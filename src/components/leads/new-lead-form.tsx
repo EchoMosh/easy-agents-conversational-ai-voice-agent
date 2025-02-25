@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus, Trash, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -110,7 +109,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                 id="firstName" 
                 name="firstName" 
                 required 
-                className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+                className="h-11 text-base border border-border/50 bg-background/50 hover:bg-background/80 focus-visible:ring-1 transition-colors"
                 placeholder="John"
               />
             </div>
@@ -120,7 +119,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                 id="lastName" 
                 name="lastName" 
                 required 
-                className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+                className="h-11 text-base border border-border/50 bg-background/50 hover:bg-background/80 focus-visible:ring-1 transition-colors"
                 placeholder="Doe"
               />
             </div>
@@ -133,7 +132,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                 id="email" 
                 name="email" 
                 type="email" 
-                className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+                className="h-11 text-base border border-border/50 bg-background/50 hover:bg-background/80 focus-visible:ring-1 transition-colors"
                 placeholder="john@example.com"
               />
             </div>
@@ -144,7 +143,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                 name="phone"
                 value={phone}
                 onChange={(value) => setPhone(value)}
-                className="[&>div]:!h-11 [&>div]:!text-base [&>div]:!border-0 [&>div]:!bg-muted/30 [&>div]:hover:!bg-muted/40 [&>div]:!transition-colors [&>div>div]:!border-0 [&>div>div]:!bg-muted/30 [&>div>div]:hover:!bg-muted/40"
+                className="[&>div]:!h-11 [&>div]:!text-base [&>div]:!border-border/50 [&>div]:!bg-background/50 [&>div]:hover:!bg-background/80 [&>div]:!transition-colors [&>div>div]:!border-border/50 [&>div>div]:!bg-background/50 [&>div>div]:hover:!bg-background/80"
               />
             </div>
           </div>
@@ -160,13 +159,13 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                   type="button" 
                   variant="outline" 
                   size="sm"
-                  className="h-10 px-5 rounded-full border border-border/50 bg-background/50 backdrop-blur-sm hover:bg-muted/10 transition-colors"
+                  className="h-10 px-5 rounded-lg border border-border/50 bg-background/50 backdrop-blur-sm hover:bg-background/80 transition-colors"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Variable
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] p-6 bg-background/95 backdrop-blur-sm">
+              <DialogContent className="sm:max-w-[425px] p-6 bg-background/95 backdrop-blur-sm border border-border/50">
                 <DialogHeader className="mb-4">
                   <DialogTitle className="text-xl">Add Variable</DialogTitle>
                 </DialogHeader>
@@ -178,7 +177,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                       placeholder="e.g., Source"
                       value={newVariable.name}
                       onChange={(e) => setNewVariable({ ...newVariable, name: e.target.value })}
-                      className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+                      className="h-11 text-base border border-border/50 bg-background/50 hover:bg-background/80 focus-visible:ring-1 transition-colors"
                     />
                   </div>
                   <div className="space-y-2">
@@ -188,7 +187,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                       placeholder="e.g., Website"
                       value={newVariable.value}
                       onChange={(e) => setNewVariable({ ...newVariable, value: e.target.value })}
-                      className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+                      className="h-11 text-base border border-border/50 bg-background/50 hover:bg-background/80 focus-visible:ring-1 transition-colors"
                     />
                   </div>
                 </div>
@@ -197,7 +196,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                     type="button" 
                     onClick={addVariable}
                     disabled={!newVariable.name || !newVariable.value}
-                    className="rounded-full px-6"
+                    className="px-6"
                   >
                     Add Variable
                   </Button>
@@ -206,9 +205,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
             </Dialog>
           </div>
 
-          <div className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-b from-background/10 to-background/30 backdrop-blur-sm">
-            <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/25 to-background/50 pointer-events-none" />
-            
+          <div className="overflow-hidden rounded-lg border border-border/50 bg-gradient-to-b from-background/50 via-background/30 to-background/50">
             <div className="relative p-6">
               {variables.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -216,7 +213,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                     <Badge
                       key={index}
                       variant="secondary"
-                      className="pl-3 pr-2 py-1.5 h-8 text-sm bg-background/60 hover:bg-background/80 transition-all duration-200 backdrop-blur-sm border border-border/50 shadow-sm"
+                      className="pl-3 pr-2 py-1.5 h-8 text-sm bg-background/80 hover:bg-background/90 transition-all duration-200 border border-border/50 shadow-sm"
                     >
                       <Tag className="w-3 h-3 mr-2 opacity-50" />
                       <span className="font-normal">{variable.name}:</span>
@@ -226,7 +223,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => removeVariable(index)}
-                        className="h-5 w-5 ml-2 hover:bg-muted/40 rounded-full"
+                        className="h-5 w-5 ml-2 hover:bg-background/80 rounded-full"
                       >
                         <X className="h-3 w-3" />
                       </Button>
@@ -234,20 +231,25 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  No variables added yet. Click "Add Variable" to start adding custom fields to this lead.
-                </p>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Tag className="w-8 h-8 mb-3 text-muted-foreground/50" />
+                  <p className="text-sm text-muted-foreground">
+                    No variables added yet
+                  </p>
+                  <p className="text-xs text-muted-foreground/80">
+                    Click "Add Variable" to start adding custom fields to this lead
+                  </p>
+                </div>
               )}
             </div>
           </div>
         </div>
-
       </div>
 
       <Button 
         type="submit" 
         disabled={isLoading}
-        className="w-full h-11 text-base rounded-full transition-all duration-200 hover:scale-[0.98]"
+        className="w-full h-11 text-base bg-primary/90 hover:bg-primary transition-all duration-200"
       >
         {isLoading ? "Adding..." : `Save Lead${variables.length > 0 ? ` with ${variables.length} Variable${variables.length === 1 ? '' : 's'}` : ''}`}
       </Button>
