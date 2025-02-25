@@ -1,9 +1,8 @@
-
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Plus, Settings, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Settings, Trash2, Palette } from "lucide-react";
 import { DroppableColumn } from "@/pages/dashboard/pipelines";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,49 @@ import { LeadCard } from "@/components/leads/lead-card";
 import { useState } from "react";
 import { useSortable, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+const colorOptions = [
+  { name: "Gray", value: "bg-gray-500" },
+  { name: "Red", value: "bg-red-500" },
+  { name: "Orange", value: "bg-orange-500" },
+  { name: "Yellow", value: "bg-yellow-500" },
+  { name: "Green", value: "bg-green-500" },
+  { name: "Blue", value: "bg-blue-500" },
+  { name: "Purple", value: "bg-purple-500" },
+  { name: "Pink", value: "bg-pink-500" },
+];
+
+interface ColorPickerProps {
+  color: string;
+  onColorChange: (color: string) => void;
+}
+
+function ColorPicker({ color, onColorChange }: ColorPickerProps) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <div className={`w-4 h-4 rounded-full ${color}`} />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-2">
+        <div className="grid grid-cols-4 gap-1">
+          {colorOptions.map((option) => (
+            <button
+              key={option.value}
+              className={`w-8 h-8 rounded-full ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
+                color === option.value ? "ring-2" : ""
+              }`}
+              onClick={() => onColorChange(option.value)}
+              title={option.name}
+            />
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
@@ -136,6 +178,13 @@ export function PipelineStages({
     }
   };
 
+  const handleColorChange = (columnId: string, newColor: string) => {
+    const newColumns = [...editedColumns];
+    const index = newColumns.findIndex(c => c.id === columnId);
+    newColumns[index] = { ...newColumns[index], color: newColor };
+    onReorderColumns(newColumns);
+  };
+
   return (
     <>
       <div className="flex justify-between items-center mb-6">
@@ -225,11 +274,17 @@ export function PipelineStages({
                               <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
                             )}
                             {editingColumns ? (
-                              <Input
-                                value={column.title}
-                                onChange={(e) => onEditColumnTitle(column.id, e.target.value)}
-                                className="h-8 text-base"
-                              />
+                              <div className="flex items-center gap-2 flex-1">
+                                <Input
+                                  value={column.title}
+                                  onChange={(e) => onEditColumnTitle(column.id, e.target.value)}
+                                  className="h-8 text-base"
+                                />
+                                <ColorPicker 
+                                  color={column.color}
+                                  onColorChange={(color) => handleColorChange(column.id, color)}
+                                />
+                              </div>
                             ) : (
                               <>
                                 <div className={`w-3 h-3 rounded-full ${column.color}`} />
