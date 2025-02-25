@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "@/pages/dashboard/leads";
@@ -150,6 +151,36 @@ export default function PipelinesPage() {
     setEditedColumns(prev => [...prev, newStage]);
   };
 
+  const handleEditColumnTitle = async (columnId: string, newTitle: string) => {
+    const newColumns = [...editedColumns];
+    const index = newColumns.findIndex(c => c.id === columnId);
+    const oldTitle = newColumns[index].title;
+    newColumns[index] = { ...newColumns[index], title: newTitle };
+    setEditedColumns(newColumns);
+
+    // Update the status of all leads in this stage
+    const leadsInStage = leads.filter(lead => lead.status === columnId);
+    if (leadsInStage.length > 0) {
+      try {
+        const { error } = await supabase
+          .from("leads")
+          .update({ status: newTitle })
+          .eq("status", oldTitle);
+
+        if (error) throw error;
+
+        refetchLeads();
+      } catch (error) {
+        console.error("Error updating lead statuses:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update lead statuses",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   const handleEditPipelineName = async (name: string) => {
     if (!selectedPipeline) return;
 
@@ -277,12 +308,7 @@ export default function PipelinesPage() {
           onEditColumns={handleEditColumns}
           onSaveColumns={handleSaveColumns}
           onDragEnd={handleDragEnd}
-          onEditColumnTitle={(columnId, newTitle) => {
-            const newColumns = [...editedColumns];
-            const index = newColumns.findIndex(c => c.id === columnId);
-            newColumns[index] = { ...newColumns[index], title: newTitle };
-            setEditedColumns(newColumns);
-          }}
+          onEditColumnTitle={handleEditColumnTitle}
           onLeadClick={setSelectedLead}
           onAddStage={handleAddStage}
           onDeletePipeline={handleDeletePipeline}
