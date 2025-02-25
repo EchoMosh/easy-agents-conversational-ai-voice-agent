@@ -8,9 +8,11 @@ import { toast } from "sonner";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 interface NewLeadFormProps {
   onSuccess: () => void;
 }
+
 export function NewLeadForm({
   onSuccess
 }: NewLeadFormProps) {
@@ -25,6 +27,7 @@ export function NewLeadForm({
     name: "",
     value: ""
   });
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -70,27 +73,27 @@ export function NewLeadForm({
       setIsLoading(false);
     }
   };
+
   const addVariable = () => {
     if (newVariable.name && newVariable.value) {
       // Check if variable name already exists
       const isDuplicate = variables.some(v => v.name.toLowerCase() === newVariable.name.toLowerCase());
       if (isDuplicate) {
-        toast.error("A variable with this name already exists");
+        toast.error("A variable with this name already exists", {
+          description: "Please use a different name for your variable",
+        });
         return;
       }
-      setVariables([...variables, {
-        ...newVariable
-      }]);
-      setNewVariable({
-        name: "",
-        value: ""
-      });
+      setVariables([...variables, { ...newVariable }]);
+      setNewVariable({ name: "", value: "" });
       setIsAddingVariable(false);
     }
   };
+
   const removeVariable = (index: number) => {
     setVariables(variables.filter((_, i) => i !== index));
   };
+
   return <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-6">
         {/* Contact Information Section */}
