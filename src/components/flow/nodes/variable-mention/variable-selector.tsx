@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export type Variable = {
   id: string;
@@ -27,7 +27,6 @@ interface VariableSelectorProps {
 export function VariableSelector({ text, onTextChange, textareaRef }: VariableSelectorProps) {
   const [showVariables, setShowVariables] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [position, setPosition] = useState({ x: 0, y: 0 });
   const lastAtIndex = useRef(-1);
 
   useEffect(() => {
@@ -35,28 +34,15 @@ export function VariableSelector({ text, onTextChange, textareaRef }: VariableSe
       const atIndex = text.lastIndexOf('@');
       if (atIndex !== -1 && atIndex !== lastAtIndex.current) {
         lastAtIndex.current = atIndex;
-        const textarea = textareaRef.current;
-        if (textarea) {
-          const { left, top, height } = textarea.getBoundingClientRect();
-          const textBeforeAt = text.substring(0, atIndex);
-          const lines = textBeforeAt.split('\n');
-          const lineHeight = height / textarea.rows;
-          const currentLine = lines.length;
-          
-          setPosition({
-            x: left + 10,
-            y: top + (currentLine * lineHeight)
-          });
-          setShowVariables(true);
-          setSearchTerm("");
-        }
+        setShowVariables(true);
+        setSearchTerm("");
       } else if (!text.includes('@')) {
         setShowVariables(false);
       }
     };
 
     handleAt();
-  }, [text, textareaRef]);
+  }, [text]);
 
   const insertVariable = (variable: Variable) => {
     const atIndex = text.lastIndexOf('@');
@@ -70,39 +56,35 @@ export function VariableSelector({ text, onTextChange, textareaRef }: VariableSe
   };
 
   return (
-    <Popover open={showVariables} onOpenChange={setShowVariables}>
-      <PopoverTrigger asChild>
-        <div className="fixed" style={{ left: position.x, top: position.y }} />
-      </PopoverTrigger>
-      <PopoverContent className="p-0 w-[300px]" side="right" align="start" sideOffset={5}>
-        <div className="relative">
-          <Command className="rounded-lg border shadow-md">
-            <CommandInput 
-              placeholder="Search variables..." 
-              value={searchTerm}
-              onValueChange={setSearchTerm}
-            />
-            <CommandList>
-              <CommandEmpty>No variables found.</CommandEmpty>
-              <CommandGroup className="max-h-[200px] overflow-auto">
-                {SAMPLE_VARIABLES.filter(variable => 
-                  variable.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  variable.description.toLowerCase().includes(searchTerm.toLowerCase())
-                ).map((variable) => (
-                  <CommandItem
-                    key={variable.id}
-                    onSelect={() => insertVariable(variable)}
-                    className="flex flex-col items-start gap-1 p-2"
-                  >
-                    <div className="font-medium">{variable.name}</div>
-                    <div className="text-xs text-muted-foreground">{variable.description}</div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </div>
-      </PopoverContent>
-    </Popover>
+    <Dialog open={showVariables} onOpenChange={setShowVariables}>
+      <DialogContent className="sm:max-w-[500px] p-0">
+        <Command className="rounded-lg">
+          <CommandInput 
+            placeholder="Search variables..." 
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            className="border-none focus:ring-0"
+          />
+          <CommandList>
+            <CommandEmpty>No variables found.</CommandEmpty>
+            <CommandGroup className="max-h-[300px] overflow-auto">
+              {SAMPLE_VARIABLES.filter(variable => 
+                variable.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                variable.description.toLowerCase().includes(searchTerm.toLowerCase())
+              ).map((variable) => (
+                <CommandItem
+                  key={variable.id}
+                  onSelect={() => insertVariable(variable)}
+                  className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <div className="font-medium">{variable.name}</div>
+                  <div className="text-xs text-muted-foreground">{variable.description}</div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </DialogContent>
+    </Dialog>
   );
 }
