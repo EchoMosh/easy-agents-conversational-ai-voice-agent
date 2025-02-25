@@ -24,6 +24,8 @@ import { EditLeadForm } from "./edit-lead-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DeleteDialog } from "@/components/agents/table/delete-dialog";
+import { SelectionHeader } from "@/components/agents/table/selection-header";
+import { useQuery } from "@tanstack/react-query";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -44,6 +46,20 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Fetch available pipelines
+  const { data: pipelines = [] } = useQuery({
+    queryKey: ["pipelines"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("id, name")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleToggleSelect = (id: string) => {
     setSelectedLeads(prev =>
@@ -79,6 +95,24 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
     }
   };
 
+  const handleMoveToPipeline = async (pipelineId: string) => {
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ pipeline_id: pipelineId })
+        .in('id', selectedLeads);
+
+      if (error) throw error;
+
+      toast.success(`Successfully moved ${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''} to pipeline`);
+      setSelectedLeads([]);
+      onLeadUpdated();
+    } catch (error) {
+      console.error('Error moving leads:', error);
+      toast.error('Failed to move leads');
+    }
+  };
+
   if (isLoading) {
     return <div className="text-center py-4">Loading leads...</div>;
   }
@@ -93,21 +127,14 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
 
   return (
     <>
-      {selectedLeads.length > 0 && (
-        <div className="mb-4 flex items-center justify-between bg-muted p-4 rounded-lg">
-          <span className="text-sm font-medium">
-            {selectedLeads.length} lead{selectedLeads.length > 1 ? 's' : ''} selected
-          </span>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setIsDeleteDialogOpen(true)}
-            disabled={isDeleting}
-          >
-            Delete Selected
-          </Button>
-        </div>
-      )}
+      <SelectionHeader
+        selectedCount={selectedLeads.length}
+        onDelete={() => setIsDeleteDialogOpen(true)}
+        isDeleting={isDeleting}
+        onMoveToPipeline={handleMoveToPipeline}
+        pipelines={pipelines}
+      />
+
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
