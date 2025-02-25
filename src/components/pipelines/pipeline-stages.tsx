@@ -1,3 +1,4 @@
+
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
@@ -98,7 +99,7 @@ export function PipelineStages({
   const toggleColumnCollapse = (columnId: string) => {
     setCollapsedColumns(prev => {
       const newMap = new Map(prev);
-      const pipelineCollapsed = new Set(newMap.get(selectedPipeline.id) || new Set());
+      const pipelineCollapsed = new Set<string>(newMap.get(selectedPipeline.id) || new Set());
       
       if (pipelineCollapsed.has(columnId)) {
         pipelineCollapsed.delete(columnId);
@@ -194,7 +195,13 @@ export function PipelineStages({
       title: "New Stage",
       color: "bg-gray-500",
     };
+    
+    // Add the new stage to the pipeline
+    const newColumns = [...selectedPipeline.columns, newStage];
     onAddStage(newStage);
+    onReorderColumns(newColumns);
+    
+    // Start editing the new stage
     setEditingColumnId(newStage.id);
     setEditingColumnTitle("New Stage");
   };
