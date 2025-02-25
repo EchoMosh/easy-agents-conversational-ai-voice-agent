@@ -1,5 +1,5 @@
 
-import { Users, Target, Settings } from "lucide-react";
+import { Users, Target, Settings, GitMerge } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   SidebarContent,
@@ -20,6 +20,11 @@ const mainMenuItems = [
     title: "Leads",
     icon: Target,
     url: "/dashboard/leads",
+  },
+  {
+    title: "Pipelines",
+    icon: GitMerge,
+    url: "/dashboard/pipelines",
   },
 ];
 

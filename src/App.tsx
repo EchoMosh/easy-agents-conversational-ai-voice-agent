@@ -16,6 +16,7 @@ import LeadsPage from './pages/dashboard/leads';
 import SettingsPage from './pages/dashboard/settings';
 import ProfilePage from './pages/dashboard/profile';
 import AgentFlowPage from './pages/dashboard/agent-flow';
+import PipelinesPage from './pages/dashboard/pipelines';
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ function App() {
                   <Route index element={<Navigate to="agents" replace />} />
                   <Route path="agents" element={<AgentsPage />} />
                   <Route path="leads" element={<LeadsPage />} />
+                  <Route path="pipelines" element={<PipelinesPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="profile" element={<ProfilePage />} />
                 </Route>
