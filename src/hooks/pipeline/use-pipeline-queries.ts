@@ -1,10 +1,12 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 
 export function usePipelineQueries(selectedPipelineId: string | undefined) {
+  const queryClient = useQueryClient();
+
   const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
@@ -35,10 +37,18 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
     enabled: !!selectedPipelineId,
   });
 
+  const invalidateAndRefetch = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] }),
+      queryClient.invalidateQueries({ queryKey: ["leads", selectedPipelineId] })
+    ]);
+  };
+
   return {
     pipelines,
     leads,
     refetchPipelines,
     refetchLeads,
+    invalidateAndRefetch
   };
 }

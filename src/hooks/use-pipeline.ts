@@ -14,7 +14,8 @@ export function usePipeline() {
     pipelines, 
     leads, 
     refetchPipelines, 
-    refetchLeads 
+    refetchLeads,
+    invalidateAndRefetch
   } = usePipelineQueries(selectedPipeline?.id);
 
   const {
@@ -22,7 +23,7 @@ export function usePipeline() {
     createNewPipeline,
     handleDeletePipeline: deletePipeline,
     handleEditPipelineName,
-  } = usePipelineMutations(refetchPipelines, refetchLeads);
+  } = usePipelineMutations(invalidateAndRefetch, invalidateAndRefetch);
 
   return {
     // State
