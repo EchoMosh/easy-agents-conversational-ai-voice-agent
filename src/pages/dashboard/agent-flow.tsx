@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Agent, FlowNode, FlowEdge, NodeType } from '@/types/agent';
+import { Agent, FlowNode, FlowEdge, NodeType, FlowData } from '@/types/agent';
 import { Json } from '@/integrations/supabase/types';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
@@ -43,10 +43,11 @@ export default function AgentFlowPage() {
         throw error;
       }
 
-      // Initialize nodes and edges when agent data is loaded
-      if (data.flow) {
-        setNodes(data.flow.nodes);
-        setEdges(data.flow.edges);
+      // Type check and initialize nodes and edges when agent data is loaded
+      const flowData = data.flow as FlowData | null;
+      if (flowData && Array.isArray(flowData.nodes) && Array.isArray(flowData.edges)) {
+        setNodes(flowData.nodes as Node[]);
+        setEdges(flowData.edges as Edge[]);
       }
       
       return data as Agent;
