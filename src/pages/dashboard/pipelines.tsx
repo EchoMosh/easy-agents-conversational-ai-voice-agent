@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { DragEndEvent } from "@dnd-kit/core";
 import { useDroppable } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { PipelineHeader } from "@/components/pipelines/pipeline-header";
 import { PipelineStages } from "@/components/pipelines/pipeline-stages";
 import { LeadDetailsDialog } from "@/components/pipelines/lead-details-dialog";
@@ -13,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "@/hooks/use-pipeline";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -32,6 +32,7 @@ export default function PipelinesPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const {
     pipelines,
@@ -48,6 +49,20 @@ export default function PipelinesPage() {
     createNewPipeline,
   } = usePipeline();
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      window.location.reload();
+    } catch (error) {
+      console.error("Error refreshing:", error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh the page",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -56,7 +71,6 @@ export default function PipelinesPage() {
     const leadId = String(active.id);
     const newStatus = over.id as Lead["status"];
 
-    // Don't update if dropping in the same column
     const lead = leads.find(l => l.id === leadId);
     if (lead?.status === newStatus) return;
 
@@ -122,6 +136,18 @@ export default function PipelinesPage() {
   return (
     <div className="relative">
       <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
+        <div className="flex justify-between items-center mb-6">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="w-8 h-8"
+          >
+            <Loader2 className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+        
         <PipelineHeader 
           pipelines={pipelines}
           selectedPipeline={selectedPipeline}
