@@ -17,6 +17,7 @@ export type Lead = {
   email: string | null;
   phone: string | null;
   status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+  pipeline_id: string;
   created_at: string;
   variables?: LeadVariable[];
 };

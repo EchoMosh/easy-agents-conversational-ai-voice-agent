@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Plus, Trash, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,9 @@ import { toast } from "sonner";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { Pipeline } from "@/types/pipeline";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
@@ -22,14 +26,34 @@ export function NewLeadForm({
     value: string;
   }[]>([]);
   const [phone, setPhone] = useState("");
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
   const [isAddingVariable, setIsAddingVariable] = useState(false);
   const [newVariable, setNewVariable] = useState({
     name: "",
     value: ""
   });
 
+  const { data: pipelines = [] } = useQuery({
+    queryKey: ["pipelines"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as Pipeline[];
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!selectedPipelineId) {
+      toast.error("Please select a pipeline");
+      return;
+    }
+
     setIsLoading(true);
     const formData = new FormData(e.currentTarget);
     const firstName = formData.get("firstName") as string;
@@ -51,7 +75,9 @@ export function NewLeadForm({
         name: `${firstName} ${lastName}`.trim(),
         email: email || null,
         phone: phone || null,
-        user_id: user.id
+        user_id: user.id,
+        pipeline_id: selectedPipelineId,
+        status: 'new'
       }]).select().single();
       if (leadError) throw leadError;
       if (variables.length > 0) {
@@ -96,6 +122,23 @@ export function NewLeadForm({
 
   return <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-6">
+        {/* Pipeline Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="pipeline" className="text-sm font-medium text-muted-foreground">Pipeline</Label>
+          <Select value={selectedPipelineId} onValueChange={setSelectedPipelineId} required>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a pipeline" />
+            </SelectTrigger>
+            <SelectContent>
+              {pipelines.map((pipeline) => (
+                <SelectItem key={pipeline.id} value={pipeline.id}>
+                  {pipeline.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Contact Information Section */}
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
