@@ -18,6 +18,7 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
         transition: 'transform 0ms',
+        zIndex: 50,
       }
     : undefined;
 
