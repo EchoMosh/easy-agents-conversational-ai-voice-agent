@@ -1,7 +1,6 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ReactFlowProvider } from '@xyflow/react';
+import { ReactFlowProvider, useNodesState, useEdgesState, addEdge } from '@xyflow/react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Agent, FlowNode, FlowEdge, NodeType, FlowData } from '@/types/agent';
@@ -11,15 +10,16 @@ import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
 import { Node, Edge } from '@xyflow/react';
 import { Circle } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string; }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const [nodes, setNodes] = useNodesState<Node[]>([]);
+  const [edges, setEdges] = useEdgesState<Edge[]>([]);
   
   const {
     data: agent,
@@ -103,20 +103,17 @@ export default function AgentFlowPage() {
     });
   };
 
-  const saveFlowChanges = useCallback(async (updatedNodes: Node[], updatedEdges: Edge[]) => {
+  const saveFlowChanges = useCallback(async () => {
     if (!agent) return;
 
     const flowData = {
-      nodes: updatedNodes.map(node => ({
+      nodes: nodes.map(node => ({
         id: node.id,
         type: node.type as NodeType,
-        position: {
-          x: node.position.x,
-          y: node.position.y
-        },
+        position: node.position,
         data: node.data as Record<string, unknown>
       })) as FlowNode[],
-      edges: updatedEdges.map(edge => ({
+      edges: edges.map(edge => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
@@ -138,40 +135,48 @@ export default function AgentFlowPage() {
         title: "Error",
         description: "Failed to save flow changes"
       });
-      return;
     }
+  }, [agent, id, nodes, edges, toast]);
 
-    // Update local state
-    setNodes(updatedNodes);
-    setEdges(updatedEdges);
-  }, [agent, id, toast]);
+  const debouncedSave = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      saveFlowChanges();
+    }, 1000); // Save after 1 second of no changes
+  }, [saveFlowChanges]);
 
-  const handleNodesChange = useCallback((changes: Node[]) => {
+  const handleNodesChange = useCallback((changes: any) => {
     setNodes(changes);
-    saveFlowChanges(changes, edges);
-  }, [edges, saveFlowChanges]);
+    debouncedSave();
+  }, [setNodes, debouncedSave]);
 
-  const handleEdgesChange = useCallback((changes: Edge[]) => {
+  const handleEdgesChange = useCallback((changes: any) => {
     setEdges(changes);
-    saveFlowChanges(nodes, changes);
-  }, [nodes, saveFlowChanges]);
+    debouncedSave();
+  }, [setEdges, debouncedSave]);
 
   useEffect(() => {
     // Listen for node updates from other components
     const handleNodeUpdate = (event: CustomEvent) => {
       const { id: nodeId, data } = event.detail;
-      setNodes(currentNodes => 
-        currentNodes.map(node => 
+      setNodes(nds => 
+        nds.map(node => 
           node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
         )
       );
+      debouncedSave();
     };
 
     window.addEventListener('nodeupdate', handleNodeUpdate as EventListener);
     return () => {
       window.removeEventListener('nodeupdate', handleNodeUpdate as EventListener);
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
     };
-  }, []);
+  }, [setNodes, debouncedSave]);
 
   if (isLoading) return <div className="flex items-center justify-center h-screen"><p className="text-lg">Loading agent...</p></div>;
   if (error || !agent) return <div className="flex items-center justify-center h-screen"><p className="text-lg text-destructive">Failed to load agent</p></div>;
