@@ -7,6 +7,7 @@ import { Plus, X, Pencil, MessageSquare } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { VariableSelector } from './variable-mention/variable-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 type SpeakNodeData = {
   message: string;
@@ -53,6 +54,12 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
     setShowOutcomeDialog(false);
     setEditingIndex(null);
     setNewOutcome('');
+  };
+
+  const openNewOutcomeDialog = () => {
+    setEditingIndex(null);
+    setNewOutcome('');
+    setShowOutcomeDialog(true);
   };
 
   const highlightVariables = (text: string) => {
@@ -116,12 +123,12 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
             <Label className="text-xs font-medium text-indigo-600/75 dark:text-indigo-300/75">
               Possible outcomes ({outcomes.length}/5)
             </Label>
-            {outcomes.length < 5 && !editingIndex && (
+            {outcomes.length < 5 && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-900/50 rounded-lg"
-                onClick={() => setShowOutcomeDialog(true)}
+                onClick={openNewOutcomeDialog}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -186,16 +193,16 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
 
       {/* Outcome Dialog */}
       <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{editingIndex !== null ? 'Edit Outcome' : 'Add New Outcome'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <Textarea
+            <Input
               value={newOutcome}
               onChange={(e) => setNewOutcome(e.target.value)}
               placeholder="Enter possible response..."
-              className="text-sm resize-none min-h-[120px]"
+              className="text-sm"
             />
             <div className="flex justify-end gap-3">
               <Button 
