@@ -1,4 +1,3 @@
-
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
@@ -143,19 +142,16 @@ export function PipelineStages({
 
   const handleColorChange = async (columnId: string, newColor: string) => {
     try {
-      // Create new columns array with updated color
       const newColumns = selectedPipeline.columns.map(col => 
         col.id === columnId ? { ...col, color: newColor } : col
       );
       
-      // Convert PipelineColumn[] to a format suitable for Supabase Json type
       const columnsForDb = newColumns.map(col => ({
         id: col.id,
         title: col.title,
         color: col.color
       }));
       
-      // Update in the database
       const { error } = await supabase
         .from("pipelines")
         .update({
@@ -165,7 +161,6 @@ export function PipelineStages({
 
       if (error) throw error;
 
-      // Update the UI
       onReorderColumns(newColumns);
 
       toast({
@@ -233,21 +228,19 @@ export function PipelineStages({
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 grid-flow-row-dense">
+        <div className="grid auto-cols-fr grid-flow-col gap-6">
           <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
             {selectedPipeline.columns.map((column) => {
               const columnLeads = leads.filter((lead) => lead.status === column.title);
               const isEditing = editingColumnId === column.id;
               const isCollapsed = collapsedColumns.has(column.id);
               
-              console.log('Column collapsed state:', { id: column.id, isCollapsed, title: column.title });
-              
               return (
                 <SortableStage key={column.id} column={column}>
                   <DroppableColumn id={column.id}>
-                    <Card className={`h-full transition-all duration-300 ${
-                      isCollapsed ? "w-16 shrink-0" : "w-full"
-                    }`}>
+                    <Card className={`h-full ${
+                      isCollapsed ? "w-16 shrink-0 flex-none" : "w-full"
+                    } transition-all duration-300`}>
                       <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
                         <div className={`flex items-center ${isCollapsed ? "flex-col" : "justify-between"}`}>
                           <div className={`flex items-center ${isCollapsed ? "flex-col" : "space-x-3"} flex-1`}>
