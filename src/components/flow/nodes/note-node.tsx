@@ -12,14 +12,15 @@ export function NoteNode({ data, selected }: { data: NoteNodeData; selected: boo
   const [note, setNote] = useState(data.note);
 
   return (
-    <div className="group relative min-w-[150px] min-h-[100px]" style={{ maxWidth: '100%' }}>
+    <div className="group relative min-w-[150px] min-h-[100px]">
       {/* Enable resizing when node is selected */}
       <NodeResizer 
         minWidth={150}
         minHeight={100}
         isVisible={selected}
         lineClassName="border-yellow-500"
-        handleClassName="h-3 w-3 border-2 border-yellow-500 bg-white"
+        handleClassName="h-4 w-4 border-2 border-yellow-500 bg-white dark:bg-yellow-900 hover:bg-yellow-50 dark:hover:bg-yellow-800 transition-colors"
+        keepAspectRatio={false}
       />
       
       {/* Create stacked paper effect */}
@@ -49,6 +50,13 @@ export function NoteNode({ data, selected }: { data: NoteNodeData; selected: boo
       
       {/* Add a small shadow effect at the bottom */}
       <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/5 to-transparent rounded-b-sm pointer-events-none" />
+
+      {/* Show resize hint when selected */}
+      {selected && (
+        <div className="absolute bottom-0 right-0 p-1 text-[10px] font-medium text-yellow-600 dark:text-yellow-400 pointer-events-none">
+          Drag corner to resize
+        </div>
+      )}
     </div>
   );
 }
