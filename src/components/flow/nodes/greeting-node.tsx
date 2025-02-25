@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Plus, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
-import { OutcomeInput } from './greeting/outcome-input';
-import { OutcomeListItem } from './greeting/outcome-list-item';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type GreetingNodeData = {
   greeting: string;
@@ -20,7 +20,7 @@ export function GreetingNode({
   data: GreetingNodeData;
   id: string;
 }) {
-  const [showOutcomeInput, setShowOutcomeInput] = useState(false);
+  const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [greeting, setGreeting] = useState(data.greeting);
@@ -31,7 +31,7 @@ export function GreetingNode({
     if (!newOutcome.trim()) return;
     setOutcomes([...outcomes, newOutcome]);
     setNewOutcome('');
-    setShowOutcomeInput(false);
+    setShowOutcomeDialog(false);
   };
 
   const removeOutcome = (index: number) => {
@@ -41,6 +41,7 @@ export function GreetingNode({
   const startEditing = (index: number) => {
     setEditingIndex(index);
     setNewOutcome(outcomes[index]);
+    setShowOutcomeDialog(true);
   };
 
   const saveEdit = () => {
@@ -50,12 +51,19 @@ export function GreetingNode({
     setOutcomes(updatedOutcomes);
     setEditingIndex(null);
     setNewOutcome('');
+    setShowOutcomeDialog(false);
   };
 
   const cancelEdit = () => {
-    setShowOutcomeInput(false);
+    setShowOutcomeDialog(false);
     setEditingIndex(null);
     setNewOutcome('');
+  };
+
+  const openNewOutcomeDialog = () => {
+    setEditingIndex(null);
+    setNewOutcome('');
+    setShowOutcomeDialog(true);
   };
 
   return (
@@ -90,37 +98,51 @@ export function GreetingNode({
             <Label className="text-xs font-medium text-indigo-600/75 dark:text-indigo-300/75">
               Possible outcomes ({outcomes.length}/5)
             </Label>
-            {!showOutcomeInput && outcomes.length < 5 && !editingIndex && (
+            {outcomes.length < 5 && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-900/50 rounded-lg"
-                onClick={() => setShowOutcomeInput(true)}
+                onClick={openNewOutcomeDialog}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             )}
           </div>
 
-          {(showOutcomeInput || editingIndex !== null) && (
-            <OutcomeInput
-              value={newOutcome}
-              onChange={setNewOutcome}
-              onSave={() => editingIndex !== null ? saveEdit() : addOutcome()}
-              onCancel={cancelEdit}
-              isEditing={editingIndex !== null}
-            />
-          )}
-
           <div className="space-y-2">
             {outcomes.map((outcome, index) => (
-              <OutcomeListItem
-                key={index}
-                outcome={outcome}
-                index={index}
-                onEdit={startEditing}
-                onRemove={removeOutcome}
-              />
+              <div key={index} className="group relative animate-fade-in">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 rounded-xl py-2.5 px-4 text-sm border border-indigo-100/50 dark:border-indigo-800/50 shadow-sm text-gray-900 dark:text-white/90">
+                    {outcome}
+                  </div>
+                  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg"
+                      onClick={() => startEditing(index)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg"
+                      onClick={() => removeOutcome(index)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`outcome-${index}`}
+                    className="!w-2 !h-4 !bg-indigo-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-indigo-500"
+                  />
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -142,6 +164,37 @@ export function GreetingNode({
           className="!w-2 !h-4 !bg-indigo-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-indigo-500"
         />
       )}
+
+      {/* Outcome Dialog */}
+      <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{editingIndex !== null ? 'Edit Outcome' : 'Add New Outcome'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              value={newOutcome}
+              onChange={(e) => setNewOutcome(e.target.value)}
+              placeholder="Enter possible response..."
+              className="text-sm"
+            />
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline" 
+                onClick={cancelEdit}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
+                onClick={() => editingIndex !== null ? saveEdit() : addOutcome()}
+              >
+                {editingIndex !== null ? 'Save Changes' : 'Add Outcome'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
