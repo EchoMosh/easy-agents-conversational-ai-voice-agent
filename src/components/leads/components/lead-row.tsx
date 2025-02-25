@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { CheckSquare, Square } from "lucide-react";
 import { LeadRowProps, statusColors } from "../types/lead-types";
 import { LeadActions } from "./lead-actions";
+import { useTheme } from "@/components/theme/theme-provider";
+import { cn } from "@/lib/utils";
 
 export function LeadRow({ 
   lead, 
@@ -14,6 +16,8 @@ export function LeadRow({
   isDeleting,
   pipelineName 
 }: LeadRowProps) {
+  const { theme } = useTheme();
+
   return (
     <TableRow>
       <TableCell>
@@ -37,7 +41,10 @@ export function LeadRow({
       <TableCell>
         <Badge
           variant="secondary"
-          className={`${statusColors[lead.status]} text-white`}
+          className={cn(
+            statusColors[lead.status],
+            theme === "light" ? "text-black" : "text-white"
+          )}
         >
           {lead.status}
         </Badge>
