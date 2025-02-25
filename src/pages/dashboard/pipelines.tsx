@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "@/pages/dashboard/leads";
+import { Pipeline } from "@/types/pipeline";
 import { 
   DndContext, 
   DragEndEvent, 
@@ -14,12 +15,16 @@ import {
 import { LeadCard } from "@/components/leads/lead-card";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, Settings } from "lucide-react";
 
-const statusColumns = [
+const defaultColumns = [
   { id: "new", title: "New", color: "bg-blue-500" },
   { id: "contacted", title: "Contacted", color: "bg-yellow-500" },
   { id: "qualified", title: "Qualified", color: "bg-green-500" },
@@ -35,6 +40,9 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
 export default function PipelinesPage() {
   const { toast } = useToast();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [showNewPipelineDialog, setShowNewPipelineDialog] = useState(false);
+  const [newPipelineName, setNewPipelineName] = useState("");
+  const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
   
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -50,8 +58,21 @@ export default function PipelinesPage() {
     })
   );
 
-  const { data: leads = [], refetch } = useQuery({
-    queryKey: ["leads"],
+  const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
+    queryKey: ["pipelines"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as Pipeline[];
+    },
+  });
+
+  const { data: leads = [], refetch: refetchLeads } = useQuery({
+    queryKey: ["leads", selectedPipeline?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
@@ -88,7 +109,7 @@ export default function PipelinesPage() {
         description: `Lead moved to ${newStatus}`,
       });
 
-      refetch();
+      refetchLeads();
     } catch (error) {
       console.error("Error updating lead status:", error);
       toast({
@@ -99,58 +120,147 @@ export default function PipelinesPage() {
     }
   };
 
+  const createNewPipeline = async () => {
+    if (!newPipelineName.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("pipelines")
+        .insert({
+          name: newPipelineName,
+          columns: defaultColumns,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Pipeline created",
+        description: "New pipeline has been created successfully",
+      });
+
+      setNewPipelineName("");
+      setShowNewPipelineDialog(false);
+      refetchPipelines();
+      setSelectedPipeline(data);
+    } catch (error) {
+      console.error("Error creating pipeline:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create pipeline",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const columns = selectedPipeline?.columns || defaultColumns;
+
   return (
     <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-          Pipeline
-        </h1>
-        <p className="text-muted-foreground mt-3 text-lg">
-          Manage and track your leads through different stages of your sales process.
-        </p>
+        <div className="flex items-center justify-between">
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Pipelines
+          </h1>
+          <Button
+            onClick={() => setShowNewPipelineDialog(true)}
+            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Pipeline
+          </Button>
+        </div>
+        {pipelines.length > 0 ? (
+          <div className="flex items-center gap-4 mt-4">
+            {pipelines.map((pipeline) => (
+              <Button
+                key={pipeline.id}
+                variant={selectedPipeline?.id === pipeline.id ? "default" : "outline"}
+                onClick={() => setSelectedPipeline(pipeline)}
+                className="gap-2"
+              >
+                {pipeline.name}
+              </Button>
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground mt-3 text-lg">
+            Create your first pipeline to start managing leads.
+          </p>
+        )}
       </div>
 
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-          {statusColumns.map((column) => {
-            const columnLeads = leads.filter((lead) => lead.status === column.id);
-            
-            return (
-              <DroppableColumn key={column.id} id={column.id}>
-                <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200">
-                  <CardHeader className="space-y-2 pb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${column.color}`} />
-                      <CardTitle className="text-xl font-semibold">
-                        {column.title}
-                      </CardTitle>
-                    </div>
-                    <div className="text-sm text-muted-foreground/80 font-medium">
-                      {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3 pt-2">
-                    {columnLeads.map((lead) => (
-                      <LeadCard 
-                        key={lead.id} 
-                        lead={lead}
-                        onClick={() => setSelectedLead(lead)} 
-                      />
-                    ))}
-                    {columnLeads.length === 0 && (
-                      <div className="min-h-[200px] flex items-center justify-center border-2 border-dashed border-muted rounded-lg">
-                        <p className="text-sm text-muted-foreground/70 text-center px-4">
-                          Drop leads here
-                        </p>
+      {selectedPipeline && (
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {columns.map((column) => {
+              const columnLeads = leads.filter((lead) => lead.status === column.id);
+              
+              return (
+                <DroppableColumn key={column.id} id={column.id}>
+                  <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <CardHeader className="space-y-2 pb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-3 h-3 rounded-full ${column.color}`} />
+                        <CardTitle className="text-xl font-semibold">
+                          {column.title}
+                        </CardTitle>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </DroppableColumn>
-            );
-          })}
-        </div>
-      </DndContext>
+                      <div className="text-sm text-muted-foreground/80 font-medium">
+                        {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3 pt-2">
+                      {columnLeads.map((lead) => (
+                        <LeadCard 
+                          key={lead.id} 
+                          lead={lead}
+                          onClick={() => setSelectedLead(lead)} 
+                        />
+                      ))}
+                      {columnLeads.length === 0 && (
+                        <div className="min-h-[200px] flex items-center justify-center border-2 border-dashed border-muted rounded-lg">
+                          <p className="text-sm text-muted-foreground/70 text-center px-4">
+                            Drop leads here
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </DroppableColumn>
+              );
+            })}
+          </div>
+        </DndContext>
+      )}
+
+      <Dialog open={showNewPipelineDialog} onOpenChange={setShowNewPipelineDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Pipeline</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Pipeline Name</Label>
+              <Input
+                id="name"
+                value={newPipelineName}
+                onChange={(e) => setNewPipelineName(e.target.value)}
+                placeholder="Enter pipeline name..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewPipelineDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={createNewPipeline}>
+              Create Pipeline
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
         <DialogContent className="sm:max-w-[600px]">
@@ -170,7 +280,7 @@ export default function PipelinesPage() {
 
               <div className="space-y-2">
                 <h3 className="text-lg font-medium">Status</h3>
-                <Badge variant="secondary" className={`${statusColumns.find(s => s.id === selectedLead.status)?.color} text-white px-4 py-1 text-sm`}>
+                <Badge variant="secondary" className={`${columns.find(s => s.id === selectedLead.status)?.color} text-white px-4 py-1 text-sm`}>
                   {selectedLead.status}
                 </Badge>
               </div>
