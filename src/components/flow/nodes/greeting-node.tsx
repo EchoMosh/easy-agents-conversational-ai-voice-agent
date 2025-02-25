@@ -1,3 +1,4 @@
+
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,76 +11,37 @@ type GreetingNodeData = {
   outcomes: string[];
 };
 
-export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string }) {
+export function GreetingNode({ data }: { data: GreetingNodeData; id: string }) {
   const [showOutcomeInput, setShowOutcomeInput] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-
-  const handleGreetingChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const evt = new CustomEvent('nodeupdate', {
-      detail: { 
-        id, 
-        data: { 
-          ...data,
-          greeting: event.target.value 
-        } 
-      },
-    });
-    window.dispatchEvent(evt);
-  };
+  const [greeting, setGreeting] = useState(data.greeting);
+  const [outcomes, setOutcomes] = useState(data.outcomes || []);
 
   const addOutcome = () => {
-    if (data.outcomes?.length >= 5) return;
+    if (outcomes.length >= 5) return;
     if (!newOutcome.trim()) return;
-
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          ...data,
-          outcomes: [...(data.outcomes || []), newOutcome]
-        }
-      },
-    });
-    window.dispatchEvent(evt);
+    
+    setOutcomes([...outcomes, newOutcome]);
     setNewOutcome('');
     setShowOutcomeInput(false);
   };
 
   const removeOutcome = (index: number) => {
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          ...data,
-          outcomes: data.outcomes.filter((_, i) => i !== index)
-        }
-      },
-    });
-    window.dispatchEvent(evt);
+    setOutcomes(outcomes.filter((_, i) => i !== index));
   };
 
   const startEditing = (index: number) => {
     setEditingIndex(index);
-    setNewOutcome(data.outcomes[index]);
+    setNewOutcome(outcomes[index]);
   };
 
   const saveEdit = (index: number) => {
     if (!newOutcome.trim()) return;
     
-    const updatedOutcomes = [...data.outcomes];
+    const updatedOutcomes = [...outcomes];
     updatedOutcomes[index] = newOutcome;
-
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          ...data,
-          outcomes: updatedOutcomes
-        }
-      },
-    });
-    window.dispatchEvent(evt);
+    setOutcomes(updatedOutcomes);
     setEditingIndex(null);
     setNewOutcome('');
   };
@@ -102,13 +64,12 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
         </div>
         
         <div className="flex flex-col gap-2">
-          <Label htmlFor={`greeting-${id}`} className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
+          <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
             Message
           </Label>
           <Textarea 
-            id={`greeting-${id}`}
-            value={data.greeting}
-            onChange={handleGreetingChange}
+            value={greeting}
+            onChange={(e) => setGreeting(e.target.value)}
             className="nodrag text-sm resize-y min-h-[80px] bg-white/80 dark:bg-gray-900/50 border-blue-100/50 dark:border-blue-800/50 shadow-sm rounded-lg focus-visible:ring-blue-500/50 focus-visible:border-blue-200"
             placeholder="Type your greeting message..."
           />
@@ -117,9 +78,9 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
-              Possible outcomes ({(data.outcomes || []).length}/5)
+              Possible outcomes ({outcomes.length}/5)
             </Label>
-            {!showOutcomeInput && (data.outcomes || []).length < 5 && !editingIndex && (
+            {!showOutcomeInput && outcomes.length < 5 && !editingIndex && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -170,7 +131,7 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
           )}
 
           <div className="space-y-2.5">
-            {(data.outcomes || []).map((outcome, index) => (
+            {outcomes.map((outcome, index) => (
               <div key={index} className="group relative">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-white/80 dark:bg-gray-900/50 rounded-lg py-2 px-3 text-sm border border-blue-100/50 dark:border-blue-800/50 shadow-sm">
