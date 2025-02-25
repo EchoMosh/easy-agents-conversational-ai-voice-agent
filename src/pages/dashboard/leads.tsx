@@ -59,16 +59,18 @@ const LeadsPage = () => {
               Add Lead
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Lead</DialogTitle>
+          <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-sm border-none shadow-2xl">
+            <DialogHeader className="p-6 pb-0">
+              <DialogTitle className="text-2xl">Add New Lead</DialogTitle>
             </DialogHeader>
-            <NewLeadForm 
-              onSuccess={() => {
-                setIsNewLeadOpen(false);
-                refetch();
-              }} 
-            />
+            <div className="px-6 pb-6 overflow-y-auto max-h-[80vh]">
+              <NewLeadForm 
+                onSuccess={() => {
+                  setIsNewLeadOpen(false);
+                  refetch();
+                }} 
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>

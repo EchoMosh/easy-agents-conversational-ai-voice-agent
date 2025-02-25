@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 import {
   Table,
@@ -107,19 +106,21 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
                         Edit
                       </Button>
                     </SheetTrigger>
-                    <SheetContent>
-                      <SheetHeader>
-                        <SheetTitle>Edit Lead</SheetTitle>
+                    <SheetContent className="p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-sm border-none shadow-2xl sm:max-w-[600px]">
+                      <SheetHeader className="p-6 pb-0">
+                        <SheetTitle className="text-2xl">Edit Lead</SheetTitle>
                       </SheetHeader>
-                      {editingLead && (
-                        <EditLeadForm
-                          lead={editingLead}
-                          onSuccess={() => {
-                            setEditingLead(null);
-                            onLeadUpdated();
-                          }}
-                        />
-                      )}
+                      <div className="px-6 pb-6 overflow-y-auto max-h-[80vh]">
+                        {editingLead && (
+                          <EditLeadForm
+                            lead={editingLead}
+                            onSuccess={() => {
+                              setEditingLead(null);
+                              onLeadUpdated();
+                            }}
+                          />
+                        )}
+                      </div>
                     </SheetContent>
                   </Sheet>
                 </TableCell>

@@ -54,42 +54,59 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
     }
   };
 
+  const [firstName, lastName] = name.split(" ");
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pt-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name*</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="firstName" className="text-base font-normal text-muted-foreground">First name</Label>
+            <Input 
+              id="firstName" 
+              value={firstName}
+              onChange={(e) => setName(`${e.target.value} ${lastName}`)}
+              required 
+              className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName" className="text-base font-normal text-muted-foreground">Last name</Label>
+            <Input 
+              id="lastName" 
+              value={lastName}
+              onChange={(e) => setName(`${firstName} ${e.target.value}`)}
+              required 
+              className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email" className="text-base font-normal text-muted-foreground">Email</Label>
           <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone" className="text-base font-normal text-muted-foreground">Phone</Label>
           <PhoneInput
             id="phone"
             value={phone}
             onChange={(value) => setPhone(value)}
+            className="h-12 text-lg"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
+          <Label htmlFor="status" className="text-base font-normal text-muted-foreground">Status</Label>
           <Select value={status} onValueChange={(value: Lead['status']) => setStatus(value)}>
-            <SelectTrigger>
+            <SelectTrigger className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -103,7 +120,11 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
         </div>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button 
+        type="submit" 
+        className="w-full h-12 text-lg rounded-full transition-all duration-200 hover:scale-[0.98]" 
+        disabled={isLoading}
+      >
         {isLoading ? "Updating..." : "Update Lead"}
       </Button>
     </form>
