@@ -13,7 +13,7 @@ type GreetingNodeData = {
   outcomes?: string[];
 };
 
-export function GreetingNode({ data }: { data: GreetingNodeData; id: string }) {
+export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string }) {
   const [showOutcomeInput, setShowOutcomeInput] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -111,7 +111,14 @@ export function GreetingNode({ data }: { data: GreetingNodeData; id: string }) {
                 index={index}
                 onEdit={startEditing}
                 onRemove={removeOutcome}
-              />
+              >
+                <Handle
+                  type="source"
+                  position={Position.Right}
+                  id={`outcome-${index}`}
+                  className="w-2 h-4 !bg-blue-400 rounded-sm border-none"
+                />
+              </OutcomeListItem>
             ))}
           </div>
         </div>
