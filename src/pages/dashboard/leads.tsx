@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus, Search, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,8 @@ export type Lead = {
   name: string;
   email: string | null;
   phone: string | null;
-  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+  // Make sure these match your pipeline column titles exactly
+  status: 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Lost';
   pipeline_id: string;
   created_at: string;
   variables?: LeadVariable[];
@@ -129,11 +129,11 @@ const LeadsPage = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="new">New</SelectItem>
-            <SelectItem value="contacted">Contacted</SelectItem>
-            <SelectItem value="qualified">Qualified</SelectItem>
-            <SelectItem value="converted">Converted</SelectItem>
-            <SelectItem value="lost">Lost</SelectItem>
+            <SelectItem value="New">New</SelectItem>
+            <SelectItem value="Contacted">Contacted</SelectItem>
+            <SelectItem value="Qualified">Qualified</SelectItem>
+            <SelectItem value="Converted">Converted</SelectItem>
+            <SelectItem value="Lost">Lost</SelectItem>
           </SelectContent>
         </Select>
       </div>

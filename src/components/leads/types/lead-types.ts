@@ -8,11 +8,11 @@ export interface LeadsTableProps {
 }
 
 export const statusColors = {
-  new: "bg-blue-500",
-  contacted: "bg-yellow-500",
-  qualified: "bg-green-500",
-  converted: "bg-purple-500",
-  lost: "bg-red-500",
+  'New': "bg-blue-500",
+  'Contacted': "bg-yellow-500",
+  'Qualified': "bg-green-500",
+  'Converted': "bg-purple-500",
+  'Lost': "bg-red-500",
 } as const;
 
 export interface LeadRowProps {
