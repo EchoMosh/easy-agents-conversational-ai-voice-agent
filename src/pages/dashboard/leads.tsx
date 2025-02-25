@@ -4,10 +4,10 @@ import { Plus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { NewLeadForm } from "@/components/leads/new-lead-form";
 import { LeadsTable } from "@/components/leads/leads-table";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export type Lead = {
   id: string;
@@ -52,25 +52,25 @@ const LeadsPage = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Leads</h1>
-        <Sheet open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen}>
-          <SheetTrigger asChild>
+        <Dialog open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen}>
+          <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2" />
               Add Lead
             </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Add New Lead</SheetTitle>
-            </SheetHeader>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New Lead</DialogTitle>
+            </DialogHeader>
             <NewLeadForm 
               onSuccess={() => {
                 setIsNewLeadOpen(false);
                 refetch();
               }} 
             />
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <LeadsTable leads={leads || []} isLoading={isLoading} onLeadUpdated={() => refetch()} />
