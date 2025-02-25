@@ -71,18 +71,27 @@ export default function PipelinesPage() {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over) return;
+    if (!over || !selectedPipeline) return;
 
     const leadId = String(active.id);
-    const newStatus = over.id as Lead["status"];
+    const newColumnId = String(over.id);
 
+    // Find the column title that matches the destination
+    const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
+    if (!targetColumn) return;
+
+    const newStatus = targetColumn.title; // Use the exact column title as the status
     const lead = leads.find(l => l.id === leadId);
+    
     if (lead?.status === newStatus) return;
 
     try {
       const { error } = await supabase
         .from("leads")
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus,
+          pipeline_id: selectedPipeline.id
+        })
         .eq("id", leadId);
 
       if (error) throw error;
@@ -91,6 +100,8 @@ export default function PipelinesPage() {
         title: "Lead status updated",
         description: `Lead moved to ${newStatus}`,
       });
+      
+      refetchLeads();
     } catch (error) {
       console.error("Error updating lead status:", error);
       toast({
