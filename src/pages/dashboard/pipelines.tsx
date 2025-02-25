@@ -12,7 +12,7 @@ import { usePipeline } from "@/hooks/use-pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "@/hooks/use-pipeline";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
@@ -24,6 +24,7 @@ export default function PipelinesPage() {
   const { toast } = useToast();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const {
     pipelines,
@@ -82,12 +83,8 @@ export default function PipelinesPage() {
     if (!selectedPipeline) return;
     
     try {
-      // Update the local state immediately
       setEditedColumns(newColumns);
-      
-      // Also update the selectedPipeline state
       setSelectedPipeline(prev => prev ? { ...prev, columns: newColumns } : null);
-      
     } catch (error) {
       console.error("Error updating columns:", error);
       toast({
@@ -99,8 +96,19 @@ export default function PipelinesPage() {
   };
 
   const onDeleteConfirm = async () => {
-    await handleDeletePipeline();
-    setShowDeleteDialog(false);
+    setIsDeleting(true);
+    try {
+      await handleDeletePipeline();
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const handleCloseDialog = (open: boolean) => {
+    if (!isDeleting) {
+      setShowDeleteDialog(open);
+    }
   };
 
   return (
@@ -138,7 +146,7 @@ export default function PipelinesPage() {
         columns={selectedPipeline?.columns || defaultColumns}
       />
 
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <Dialog open={showDeleteDialog} onOpenChange={handleCloseDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Pipeline</DialogTitle>
@@ -147,11 +155,17 @@ export default function PipelinesPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-4 mt-4">
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={onDeleteConfirm}>
-              Delete
+            <DialogClose asChild>
+              <Button variant="outline" disabled={isDeleting}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button 
+              variant="destructive" 
+              onClick={onDeleteConfirm} 
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </DialogContent>
