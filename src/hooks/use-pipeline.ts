@@ -20,7 +20,7 @@ export function usePipeline() {
   const {
     handleEditColumnTitle,
     createNewPipeline,
-    handleDeletePipeline,
+    handleDeletePipeline: deletePipeline,
     handleEditPipelineName,
   } = usePipelineMutations(refetchPipelines, refetchLeads);
 
@@ -48,10 +48,13 @@ export function usePipeline() {
         handleEditPipelineName(selectedPipeline.id, name);
       }
     },
-    handleDeletePipeline: () => {
+    handleDeletePipeline: async () => {
       if (selectedPipeline) {
-        handleDeletePipeline(selectedPipeline.id);
+        const pipelineId = selectedPipeline.id;
+        // First set selected pipeline to null to ensure consistent hook behavior
         setSelectedPipeline(null);
+        // Then perform the delete operation
+        await deletePipeline(pipelineId);
       }
     },
     createNewPipeline: async (name: string) => {
