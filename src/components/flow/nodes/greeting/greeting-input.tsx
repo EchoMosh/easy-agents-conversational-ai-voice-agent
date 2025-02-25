@@ -21,9 +21,6 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
 
   return (
     <div className="flex flex-col gap-2 relative">
-      <Label className="text-sm font-medium text-white/70">
-        Message
-      </Label>
       <div className="relative">
         <Textarea 
           ref={textareaRef}
@@ -31,10 +28,10 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
           onChange={(e) => onChange(e.target.value)}
           className="nodrag text-sm resize-y min-h-[100px] bg-white/10 border-white/20 shadow-lg backdrop-blur-xl rounded-xl focus-visible:ring-white/30 focus-visible:border-white/30"
           placeholder="Type @ to insert a variable..."
-          style={{ color: 'transparent', caretColor: 'white' }}
+          style={{ color: 'transparent', caretColor: '#6366f1' }}
         />
         <div 
-          className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap break-words text-white/90"
+          className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap break-words text-gray-900 dark:text-white/90"
           dangerouslySetInnerHTML={{ 
             __html: highlightVariables(value)
               .split('\n')
