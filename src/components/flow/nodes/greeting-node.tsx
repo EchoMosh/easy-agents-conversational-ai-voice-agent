@@ -10,7 +10,7 @@ import { OutcomeListItem } from './greeting/outcome-list-item';
 
 type GreetingNodeData = {
   greeting: string;
-  outcomes: string[];
+  outcomes?: string[];
 };
 
 export function GreetingNode({ data }: { data: GreetingNodeData; id: string }) {
@@ -116,6 +116,17 @@ export function GreetingNode({ data }: { data: GreetingNodeData; id: string }) {
           </div>
         </div>
       </div>
+
+      {/* Add default handle if no outcomes */}
+      {(!outcomes || outcomes.length === 0) && (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="default"
+          className="w-2 h-4 !bg-blue-400 rounded-sm border-none"
+        />
+      )}
+      
       <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-blue-500/[0.03] pointer-events-none" />
     </div>
   );
