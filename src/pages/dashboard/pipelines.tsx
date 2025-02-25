@@ -10,6 +10,8 @@ import { LeadDetailsDialog } from "@/components/pipelines/lead-details-dialog";
 import { NewPipelineDialog } from "@/components/pipelines/new-pipeline-dialog";
 import { usePipeline } from "@/hooks/use-pipeline";
 import { supabase } from "@/integrations/supabase/client";
+import { PipelineColumn } from "@/types/pipeline";
+import { defaultColumns } from "@/hooks/use-pipeline";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });

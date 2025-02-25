@@ -1,4 +1,5 @@
 
+import { DragEndEvent } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "./pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 
