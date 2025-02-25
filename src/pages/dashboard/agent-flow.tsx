@@ -40,7 +40,8 @@ const initialEdges: Edge[] = [
     id: 'e1-2',
     source: 'trigger-1',
     target: 'greeting-1',
-    type: 'smoothstep'
+    type: 'smoothstep',
+    animated: true
   }
 ];
 

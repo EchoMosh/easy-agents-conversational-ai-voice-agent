@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
@@ -91,19 +90,25 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     return false;
   };
 
-  const defaultEdgeStyle = {
-    strokeWidth: 2,
-    stroke: '#94a3b8',
-    strokeDasharray: '5 5',
+  const defaultEdgeOptions = {
+    type: 'smoothstep',
+    animated: true,
+    style: {
+      strokeWidth: 2,
+      stroke: '#94a3b8',
+    }
   };
 
   const onConnect = useCallback((connection: Connection) => {
     if (isValidConnection(connection)) {
       const newEdge = {
         ...connection,
-        type: 'bezier',
+        type: 'smoothstep',
         animated: true,
-        style: defaultEdgeStyle
+        style: {
+          strokeWidth: 2,
+          stroke: '#94a3b8',
+        }
       };
       setEdges(eds => addEdge(newEdge, eds));
     }
@@ -184,11 +189,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         onDrop={onDrop}
         nodeTypes={nodeTypes}
         fitView
-        defaultEdgeOptions={{
-          type: 'bezier',
-          animated: true,
-          style: defaultEdgeStyle
-        }}
+        defaultEdgeOptions={defaultEdgeOptions}
         connectionMode={ConnectionMode.Strict}
         className="bg-white dark:bg-gray-950"
       >
