@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DragEndEvent } from "@dnd-kit/core";
 import { useDroppable } from "@dnd-kit/core";
@@ -13,7 +12,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "@/hooks/use-pipeline";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
@@ -147,53 +155,28 @@ export default function PipelinesPage() {
           onClose={() => setSelectedLead(null)}
           columns={selectedPipeline?.columns || defaultColumns}
         />
-      </div>
 
-      {showDeleteDialog && (
-        <div 
-          className="fixed inset-0 z-[9999] overflow-hidden"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
-        >
-          <div 
-            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-            aria-hidden="true"
-          />
-          <div className="fixed inset-0 flex items-center justify-center pointer-events-auto">
-            <Card className="w-[400px] shadow-lg relative z-[10000]">
-              <CardHeader>
-                <CardTitle>Delete Pipeline</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4 text-muted-foreground">
-                  Are you sure you want to delete this pipeline? This action cannot be undone.
-                </p>
-                <div className="flex justify-end gap-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowDeleteDialog(false)}
-                    disabled={isDeleting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={onDelete}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? "Deleting..." : "Delete"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Pipeline</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this pipeline? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onDelete}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 }
