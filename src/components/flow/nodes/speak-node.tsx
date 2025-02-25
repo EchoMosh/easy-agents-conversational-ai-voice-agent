@@ -87,11 +87,11 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
               ref={textareaRef}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="nodrag text-sm resize-y min-h-[80px] bg-transparent border-purple-100/50 dark:border-purple-800/50 shadow-sm rounded-lg focus-visible:ring-purple-500/50 focus-visible:border-purple-200"
+              className="nodrag text-sm resize-y min-h-[80px] bg-transparent border-purple-100/50 dark:border-purple-800/50 shadow-sm rounded-lg focus-visible:ring-purple-500/50 focus-visible:border-purple-200 text-transparent caret-gray-900 dark:caret-white"
               placeholder="Type @ to insert a variable..."
             />
             <div 
-              className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap"
+              className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap text-gray-900 dark:text-white"
               dangerouslySetInnerHTML={{ 
                 __html: highlightVariables(message)
                   .split('\n')
