@@ -15,6 +15,7 @@ interface NewLeadFormProps {
 export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [variables, setVariables] = useState<{ name: string; value: string }[]>([]);
+  const [phone, setPhone] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,7 +24,6 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -105,8 +105,8 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           <PhoneInput 
             id="phone"
             name="phone"
-            value=""
-            onChange={() => {}}
+            value={phone}
+            onChange={(value) => setPhone(value)}
           />
         </div>
 

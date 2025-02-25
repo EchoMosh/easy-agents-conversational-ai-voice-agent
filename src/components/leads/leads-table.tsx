@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tag } from "lucide-react";
+import { Tag, Pencil } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -19,6 +19,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { LeadVariables } from "./lead-variables";
+import { EditLeadForm } from "./edit-lead-form";
+import { useState } from "react";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -35,6 +37,8 @@ const statusColors = {
 };
 
 export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps) {
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+
   if (isLoading) {
     return <div className="text-center py-4">Loading leads...</div>;
   }
@@ -48,55 +52,82 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
   }
 
   return (
-    <div className="border rounded-lg">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Variables</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {leads.map((lead) => (
-            <TableRow key={lead.id}>
-              <TableCell>{lead.name}</TableCell>
-              <TableCell>{lead.email || "-"}</TableCell>
-              <TableCell>{lead.phone || "-"}</TableCell>
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  className={`${statusColors[lead.status]} text-white`}
-                >
-                  {lead.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Tag className="h-4 w-4 mr-2" />
-                      {lead.variables?.length || 0} Variables
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Lead Variables</SheetTitle>
-                    </SheetHeader>
-                    <LeadVariables
-                      leadId={lead.id}
-                      variables={lead.variables || []}
-                      onVariablesUpdated={onLeadUpdated}
-                    />
-                  </SheetContent>
-                </Sheet>
-              </TableCell>
+    <>
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Variables</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {leads.map((lead) => (
+              <TableRow key={lead.id}>
+                <TableCell>{lead.name}</TableCell>
+                <TableCell>{lead.email || "-"}</TableCell>
+                <TableCell>{lead.phone || "-"}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="secondary"
+                    className={`${statusColors[lead.status]} text-white`}
+                  >
+                    {lead.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Tag className="h-4 w-4 mr-2" />
+                        {lead.variables?.length || 0} Variables
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                      <SheetHeader>
+                        <SheetTitle>Lead Variables</SheetTitle>
+                      </SheetHeader>
+                      <LeadVariables
+                        leadId={lead.id}
+                        variables={lead.variables || []}
+                        onVariablesUpdated={onLeadUpdated}
+                      />
+                    </SheetContent>
+                  </Sheet>
+                </TableCell>
+                <TableCell>
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="sm" onClick={() => setEditingLead(lead)}>
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                      <SheetHeader>
+                        <SheetTitle>Edit Lead</SheetTitle>
+                      </SheetHeader>
+                      {editingLead && (
+                        <EditLeadForm
+                          lead={editingLead}
+                          onSuccess={() => {
+                            setEditingLead(null);
+                            onLeadUpdated();
+                          }}
+                        />
+                      )}
+                    </SheetContent>
+                  </Sheet>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }
