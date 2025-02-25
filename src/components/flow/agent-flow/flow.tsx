@@ -76,11 +76,14 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
     if (!sourceNode || !targetNode) return false;
 
-    if (!connection.sourceHandle || !connection.targetHandle) {
-      return true; // Allow default handles
+    if (!connection.sourceHandle) {
+      return true;
     }
 
-    if (sourceNode.type === 'greetingNode' && targetNode.type === 'speakNode') return true;
+    if (sourceNode.type === 'greetingNode' && targetNode.type === 'speakNode') {
+      return connection.sourceHandle?.startsWith('outcome-');
+    }
+
     if (sourceNode.type === 'speakNode' && targetNode.type === 'speakNode') return true;
     if (sourceNode.type === 'greetingNode' && targetNode.type === 'endNode') return true;
     if (sourceNode.type === 'speakNode' && targetNode.type === 'endNode') return true;
