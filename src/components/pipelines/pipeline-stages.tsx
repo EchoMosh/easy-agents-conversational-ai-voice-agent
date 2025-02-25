@@ -1,32 +1,21 @@
+
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
-import { DroppableColumn } from "@/pages/dashboard/pipelines";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DroppableColumn } from "@/pages/dashboard/pipelines";
 import { LeadCard } from "@/components/leads/lead-card";
-import { useState } from "react";
-import { useSortable, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-const colorOptions = [
-  { name: "Gray", value: "bg-gray-500" },
-  { name: "Red", value: "bg-red-500" },
-  { name: "Orange", value: "bg-orange-500" },
-  { name: "Yellow", value: "bg-yellow-500" },
-  { name: "Green", value: "bg-green-500" },
-  { name: "Blue", value: "bg-blue-500" },
-  { name: "Purple", value: "bg-purple-500" },
-  { name: "Pink", value: "bg-pink-500" },
-];
+import { SortableStage } from "./components/sortable-stage";
+import { StageHeader } from "./components/stage-header";
+import { DeleteStageDialog } from "./components/delete-stage-dialog";
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
@@ -38,27 +27,6 @@ interface PipelineStagesProps {
   onDeletePipeline: () => void;
   onEditPipelineName: (name: string) => void;
   onReorderColumns: (newOrder: PipelineColumn[]) => void;
-}
-
-function SortableStage({ column, children }: { column: PipelineColumn; children: React.ReactNode }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: column.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {children}
-    </div>
-  );
 }
 
 export function PipelineStages({
@@ -140,21 +108,6 @@ export function PipelineStages({
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = selectedPipeline.columns.findIndex((col) => col.id === active.id);
-    const newIndex = selectedPipeline.columns.findIndex((col) => col.id === over.id);
-
-    const newColumns = [...selectedPipeline.columns];
-    const [removed] = newColumns.splice(oldIndex, 1);
-    newColumns.splice(newIndex, 0, removed);
-
-    onReorderColumns(newColumns);
-  };
-
   const handleColorChange = async (columnId: string, newColor: string) => {
     try {
       const newColumns = selectedPipeline.columns.map(col => 
@@ -192,21 +145,6 @@ export function PipelineStages({
     }
   };
 
-  const handleAddStage = () => {
-    const newStage: PipelineColumn = {
-      id: crypto.randomUUID(),
-      title: "New Stage",
-      color: "bg-gray-500",
-    };
-    
-    const newColumns = [...selectedPipeline.columns, newStage];
-    onAddStage(newStage);
-    onReorderColumns(newColumns);
-    
-    setEditingColumnId(newStage.id);
-    setEditingColumnTitle("New Stage");
-  };
-
   const handleDeleteStage = async (column: PipelineColumn) => {
     try {
       const newColumns = selectedPipeline.columns.filter(col => col.id !== column.id);
@@ -241,6 +179,21 @@ export function PipelineStages({
       });
       setStageToDelete(null);
     }
+  };
+
+  const handleAddStage = () => {
+    const newStage: PipelineColumn = {
+      id: crypto.randomUUID(),
+      title: "New Stage",
+      color: "bg-gray-500",
+    };
+    
+    const newColumns = [...selectedPipeline.columns, newStage];
+    onAddStage(newStage);
+    onReorderColumns(newColumns);
+    
+    setEditingColumnId(newStage.id);
+    setEditingColumnTitle("New Stage");
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -288,7 +241,7 @@ export function PipelineStages({
         </Button>
       </div>
 
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div className="flex flex-wrap gap-6">
           <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
             {selectedPipeline.columns.map((column) => {
@@ -305,84 +258,18 @@ export function PipelineStages({
                           isCollapsed ? "w-16" : "w-[350px]"
                         }`}>
                           <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
-                            <div className={`flex items-center ${isCollapsed ? "flex-col" : "justify-between"}`}>
-                              <div className={`flex items-center ${isCollapsed ? "flex-col" : "space-x-3"} flex-1`}>
-                                {isEditing ? (
-                                  <Input
-                                    value={editingColumnTitle}
-                                    onChange={(e) => setEditingColumnTitle(e.target.value)}
-                                    onKeyDown={(e) => handleKeyDown(e, 'column')}
-                                    className="h-8 text-base"
-                                    autoFocus
-                                  />
-                                ) : (
-                                  <>
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <div 
-                                          className={`${column.color} cursor-pointer rounded transition-all ${
-                                            isCollapsed ? "w-8 h-8 mb-2" : "w-3 h-3"
-                                          }`}
-                                        />
-                                      </PopoverTrigger>
-                                      <PopoverContent className="w-48 p-2">
-                                        <div className="grid grid-cols-4 gap-1">
-                                          {colorOptions.map((option) => (
-                                            <button
-                                              key={option.value}
-                                              className={`w-8 h-8 rounded-full ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
-                                                column.color === option.value ? "ring-2" : ""
-                                              }`}
-                                              onClick={() => handleColorChange(column.id, option.value)}
-                                              title={option.name}
-                                            />
-                                          ))}
-                                        </div>
-                                      </PopoverContent>
-                                    </Popover>
-                                    <CardTitle 
-                                      className={`text-xl font-semibold cursor-pointer transition-all ${
-                                        isCollapsed ? "transform writing-mode-vertical-lr mt-2 whitespace-nowrap" : ""
-                                      }`}
-                                      onClick={() => {
-                                        setEditingColumnId(column.id);
-                                        setEditingColumnTitle(column.title);
-                                      }}
-                                    >
-                                      {column.title}
-                                    </CardTitle>
-                                  </>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                {!isCollapsed && (
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <MoreVertical className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem 
-                                        className="text-destructive"
-                                        onClick={() => setStageToDelete(column)}
-                                      >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete Stage
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className={`h-8 w-8 ${isCollapsed ? "mt-2" : ""}`}
-                                  onClick={() => toggleColumnCollapse(column.id)}
-                                >
-                                  {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                                </Button>
-                              </div>
-                            </div>
+                            <StageHeader
+                              column={column}
+                              isEditing={isEditing}
+                              isCollapsed={isCollapsed}
+                              editingColumnTitle={editingColumnTitle}
+                              onEditColumnTitle={(e) => handleKeyDown(e, 'column')}
+                              setEditingColumnTitle={setEditingColumnTitle}
+                              handleColorChange={handleColorChange}
+                              setStageToDelete={setStageToDelete}
+                              toggleColumnCollapse={toggleColumnCollapse}
+                              setEditingColumnId={setEditingColumnId}
+                            />
                             {!isCollapsed && (
                               <div className="text-sm text-muted-foreground/80 font-medium">
                                 {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
@@ -412,8 +299,8 @@ export function PipelineStages({
                     </ContextMenuTrigger>
                     <ContextMenuContent>
                       <ContextMenuItem 
-                        className="text-destructive"
                         onSelect={() => setStageToDelete(column)}
+                        className="text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Stage
@@ -436,29 +323,11 @@ export function PipelineStages({
         </div>
       </DndContext>
 
-      <AlertDialog 
-        open={!!stageToDelete} 
-        onOpenChange={handleDialogClose}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the "{stageToDelete?.title}" stage and all its associated data.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setStageToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => stageToDelete && handleDeleteStage(stageToDelete)}
-            >
-              Delete Stage
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteStageDialog
+        stageToDelete={stageToDelete}
+        onClose={handleDialogClose}
+        onConfirm={handleDeleteStage}
+      />
     </>
   );
 }
