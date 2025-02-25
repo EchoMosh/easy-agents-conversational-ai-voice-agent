@@ -113,71 +113,78 @@ export default function PipelinesPage() {
   };
 
   return (
-    <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
-      <PipelineHeader 
-        pipelines={pipelines}
-        selectedPipeline={selectedPipeline}
-        onCreatePipeline={() => setShowNewPipelineDialog(true)}
-        onSelectPipeline={setSelectedPipeline}
-      />
-
-      {selectedPipeline && (
-        <PipelineStages
+    <>
+      <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
+        <PipelineHeader 
+          pipelines={pipelines}
           selectedPipeline={selectedPipeline}
-          leads={leads}
-          onDragEnd={handleDragEnd}
-          onEditColumnTitle={handleEditColumnTitle}
-          onLeadClick={setSelectedLead}
-          onAddStage={handleAddStage}
-          onDeletePipeline={() => setShowDeleteDialog(true)}
-          onEditPipelineName={handleEditPipelineName}
-          onReorderColumns={handleReorderColumns}
+          onCreatePipeline={() => setShowNewPipelineDialog(true)}
+          onSelectPipeline={setSelectedPipeline}
         />
-      )}
 
-      <NewPipelineDialog
-        open={showNewPipelineDialog}
-        onOpenChange={setShowNewPipelineDialog}
-        onSubmit={createNewPipeline}
-      />
+        {selectedPipeline && (
+          <PipelineStages
+            selectedPipeline={selectedPipeline}
+            leads={leads}
+            onDragEnd={handleDragEnd}
+            onEditColumnTitle={handleEditColumnTitle}
+            onLeadClick={setSelectedLead}
+            onAddStage={handleAddStage}
+            onDeletePipeline={() => setShowDeleteDialog(true)}
+            onEditPipelineName={handleEditPipelineName}
+            onReorderColumns={handleReorderColumns}
+          />
+        )}
 
-      <LeadDetailsDialog
-        lead={selectedLead}
-        onClose={() => setSelectedLead(null)}
-        columns={selectedPipeline?.columns || defaultColumns}
-      />
+        <NewPipelineDialog
+          open={showNewPipelineDialog}
+          onOpenChange={setShowNewPipelineDialog}
+          onSubmit={createNewPipeline}
+        />
 
-      {/* Simple modal without Portal */}
+        <LeadDetailsDialog
+          lead={selectedLead}
+          onClose={() => setSelectedLead(null)}
+          columns={selectedPipeline?.columns || defaultColumns}
+        />
+      </div>
+
+      {/* Modal rendered outside the main container */}
       {showDeleteDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-[400px]">
-            <CardHeader>
-              <CardTitle>Delete Pipeline</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-muted-foreground">
-                Are you sure you want to delete this pipeline? This action cannot be undone.
-              </p>
-              <div className="flex justify-end gap-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDeleteDialog(false)}
-                  disabled={isDeleting}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={onDelete}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+          style={{ zIndex: 9999 }}
+        >
+          <div className="fixed inset-0 flex items-center justify-center">
+            <Card className="w-[400px] shadow-lg">
+              <CardHeader>
+                <CardTitle>Delete Pipeline</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-muted-foreground">
+                  Are you sure you want to delete this pipeline? This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowDeleteDialog(false)}
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={onDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
