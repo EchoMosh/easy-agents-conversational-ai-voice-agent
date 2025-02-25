@@ -50,11 +50,8 @@ export function usePipeline() {
     },
     handleDeletePipeline: async () => {
       if (selectedPipeline) {
-        const pipelineId = selectedPipeline.id;
-        // First set selected pipeline to null to ensure consistent hook behavior
+        await deletePipeline(selectedPipeline.id);
         setSelectedPipeline(null);
-        // Then perform the delete operation
-        await deletePipeline(pipelineId);
       }
     },
     createNewPipeline: async (name: string) => {

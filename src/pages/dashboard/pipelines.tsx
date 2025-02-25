@@ -12,7 +12,7 @@ import { usePipeline } from "@/hooks/use-pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "@/hooks/use-pipeline";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
@@ -95,19 +95,20 @@ export default function PipelinesPage() {
     }
   };
 
-  const onDeleteConfirm = async () => {
+  const onDelete = async () => {
     setIsDeleting(true);
     try {
       await handleDeletePipeline();
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error("Error deleting pipeline:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete pipeline",
+        variant: "destructive",
+      });
     } finally {
       setIsDeleting(false);
-      setShowDeleteDialog(false);
-    }
-  };
-
-  const handleCloseDialog = (open: boolean) => {
-    if (!isDeleting) {
-      setShowDeleteDialog(open);
     }
   };
 
@@ -146,7 +147,7 @@ export default function PipelinesPage() {
         columns={selectedPipeline?.columns || defaultColumns}
       />
 
-      <Dialog open={showDeleteDialog} onOpenChange={handleCloseDialog}>
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Pipeline</DialogTitle>
@@ -155,14 +156,16 @@ export default function PipelinesPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-4 mt-4">
-            <DialogClose asChild>
-              <Button variant="outline" disabled={isDeleting}>
-                Cancel
-              </Button>
-            </DialogClose>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
             <Button 
               variant="destructive" 
-              onClick={onDeleteConfirm} 
+              onClick={onDelete}
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting..." : "Delete"}
