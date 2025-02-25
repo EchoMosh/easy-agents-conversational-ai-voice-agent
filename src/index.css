@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -90,7 +89,7 @@
 
 .react-flow__node {
   @apply bg-background border-border text-foreground 
-         backdrop-blur-xl rounded-2xl;
+         backdrop-blur-xl rounded-2xl p-6;
 }
 
 .react-flow__handle {
@@ -119,7 +118,7 @@
          backdrop-blur-xl border border-border/30
          shadow-[0_8px_32px_-8px_rgba(0,0,0,0.1),0_4px_16px_-4px_rgba(0,0,0,0.1)] 
          dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5),0_4px_16px_-4px_rgba(0,0,0,0.25)]
-         rounded-2xl;
+         rounded-2xl p-5 m-2;
 }
 
 .react-flow__node-greetingNode .node-header,
@@ -127,7 +126,7 @@
 .react-flow__node-endNode .node-header,
 .react-flow__node-triggerNode .node-header,
 .react-flow__node-transferNode .node-header {
-  @apply flex items-center gap-3 p-4 border-b border-border/10;
+  @apply flex items-center gap-3 px-4 py-3 mb-4 border-b border-border/10;
 }
 
 .react-flow__node-greetingNode .node-icon,
@@ -181,32 +180,27 @@
 
 /* Handle styles */
 .react-flow__handle {
-  @apply w-3 h-1.5 !bg-gray-400 dark:!bg-gray-500 border-none rounded-sm 
-         transition-all duration-300 hover:!bg-gray-600 dark:hover:!bg-gray-400;
+  @apply w-3 h-2 !bg-gray-400 dark:!bg-gray-500 border-2 border-white dark:border-gray-800 
+         rounded-full shadow-sm transition-all duration-300 
+         hover:!bg-gray-600 dark:hover:!bg-gray-400 
+         hover:scale-110;
 }
 
 .react-flow__handle-left {
-  @apply -left-5;
+  @apply -left-6;
 }
 
 .react-flow__handle-right {
-  @apply -right-5;
+  @apply -right-6;
 }
 
-/* Edge styles */
-.react-flow__edge-path {
-  @apply stroke-[2] stroke-gray-300 dark:stroke-gray-600;
+/* Connection line */
+.react-flow__connection-path {
+  @apply stroke-[3] stroke-gray-300 dark:stroke-gray-600;
 }
 
-.react-flow__edge.animated path {
-  stroke-dasharray: 10, 20;
-  animation: dashdraw 20s linear infinite;
-}
-
-@keyframes dashdraw {
-  from {
-    stroke-dashoffset: 30;
-  }
+.react-flow__connection {
+  @apply opacity-75;
 }
 
 /* Selection styles */
