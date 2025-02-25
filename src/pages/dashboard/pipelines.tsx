@@ -42,6 +42,8 @@ export default function PipelinesPage() {
   const [showNewPipelineDialog, setShowNewPipelineDialog] = useState(false);
   const [newPipelineName, setNewPipelineName] = useState("");
   const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
+  const [editingColumns, setEditingColumns] = useState(false);
+  const [editedColumns, setEditedColumns] = useState<PipelineColumn[]>([]);
   
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -73,14 +75,18 @@ export default function PipelinesPage() {
   const { data: leads = [], refetch: refetchLeads } = useQuery({
     queryKey: ["leads", selectedPipeline?.id],
     queryFn: async () => {
+      if (!selectedPipeline?.id) return [];
+      
       const { data, error } = await supabase
         .from("leads")
         .select("*")
+        .eq('pipeline_id', selectedPipeline.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as unknown as Lead[];
     },
+    enabled: !!selectedPipeline?.id,
   });
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -115,6 +121,45 @@ export default function PipelinesPage() {
         title: "Error",
         description: "Failed to update lead status",
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditColumns = () => {
+    if (!selectedPipeline) return;
+    setEditedColumns([...selectedPipeline.columns]);
+    setEditingColumns(true);
+  };
+
+  const handleSaveColumns = async () => {
+    if (!selectedPipeline) return;
+
+    try {
+      const { error } = await supabase
+        .from("pipelines")
+        .update({
+          columns: editedColumns
+        })
+        .eq("id", selectedPipeline.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Pipeline updated",
+        description: "Pipeline stages have been updated successfully"
+      });
+
+      refetchPipelines();
+      setEditingColumns(false);
+
+      // Update selected pipeline with new columns
+      setSelectedPipeline(prev => prev ? { ...prev, columns: editedColumns } : null);
+    } catch (error) {
+      console.error("Error updating pipeline:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update pipeline stages",
+        variant: "destructive"
       });
     }
   };
@@ -205,47 +250,80 @@ export default function PipelinesPage() {
       </div>
 
       {selectedPipeline && (
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {columns.map((column) => {
-              const columnLeads = leads.filter((lead) => lead.status === column.id);
-              
-              return (
-                <DroppableColumn key={column.id} id={column.id}>
-                  <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200">
-                    <CardHeader className="space-y-2 pb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${column.color}`} />
-                        <CardTitle className="text-xl font-semibold">
-                          {column.title}
-                        </CardTitle>
-                      </div>
-                      <div className="text-sm text-muted-foreground/80 font-medium">
-                        {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3 pt-2">
-                      {columnLeads.map((lead) => (
-                        <LeadCard 
-                          key={lead.id} 
-                          lead={lead}
-                          onClick={() => setSelectedLead(lead)} 
-                        />
-                      ))}
-                      {columnLeads.length === 0 && (
-                        <div className="min-h-[200px] flex items-center justify-center border-2 border-dashed border-muted rounded-lg">
-                          <p className="text-sm text-muted-foreground/70 text-center px-4">
-                            Drop leads here
-                          </p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </DroppableColumn>
-              );
-            })}
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">{selectedPipeline.name}</h2>
+            <div className="flex gap-2">
+              {editingColumns ? (
+                <Button onClick={handleSaveColumns}>
+                  Save Changes
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={handleEditColumns}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Edit Stages
+                </Button>
+              )}
+            </div>
           </div>
-        </DndContext>
+
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+              {(editingColumns ? editedColumns : columns).map((column) => {
+                const columnLeads = leads.filter((lead) => lead.status === column.id);
+                
+                return (
+                  <DroppableColumn key={column.id} id={column.id}>
+                    <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200">
+                      <CardHeader className="space-y-2 pb-4">
+                        <div className="flex items-center space-x-3">
+                          {editingColumns ? (
+                            <Input
+                              value={column.title}
+                              onChange={(e) => {
+                                const newColumns = [...editedColumns];
+                                const index = newColumns.findIndex(c => c.id === column.id);
+                                newColumns[index] = { ...column, title: e.target.value };
+                                setEditedColumns(newColumns);
+                              }}
+                              className="h-8 text-base"
+                            />
+                          ) : (
+                            <>
+                              <div className={`w-3 h-3 rounded-full ${column.color}`} />
+                              <CardTitle className="text-xl font-semibold">
+                                {column.title}
+                              </CardTitle>
+                            </>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground/80 font-medium">
+                          {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3 pt-2">
+                        {columnLeads.map((lead) => (
+                          <LeadCard 
+                            key={lead.id} 
+                            lead={lead}
+                            onClick={() => setSelectedLead(lead)} 
+                          />
+                        ))}
+                        {columnLeads.length === 0 && (
+                          <div className="min-h-[200px] flex items-center justify-center border-2 border-dashed border-muted rounded-lg">
+                            <p className="text-sm text-muted-foreground/70 text-center px-4">
+                              Drop leads here
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </DroppableColumn>
+                );
+              })}
+            </div>
+          </DndContext>
+        </>
       )}
 
       <Dialog open={showNewPipelineDialog} onOpenChange={setShowNewPipelineDialog}>
