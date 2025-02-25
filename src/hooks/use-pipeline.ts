@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { usePipelineQueries } from "./pipeline/use-pipeline-queries";
@@ -26,14 +27,7 @@ export function usePipeline() {
     handleDeletePipeline: deletePipeline,
     handleEditPipelineName,
     isUpdatingPipelineName,
-  } = usePipelineMutations(invalidateAndRefetch, invalidateAndRefetch);
-
-  console.log("Pipeline Hook States:", {
-    isLoading,
-    isFetching,
-    isPending,
-    isUpdatingPipelineName
-  });
+  } = usePipelineMutations(refetchPipelines, refetchLeads);  // Changed to individual refetch functions
 
   return {
     // State
@@ -42,7 +36,7 @@ export function usePipeline() {
     selectedPipeline,
     editedColumns,
     showNewPipelineDialog,
-    isLoading: isLoading || isPending || isFetching || isUpdatingPipelineName,
+    isLoading: isLoading || isUpdatingPipelineName, // Simplified loading state
 
     // State setters
     setSelectedPipeline,
