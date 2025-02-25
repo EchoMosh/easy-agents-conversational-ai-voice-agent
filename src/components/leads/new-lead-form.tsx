@@ -23,7 +23,8 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
     const email = formData.get("email") as string;
 
     try {
@@ -38,7 +39,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         .from("leads")
         .insert([
           {
-            name,
+            name: `${firstName} ${lastName}`.trim(),
             email: email || null,
             phone: phone || null,
             user_id: user.id
@@ -89,39 +90,65 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pt-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name*</Label>
-          <Input id="name" name="name" required />
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="space-y-6">
+        {/* Contact Information Section */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName" className="text-base font-normal text-muted-foreground">First name</Label>
+              <Input 
+                id="firstName" 
+                name="firstName" 
+                required 
+                className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
+                placeholder="John"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="text-base font-normal text-muted-foreground">Last name</Label>
+              <Input 
+                id="lastName" 
+                name="lastName" 
+                required 
+                className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
+                placeholder="Doe"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-base font-normal text-muted-foreground">Email</Label>
+            <Input 
+              id="email" 
+              name="email" 
+              type="email" 
+              className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
+              placeholder="john@example.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="text-base font-normal text-muted-foreground">Phone</Label>
+            <PhoneInput 
+              id="phone"
+              name="phone"
+              value={phone}
+              onChange={(value) => setPhone(value)}
+              className="h-12 text-lg"
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <PhoneInput 
-            id="phone"
-            name="phone"
-            value={phone}
-            onChange={(value) => setPhone(value)}
-          />
-        </div>
-
-        <Separator className="my-6" />
-
-        <div className="space-y-4 bg-muted/50 p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <Label className="text-lg font-semibold">Custom Variables</Label>
+        {/* Custom Variables Section */}
+        <div className="pt-6">
+          <div className="flex items-center justify-between mb-6">
+            <Label className="text-xl font-medium">Custom Variables</Label>
             <Button 
               type="button" 
               variant="outline" 
-              size="sm" 
               onClick={addVariable}
-              className="bg-background"
+              className="h-9 px-4 rounded-full hover:bg-muted/60 transition-colors"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Variable
@@ -131,26 +158,30 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           {variables.length > 0 ? (
             <div className="space-y-4">
               {variables.map((variable, index) => (
-                <div key={index} className="flex gap-2 items-start bg-background p-3 rounded-md">
-                  <div className="flex-1 space-y-2">
-                    <Input
-                      placeholder="Variable name"
-                      value={variable.name}
-                      onChange={(e) => updateVariable(index, "name", e.target.value)}
-                      required
-                    />
-                    <Input
-                      placeholder="Value"
-                      value={variable.value}
-                      onChange={(e) => updateVariable(index, "value", e.target.value)}
-                      required
-                    />
-                  </div>
+                <div 
+                  key={index} 
+                  className="grid grid-cols-[1fr,1fr,auto] gap-3 items-start bg-muted/40 p-4 rounded-lg"
+                >
+                  <Input
+                    placeholder="Variable name"
+                    value={variable.name}
+                    onChange={(e) => updateVariable(index, "name", e.target.value)}
+                    required
+                    className="border-0 bg-background/50 focus-visible:ring-1"
+                  />
+                  <Input
+                    placeholder="Value"
+                    value={variable.value}
+                    onChange={(e) => updateVariable(index, "value", e.target.value)}
+                    required
+                    className="border-0 bg-background/50 focus-visible:ring-1"
+                  />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => removeVariable(index)}
+                    className="mt-1"
                   >
                     <Trash className="h-4 w-4" />
                   </Button>
@@ -158,16 +189,18 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-base text-muted-foreground text-center py-8 bg-muted/40 rounded-lg">
               No variables added yet. Click "Add Variable" to start adding custom fields to this lead.
             </p>
           )}
         </div>
       </div>
 
-      <Separator />
-
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button 
+        type="submit" 
+        disabled={isLoading}
+        className="w-full h-12 text-lg rounded-full transition-all duration-200 hover:scale-[0.98]"
+      >
         {isLoading ? "Adding..." : `Save Lead${variables.length > 0 ? ` with ${variables.length} Variable${variables.length === 1 ? '' : 's'}` : ''}`}
       </Button>
     </form>
