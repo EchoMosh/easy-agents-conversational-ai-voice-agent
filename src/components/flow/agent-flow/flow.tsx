@@ -103,16 +103,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     if (isValidConnection(connection)) {
       const newEdge = {
         ...connection,
-        type: 'smoothstep',
-        animated: true,
-        style: {
-          strokeWidth: 2,
-          stroke: '#94a3b8',
-        }
+        ...defaultEdgeOptions
       };
       setEdges(eds => addEdge(newEdge, eds));
     }
-  }, [nodes]);
+  }, []);
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
