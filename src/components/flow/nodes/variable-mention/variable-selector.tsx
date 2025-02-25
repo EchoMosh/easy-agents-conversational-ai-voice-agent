@@ -75,22 +75,31 @@ export function VariableSelector({ text, onTextChange, textareaRef }: VariableSe
         <div className="fixed" style={{ left: position.x, top: position.y }} />
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[300px]" side="right" align="start" sideOffset={5}>
-        <Command className="rounded-lg border shadow-md">
-          <CommandInput placeholder="Search variables..." />
-          <CommandEmpty>No variables found.</CommandEmpty>
-          <CommandGroup>
-            {SAMPLE_VARIABLES.map((variable) => (
-              <CommandItem
-                key={variable.id}
-                onSelect={() => insertVariable(variable)}
-                className="flex flex-col items-start gap-1 p-2"
-              >
-                <div className="font-medium">{variable.name}</div>
-                <div className="text-xs text-muted-foreground">{variable.description}</div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
+        <div className="relative">
+          <Command className="rounded-lg border shadow-md">
+            <CommandInput 
+              placeholder="Search variables..." 
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
+            <CommandEmpty>No variables found.</CommandEmpty>
+            <CommandGroup className="max-h-[200px] overflow-auto">
+              {SAMPLE_VARIABLES.filter(variable => 
+                variable.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                variable.description.toLowerCase().includes(searchTerm.toLowerCase())
+              ).map((variable) => (
+                <CommandItem
+                  key={variable.id}
+                  onSelect={() => insertVariable(variable)}
+                  className="flex flex-col items-start gap-1 p-2"
+                >
+                  <div className="font-medium">{variable.name}</div>
+                  <div className="text-xs text-muted-foreground">{variable.description}</div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
+        </div>
       </PopoverContent>
     </Popover>
   );
