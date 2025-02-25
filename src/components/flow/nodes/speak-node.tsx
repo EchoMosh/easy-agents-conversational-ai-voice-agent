@@ -1,4 +1,3 @@
-
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -62,7 +61,7 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
   };
 
   return (
-    <div className="relative group bg-gradient-to-br from-purple-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-purple-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[320px]">
+    <div className="relative group bg-gradient-to-br from-purple-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-purple-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[320px] bg-[length:200%_200%] animate-breathing">
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent dark:from-purple-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
       <Handle 
         type="target" 
