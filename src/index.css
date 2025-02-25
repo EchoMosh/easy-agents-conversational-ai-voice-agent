@@ -121,4 +121,5 @@
 .writing-mode-vertical-lr {
   writing-mode: vertical-lr;
   text-orientation: mixed;
+  transform: rotate(180deg);
 }

@@ -233,18 +233,20 @@ export function PipelineStages({
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 grid-flow-row-dense">
           <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
             {selectedPipeline.columns.map((column) => {
               const columnLeads = leads.filter((lead) => lead.status === column.title);
               const isEditing = editingColumnId === column.id;
               const isCollapsed = collapsedColumns.has(column.id);
               
+              console.log('Column collapsed state:', { id: column.id, isCollapsed, title: column.title });
+              
               return (
                 <SortableStage key={column.id} column={column}>
                   <DroppableColumn id={column.id}>
-                    <Card className={`h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg transition-all ${
-                      isCollapsed ? "w-16" : "w-full"
+                    <Card className={`h-full transition-all duration-300 ${
+                      isCollapsed ? "w-16 shrink-0" : "w-full"
                     }`}>
                       <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
                         <div className={`flex items-center ${isCollapsed ? "flex-col" : "justify-between"}`}>
@@ -275,9 +277,7 @@ export function PipelineStages({
                                           className={`w-8 h-8 rounded-full ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
                                             column.color === option.value ? "ring-2" : ""
                                           }`}
-                                          onClick={() => {
-                                            handleColorChange(column.id, option.value);
-                                          }}
+                                          onClick={() => handleColorChange(column.id, option.value)}
                                           title={option.name}
                                         />
                                       ))}
@@ -285,8 +285,8 @@ export function PipelineStages({
                                   </PopoverContent>
                                 </Popover>
                                 <CardTitle 
-                                  className={`text-xl font-semibold cursor-pointer ${
-                                    isCollapsed ? "writing-mode-vertical-lr rotate-180 mt-2 whitespace-nowrap" : ""
+                                  className={`text-xl font-semibold cursor-pointer transition-all ${
+                                    isCollapsed ? "transform writing-mode-vertical-lr mt-2 whitespace-nowrap" : ""
                                   }`}
                                   onClick={() => {
                                     setEditingColumnId(column.id);
