@@ -91,17 +91,12 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
 
   return (
     <>
-      <div className="relative group">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent dark:from-emerald-500/[0.05] rounded-2xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
-        
-        <Handle
-          type="target"
-          position={Position.Left}
-        />
+      <div className="relative group bg-gradient-to-br from-emerald-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-emerald-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[300px] transition-transform duration-300">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent dark:from-emerald-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
         
         <div className="flex flex-col gap-4">
-          <div className="node-header">
-            <span className="node-icon">
+          <div className="flex items-center gap-2 pb-3 border-b border-emerald-100/50 dark:border-gray-700/50">
+            <span className="text-emerald-500 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-900/50 p-1.5 rounded-md">
               <PhoneForwarded className="h-4 w-4" />
             </span>
             <span className="font-medium text-emerald-700 dark:text-emerald-300">Transfer Call</span>
@@ -167,11 +162,17 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
         </div>
 
         <Handle
+          type="target"
+          position={Position.Left}
+          className="w-2 h-4 !bg-emerald-400 rounded-sm border-none transition-all duration-300 hover:!bg-emerald-500"
+        />
+        <Handle
           type="source"
           position={Position.Right}
+          className="w-2 h-4 !bg-emerald-400 rounded-sm border-none transition-all duration-300 hover:!bg-emerald-500"
         />
         
-        <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-emerald-500/[0.03] pointer-events-none" />
+        <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-emerald-500/[0.03] pointer-events-none" />
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

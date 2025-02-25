@@ -61,11 +61,11 @@
 
 /* React Flow Dark Mode Styles */
 .react-flow__controls {
-  @apply bg-transparent border-border;
+  @apply bg-background border-border;
 }
 
 .react-flow__controls button {
-  @apply bg-background/20 backdrop-blur-sm border-border text-foreground hover:bg-accent;
+  @apply bg-background border-border text-foreground hover:bg-accent;
 }
 
 .react-flow__controls button path {
@@ -73,11 +73,11 @@
 }
 
 .react-flow__panel.react-flow__attribution {
-  @apply bg-transparent text-foreground;
+  @apply bg-background text-foreground;
 }
 
 .react-flow__minimap {
-  @apply bg-transparent;
+  @apply bg-background;
 }
 
 .react-flow__minimap-mask {
@@ -89,8 +89,7 @@
 }
 
 .react-flow__node {
-  @apply bg-background/20 border-border text-foreground 
-         backdrop-blur-xl rounded-2xl p-6;
+  @apply bg-background border-border text-foreground;
 }
 
 .react-flow__handle {
@@ -111,145 +110,6 @@
 
 /* Node type specific styles */
 .react-flow__node-greetingNode,
-.react-flow__node-speakNode,
-.react-flow__node-endNode,
-.react-flow__node-triggerNode,
-.react-flow__node-transferNode {
-  @apply bg-gradient-to-br from-background/95 to-background/80
-         backdrop-blur-xl border border-border/30
-         shadow-[0_8px_32px_-8px_rgba(0,0,0,0.1),0_4px_16px_-4px_rgba(0,0,0,0.1)] 
-         dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5),0_4px_16px_-4px_rgba(0,0,0,0.25)]
-         rounded-2xl p-5 m-2;
-  position: relative;
-}
-
-.react-flow__node-greetingNode .node-header,
-.react-flow__node-speakNode .node-header,
-.react-flow__node-endNode .node-header,
-.react-flow__node-triggerNode .node-header,
-.react-flow__node-transferNode .node-header {
-  @apply flex items-center gap-3 px-4 py-3 mb-4 border-b border-border/10;
-}
-
-.react-flow__node-greetingNode .node-icon,
-.react-flow__node-speakNode .node-icon,
-.react-flow__node-endNode .node-icon,
-.react-flow__node-triggerNode .node-icon,
-.react-flow__node-transferNode .node-icon {
-  @apply p-2 rounded-lg;
-}
-
-/* Specific node styles */
-.react-flow__node-greetingNode {
-  @apply min-w-[320px];
-}
-
-.react-flow__node-greetingNode .node-icon {
-  @apply text-blue-500 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10;
-}
-
 .react-flow__node-speakNode {
-  @apply min-w-[320px];
-}
-
-.react-flow__node-speakNode .node-icon {
-  @apply text-purple-500 dark:text-purple-400 bg-purple-500/10 dark:bg-purple-400/10;
-}
-
-.react-flow__node-endNode {
-  @apply min-w-[200px];
-}
-
-.react-flow__node-endNode .node-icon {
-  @apply text-rose-500 dark:text-rose-400 bg-rose-500/10 dark:bg-rose-400/10;
-}
-
-.react-flow__node-triggerNode {
-  @apply min-w-[300px];
-}
-
-.react-flow__node-triggerNode::before {
-  content: '';
-  @apply absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] to-transparent dark:from-amber-500/[0.05] rounded-2xl 
-         opacity-0 transition-opacity duration-300 pointer-events-none -z-10;
-}
-
-.react-flow__node-triggerNode:hover::before {
-  @apply opacity-100;
-}
-
-.react-flow__node-triggerNode .node-icon {
-  @apply text-amber-500 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-400/10;
-}
-
-.react-flow__node-transferNode {
-  @apply min-w-[300px];
-}
-
-.react-flow__node-transferNode .node-icon {
-  @apply text-emerald-500 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-400/10;
-}
-
-/* Handle styles */
-.react-flow__handle {
-  @apply w-4 h-3 border-2 rounded-full shadow-md transition-all duration-300 
-         hover:scale-110;
-}
-
-.react-flow__handle.custom-handle {
-  @apply pointer-events-auto;  /* Changed from pointer-events-all to pointer-events-auto */
-}
-
-/* Handle colors based on node type */
-.react-flow__node-greetingNode .react-flow__handle {
-  @apply !bg-blue-400 border-blue-100 dark:border-blue-900
-         hover:!bg-blue-500 dark:hover:!bg-blue-400;
-}
-
-.react-flow__node-speakNode .react-flow__handle {
-  @apply !bg-purple-400 border-purple-100 dark:border-purple-900
-         hover:!bg-purple-500 dark:hover:!bg-purple-400;
-}
-
-.react-flow__node-endNode .react-flow__handle {
-  @apply !bg-rose-400 border-rose-100 dark:border-rose-900
-         hover:!bg-rose-500 dark:hover:!bg-rose-400;
-}
-
-.react-flow__node-triggerNode .react-flow__handle {
-  @apply !bg-amber-400 border-amber-100 dark:border-amber-900
-         hover:!bg-amber-500 dark:hover:!bg-amber-400;
-}
-
-.react-flow__node-transferNode .react-flow__handle {
-  @apply !bg-emerald-400 border-emerald-100 dark:border-emerald-900
-         hover:!bg-emerald-500 dark:hover:!bg-emerald-400;
-}
-
-.react-flow__handle-left {
-  @apply -left-6;
-}
-
-.react-flow__handle-right {
-  @apply -right-6;
-}
-
-/* Connection line */
-.react-flow__connection-path {
-  @apply stroke-[3] stroke-gray-300 dark:stroke-gray-600;
-}
-
-.react-flow__connection {
-  @apply opacity-75;
-}
-
-/* Selection styles */
-.react-flow__node.selected {
-  @apply shadow-[0_0_0_2px_rgba(139,92,246,0.3),0_8px_16px_-6px_rgba(0,0,0,0.05),0_4px_8px_-4px_rgba(0,0,0,0.05)]
-         dark:shadow-[0_0_0_2px_rgba(139,92,246,0.3),0_8px_16px_-6px_rgba(0,0,0,0.5),0_4px_8px_-4px_rgba(0,0,0,0.25)];
-}
-
-/* Minimap styles */
-.react-flow__minimap {
-  @apply rounded-xl overflow-hidden border border-gray-100/20 dark:border-gray-700/20;
+  @apply bg-background border-border text-foreground shadow-sm;
 }
