@@ -94,7 +94,7 @@ export type Database = {
           name: string
           phone: string | null
           pipeline_id: string
-          status: Database["public"]["Enums"]["lead_status"] | null
+          status: string | null
           updated_at: string
           user_id: string
         }
@@ -105,7 +105,7 @@ export type Database = {
           name: string
           phone?: string | null
           pipeline_id: string
-          status?: Database["public"]["Enums"]["lead_status"] | null
+          status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -116,7 +116,7 @@ export type Database = {
           name?: string
           phone?: string | null
           pipeline_id?: string
-          status?: Database["public"]["Enums"]["lead_status"] | null
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
