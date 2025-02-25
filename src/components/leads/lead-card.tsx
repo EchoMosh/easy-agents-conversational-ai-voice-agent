@@ -27,18 +27,19 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
       {...attributes}
       {...listeners}
       className={cn(
-        "cursor-grab active:cursor-grabbing border border-border/50 bg-background/50 hover:bg-background/80 transition-colors",
-        isDragging && "opacity-50"
+        "cursor-grab active:cursor-grabbing border-border/50 bg-card shadow-sm hover:shadow-md transition-all",
+        "hover:scale-[1.02] hover:-translate-y-0.5 duration-200",
+        isDragging && "opacity-50 ring-2 ring-primary/20"
       )}
       onClick={onClick}
     >
       <CardContent className="p-4 space-y-2">
         <div className="font-medium">{lead.name}</div>
         {lead.email && (
-          <div className="text-sm text-muted-foreground">{lead.email}</div>
+          <div className="text-sm text-muted-foreground/80">{lead.email}</div>
         )}
         {lead.phone && (
-          <div className="text-sm text-muted-foreground">{lead.phone}</div>
+          <div className="text-sm text-muted-foreground/80">{lead.phone}</div>
         )}
       </CardContent>
     </Card>
