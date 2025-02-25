@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Lead } from "@/pages/dashboard/leads";
+import { LeadVariables } from "./lead-variables";
 import {
   Select,
   SelectContent,
@@ -59,6 +60,7 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-6">
+        {/* Contact Information Section */}
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -121,6 +123,13 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
             </Select>
           </div>
         </div>
+
+        {/* Custom Variables Section */}
+        <LeadVariables 
+          leadId={lead.id}
+          variables={lead.variables || []}
+          onVariablesUpdated={onSuccess}
+        />
       </div>
 
       <Button 
