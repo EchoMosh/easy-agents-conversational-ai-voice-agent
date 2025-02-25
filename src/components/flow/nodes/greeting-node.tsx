@@ -73,21 +73,21 @@ export function GreetingNode({
               <MessageSquare className="h-4 w-4" />
             </span>
           </span>
-          <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">Greeting</span>
+          <span className="font-semibold text-gray-900 dark:text-white">Greeting</span>
         </div>
 
         <GreetingInput value={greeting} onChange={setGreeting} />
 
         <div className="mt-6 space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium text-indigo-600/75 dark:text-indigo-300/75">
+            <Label className="text-xs font-medium text-gray-600 dark:text-gray-300">
               Possible outcomes ({outcomes.length}/5)
             </Label>
             {!showOutcomeInput && outcomes.length < 5 && !editingIndex && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-900/50 rounded-lg"
+                className="h-7 w-7 p-0 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 rounded-lg"
                 onClick={() => setShowOutcomeInput(true)}
               >
                 <Plus className="h-4 w-4" />
