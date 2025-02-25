@@ -244,7 +244,7 @@ export function PipelineStages({
                 <SortableStage key={column.id} column={column}>
                   <DroppableColumn id={column.id}>
                     <Card className={`h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg transition-all ${
-                      isCollapsed ? "w-16" : ""
+                      isCollapsed ? "w-16" : "w-full"
                     }`}>
                       <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
                         <div className={`flex items-center ${isCollapsed ? "flex-col" : "justify-between"}`}>
@@ -286,7 +286,7 @@ export function PipelineStages({
                                 </Popover>
                                 <CardTitle 
                                   className={`text-xl font-semibold cursor-pointer ${
-                                    isCollapsed ? "writing-mode-vertical-rl rotate-180 mt-2" : ""
+                                    isCollapsed ? "writing-mode-vertical-lr rotate-180 mt-2 whitespace-nowrap" : ""
                                   }`}
                                   onClick={() => {
                                     setEditingColumnId(column.id);
