@@ -4,7 +4,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Node, Edge } from '@xyflow/react';
 
 // Sample initial data for development
@@ -17,7 +17,7 @@ const sampleAgent = {
   user_id: 'sample-user-id',
   interaction_type: ['chat'],
   language: 'en',
-  voice_id: null // Added this line to match the Agent type
+  voice_id: null
 };
 
 const initialNodes: Node[] = [
@@ -49,6 +49,23 @@ export default function AgentFlowPage() {
   const navigate = useNavigate();
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
+
+  // Add this effect to listen for node updates
+  useEffect(() => {
+    const handleNodeUpdate = (event: CustomEvent) => {
+      const { id: nodeId, data } = event.detail;
+      console.log('Node update event received:', { nodeId, data });
+      
+      setNodes(currentNodes => 
+        currentNodes.map(node => 
+          node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+        )
+      );
+    };
+
+    window.addEventListener('nodeupdate', handleNodeUpdate as EventListener);
+    return () => window.removeEventListener('nodeupdate', handleNodeUpdate as EventListener);
+  }, []);
 
   const handleNodesChange = useCallback((newNodes: Node[]) => {
     console.log('Nodes changed:', newNodes);
