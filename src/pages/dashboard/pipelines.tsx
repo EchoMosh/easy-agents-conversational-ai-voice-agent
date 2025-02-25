@@ -113,7 +113,7 @@ export default function PipelinesPage() {
   };
 
   return (
-    <>
+    <div className="relative">
       <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
         <PipelineHeader 
           pipelines={pipelines}
@@ -149,14 +149,23 @@ export default function PipelinesPage() {
         />
       </div>
 
-      {/* Modal rendered outside the main container */}
       {showDeleteDialog && (
         <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm"
-          style={{ zIndex: 9999 }}
+          className="fixed inset-0 z-[9999] overflow-hidden"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
         >
-          <div className="fixed inset-0 flex items-center justify-center">
-            <Card className="w-[400px] shadow-lg">
+          <div 
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 flex items-center justify-center pointer-events-auto">
+            <Card className="w-[400px] shadow-lg relative z-[10000]">
               <CardHeader>
                 <CardTitle>Delete Pipeline</CardTitle>
               </CardHeader>
@@ -185,6 +194,6 @@ export default function PipelinesPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
