@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
@@ -71,9 +70,27 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
 
+  const isValidConnection = (connection: Connection) => {
+    const sourceNode = nodes.find(node => node.id === connection.source);
+    const targetNode = nodes.find(node => node.id === connection.target);
+
+    if (!sourceNode || !targetNode) return false;
+
+    if (sourceNode.type === 'greetingNode' && targetNode.type === 'speakNode') return true;
+    if (sourceNode.type === 'speakNode' && targetNode.type === 'speakNode') return true;
+    if (sourceNode.type === 'greetingNode' && targetNode.type === 'endNode') return true;
+    if (sourceNode.type === 'speakNode' && targetNode.type === 'endNode') return true;
+    if (sourceNode.type === 'triggerNode' && targetNode.type === 'greetingNode') return true;
+    if (sourceNode.type === 'triggerNode' && targetNode.type === 'speakNode') return true;
+
+    return false;
+  };
+
   const onConnect = useCallback((connection: Connection) => {
-    setEdges(eds => addEdge(connection, eds));
-  }, [setEdges]);
+    if (isValidConnection(connection)) {
+      setEdges(eds => addEdge(connection, eds));
+    }
+  }, [nodes]);
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
