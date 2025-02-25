@@ -1,48 +1,16 @@
 
 import { useState } from "react";
-import { Lead } from "@/pages/dashboard/leads";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tag, Pencil, Square, CheckSquare } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { LeadVariables } from "./lead-variables";
-import { EditLeadForm } from "./edit-lead-form";
+import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DeleteDialog } from "@/components/agents/table/delete-dialog";
 import { SelectionHeader } from "@/components/agents/table/selection-header";
 import { useQuery } from "@tanstack/react-query";
-
-interface LeadsTableProps {
-  leads: Lead[];
-  isLoading: boolean;
-  onLeadUpdated: () => void;
-}
-
-const statusColors = {
-  new: "bg-blue-500",
-  contacted: "bg-yellow-500",
-  qualified: "bg-green-500",
-  converted: "bg-purple-500",
-  lost: "bg-red-500",
-};
+import { LeadTableHeader } from "./components/lead-table-header";
+import { LeadRow } from "./components/lead-row";
+import { LeadsTableProps } from "./types/lead-types";
 
 export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps) {
-  const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -137,109 +105,21 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
 
       <div className="border rounded-lg">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleToggleSelectAll}
-                  className="h-8 w-8"
-                  disabled={isDeleting}
-                >
-                  {selectedLeads.length === leads.length ? (
-                    <CheckSquare className="h-4 w-4" />
-                  ) : (
-                    <Square className="h-4 w-4" />
-                  )}
-                </Button>
-              </TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Variables</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+          <LeadTableHeader
+            onToggleSelectAll={handleToggleSelectAll}
+            isAllSelected={selectedLeads.length === leads.length}
+            isDeleting={isDeleting}
+          />
           <TableBody>
             {leads.map((lead) => (
-              <TableRow key={lead.id}>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleToggleSelect(lead.id)}
-                    className="h-8 w-8"
-                    disabled={isDeleting}
-                  >
-                    {selectedLeads.includes(lead.id) ? (
-                      <CheckSquare className="h-4 w-4" />
-                    ) : (
-                      <Square className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TableCell>
-                <TableCell>{lead.name}</TableCell>
-                <TableCell>{lead.email || "-"}</TableCell>
-                <TableCell>{lead.phone || "-"}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant="secondary"
-                    className={`${statusColors[lead.status]} text-white`}
-                  >
-                    {lead.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Tag className="h-4 w-4 mr-2" />
-                        {lead.variables?.length || 0} Variables
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-sm border-none shadow-2xl">
-                      <DialogHeader className="p-6 pb-0">
-                        <DialogTitle className="text-2xl py-[7px]">Lead Variables</DialogTitle>
-                      </DialogHeader>
-                      <div className="px-6 pb-6 overflow-y-auto max-h-[80vh]">
-                        <LeadVariables
-                          leadId={lead.id}
-                          variables={lead.variables || []}
-                          onVariablesUpdated={onLeadUpdated}
-                        />
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </TableCell>
-                <TableCell>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm" onClick={() => setEditingLead(lead)}>
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-sm border-none shadow-2xl">
-                      <DialogHeader className="p-6 pb-0">
-                        <DialogTitle className="text-2xl py-[7px]">Edit Lead</DialogTitle>
-                      </DialogHeader>
-                      <div className="px-6 pb-6 overflow-y-auto max-h-[80vh]">
-                        {editingLead && (
-                          <EditLeadForm
-                            lead={editingLead}
-                            onSuccess={() => {
-                              setEditingLead(null);
-                              onLeadUpdated();
-                            }}
-                          />
-                        )}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </TableCell>
-              </TableRow>
+              <LeadRow
+                key={lead.id}
+                lead={lead}
+                isSelected={selectedLeads.includes(lead.id)}
+                onToggleSelect={handleToggleSelect}
+                onLeadUpdated={onLeadUpdated}
+                isDeleting={isDeleting}
+              />
             ))}
           </TableBody>
         </Table>
