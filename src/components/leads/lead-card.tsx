@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 
 interface LeadCardProps {
   lead: Lead;
+  onClick?: () => void;
 }
 
-export function LeadCard({ lead }: LeadCardProps) {
+export function LeadCard({ lead, onClick }: LeadCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
   });
@@ -29,6 +30,7 @@ export function LeadCard({ lead }: LeadCardProps) {
         "cursor-grab active:cursor-grabbing border border-border/50 bg-background/50 hover:bg-background/80 transition-colors",
         isDragging && "opacity-50"
       )}
+      onClick={onClick}
     >
       <CardContent className="p-4 space-y-2">
         <div className="font-medium">{lead.name}</div>
