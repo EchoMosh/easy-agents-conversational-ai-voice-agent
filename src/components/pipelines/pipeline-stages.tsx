@@ -11,8 +11,8 @@ import { useState } from "react";
 import { useSortable, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { supabase } from "@/lib/supabase";
-import { toast } from "@/components/ui/toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const colorOptions = [
   { name: "Gray", value: "bg-gray-500" },
@@ -69,6 +69,7 @@ export function PipelineStages({
   onEditPipelineName,
   onReorderColumns,
 }: PipelineStagesProps) {
+  const { toast } = useToast();
   const [editingPipelineName, setEditingPipelineName] = useState(false);
   const [pipelineName, setPipelineName] = useState(selectedPipeline.name);
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
