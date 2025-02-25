@@ -37,6 +37,10 @@ export function usePipeline() {
     setEditedColumns,
     setShowNewPipelineDialog,
 
+    // Queries
+    refetchPipelines,
+    refetchLeads,
+
     // Actions
     handleEditColumnTitle: (columnId: string, newTitle: string) => {
       if (selectedPipeline) {

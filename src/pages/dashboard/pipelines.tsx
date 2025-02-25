@@ -47,19 +47,23 @@ export default function PipelinesPage() {
     handleEditPipelineName,
     handleDeletePipeline,
     createNewPipeline,
+    refetchPipelines,
+    refetchLeads,
   } = usePipeline();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      window.location.reload();
+      await Promise.all([refetchPipelines(), refetchLeads()]);
     } catch (error) {
       console.error("Error refreshing:", error);
       toast({
         title: "Error",
-        description: "Failed to refresh the page",
+        description: "Failed to refresh data",
         variant: "destructive",
       });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
