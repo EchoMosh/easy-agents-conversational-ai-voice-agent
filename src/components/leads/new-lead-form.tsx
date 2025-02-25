@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus, Trash, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,9 +16,7 @@ interface NewLeadFormProps {
   onSuccess: () => void;
 }
 
-export function NewLeadForm({
-  onSuccess
-}: NewLeadFormProps) {
+export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [variables, setVariables] = useState<{
     name: string;
@@ -42,7 +39,7 @@ export function NewLeadForm({
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Pipeline[];
+      return (data || []).map(convertJsonToPipeline);
     },
   });
 

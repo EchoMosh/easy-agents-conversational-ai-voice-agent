@@ -1,8 +1,7 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "@/pages/dashboard/leads";
-import { Pipeline } from "@/types/pipeline";
+import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 import { 
   DndContext, 
   DragEndEvent, 
@@ -61,13 +60,13 @@ export default function PipelinesPage() {
   const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
-      const { data: pipelineData, error } = await supabase
+      const { data, error } = await supabase
         .from("pipelines")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return pipelineData as Pipeline[];
+      return (data || []).map(convertJsonToPipeline);
     },
   });
 
@@ -80,7 +79,7 @@ export default function PipelinesPage() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Lead[];
+      return data as unknown as Lead[];
     },
   });
 
@@ -123,13 +122,25 @@ export default function PipelinesPage() {
   const createNewPipeline = async () => {
     if (!newPipelineName.trim()) return;
 
+    const user = await supabase.auth.getUser();
+    const userId = user.data.user?.id;
+
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a pipeline",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("pipelines")
         .insert({
           name: newPipelineName,
           columns: defaultColumns,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: userId,
         })
         .select()
         .single();
@@ -144,7 +155,8 @@ export default function PipelinesPage() {
       setNewPipelineName("");
       setShowNewPipelineDialog(false);
       refetchPipelines();
-      setSelectedPipeline(data as Pipeline);
+      
+      setSelectedPipeline(convertJsonToPipeline(data));
     } catch (error) {
       console.error("Error creating pipeline:", error);
       toast({

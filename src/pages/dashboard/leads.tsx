@@ -52,7 +52,7 @@ const LeadsPage = () => {
         toast.error("Failed to fetch leads");
         throw leadsError;
       }
-      return leadsData as Lead[];
+      return leadsData as unknown as Lead[];
     }
   });
 
