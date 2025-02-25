@@ -111,7 +111,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
             isDeleting={isDeleting}
           />
           <TableBody>
-            {leads.map((lead) => (
+            {leads.map((lead: any) => (
               <LeadRow
                 key={lead.id}
                 lead={lead}
@@ -119,6 +119,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
                 onToggleSelect={handleToggleSelect}
                 onLeadUpdated={onLeadUpdated}
                 isDeleting={isDeleting}
+                pipelineName={lead.pipelineName}
               />
             ))}
           </TableBody>

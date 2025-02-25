@@ -56,6 +56,24 @@ const LeadsPage = () => {
     }
   });
 
+  // Fetch pipelines for mapping pipeline_id to names
+  const { data: pipelines = [] } = useQuery({
+    queryKey: ['pipelines'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pipelines')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const pipelineMap = Object.fromEntries(
+    pipelines.map(pipeline => [pipeline.id, pipeline.name])
+  );
+
   const filteredLeads = leads?.filter(lead => {
     const matchesSearch = lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (lead.email && lead.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -65,6 +83,11 @@ const LeadsPage = () => {
     
     return matchesSearch && matchesStatus;
   }) || [];
+
+  const leadsWithPipelineNames = filteredLeads.map(lead => ({
+    ...lead,
+    pipelineName: pipelineMap[lead.pipeline_id]
+  }));
 
   return <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -115,7 +138,7 @@ const LeadsPage = () => {
         </Select>
       </div>
 
-      <LeadsTable leads={filteredLeads} isLoading={isLoading} onLeadUpdated={() => refetch()} />
+      <LeadsTable leads={leadsWithPipelineNames} isLoading={isLoading} onLeadUpdated={() => refetch()} />
     </div>;
 };
 

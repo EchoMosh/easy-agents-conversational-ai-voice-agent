@@ -21,6 +21,7 @@ export interface LeadRowProps {
   onToggleSelect: (id: string) => void;
   onLeadUpdated: () => void;
   isDeleting: boolean;
+  pipelineName?: string;
 }
 
 export interface LeadTableHeaderProps {

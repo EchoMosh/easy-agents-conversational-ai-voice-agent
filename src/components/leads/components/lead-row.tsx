@@ -11,7 +11,8 @@ export function LeadRow({
   isSelected, 
   onToggleSelect, 
   onLeadUpdated,
-  isDeleting 
+  isDeleting,
+  pipelineName 
 }: LeadRowProps) {
   return (
     <TableRow>
@@ -41,6 +42,7 @@ export function LeadRow({
           {lead.status}
         </Badge>
       </TableCell>
+      <TableCell>{pipelineName || "-"}</TableCell>
       <TableCell>
         <LeadActions lead={lead} onEditSuccess={onLeadUpdated} />
       </TableCell>
