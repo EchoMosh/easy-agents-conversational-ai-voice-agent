@@ -31,9 +31,10 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
           onChange={(e) => onChange(e.target.value)}
           className="nodrag text-sm resize-y min-h-[80px] bg-white/80 dark:bg-gray-900/50 border-blue-100/50 dark:border-blue-800/50 shadow-sm rounded-lg focus-visible:ring-blue-500/50 focus-visible:border-blue-200"
           placeholder="Type @ to insert a variable..."
+          style={{ color: 'transparent', caretColor: 'black' }}
         />
         <div 
-          className="absolute inset-0 pointer-events-none p-[9px] text-sm"
+          className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100"
           dangerouslySetInnerHTML={{ 
             __html: highlightVariables(value)
               .split('\n')

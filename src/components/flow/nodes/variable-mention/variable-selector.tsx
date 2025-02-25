@@ -72,10 +72,10 @@ export function VariableSelector({ text, onTextChange, textareaRef }: VariableSe
   return (
     <Popover open={showVariables} onOpenChange={setShowVariables}>
       <PopoverTrigger asChild>
-        <div style={{ position: 'fixed', left: position.x, top: position.y }} />
+        <div className="fixed" style={{ left: position.x, top: position.y }} />
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-[300px]" side="right" align="start">
-        <Command>
+      <PopoverContent className="p-0 w-[300px]" side="right" align="start" sideOffset={5}>
+        <Command className="rounded-lg border shadow-md">
           <CommandInput placeholder="Search variables..." />
           <CommandEmpty>No variables found.</CommandEmpty>
           <CommandGroup>
