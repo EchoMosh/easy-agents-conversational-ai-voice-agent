@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export type Variable = {
@@ -82,22 +82,24 @@ export function VariableSelector({ text, onTextChange, textareaRef }: VariableSe
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
-            <CommandEmpty>No variables found.</CommandEmpty>
-            <CommandGroup className="max-h-[200px] overflow-auto">
-              {SAMPLE_VARIABLES.filter(variable => 
-                variable.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                variable.description.toLowerCase().includes(searchTerm.toLowerCase())
-              ).map((variable) => (
-                <CommandItem
-                  key={variable.id}
-                  onSelect={() => insertVariable(variable)}
-                  className="flex flex-col items-start gap-1 p-2"
-                >
-                  <div className="font-medium">{variable.name}</div>
-                  <div className="text-xs text-muted-foreground">{variable.description}</div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            <CommandList>
+              <CommandEmpty>No variables found.</CommandEmpty>
+              <CommandGroup className="max-h-[200px] overflow-auto">
+                {SAMPLE_VARIABLES.filter(variable => 
+                  variable.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  variable.description.toLowerCase().includes(searchTerm.toLowerCase())
+                ).map((variable) => (
+                  <CommandItem
+                    key={variable.id}
+                    onSelect={() => insertVariable(variable)}
+                    className="flex flex-col items-start gap-1 p-2"
+                  >
+                    <div className="font-medium">{variable.name}</div>
+                    <div className="text-xs text-muted-foreground">{variable.description}</div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
           </Command>
         </div>
       </PopoverContent>
