@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
@@ -76,11 +77,22 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
     if (!sourceNode || !targetNode) return false;
 
+    // Ensure we're connecting from a source handle to a target handle
+    if (!connection.sourceHandle || !connection.targetHandle) {
+      return true; // Allow default handles
+    }
+
+    // Allow connections from greetingNode to speakNode
     if (sourceNode.type === 'greetingNode' && targetNode.type === 'speakNode') return true;
+    // Allow connections from speakNode to speakNode
     if (sourceNode.type === 'speakNode' && targetNode.type === 'speakNode') return true;
+    // Allow connections from greetingNode to endNode
     if (sourceNode.type === 'greetingNode' && targetNode.type === 'endNode') return true;
+    // Allow connections from speakNode to endNode
     if (sourceNode.type === 'speakNode' && targetNode.type === 'endNode') return true;
+    // Allow connections from triggerNode to greetingNode
     if (sourceNode.type === 'triggerNode' && targetNode.type === 'greetingNode') return true;
+    // Allow connections from triggerNode to speakNode
     if (sourceNode.type === 'triggerNode' && targetNode.type === 'speakNode') return true;
 
     return false;
@@ -88,7 +100,12 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
   const onConnect = useCallback((connection: Connection) => {
     if (isValidConnection(connection)) {
-      setEdges(eds => addEdge(connection, eds));
+      const newEdge = {
+        ...connection,
+        type: 'smoothstep',
+        animated: true,
+      };
+      setEdges(eds => addEdge(newEdge, eds));
     }
   }, [nodes]);
 
@@ -169,6 +186,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         fitView
         defaultEdgeOptions={{
           animated: true,
+          type: 'smoothstep',
           style: { stroke: '#94a3b8', strokeWidth: 1.5 },
         }}
         className="bg-white dark:bg-gray-950"
