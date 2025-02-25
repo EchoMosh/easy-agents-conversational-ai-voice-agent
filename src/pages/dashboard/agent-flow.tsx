@@ -62,7 +62,7 @@ export default function AgentFlowPage() {
 
   return (
     <DragProvider>
-      <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+      <div className="h-screen flex flex-col bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-slate-900 to-black">
         <Header 
           agent={sampleAgent}
           onBack={() => navigate('/dashboard/agents')}
