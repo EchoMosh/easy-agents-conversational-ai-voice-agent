@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
-import { useToast } from "@/hooks/use-toast";
 import { PipelineHeader } from "@/components/pipelines/pipeline-header";
 import { PipelineStages } from "@/components/pipelines/pipeline-stages";
 import { LeadDetailsDialog } from "@/components/pipelines/lead-details-dialog";
@@ -12,7 +11,8 @@ import { RefreshButton } from "@/components/pipelines/refresh-button";
 import { usePipeline } from "@/hooks/use-pipeline";
 import { useDeletePipeline } from "@/hooks/pipeline/use-delete-pipeline";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
-import { PipelineColumn } from "@/types/pipeline";
+import { usePipelineRefresh } from "@/hooks/pipeline/use-pipeline-refresh";
+import { usePipelineColumns } from "@/hooks/pipeline/use-pipeline-columns";
 import { defaultColumns } from "@/hooks/use-pipeline";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
@@ -21,18 +21,14 @@ export function DroppableColumn({ id, children }: { id: string; children: React.
 }
 
 export default function PipelinesPage() {
-  const { toast } = useToast();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const {
     pipelines,
     leads,
     selectedPipeline,
-    editedColumns,
     showNewPipelineDialog,
     setSelectedPipeline,
-    setEditedColumns,
     setShowNewPipelineDialog,
     handleEditColumnTitle,
     handleEditPipelineName,
@@ -50,42 +46,14 @@ export default function PipelinesPage() {
   } = useDeletePipeline(handleDeletePipeline);
 
   const { handleDragEnd } = usePipelineDrag(selectedPipeline, leads, refetchLeads);
+  
+  const { isRefreshing, handleRefresh } = usePipelineRefresh(refetchPipelines, refetchLeads);
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await Promise.all([refetchPipelines(), refetchLeads()]);
-    } catch (error) {
-      console.error("Error refreshing:", error);
-      toast({
-        title: "Error",
-        description: "Failed to refresh data",
-        variant: "destructive",
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleAddStage = (newStage: PipelineColumn) => {
-    setEditedColumns(prev => [...prev, newStage]);
-  };
-
-  const handleReorderColumns = async (newColumns: PipelineColumn[]) => {
-    if (!selectedPipeline) return;
-    
-    try {
-      setEditedColumns(newColumns);
-      setSelectedPipeline(prev => prev ? { ...prev, columns: newColumns } : null);
-    } catch (error) {
-      console.error("Error updating columns:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update pipeline columns",
-        variant: "destructive",
-      });
-    }
-  };
+  const {
+    editedColumns,
+    handleAddStage,
+    handleReorderColumns,
+  } = usePipelineColumns(setSelectedPipeline);
 
   return (
     <div className="relative">
