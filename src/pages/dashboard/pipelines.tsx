@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { DragEndEvent } from "@dnd-kit/core";
 import { useDroppable } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +11,7 @@ import { DeletePipelineDialog } from "@/components/pipelines/delete-pipeline-dia
 import { RefreshButton } from "@/components/pipelines/refresh-button";
 import { usePipeline } from "@/hooks/use-pipeline";
 import { useDeletePipeline } from "@/hooks/pipeline/use-delete-pipeline";
-import { supabase } from "@/integrations/supabase/client";
+import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
 import { PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "@/hooks/use-pipeline";
 
@@ -50,6 +49,8 @@ export default function PipelinesPage() {
     onDelete,
   } = useDeletePipeline(handleDeletePipeline);
 
+  const { handleDragEnd } = usePipelineDrag(selectedPipeline, leads, refetchLeads);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -63,49 +64,6 @@ export default function PipelinesPage() {
       });
     } finally {
       setIsRefreshing(false);
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || !selectedPipeline) return;
-
-    const leadId = String(active.id);
-    const newColumnId = String(over.id);
-
-    const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
-    if (!targetColumn) return;
-
-    const newStatus = targetColumn.title;
-    const lead = leads.find(l => l.id === leadId);
-    
-    if (lead?.status === newStatus) return;
-
-    try {
-      const { error } = await supabase
-        .from("leads")
-        .update({ 
-          status: newStatus,
-          pipeline_id: selectedPipeline.id
-        })
-        .eq("id", leadId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Lead status updated",
-        description: `Lead moved to ${newStatus}`,
-      });
-      
-      refetchLeads();
-    } catch (error) {
-      console.error("Error updating lead status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update lead status",
-        variant: "destructive",
-      });
     }
   };
 
