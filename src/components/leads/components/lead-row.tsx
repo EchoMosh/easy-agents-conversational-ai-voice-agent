@@ -46,17 +46,6 @@ export function LeadRow({
       <TableCell>
         <LeadActions lead={lead} onEditSuccess={onLeadUpdated} />
       </TableCell>
-      <TableCell>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            // We could add additional actions here if needed
-          }}
-        >
-          More Actions
-        </Button>
-      </TableCell>
     </TableRow>
   );
 }

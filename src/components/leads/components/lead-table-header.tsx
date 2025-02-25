@@ -28,7 +28,6 @@ export function LeadTableHeader({ onToggleSelectAll, isAllSelected, isDeleting }
         <TableHead>Phone</TableHead>
         <TableHead>Status</TableHead>
         <TableHead>Pipeline</TableHead>
-        <TableHead>Variables</TableHead>
         <TableHead>Actions</TableHead>
       </TableRow>
     </TableHeader>
