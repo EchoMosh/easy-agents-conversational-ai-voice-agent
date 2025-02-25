@@ -61,13 +61,13 @@ export default function PipelinesPage() {
   const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: pipelineData, error } = await supabase
         .from("pipelines")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Pipeline[];
+      return pipelineData as Pipeline[];
     },
   });
 
@@ -129,6 +129,7 @@ export default function PipelinesPage() {
         .insert({
           name: newPipelineName,
           columns: defaultColumns,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
         .single();
@@ -143,7 +144,7 @@ export default function PipelinesPage() {
       setNewPipelineName("");
       setShowNewPipelineDialog(false);
       refetchPipelines();
-      setSelectedPipeline(data);
+      setSelectedPipeline(data as Pipeline);
     } catch (error) {
       console.error("Error creating pipeline:", error);
       toast({
