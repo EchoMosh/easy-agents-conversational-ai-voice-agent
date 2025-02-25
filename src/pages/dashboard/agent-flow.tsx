@@ -1,6 +1,7 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ReactFlowProvider, useNodesState, useEdgesState, addEdge } from '@xyflow/react';
+import { ReactFlowProvider, useNodesState, useEdgesState, addEdge, NodeChange, EdgeChange } from '@xyflow/react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Agent, FlowNode, FlowEdge, NodeType, FlowData } from '@/types/agent';
@@ -18,8 +19,8 @@ export default function AgentFlowPage() {
   const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
-  const [nodes, setNodes] = useNodesState<Node[]>([]);
-  const [edges, setEdges] = useEdgesState<Edge[]>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   
   const {
     data: agent,
@@ -46,8 +47,8 @@ export default function AgentFlowPage() {
       // Type check and initialize nodes and edges when agent data is loaded
       const flowData = data.flow as FlowData | null;
       if (flowData && Array.isArray(flowData.nodes) && Array.isArray(flowData.edges)) {
-        setNodes(flowData.nodes as Node[]);
-        setEdges(flowData.edges as Edge[]);
+        setNodes(flowData.nodes);
+        setEdges(flowData.edges);
       }
       
       return data as Agent;
@@ -138,6 +139,7 @@ export default function AgentFlowPage() {
     }
   }, [agent, id, nodes, edges, toast]);
 
+  // Debounced save function
   const debouncedSave = useCallback(() => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -147,15 +149,15 @@ export default function AgentFlowPage() {
     }, 1000); // Save after 1 second of no changes
   }, [saveFlowChanges]);
 
-  const handleNodesChange = useCallback((changes: any) => {
-    setNodes(changes);
+  const handleNodesChange = useCallback((changes: NodeChange[]) => {
+    onNodesChange(changes);
     debouncedSave();
-  }, [setNodes, debouncedSave]);
+  }, [onNodesChange, debouncedSave]);
 
-  const handleEdgesChange = useCallback((changes: any) => {
-    setEdges(changes);
+  const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
+    onEdgesChange(changes);
     debouncedSave();
-  }, [setEdges, debouncedSave]);
+  }, [onEdgesChange, debouncedSave]);
 
   useEffect(() => {
     // Listen for node updates from other components
