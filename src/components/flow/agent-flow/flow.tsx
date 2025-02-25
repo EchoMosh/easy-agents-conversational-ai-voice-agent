@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
-import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
+import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, StickyNote } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
@@ -8,6 +8,7 @@ import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
 import { TransferNode } from '@/components/flow/nodes/transfer-node';
+import { NoteNode } from '@/components/flow/nodes/note-node';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const nodeTypes: NodeTypes = {
@@ -15,7 +16,8 @@ const nodeTypes: NodeTypes = {
   greetingNode: GreetingNode,
   endNode: EndNode,
   triggerNode: TriggerNode,
-  transferNode: TransferNode
+  transferNode: TransferNode,
+  noteNode: NoteNode
 };
 
 const widgets = [
@@ -53,6 +55,13 @@ const widgets = [
     icon: PhoneForwarded, 
     color: '#10b981',
     description: 'Transfer the conversation to a live agent'
+  },
+  { 
+    type: 'noteNode', 
+    label: 'Note', 
+    icon: StickyNote, 
+    color: '#fbbf24',
+    description: 'Add a sticky note to document your flow'
   }
 ];
 
@@ -157,6 +166,9 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         case 'transferNode':
           newNodeData = { message: 'Transfer to agent', outcomes: [] };
           break;
+        case 'noteNode':
+          newNodeData = { note: 'Enter your note here' };
+          break;
       }
 
       const newNode: Node = {
@@ -199,6 +211,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
                 return '#f87171';
               case 'transferNode':
                 return '#10b981';
+              case 'noteNode':
+                return '#fbbf24';
               default:
                 return '#60a5fa';
             }
