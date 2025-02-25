@@ -132,7 +132,13 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
 
         {/* Custom Variables Section */}
         <div>
-          <Label className="text-xl font-semibold mb-6 block">Custom Variables</Label>
+          <div className="flex items-center justify-between mb-6">
+            <Label className="text-xl font-semibold">Custom Variables</Label>
+            <Button type="button" variant="outline" size="sm" className="h-10 px-5 rounded-lg border border-border/50 bg-background/50 backdrop-blur-sm hover:bg-background/80 transition-colors">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Variable
+            </Button>
+          </div>
           <LeadVariables 
             leadId={lead.id}
             variables={lead.variables || []}
