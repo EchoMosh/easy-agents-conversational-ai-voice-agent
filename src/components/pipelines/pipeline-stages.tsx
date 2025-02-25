@@ -245,7 +245,9 @@ export function PipelineStages({
         <div className="flex flex-wrap gap-6">
           <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
             {selectedPipeline.columns.map((column) => {
-              const columnLeads = leads.filter((lead) => lead.status === column.title);
+              const columnLeads = leads.filter((lead) => 
+                lead.status.toLowerCase() === column.title.toLowerCase()
+              );
               const isEditing = editingColumnId === column.id;
               const isCollapsed = isColumnCollapsed(column.id);
               
