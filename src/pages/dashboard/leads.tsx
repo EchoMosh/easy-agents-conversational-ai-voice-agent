@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Plus, Tag } from "lucide-react";
+import { Plus, Search, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +8,9 @@ import { NewLeadForm } from "@/components/leads/new-lead-form";
 import { LeadsTable } from "@/components/leads/leads-table";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 export type Lead = {
   id: string;
   name: string;
@@ -16,14 +20,19 @@ export type Lead = {
   created_at: string;
   variables?: LeadVariable[];
 };
+
 export type LeadVariable = {
   id: string;
   lead_id: string;
   name: string;
   value: string | null;
 };
+
 const LeadsPage = () => {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
   const {
     data: leads,
     isLoading,
@@ -45,6 +54,17 @@ const LeadsPage = () => {
       return leadsData as Lead[];
     }
   });
+
+  const filteredLeads = leads?.filter(lead => {
+    const matchesSearch = lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (lead.email && lead.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (lead.phone && lead.phone.includes(searchQuery));
+    
+    const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  }) || [];
+
   return <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Leads</h1>
@@ -61,15 +81,41 @@ const LeadsPage = () => {
             </DialogHeader>
             <div className="px-6 pb-6 overflow-y-auto max-h-[80vh]">
               <NewLeadForm onSuccess={() => {
-              setIsNewLeadOpen(false);
-              refetch();
-            }} />
+                setIsNewLeadOpen(false);
+                refetch();
+              }} />
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <LeadsTable leads={leads || []} isLoading={isLoading} onLeadUpdated={() => refetch()} />
+      <div className="flex gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search leads..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-11"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="new">New</SelectItem>
+            <SelectItem value="contacted">Contacted</SelectItem>
+            <SelectItem value="qualified">Qualified</SelectItem>
+            <SelectItem value="converted">Converted</SelectItem>
+            <SelectItem value="lost">Lost</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <LeadsTable leads={filteredLeads} isLoading={isLoading} onLeadUpdated={() => refetch()} />
     </div>;
 };
+
 export default LeadsPage;
