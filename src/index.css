@@ -217,7 +217,7 @@
 }
 
 .react-flow__edge.animated path {
-  @apply stroke-dasharray-5;
+  stroke-dasharray: 5;
 }
 
 @keyframes dashdraw {
