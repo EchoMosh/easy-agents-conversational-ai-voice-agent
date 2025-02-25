@@ -102,11 +102,12 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     if (isValidConnection(connection)) {
       const newEdge = {
         ...connection,
-        type: 'smoothstep',
+        type: 'step',
         animated: true,
         style: { 
           strokeWidth: 2,
-          stroke: '#94a3b8'
+          stroke: '#94a3b8',
+          transition: '0.3s all ease'
         }
       };
       setEdges(eds => addEdge(newEdge, eds));
@@ -189,11 +190,12 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         nodeTypes={nodeTypes}
         fitView
         defaultEdgeOptions={{
-          type: 'smoothstep',
+          type: 'step',
           animated: true,
           style: { 
             strokeWidth: 2,
-            stroke: '#94a3b8'
+            stroke: '#94a3b8',
+            transition: '0.3s all ease'
           }
         }}
         className="bg-white dark:bg-gray-950"
