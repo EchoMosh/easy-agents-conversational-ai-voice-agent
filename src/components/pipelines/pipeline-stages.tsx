@@ -229,7 +229,7 @@ export function PipelineStages({
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+        <div className="flex gap-6 overflow-x-auto pb-4">
           <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
             {selectedPipeline.columns.map((column) => {
               const columnLeads = leads.filter((lead) => lead.status === column.title);
@@ -240,7 +240,7 @@ export function PipelineStages({
                 <SortableStage key={column.id} column={column}>
                   <DroppableColumn id={column.id}>
                     <Card className={`h-full transition-all duration-300 ${
-                      isCollapsed ? "w-16 shrink-0 flex-none" : ""
+                      isCollapsed ? "w-16" : "w-[350px]"
                     }`}>
                       <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
                         <div className={`flex items-center ${isCollapsed ? "flex-col" : "justify-between"}`}>
@@ -334,7 +334,7 @@ export function PipelineStages({
           
           <Button
             variant="outline"
-            className="h-full min-h-[300px] border-2 border-dashed hover:border-solid"
+            className="h-full min-h-[300px] w-[350px] shrink-0 border-2 border-dashed hover:border-solid"
             onClick={handleAddStage}
           >
             <Plus className="w-6 h-6 mr-2" />
