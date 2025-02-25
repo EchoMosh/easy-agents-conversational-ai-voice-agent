@@ -62,15 +62,19 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
       <Handle 
         type="target" 
         position={Position.Left} 
+        id="target"
         className="w-2 h-4 !bg-blue-400 rounded-sm border-none transition-all duration-300 hover:!bg-blue-500" 
       />
-      
-      {/* Output handle */}
-      <Handle 
-        type="source" 
-        position={Position.Right}
-        className="w-2 h-4 !bg-blue-400 rounded-sm border-none transition-all duration-300 hover:!bg-blue-500" 
-      />
+
+      {/* Default output handle if no outcomes */}
+      {outcomes.length === 0 && (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="default"
+          className="w-2 h-4 !bg-blue-400 rounded-sm border-none transition-all duration-300 hover:!bg-blue-500"
+        />
+      )}
       
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 pb-3 border-b border-blue-100/50 dark:border-gray-700/50">
@@ -114,13 +118,37 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
 
           <div className="space-y-2.5">
             {outcomes.map((outcome, index) => (
-              <OutcomeListItem
-                key={index}
-                outcome={outcome}
-                index={index}
-                onEdit={startEditing}
-                onRemove={removeOutcome}
-              />
+              <div key={index} className="group relative">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-white/80 dark:bg-gray-900/50 rounded-lg py-2 px-3 text-sm border border-blue-100/50 dark:border-blue-800/50 shadow-sm">
+                    {outcome}
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 bg-white/80 dark:bg-gray-900/50 shadow-sm hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-md"
+                      onClick={() => startEditing(index)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 bg-white/80 dark:bg-gray-900/50 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-md"
+                      onClick={() => removeOutcome(index)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`outcome-${index}`}
+                    className="w-2 h-4 !bg-blue-400 rounded-sm border-none"
+                  />
+                </div>
+              </div>
             ))}
           </div>
         </div>

@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
@@ -77,30 +76,16 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
     if (!sourceNode || !targetNode) return false;
 
-    // Always allow connections from trigger nodes
-    if (sourceNode.type === 'triggerNode') {
-      return targetNode.type === 'greetingNode' || targetNode.type === 'speakNode';
-    }
+    const validConnections = {
+      triggerNode: ['greetingNode', 'speakNode'],
+      greetingNode: ['speakNode', 'endNode'],
+      speakNode: ['speakNode', 'endNode'],
+    };
 
-    // Allow connections from greeting nodes
-    if (sourceNode.type === 'greetingNode') {
-      // If connecting from a specific outcome handle
-      if (connection.sourceHandle?.startsWith('outcome-')) {
-        return targetNode.type === 'speakNode' || targetNode.type === 'endNode';
-      }
-      // Allow default connections
-      return targetNode.type === 'speakNode' || targetNode.type === 'endNode';
-    }
+    const sourceType = sourceNode.type as keyof typeof validConnections;
+    const targetType = targetNode.type;
 
-    // Allow connections from speak nodes
-    if (sourceNode.type === 'speakNode') {
-      if (connection.sourceHandle?.startsWith('outcome-')) {
-        return targetNode.type === 'speakNode' || targetNode.type === 'endNode';
-      }
-      return targetNode.type === 'speakNode' || targetNode.type === 'endNode';
-    }
-
-    return false;
+    return validConnections[sourceType]?.includes(targetType) ?? false;
   };
 
   const defaultEdgeOptions = {
