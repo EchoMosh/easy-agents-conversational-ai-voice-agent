@@ -23,7 +23,7 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
         buttonClass="!border-input !bg-background hover:!bg-accent dark:!text-white"
         dropdownClass="!bg-background !border-input dark:!bg-gray-800 dark:!text-white"
         searchClass="!bg-background !border-input dark:!bg-gray-800 dark:!text-white"
-        containerClass="dark:!text-white"
+        containerClass="dark:!text-white [&>div]:!w-full"
         onChange={(value) => onChange(value)}
         {...props}
       />
@@ -34,3 +34,4 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
 PhoneInput.displayName = 'PhoneInput';
 
 export { PhoneInput };
+
