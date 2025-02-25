@@ -186,7 +186,7 @@
 }
 
 .react-flow__handle.custom-handle {
-  @apply pointer-events-all;
+  @apply pointer-events-auto;  /* Changed from pointer-events-all to pointer-events-auto */
 }
 
 /* Handle colors based on node type */
