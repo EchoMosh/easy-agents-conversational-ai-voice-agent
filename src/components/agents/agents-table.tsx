@@ -41,14 +41,12 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     if (!agentToDelete || isDeleting) return;
     
     setIsDeleting(true);
-    
     try {
-      const idToDelete = agentToDelete;
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await onDelete(agentToDelete);
       setAgentToDelete(null);
-      await new Promise(resolve => setTimeout(resolve, 100));
-      await onDelete(idToDelete);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      setSelectedAgents(prev => prev.filter(id => id !== agentToDelete));
+    } catch (error) {
+      console.error("Error deleting agent:", error);
     } finally {
       setIsDeleting(false);
     }
@@ -58,27 +56,18 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     if (isDeleting || selectedAgents.length === 0) return;
     
     setIsDeleting(true);
-    
     try {
-      const agentsToDelete = [...selectedAgents];
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setShowBulkDeleteDialog(false);
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setSelectedAgents([]);
-      
-      for (const id of agentsToDelete) {
+      for (const id of selectedAgents) {
         await onDelete(id);
       }
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
+      setSelectedAgents([]);
+      setShowBulkDeleteDialog(false);
+    } catch (error) {
+      console.error("Error bulk deleting agents:", error);
     } finally {
       setIsDeleting(false);
     }
   };
-
-  if (isDeleting) {
-    return <LoadingOverlay />;
-  }
 
   return (
     <div className="w-full relative">
@@ -135,6 +124,8 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
         title="Are you sure?"
         description={`This action cannot be undone. This will permanently delete ${selectedAgents.length} selected agents and all of their data.`}
       />
+
+      {isDeleting && <LoadingOverlay />}
     </div>
   );
 }
