@@ -1,13 +1,14 @@
 
 import { useState } from "react";
-import { Plus, Trash } from "lucide-react";
+import { Plus, Trash, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
@@ -17,6 +18,8 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [variables, setVariables] = useState<{ name: string; value: string }[]>([]);
   const [phone, setPhone] = useState("");
+  const [isAddingVariable, setIsAddingVariable] = useState(false);
+  const [newVariable, setNewVariable] = useState({ name: "", value: "" });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,7 +37,6 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         throw new Error("No authenticated user found");
       }
 
-      // Insert the lead
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .insert([
@@ -50,7 +52,6 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
 
       if (leadError) throw leadError;
 
-      // Insert variables if any
       if (variables.length > 0) {
         const { error: variablesError } = await supabase
           .from("lead_variables")
@@ -76,17 +77,15 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   };
 
   const addVariable = () => {
-    setVariables([...variables, { name: "", value: "" }]);
+    if (newVariable.name && newVariable.value) {
+      setVariables([...variables, { ...newVariable }]);
+      setNewVariable({ name: "", value: "" });
+      setIsAddingVariable(false);
+    }
   };
 
   const removeVariable = (index: number) => {
     setVariables(variables.filter((_, i) => i !== index));
-  };
-
-  const updateVariable = (index: number, field: "name" | "value", value: string) => {
-    const newVariables = [...variables];
-    newVariables[index][field] = value;
-    setVariables(newVariables);
   };
 
   return (
@@ -142,57 +141,87 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
 
         {/* Custom Variables Section */}
         <div className="pt-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <Label className="text-xl font-medium">Custom Variables</Label>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={addVariable}
-              className="h-9 px-4 rounded-full hover:bg-muted/60 transition-colors"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Variable
-            </Button>
-          </div>
-
-          {variables.length > 0 ? (
-            <div className="space-y-4">
-              {variables.map((variable, index) => (
-                <div 
-                  key={index} 
-                  className="grid grid-cols-[1fr,1fr,auto] gap-3 items-start bg-muted/40 p-4 rounded-lg"
+            <Dialog open={isAddingVariable} onOpenChange={setIsAddingVariable}>
+              <DialogTrigger asChild>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  className="h-9 px-4 rounded-full hover:bg-muted/60 transition-colors"
                 >
-                  <Input
-                    placeholder="Variable name"
-                    value={variable.name}
-                    onChange={(e) => updateVariable(index, "name", e.target.value)}
-                    required
-                    className="border-0 bg-background/50 focus-visible:ring-1"
-                  />
-                  <Input
-                    placeholder="Value"
-                    value={variable.value}
-                    onChange={(e) => updateVariable(index, "value", e.target.value)}
-                    required
-                    className="border-0 bg-background/50 focus-visible:ring-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeVariable(index)}
-                    className="mt-1"
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Variable
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Add Variable</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="variableName">Variable name</Label>
+                    <Input
+                      id="variableName"
+                      placeholder="e.g., Source"
+                      value={newVariable.name}
+                      onChange={(e) => setNewVariable({ ...newVariable, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="variableValue">Value</Label>
+                    <Input
+                      id="variableValue"
+                      placeholder="e.g., Website"
+                      value={newVariable.value}
+                      onChange={(e) => setNewVariable({ ...newVariable, value: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button 
+                    type="button" 
+                    onClick={addVariable}
+                    disabled={!newVariable.name || !newVariable.value}
                   >
-                    <Trash className="h-4 w-4" />
+                    Add Variable
                   </Button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-base text-muted-foreground text-center py-8 bg-muted/40 rounded-lg">
-              No variables added yet. Click "Add Variable" to start adding custom fields to this lead.
-            </p>
-          )}
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="min-h-[100px] bg-muted/40 rounded-lg p-4">
+            {variables.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {variables.map((variable, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="pl-2 pr-1 py-1 h-7 text-sm bg-background/80 hover:bg-background transition-colors group"
+                  >
+                    <Tag className="w-3 h-3 mr-1 opacity-50" />
+                    <span className="font-normal">{variable.name}:</span>
+                    <span className="font-medium ml-1">{variable.value}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeVariable(index)}
+                      className="h-5 w-5 ml-1 hover:bg-muted rounded-full"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No variables added yet. Click "Add Variable" to start adding custom fields to this lead.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
