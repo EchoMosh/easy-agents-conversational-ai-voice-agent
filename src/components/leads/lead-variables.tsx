@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Plus, Trash } from "lucide-react";
+import { Plus, Trash, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LeadVariable } from "@/pages/dashboard/leads";
@@ -21,6 +21,7 @@ export function LeadVariables({
   const [newVariables, setNewVariables] = useState<
     { name: string; value: string }[]
   >([]);
+  const [editingVariables, setEditingVariables] = useState<Record<string, { name: string; value: string }>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const addVariable = () => {
@@ -39,6 +40,41 @@ export function LeadVariables({
     const updated = [...newVariables];
     updated[index][field] = value;
     setNewVariables(updated);
+  };
+
+  const startEditing = (variable: LeadVariable) => {
+    setEditingVariables({
+      ...editingVariables,
+      [variable.id]: { name: variable.name, value: variable.value || "" }
+    });
+  };
+
+  const cancelEditing = (variableId: string) => {
+    const updated = { ...editingVariables };
+    delete updated[variableId];
+    setEditingVariables(updated);
+  };
+
+  const saveEditing = async (variableId: string) => {
+    try {
+      const editedVariable = editingVariables[variableId];
+      const { error } = await supabase
+        .from("lead_variables")
+        .update({
+          name: editedVariable.name,
+          value: editedVariable.value
+        })
+        .eq("id", variableId);
+
+      if (error) throw error;
+
+      toast.success("Variable updated successfully");
+      cancelEditing(variableId);
+      onVariablesUpdated();
+    } catch (error) {
+      toast.error("Failed to update variable");
+      console.error("Error updating variable:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -84,23 +120,78 @@ export function LeadVariables({
     }
   };
 
+  const updateEditingVariable = (
+    variableId: string,
+    field: "name" | "value",
+    value: string
+  ) => {
+    setEditingVariables({
+      ...editingVariables,
+      [variableId]: {
+        ...editingVariables[variableId],
+        [field]: value
+      }
+    });
+  };
+
   return (
     <div className="space-y-6 pt-6">
       <div className="space-y-4">
         {variables.map((variable) => (
           <div key={variable.id} className="flex items-center gap-2">
-            <div className="flex-1 grid grid-cols-2 gap-2">
-              <Input value={variable.name} disabled />
-              <Input value={variable.value || ""} disabled />
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => deleteVariable(variable.id)}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
+            {editingVariables[variable.id] ? (
+              <>
+                <div className="flex-1 grid grid-cols-2 gap-2">
+                  <Input
+                    value={editingVariables[variable.id].name}
+                    onChange={(e) => updateEditingVariable(variable.id, "name", e.target.value)}
+                  />
+                  <Input
+                    value={editingVariables[variable.id].value}
+                    onChange={(e) => updateEditingVariable(variable.id, "value", e.target.value)}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => saveEditing(variable.id)}
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => cancelEditing(variable.id)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex-1 grid grid-cols-2 gap-2">
+                  <Input value={variable.name} readOnly onClick={() => startEditing(variable)} />
+                  <Input value={variable.value || ""} readOnly onClick={() => startEditing(variable)} />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => startEditing(variable)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteVariable(variable.id)}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </>
+            )}
           </div>
         ))}
       </div>
