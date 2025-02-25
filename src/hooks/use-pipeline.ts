@@ -37,7 +37,7 @@ export function usePipeline() {
     setEditedColumns,
     setShowNewPipelineDialog,
 
-    // Queries
+    // Queries - explicitly expose these
     refetchPipelines,
     refetchLeads,
 
