@@ -229,7 +229,7 @@ export function PipelineStages({
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex gap-6 overflow-x-auto pb-4">
+        <div className="flex flex-wrap gap-6">
           <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
             {selectedPipeline.columns.map((column) => {
               const columnLeads = leads.filter((lead) => lead.status === column.title);
