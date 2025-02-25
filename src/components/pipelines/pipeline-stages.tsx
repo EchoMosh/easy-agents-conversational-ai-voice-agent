@@ -1,4 +1,3 @@
-
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
@@ -75,7 +74,7 @@ export function PipelineStages({
   const [pipelineName, setPipelineName] = useState(selectedPipeline.name);
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnTitle, setEditingColumnTitle] = useState("");
-  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
+  const [collapsedColumns, setCollapsedColumns] = useState<Map<string, Set<string>>>(new Map());
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -90,6 +89,27 @@ export function PipelineStages({
       },
     })
   );
+
+  const isColumnCollapsed = (columnId: string) => {
+    const pipelineCollapsed = collapsedColumns.get(selectedPipeline.id);
+    return pipelineCollapsed?.has(columnId) ?? false;
+  };
+
+  const toggleColumnCollapse = (columnId: string) => {
+    setCollapsedColumns(prev => {
+      const newMap = new Map(prev);
+      const pipelineCollapsed = new Set(newMap.get(selectedPipeline.id) || new Set());
+      
+      if (pipelineCollapsed.has(columnId)) {
+        pipelineCollapsed.delete(columnId);
+      } else {
+        pipelineCollapsed.add(columnId);
+      }
+      
+      newMap.set(selectedPipeline.id, pipelineCollapsed);
+      return newMap;
+    });
+  };
 
   const handleSavePipelineName = () => {
     if (pipelineName.trim()) {
@@ -129,16 +149,6 @@ export function PipelineStages({
     newColumns.splice(newIndex, 0, removed);
 
     onReorderColumns(newColumns);
-  };
-
-  const toggleColumnCollapse = (columnId: string) => {
-    const newCollapsed = new Set(collapsedColumns);
-    if (newCollapsed.has(columnId)) {
-      newCollapsed.delete(columnId);
-    } else {
-      newCollapsed.add(columnId);
-    }
-    setCollapsedColumns(newCollapsed);
   };
 
   const handleColorChange = async (columnId: string, newColor: string) => {
@@ -234,7 +244,7 @@ export function PipelineStages({
             {selectedPipeline.columns.map((column) => {
               const columnLeads = leads.filter((lead) => lead.status === column.title);
               const isEditing = editingColumnId === column.id;
-              const isCollapsed = collapsedColumns.has(column.id);
+              const isCollapsed = isColumnCollapsed(column.id);
               
               return (
                 <SortableStage key={column.id} column={column}>
