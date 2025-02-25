@@ -189,7 +189,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
           animated: true,
           style: defaultEdgeStyle
         }}
-        connectionMode="loose"
+        connectionMode={ConnectionMode.Loose as ConnectionMode}
         className="bg-white dark:bg-gray-950"
       >
         <Background className="opacity-40" />
