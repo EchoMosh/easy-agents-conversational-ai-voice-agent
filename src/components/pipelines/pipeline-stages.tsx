@@ -1,3 +1,4 @@
+
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
@@ -142,19 +143,29 @@ export function PipelineStages({
 
   const handleColorChange = async (columnId: string, newColor: string) => {
     try {
+      // Create new columns array with updated color
       const newColumns = selectedPipeline.columns.map(col => 
         col.id === columnId ? { ...col, color: newColor } : col
       );
       
+      // Convert PipelineColumn[] to a format suitable for Supabase Json type
+      const columnsForDb = newColumns.map(col => ({
+        id: col.id,
+        title: col.title,
+        color: col.color
+      }));
+      
+      // Update in the database
       const { error } = await supabase
         .from("pipelines")
         .update({
-          columns: newColumns
+          columns: columnsForDb
         })
         .eq("id", selectedPipeline.id);
 
       if (error) throw error;
 
+      // Update the UI
       onReorderColumns(newColumns);
 
       toast({
