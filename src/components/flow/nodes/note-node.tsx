@@ -21,12 +21,11 @@ export function NoteNode({ data, selected }: { data: NoteNodeData; selected: boo
         lineClassName="border-yellow-500"
         handleClassName="h-6 w-6 border-2 border-yellow-500 bg-white dark:bg-yellow-900 hover:bg-yellow-50 dark:hover:bg-yellow-800 transition-colors"
         keepAspectRatio={false}
-        onResize={(event, { width, height, position }) => {
-          // This ensures the position is maintained relative to the anchor point
+        onResize={(event, params) => {
+          // Just return the width and height, the position will be handled automatically
           return {
-            width,
-            height,
-            position
+            width: params.width,
+            height: params.height
           };
         }}
       />
