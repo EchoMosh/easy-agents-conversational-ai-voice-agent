@@ -128,15 +128,6 @@ export default function PipelinesPage() {
 
       if (pipelineError) throw pipelineError;
 
-      const renamedColumns = editedColumns.filter(newCol => {
-        const oldCol = selectedPipeline.columns.find(c => c.id === newCol.id);
-        return oldCol && oldCol.title !== newCol.title;
-      });
-
-      if (renamedColumns.length > 0) {
-        await refetchLeads();
-      }
-
       toast({
         title: "Pipeline updated",
         description: "Pipeline stages have been updated successfully"
@@ -157,6 +148,34 @@ export default function PipelinesPage() {
 
   const handleAddStage = (newStage: PipelineColumn) => {
     setEditedColumns(prev => [...prev, newStage]);
+  };
+
+  const handleEditPipelineName = async (name: string) => {
+    if (!selectedPipeline) return;
+
+    try {
+      const { error } = await supabase
+        .from("pipelines")
+        .update({ name })
+        .eq("id", selectedPipeline.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Pipeline updated",
+        description: "Pipeline name has been updated successfully"
+      });
+
+      refetchPipelines();
+      setSelectedPipeline(prev => prev ? { ...prev, name } : null);
+    } catch (error) {
+      console.error("Error updating pipeline name:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update pipeline name",
+        variant: "destructive"
+      });
+    }
   };
 
   const createNewPipeline = async () => {
@@ -267,6 +286,8 @@ export default function PipelinesPage() {
           onLeadClick={setSelectedLead}
           onAddStage={handleAddStage}
           onDeletePipeline={handleDeletePipeline}
+          onEditPipelineName={handleEditPipelineName}
+          onReorderColumns={setEditedColumns}
         />
       )}
 
