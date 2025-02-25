@@ -44,7 +44,9 @@ function SortableStage({ column, children }: { column: PipelineColumn; children:
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-      {children}
+      <div {...listeners}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -100,23 +102,38 @@ export function PipelineStages({
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    if (editingColumns) {
+      const { active, over } = event;
 
-    if (!over || active.id === over.id) return;
+      if (!over || active.id === over.id) return;
 
-    const oldIndex = editedColumns.findIndex((col) => col.id === active.id);
-    const newIndex = editedColumns.findIndex((col) => col.id === over.id);
+      const oldIndex = editedColumns.findIndex((col) => col.id === active.id);
+      const newIndex = editedColumns.findIndex((col) => col.id === over.id);
 
-    const newColumns = [...editedColumns];
-    const [removed] = newColumns.splice(oldIndex, 1);
-    newColumns.splice(newIndex, 0, removed);
+      const newColumns = [...editedColumns];
+      const [removed] = newColumns.splice(oldIndex, 1);
+      newColumns.splice(newIndex, 0, removed);
 
-    onReorderColumns(newColumns);
+      onReorderColumns(newColumns);
+    } else {
+      onDragEnd(event);
+    }
   };
 
   const handleSavePipelineName = () => {
-    onEditPipelineName(pipelineName);
-    setEditingPipelineName(false);
+    if (pipelineName.trim()) {
+      onEditPipelineName(pipelineName);
+      setEditingPipelineName(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSavePipelineName();
+    } else if (e.key === 'Escape') {
+      setEditingPipelineName(false);
+      setPipelineName(selectedPipeline.name);
+    }
   };
 
   return (
@@ -128,11 +145,20 @@ export function PipelineStages({
               <Input
                 value={pipelineName}
                 onChange={(e) => setPipelineName(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="text-2xl font-semibold h-10"
                 autoFocus
               />
               <Button onClick={handleSavePipelineName}>Save</Button>
-              <Button variant="ghost" onClick={() => setEditingPipelineName(false)}>Cancel</Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setEditingPipelineName(false);
+                  setPipelineName(selectedPipeline.name);
+                }}
+              >
+                Cancel
+              </Button>
             </div>
           ) : (
             <h2 
