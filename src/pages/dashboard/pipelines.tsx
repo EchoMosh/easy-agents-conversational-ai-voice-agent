@@ -14,6 +14,7 @@ import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
 import { usePipelineRefresh } from "@/hooks/pipeline/use-pipeline-refresh";
 import { usePipelineColumns } from "@/hooks/pipeline/use-pipeline-columns";
 import { defaultColumns } from "@/hooks/use-pipeline";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
@@ -55,6 +56,14 @@ export default function PipelinesPage() {
     handleAddStage,
     handleReorderColumns,
   } = usePipelineColumns(setSelectedPipeline);
+
+  if (isLoading) {
+    return (
+      <div className="h-[300px] w-full flex items-center justify-center">
+        <LoadingSpinner className="w-8 h-8" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
