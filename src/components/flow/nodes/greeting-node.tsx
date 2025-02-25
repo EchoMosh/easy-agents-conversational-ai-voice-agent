@@ -2,7 +2,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageCurlyIcon } from 'lucide-react';
+import { Plus, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { OutcomeInput } from './greeting/outcome-input';
@@ -92,7 +92,7 @@ export function GreetingNode({
           {/* Header */}
           <div className="flex items-center gap-3 pb-4 border-b border-white/20">
             <span className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-tr from-cyan-400/80 to-blue-500/80 text-white shadow-lg">
-              <MessageCurlyIcon className="h-5 w-5" />
+              <MessageCircle className="h-5 w-5" />
               <div className="absolute inset-0 rounded-lg bg-gradient-to-tr from-cyan-400/30 to-blue-500/30 blur-xl" />
             </span>
             <span className="font-semibold text-lg text-white">Greeting</span>
