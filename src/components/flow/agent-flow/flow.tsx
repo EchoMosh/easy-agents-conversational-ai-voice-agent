@@ -1,5 +1,6 @@
+
 import { useCallback, useRef, useState } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel } from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
@@ -188,7 +189,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
           animated: true,
           style: defaultEdgeStyle
         }}
-        connectionMode="loose"
+        connectionMode={ConnectionMode.Loose}
         className="bg-white dark:bg-gray-950"
       >
         <Background className="opacity-40" />
