@@ -60,59 +60,41 @@ export function GreetingNode({
 
   return (
     <div className="relative group">
-      {/* Dynamic Wave Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl overflow-hidden">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e5,#0ea5e9)] mix-blend-multiply" />
-          <div className="absolute w-[200%] aspect-[1/0.2] -top-[25%] left-[50%] -translate-x-[50%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_100%)] animate-[wave_15s_linear_infinite]" 
-            style={{
-              maskImage: "linear-gradient(to bottom, transparent 40%, black 60%)",
-              WebkitMaskImage: "linear-gradient(to bottom, transparent 40%, black 60%)"
-            }}
-          />
-          <div className="absolute w-[200%] aspect-[1/0.2] -top-[15%] left-[50%] -translate-x-[50%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_100%)] animate-[wave_12s_linear_infinite]"
-            style={{
-              maskImage: "linear-gradient(to bottom, transparent 30%, black 70%)",
-              WebkitMaskImage: "linear-gradient(to bottom, transparent 30%, black 70%)"
-            }}
-          />
-        </div>
+      {/* Background Light Particles */}
+      <div className="absolute inset-0 overflow-hidden rounded-xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/10" />
+        <div className="absolute w-32 h-32 -left-16 -top-16 bg-blue-200/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute w-32 h-32 -right-16 -bottom-16 bg-purple-200/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute w-24 h-24 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/5 rounded-full blur-2xl animate-pulse delay-500" />
       </div>
 
-      {/* Content Container */}
-      <div className="relative backdrop-blur-md bg-white/10 rounded-xl border border-white/20 shadow-lg p-5 min-w-[320px]">
-        {/* Floating Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute h-32 w-32 -left-16 -top-16 bg-blue-300/20 rounded-full blur-2xl animate-pulse" />
-          <div className="absolute h-32 w-32 -right-16 -bottom-16 bg-cyan-300/20 rounded-full blur-2xl animate-pulse delay-700" />
-        </div>
-
+      {/* Glass Card Content */}
+      <div className="relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl shadow-lg px-6 py-5 min-w-[320px]">
         {/* Content */}
-        <div className="relative z-10 flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           {/* Header */}
-          <div className="flex items-center gap-3 pb-4 border-b border-white/20">
-            <span className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-tr from-cyan-400/80 to-blue-500/80 text-white shadow-lg">
-              <MessageCircle className="h-5 w-5" />
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-tr from-cyan-400/30 to-blue-500/30 blur-xl" />
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 shadow-sm backdrop-blur-sm">
+              <MessageCircle className="h-4 w-4" />
             </span>
-            <span className="font-semibold text-lg text-white">Greeting</span>
+            <span className="font-medium text-white/90">Greeting</span>
           </div>
 
           <GreetingInput value={greeting} onChange={setGreeting} />
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 mt-1">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-white/70">
+              <Label className="text-sm font-normal text-white/50">
                 Possible outcomes ({outcomes.length}/5)
               </Label>
               {!showOutcomeInput && outcomes.length < 5 && !editingIndex && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 text-white/70 hover:text-white hover:bg-white/10 backdrop-blur-sm rounded-lg"
+                  className="h-7 w-7 p-0 text-white/40 hover:text-white/90 hover:bg-white/10 rounded-lg"
                   onClick={() => setShowOutcomeInput(true)}
                 >
-                  <Plus className="h-5 w-5" />
+                  <Plus className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -127,7 +109,7 @@ export function GreetingNode({
               />
             )}
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {outcomes.map((outcome, index) => (
                 <OutcomeListItem
                   key={index}
@@ -146,7 +128,7 @@ export function GreetingNode({
       <Handle
         type="target"
         position={Position.Left}
-        className="w-2 h-4 !bg-white/50 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-white/70"
+        className="w-2 h-4 !bg-white/30 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-white/50"
       />
 
       {outcomes.length === 0 && (
@@ -154,7 +136,7 @@ export function GreetingNode({
           type="source"
           position={Position.Right}
           id="default"
-          className="w-2 h-4 !bg-white/50 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-white/70"
+          className="w-2 h-4 !bg-white/30 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-white/50"
         />
       )}
     </div>
