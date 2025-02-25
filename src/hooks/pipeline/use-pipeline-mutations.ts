@@ -15,6 +15,7 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
     newColumns[index] = { ...newColumns[index], title: newTitle };
 
     try {
+      setIsUpdatingPipelineName(true);
       const columnsJson = newColumns.map(col => ({
         id: col.id,
         title: col.title,
@@ -53,6 +54,8 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
         description: "Failed to update pipeline stage",
         variant: "destructive"
       });
+    } finally {
+      setIsUpdatingPipelineName(false);
     }
   };
 
