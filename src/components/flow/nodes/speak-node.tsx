@@ -1,4 +1,3 @@
-
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,17 +52,17 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
   };
 
   return (
-    <div className="relative group bg-gradient-to-br from-purple-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-purple-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[320px]">
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent dark:from-purple-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
+    <div className="relative group">
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent dark:from-purple-500/[0.05] rounded-2xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
+      
       <Handle 
         type="target" 
-        position={Position.Left} 
-        className="w-2 h-4 !bg-purple-400 rounded-sm border-none transition-all duration-300 hover:!bg-purple-500" 
+        position={Position.Left}
       />
       
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 pb-3 border-b border-purple-100/50 dark:border-gray-700/50">
-          <span className="text-purple-500 dark:text-purple-400 bg-purple-100/50 dark:bg-purple-900/50 p-1.5 rounded-md">
+        <div className="node-header">
+          <span className="node-icon">
             <MessageCircle className="h-4 w-4" />
           </span>
           <span className="font-medium text-purple-700 dark:text-purple-300">Speak</span>
@@ -164,17 +163,15 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
         </div>
       </div>
 
-      {/* Add default handle if no outcomes */}
       {(!outcomes || outcomes.length === 0) && (
         <Handle
           type="source"
           position={Position.Right}
           id="default"
-          className="w-2 h-4 !bg-purple-400 rounded-sm border-none"
         />
       )}
       
-      <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-purple-500/[0.03] pointer-events-none" />
+      <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-purple-500/[0.03] pointer-events-none" />
     </div>
   );
 }

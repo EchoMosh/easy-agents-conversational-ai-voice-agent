@@ -1,4 +1,3 @@
-
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -55,26 +54,22 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
   };
 
   return (
-    <div className="relative group bg-gradient-to-br from-blue-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-blue-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[320px] transition-transform duration-300">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-transparent dark:from-blue-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
+    <div className="relative group">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-transparent dark:from-blue-500/[0.05] rounded-2xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
       
-      {/* Input handle */}
       <Handle 
         type="target" 
-        position={Position.Left} 
-        className="w-2 h-4 !bg-blue-400 rounded-sm border-none transition-all duration-300 hover:!bg-blue-500" 
+        position={Position.Left}
       />
       
-      {/* Output handle */}
       <Handle 
         type="source" 
         position={Position.Right}
-        className="w-2 h-4 !bg-blue-400 rounded-sm border-none transition-all duration-300 hover:!bg-blue-500" 
       />
       
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 pb-3 border-b border-blue-100/50 dark:border-gray-700/50">
-          <span className="text-blue-500 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-900/50 p-1.5 rounded-md">
+        <div className="node-header">
+          <span className="node-icon">
             <MessageCircle className="h-4 w-4" />
           </span>
           <span className="font-medium text-blue-700 dark:text-blue-300">Greeting</span>
@@ -126,7 +121,7 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
         </div>
       </div>
       
-      <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-blue-500/[0.03] pointer-events-none" />
+      <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-blue-500/[0.03] pointer-events-none" />
     </div>
   );
 }
