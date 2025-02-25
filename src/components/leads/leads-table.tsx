@@ -1,3 +1,4 @@
+
 import { Lead } from "@/pages/dashboard/leads";
 import {
   Table,
@@ -17,6 +18,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { LeadVariables } from "./lead-variables";
 import { EditLeadForm } from "./edit-lead-form";
 import { useState } from "react";
@@ -99,17 +107,17 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
                   </Sheet>
                 </TableCell>
                 <TableCell>
-                  <Sheet>
-                    <SheetTrigger asChild>
+                  <Dialog>
+                    <DialogTrigger asChild>
                       <Button variant="ghost" size="sm" onClick={() => setEditingLead(lead)}>
                         <Pencil className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
-                    </SheetTrigger>
-                    <SheetContent className="p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-sm border-none shadow-2xl sm:max-w-[600px]">
-                      <SheetHeader className="p-6 pb-0">
-                        <SheetTitle className="text-2xl">Edit Lead</SheetTitle>
-                      </SheetHeader>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-sm border-none shadow-2xl">
+                      <DialogHeader className="p-6 pb-0">
+                        <DialogTitle className="text-2xl py-[7px]">Edit Lead</DialogTitle>
+                      </DialogHeader>
                       <div className="px-6 pb-6 overflow-y-auto max-h-[80vh]">
                         {editingLead && (
                           <EditLeadForm
@@ -121,8 +129,8 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
                           />
                         )}
                       </div>
-                    </SheetContent>
-                  </Sheet>
+                    </DialogContent>
+                  </Dialog>
                 </TableCell>
               </TableRow>
             ))}
