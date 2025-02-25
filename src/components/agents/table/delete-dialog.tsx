@@ -48,7 +48,13 @@ export function DeleteDialog({
             </Button>
             <Button
               variant="destructive"
-              onClick={onConfirm}
+              onClick={async () => {
+                try {
+                  await onConfirm();
+                } finally {
+                  onOpenChange(false);
+                }
+              }}
               disabled={isDeleting}
               className="flex-1"
             >
