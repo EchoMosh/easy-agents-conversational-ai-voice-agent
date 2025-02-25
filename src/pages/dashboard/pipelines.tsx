@@ -120,7 +120,7 @@ export default function PipelinesPage() {
                 <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg transition-shadow duration-200">
                   <CardHeader className="space-y-2 pb-4">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${column.color} ring-2 ring-${column.color}/30 shadow-sm`} />
+                      <div className={`w-3 h-3 rounded-full ${column.color}`} />
                       <CardTitle className="text-xl font-semibold">
                         {column.title}
                       </CardTitle>

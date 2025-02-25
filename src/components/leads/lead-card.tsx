@@ -17,6 +17,7 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
   const style = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        transition: 'transform 0ms',
       }
     : undefined;
 
@@ -27,9 +28,9 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
       {...attributes}
       {...listeners}
       className={cn(
-        "cursor-grab active:cursor-grabbing border-border/50 bg-card shadow-sm hover:shadow-md transition-all",
-        "hover:scale-[1.02] hover:-translate-y-0.5 duration-200",
-        isDragging && "opacity-50 ring-2 ring-primary/20"
+        "cursor-grab active:cursor-grabbing border-border/50 bg-card shadow-sm transition-[shadow,opacity]",
+        "hover:shadow-md",
+        isDragging && "opacity-50 shadow-lg"
       )}
       onClick={onClick}
     >
