@@ -95,54 +95,55 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-base font-normal text-muted-foreground">First name</Label>
+              <Label htmlFor="firstName" className="text-sm font-medium text-muted-foreground">First name</Label>
               <Input 
                 id="firstName" 
                 name="firstName" 
                 required 
-                className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
+                className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
                 placeholder="John"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-base font-normal text-muted-foreground">Last name</Label>
+              <Label htmlFor="lastName" className="text-sm font-medium text-muted-foreground">Last name</Label>
               <Input 
                 id="lastName" 
                 name="lastName" 
                 required 
-                className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
+                className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
                 placeholder="Doe"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-base font-normal text-muted-foreground">Email</Label>
-            <Input 
-              id="email" 
-              name="email" 
-              type="email" 
-              className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
-              placeholder="john@example.com"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone" className="text-base font-normal text-muted-foreground">Phone</Label>
-            <PhoneInput 
-              id="phone"
-              name="phone"
-              value={phone}
-              onChange={(value) => setPhone(value)}
-              className="h-12 text-lg"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email</Label>
+              <Input 
+                id="email" 
+                name="email" 
+                type="email" 
+                className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+                placeholder="john@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone</Label>
+              <PhoneInput 
+                id="phone"
+                name="phone"
+                value={phone}
+                onChange={(value) => setPhone(value)}
+                className="[&>div]:!h-11 [&>div]:!text-base [&>div]:!border-0 [&>div]:!bg-muted/30 [&>div]:hover:!bg-muted/40 [&>div]:!transition-colors [&>div>div]:!border-0 [&>div>div]:!bg-muted/30 [&>div>div]:hover:!bg-muted/40"
+              />
+            </div>
           </div>
         </div>
 
         {/* Custom Variables Section */}
-        <div className="pt-6">
+        <div className="pt-4">
           <div className="flex items-center justify-between mb-4">
-            <Label className="text-xl font-medium">Custom Variables</Label>
+            <Label className="text-lg font-medium">Custom Variables</Label>
             <Dialog open={isAddingVariable} onOpenChange={setIsAddingVariable}>
               <DialogTrigger asChild>
                 <Button 
@@ -167,6 +168,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                       placeholder="e.g., Source"
                       value={newVariable.name}
                       onChange={(e) => setNewVariable({ ...newVariable, name: e.target.value })}
+                      className="border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
                     />
                   </div>
                   <div className="space-y-2">
@@ -176,6 +178,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                       placeholder="e.g., Website"
                       value={newVariable.value}
                       onChange={(e) => setNewVariable({ ...newVariable, value: e.target.value })}
+                      className="border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
                     />
                   </div>
                 </div>
@@ -184,6 +187,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                     type="button" 
                     onClick={addVariable}
                     disabled={!newVariable.name || !newVariable.value}
+                    className="rounded-full"
                   >
                     Add Variable
                   </Button>
@@ -192,14 +196,14 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
             </Dialog>
           </div>
 
-          <div className="min-h-[100px] bg-muted/40 rounded-lg p-4">
+          <div className="min-h-[100px] bg-muted/30 rounded-lg p-4">
             {variables.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {variables.map((variable, index) => (
                   <Badge
                     key={index}
                     variant="secondary"
-                    className="pl-2 pr-1 py-1 h-7 text-sm bg-background/80 hover:bg-background transition-colors group"
+                    className="pl-2 pr-1 py-1 h-7 text-sm bg-background/50 hover:bg-background/60 transition-colors"
                   >
                     <Tag className="w-3 h-3 mr-1 opacity-50" />
                     <span className="font-normal">{variable.name}:</span>
@@ -209,7 +213,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                       variant="ghost"
                       size="icon"
                       onClick={() => removeVariable(index)}
-                      className="h-5 w-5 ml-1 hover:bg-muted rounded-full"
+                      className="h-5 w-5 ml-1 hover:bg-muted/40 rounded-full"
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -228,7 +232,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       <Button 
         type="submit" 
         disabled={isLoading}
-        className="w-full h-12 text-lg rounded-full transition-all duration-200 hover:scale-[0.98]"
+        className="w-full h-11 text-base rounded-full transition-all duration-200 hover:scale-[0.98]"
       >
         {isLoading ? "Adding..." : `Save Lead${variables.length > 0 ? ` with ${variables.length} Variable${variables.length === 1 ? '' : 's'}` : ''}`}
       </Button>

@@ -61,52 +61,53 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="firstName" className="text-base font-normal text-muted-foreground">First name</Label>
+            <Label htmlFor="firstName" className="text-sm font-medium text-muted-foreground">First name</Label>
             <Input 
               id="firstName" 
               value={firstName}
               onChange={(e) => setName(`${e.target.value} ${lastName}`)}
               required 
-              className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
+              className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="lastName" className="text-base font-normal text-muted-foreground">Last name</Label>
+            <Label htmlFor="lastName" className="text-sm font-medium text-muted-foreground">Last name</Label>
             <Input 
               id="lastName" 
               value={lastName}
               onChange={(e) => setName(`${firstName} ${e.target.value}`)}
               required 
-              className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
+              className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone</Label>
+            <PhoneInput
+              id="phone"
+              value={phone}
+              onChange={(value) => setPhone(value)}
+              className="[&>div]:!h-11 [&>div]:!text-base [&>div]:!border-0 [&>div]:!bg-muted/30 [&>div]:hover:!bg-muted/40 [&>div]:!transition-colors [&>div>div]:!border-0 [&>div>div]:!bg-muted/30 [&>div>div]:hover:!bg-muted/40"
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-base font-normal text-muted-foreground">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-base font-normal text-muted-foreground">Phone</Label>
-          <PhoneInput
-            id="phone"
-            value={phone}
-            onChange={(value) => setPhone(value)}
-            className="h-12 text-lg"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status" className="text-base font-normal text-muted-foreground">Status</Label>
+          <Label htmlFor="status" className="text-sm font-medium text-muted-foreground">Status</Label>
           <Select value={status} onValueChange={(value: Lead['status']) => setStatus(value)}>
-            <SelectTrigger className="h-12 text-lg border-0 bg-muted/40 focus-visible:ring-1 transition-all duration-200">
+            <SelectTrigger className="h-11 text-base border-0 bg-muted/30 hover:bg-muted/40 focus-visible:ring-1 transition-colors">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -122,7 +123,7 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
 
       <Button 
         type="submit" 
-        className="w-full h-12 text-lg rounded-full transition-all duration-200 hover:scale-[0.98]" 
+        className="w-full h-11 text-base rounded-full transition-all duration-200 hover:scale-[0.98]" 
         disabled={isLoading}
       >
         {isLoading ? "Updating..." : "Update Lead"}
