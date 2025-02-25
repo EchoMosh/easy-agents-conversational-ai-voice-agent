@@ -17,6 +17,7 @@ const sampleAgent = {
   user_id: 'sample-user-id',
   interaction_type: ['chat'],
   language: 'en',
+  voice_id: null // Added this line to match the Agent type
 };
 
 const initialNodes: Node[] = [
