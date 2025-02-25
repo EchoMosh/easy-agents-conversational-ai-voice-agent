@@ -7,7 +7,7 @@ import { Lead } from "@/pages/dashboard/leads";
 export function usePipelineQueries(selectedPipelineId: string | undefined) {
   const queryClient = useQueryClient();
 
-  const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
+  const { data: pipelines = [], refetch: refetchPipelines, isLoading: isPipelinesLoading } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -18,9 +18,11 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
       if (error) throw error;
       return (data || []).map(convertJsonToPipeline);
     },
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache the data
   });
 
-  const { data: leads = [], refetch: refetchLeads } = useQuery({
+  const { data: leads = [], refetch: refetchLeads, isLoading: isLeadsLoading } = useQuery({
     queryKey: ["leads", selectedPipelineId],
     queryFn: async () => {
       if (!selectedPipelineId) return [];
@@ -35,12 +37,16 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
       return data as unknown as Lead[];
     },
     enabled: !!selectedPipelineId,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   const invalidateAndRefetch = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["pipelines"] }),
-      queryClient.invalidateQueries({ queryKey: ["leads", selectedPipelineId] })
+      queryClient.invalidateQueries({ queryKey: ["leads", selectedPipelineId] }),
+      refetchPipelines(),
+      refetchLeads()
     ]);
   };
 
@@ -49,6 +55,7 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
     leads,
     refetchPipelines,
     refetchLeads,
-    invalidateAndRefetch
+    invalidateAndRefetch,
+    isLoading: isPipelinesLoading || isLeadsLoading
   };
 }

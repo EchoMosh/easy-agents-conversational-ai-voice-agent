@@ -1,4 +1,3 @@
-
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { Plus, Trash2 } from "lucide-react";
@@ -16,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SortableStage } from "./components/sortable-stage";
 import { StageHeader } from "./components/stage-header";
 import { DeleteStageDialog } from "./components/delete-stage-dialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
@@ -27,6 +27,7 @@ interface PipelineStagesProps {
   onDeletePipeline: () => void;
   onEditPipelineName: (name: string) => void;
   onReorderColumns: (newOrder: PipelineColumn[]) => void;
+  isLoading?: boolean;
 }
 
 export function PipelineStages({
@@ -39,6 +40,7 @@ export function PipelineStages({
   onDeletePipeline,
   onEditPipelineName,
   onReorderColumns,
+  isLoading = false,
 }: PipelineStagesProps) {
   const { toast } = useToast();
   const [editingPipelineName, setEditingPipelineName] = useState(false);
@@ -201,6 +203,14 @@ export function PipelineStages({
       setStageToDelete(null);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-[300px] w-full flex items-center justify-center">
+        <LoadingSpinner className="w-8 h-8" />
+      </div>
+    );
+  }
 
   return (
     <>

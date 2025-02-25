@@ -15,7 +15,8 @@ export function usePipeline() {
     leads, 
     refetchPipelines, 
     refetchLeads,
-    invalidateAndRefetch
+    invalidateAndRefetch,
+    isLoading
   } = usePipelineQueries(selectedPipeline?.id);
 
   const {
@@ -32,13 +33,14 @@ export function usePipeline() {
     selectedPipeline,
     editedColumns,
     showNewPipelineDialog,
+    isLoading,
 
     // State setters
     setSelectedPipeline,
     setEditedColumns,
     setShowNewPipelineDialog,
 
-    // Queries - explicitly expose these
+    // Queries
     refetchPipelines,
     refetchLeads,
 

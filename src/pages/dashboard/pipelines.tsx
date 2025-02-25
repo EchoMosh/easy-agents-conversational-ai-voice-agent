@@ -36,6 +36,7 @@ export default function PipelinesPage() {
     createNewPipeline,
     refetchPipelines,
     refetchLeads,
+    isLoading,
   } = usePipeline();
 
   const {
@@ -80,6 +81,7 @@ export default function PipelinesPage() {
             onDeletePipeline={() => setShowDeleteDialog(true)}
             onEditPipelineName={handleEditPipelineName}
             onReorderColumns={handleReorderColumns}
+            isLoading={isLoading}
           />
         )}
 
