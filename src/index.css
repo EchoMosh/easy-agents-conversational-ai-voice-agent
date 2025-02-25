@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -112,4 +111,9 @@
 .react-flow__node-greetingNode,
 .react-flow__node-speakNode {
   @apply bg-background border-border text-foreground shadow-sm;
+}
+
+.writing-mode-vertical-rl {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
 }

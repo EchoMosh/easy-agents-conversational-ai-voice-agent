@@ -3,7 +3,7 @@ import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSenso
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { DroppableColumn } from "@/pages/dashboard/pipelines";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,37 +23,6 @@ const colorOptions = [
   { name: "Purple", value: "bg-purple-500" },
   { name: "Pink", value: "bg-pink-500" },
 ];
-
-interface ColorPickerProps {
-  color: string;
-  onColorChange: (color: string) => void;
-}
-
-function ColorPicker({ color, onColorChange }: ColorPickerProps) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <div className={`w-4 h-4 rounded-full ${color}`} />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-2">
-        <div className="grid grid-cols-4 gap-1">
-          {colorOptions.map((option) => (
-            <button
-              key={option.value}
-              className={`w-8 h-8 rounded-full ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
-                color === option.value ? "ring-2" : ""
-              }`}
-              onClick={() => onColorChange(option.value)}
-              title={option.name}
-            />
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
@@ -103,6 +72,7 @@ export function PipelineStages({
   const [pipelineName, setPipelineName] = useState(selectedPipeline.name);
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnTitle, setEditingColumnTitle] = useState("");
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -156,6 +126,16 @@ export function PipelineStages({
     newColumns.splice(newIndex, 0, removed);
 
     onReorderColumns(newColumns);
+  };
+
+  const toggleColumnCollapse = (columnId: string) => {
+    const newCollapsed = new Set(collapsedColumns);
+    if (newCollapsed.has(columnId)) {
+      newCollapsed.delete(columnId);
+    } else {
+      newCollapsed.add(columnId);
+    }
+    setCollapsedColumns(newCollapsed);
   };
 
   const handleColorChange = (columnId: string, newColor: string) => {
@@ -221,14 +201,17 @@ export function PipelineStages({
             {selectedPipeline.columns.map((column) => {
               const columnLeads = leads.filter((lead) => lead.status === column.title);
               const isEditing = editingColumnId === column.id;
+              const isCollapsed = collapsedColumns.has(column.id);
               
               return (
                 <SortableStage key={column.id} column={column}>
                   <DroppableColumn id={column.id}>
-                    <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg">
-                      <CardHeader className="space-y-2 pb-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3 flex-1">
+                    <Card className={`h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg transition-all ${
+                      isCollapsed ? "w-16" : ""
+                    }`}>
+                      <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
+                        <div className={`flex items-center ${isCollapsed ? "flex-col" : "justify-between"}`}>
+                          <div className={`flex items-center ${isCollapsed ? "flex-col" : "space-x-3"} flex-1`}>
                             {isEditing ? (
                               <Input
                                 value={editingColumnTitle}
@@ -239,12 +222,33 @@ export function PipelineStages({
                               />
                             ) : (
                               <>
-                                <div 
-                                  className={`w-3 h-3 rounded-full ${column.color} cursor-pointer`}
-                                  onClick={() => handleColorChange(column.id, column.color)}
-                                />
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <div 
+                                      className={`${column.color} cursor-pointer rounded transition-all ${
+                                        isCollapsed ? "w-8 h-8 mb-2" : "w-3 h-3"
+                                      }`}
+                                    />
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-48 p-2">
+                                    <div className="grid grid-cols-4 gap-1">
+                                      {colorOptions.map((option) => (
+                                        <button
+                                          key={option.value}
+                                          className={`w-8 h-8 rounded-full ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
+                                            column.color === option.value ? "ring-2" : ""
+                                          }`}
+                                          onClick={() => handleColorChange(column.id, option.value)}
+                                          title={option.name}
+                                        />
+                                      ))}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
                                 <CardTitle 
-                                  className="text-xl font-semibold cursor-pointer"
+                                  className={`text-xl font-semibold cursor-pointer ${
+                                    isCollapsed ? "writing-mode-vertical-rl rotate-180 mt-2" : ""
+                                  }`}
                                   onClick={() => {
                                     setEditingColumnId(column.id);
                                     setEditingColumnTitle(column.title);
@@ -254,32 +258,40 @@ export function PipelineStages({
                                 </CardTitle>
                               </>
                             )}
-                            <ColorPicker 
-                              color={column.color}
-                              onColorChange={(color) => handleColorChange(column.id, color)}
-                            />
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`h-8 w-8 ${isCollapsed ? "mt-2" : ""}`}
+                            onClick={() => toggleColumnCollapse(column.id)}
+                          >
+                            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                          </Button>
                         </div>
-                        <div className="text-sm text-muted-foreground/80 font-medium">
-                          {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3 pt-2">
-                        {columnLeads.map((lead) => (
-                          <LeadCard 
-                            key={lead.id} 
-                            lead={lead}
-                            onClick={() => onLeadClick(lead)} 
-                          />
-                        ))}
-                        {columnLeads.length === 0 && (
-                          <div className="min-h-[200px] flex items-center justify-center border-2 border-dashed border-muted rounded-lg">
-                            <p className="text-sm text-muted-foreground/70 text-center px-4">
-                              Drop leads here
-                            </p>
+                        {!isCollapsed && (
+                          <div className="text-sm text-muted-foreground/80 font-medium">
+                            {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
                           </div>
                         )}
-                      </CardContent>
+                      </CardHeader>
+                      {!isCollapsed && (
+                        <CardContent className="space-y-3 pt-2">
+                          {columnLeads.map((lead) => (
+                            <LeadCard 
+                              key={lead.id} 
+                              lead={lead}
+                              onClick={() => onLeadClick(lead)} 
+                            />
+                          ))}
+                          {columnLeads.length === 0 && (
+                            <div className="min-h-[200px] flex items-center justify-center border-2 border-dashed border-muted rounded-lg">
+                              <p className="text-sm text-muted-foreground/70 text-center px-4">
+                                Drop leads here
+                              </p>
+                            </div>
+                          )}
+                        </CardContent>
+                      )}
                     </Card>
                   </DroppableColumn>
                 </SortableStage>
