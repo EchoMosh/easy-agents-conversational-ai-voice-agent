@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { Separator } from "@/components/ui/separator";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
@@ -110,46 +111,64 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           />
         </div>
 
-        <div className="space-y-4">
+        <Separator className="my-6" />
+
+        <div className="space-y-4 bg-muted/50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
-            <Label>Custom Variables</Label>
-            <Button type="button" variant="outline" size="sm" onClick={addVariable}>
+            <Label className="text-lg font-semibold">Custom Variables</Label>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={addVariable}
+              className="bg-background"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Variable
             </Button>
           </div>
 
-          {variables.map((variable, index) => (
-            <div key={index} className="flex gap-2 items-start">
-              <div className="flex-1 space-y-2">
-                <Input
-                  placeholder="Variable name"
-                  value={variable.name}
-                  onChange={(e) => updateVariable(index, "name", e.target.value)}
-                  required
-                />
-                <Input
-                  placeholder="Value"
-                  value={variable.value}
-                  onChange={(e) => updateVariable(index, "value", e.target.value)}
-                  required
-                />
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeVariable(index)}
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
+          {variables.length > 0 ? (
+            <div className="space-y-4">
+              {variables.map((variable, index) => (
+                <div key={index} className="flex gap-2 items-start bg-background p-3 rounded-md">
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      placeholder="Variable name"
+                      value={variable.name}
+                      onChange={(e) => updateVariable(index, "name", e.target.value)}
+                      required
+                    />
+                    <Input
+                      placeholder="Value"
+                      value={variable.value}
+                      onChange={(e) => updateVariable(index, "value", e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeVariable(index)}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No variables added yet. Click "Add Variable" to start adding custom fields to this lead.
+            </p>
+          )}
         </div>
       </div>
 
+      <Separator />
+
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Adding..." : "Add Lead"}
+        {isLoading ? "Adding..." : `Save Lead${variables.length > 0 ? ` with ${variables.length} Variable${variables.length === 1 ? '' : 's'}` : ''}`}
       </Button>
     </form>
   );
