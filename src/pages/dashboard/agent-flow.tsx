@@ -62,23 +62,25 @@ export default function AgentFlowPage() {
 
   return (
     <DragProvider>
-      <div className="h-screen flex flex-col bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-slate-900 to-black">
-        <Header 
-          agent={sampleAgent}
-          onBack={() => navigate('/dashboard/agents')}
-          onUpdateSettings={async () => {
-            console.log('Settings update requested');
-          }}
-        />
-        <div className="flex-1 relative">
-          <ReactFlowProvider>
-            <Flow
-              initialNodes={nodes}
-              initialEdges={edges}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={handleEdgesChange}
-            />
-          </ReactFlowProvider>
+      <div className="fixed inset-0 min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-slate-900 to-black">
+        <div className="h-screen flex flex-col">
+          <Header 
+            agent={sampleAgent}
+            onBack={() => navigate('/dashboard/agents')}
+            onUpdateSettings={async () => {
+              console.log('Settings update requested');
+            }}
+          />
+          <div className="flex-1 relative">
+            <ReactFlowProvider>
+              <Flow
+                initialNodes={nodes}
+                initialEdges={edges}
+                onNodesChange={handleNodesChange}
+                onEdgesChange={handleEdgesChange}
+              />
+            </ReactFlowProvider>
+          </div>
         </div>
       </div>
     </DragProvider>
