@@ -1,3 +1,4 @@
+
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
@@ -228,7 +229,7 @@ export function PipelineStages({
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="grid auto-cols-fr grid-flow-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
           <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
             {selectedPipeline.columns.map((column) => {
               const columnLeads = leads.filter((lead) => lead.status === column.title);
@@ -238,9 +239,9 @@ export function PipelineStages({
               return (
                 <SortableStage key={column.id} column={column}>
                   <DroppableColumn id={column.id}>
-                    <Card className={`h-full ${
-                      isCollapsed ? "w-16 shrink-0 flex-none" : "w-full"
-                    } transition-all duration-300`}>
+                    <Card className={`h-full transition-all duration-300 ${
+                      isCollapsed ? "w-16 shrink-0 flex-none" : ""
+                    }`}>
                       <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
                         <div className={`flex items-center ${isCollapsed ? "flex-col" : "justify-between"}`}>
                           <div className={`flex items-center ${isCollapsed ? "flex-col" : "space-x-3"} flex-1`}>
