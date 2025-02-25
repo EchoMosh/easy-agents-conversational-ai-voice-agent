@@ -38,10 +38,9 @@ export type NodeData = {
     | 'ticket_created'     // Activix
     | 'payment_received';  // Activix
   contacts?: ContactData[];
-  note?: string;
 };
 
-export type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode' | 'noteNode';
+export type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode';
 
 export type FlowNode = {
   id: string;

@@ -32,10 +32,21 @@ export default {
 					"0%, 100%": { transform: "translateX(-25%)" },
 					"50%": { transform: "translateX(25%)" },
 				},
+				breathing: {
+					"0%, 100%": { 
+						backgroundPosition: "0% 50%",
+						filter: "saturate(100%) brightness(100%)"
+					},
+					"50%": { 
+						backgroundPosition: "100% 50%",
+						filter: "saturate(120%) brightness(105%)"
+					}
+				}
 			},
 			animation: {
 				"accordion-down": "accordion-down 0.2s ease-out",
 				"accordion-up": "accordion-up 0.2s ease-out",
+				"breathing": "breathing 8s ease-in-out infinite",
 			},
 			colors: {
 				border: "hsl(var(--border))",
