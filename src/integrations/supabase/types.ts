@@ -93,6 +93,7 @@ export type Database = {
           id: string
           name: string
           phone: string | null
+          pipeline_id: string
           status: Database["public"]["Enums"]["lead_status"] | null
           updated_at: string
           user_id: string
@@ -103,6 +104,7 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
+          pipeline_id: string
           status?: Database["public"]["Enums"]["lead_status"] | null
           updated_at?: string
           user_id: string
@@ -113,11 +115,20 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
+          pipeline_id?: string
           status?: Database["public"]["Enums"]["lead_status"] | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pipelines: {
         Row: {

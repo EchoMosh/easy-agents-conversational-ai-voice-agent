@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Plus, Trash, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
-import { Pipeline } from "@/types/pipeline";
+import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
