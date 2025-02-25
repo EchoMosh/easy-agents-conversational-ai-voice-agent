@@ -212,6 +212,34 @@ export default function PipelinesPage() {
     }
   };
 
+  const handleDeletePipeline = async () => {
+    if (!selectedPipeline) return;
+
+    try {
+      const { error } = await supabase
+        .from("pipelines")
+        .delete()
+        .eq("id", selectedPipeline.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Pipeline deleted",
+        description: "Pipeline has been deleted successfully",
+      });
+
+      setSelectedPipeline(null);
+      refetchPipelines();
+    } catch (error) {
+      console.error("Error deleting pipeline:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete pipeline",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
       <PipelineHeader 
@@ -238,6 +266,7 @@ export default function PipelinesPage() {
           }}
           onLeadClick={setSelectedLead}
           onAddStage={handleAddStage}
+          onDeletePipeline={handleDeletePipeline}
         />
       )}
 
