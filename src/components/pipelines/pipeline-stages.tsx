@@ -239,6 +239,13 @@ export function PipelineStages({
         description: "Failed to delete stage",
         variant: "destructive"
       });
+      setStageToDelete(null);
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      setStageToDelete(null);
     }
   };
 
@@ -406,7 +413,7 @@ export function PipelineStages({
                     <ContextMenuContent>
                       <ContextMenuItem 
                         className="text-destructive"
-                        onClick={() => setStageToDelete(column)}
+                        onSelect={() => setStageToDelete(column)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Stage
@@ -429,8 +436,11 @@ export function PipelineStages({
         </div>
       </DndContext>
 
-      <AlertDialog open={!!stageToDelete} onOpenChange={() => setStageToDelete(null)}>
-        <AlertDialogContent>
+      <AlertDialog 
+        open={!!stageToDelete} 
+        onOpenChange={handleDialogClose}
+      >
+        <AlertDialogContent onPointerDownOutside={(e) => e.preventDefault()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -439,7 +449,7 @@ export function PipelineStages({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setStageToDelete(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => stageToDelete && handleDeleteStage(stageToDelete)}
