@@ -440,7 +440,7 @@ export function PipelineStages({
         open={!!stageToDelete} 
         onOpenChange={handleDialogClose}
       >
-        <AlertDialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
