@@ -12,6 +12,8 @@ import { usePipeline } from "@/hooks/use-pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "@/hooks/use-pipeline";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
@@ -21,6 +23,7 @@ export function DroppableColumn({ id, children }: { id: string; children: React.
 export default function PipelinesPage() {
   const { toast } = useToast();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const {
     pipelines,
@@ -95,6 +98,11 @@ export default function PipelinesPage() {
     }
   };
 
+  const onDeleteConfirm = async () => {
+    await handleDeletePipeline();
+    setShowDeleteDialog(false);
+  };
+
   return (
     <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
       <PipelineHeader 
@@ -112,7 +120,7 @@ export default function PipelinesPage() {
           onEditColumnTitle={handleEditColumnTitle}
           onLeadClick={setSelectedLead}
           onAddStage={handleAddStage}
-          onDeletePipeline={handleDeletePipeline}
+          onDeletePipeline={() => setShowDeleteDialog(true)}
           onEditPipelineName={handleEditPipelineName}
           onReorderColumns={handleReorderColumns}
         />
@@ -129,6 +137,25 @@ export default function PipelinesPage() {
         onClose={() => setSelectedLead(null)}
         columns={selectedPipeline?.columns || defaultColumns}
       />
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Pipeline</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this pipeline? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-4 mt-4">
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={onDeleteConfirm}>
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
