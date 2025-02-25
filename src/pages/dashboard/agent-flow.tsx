@@ -1,60 +1,25 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ReactFlowProvider, useNodesState, useEdgesState, addEdge, NodeChange, EdgeChange } from '@xyflow/react';
+import { ReactFlowProvider } from '@xyflow/react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Agent, FlowNode, FlowEdge, NodeType, FlowData } from '@/types/agent';
-import { Json } from '@/integrations/supabase/types';
+import { Agent } from '@/types/agent';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { Node, Edge } from '@xyflow/react';
 import { Circle } from 'lucide-react';
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string; }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  
-  const {
-    data: agent,
-    isLoading,
-    error
-  } = useQuery({
-    queryKey: ['agent', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('agents')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch agent"
-        });
-        throw error;
-      }
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
 
-      // Type check and initialize nodes and edges when agent data is loaded
-      const flowData = data.flow as FlowData | null;
-      if (flowData && Array.isArray(flowData.nodes) && Array.isArray(flowData.edges)) {
-        setNodes(flowData.nodes);
-        setEdges(flowData.edges);
-      }
-      
-      return data as Agent;
-    }
-  });
-
+  // 1. WebSocket Connection
   useEffect(() => {
     const channel = supabase.channel('any')
       .on('presence', { event: 'sync' }, () => {
@@ -80,54 +45,44 @@ export default function AgentFlowPage() {
     };
   }, []);
 
-  const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
-    const { error } = await supabase
-      .from('agents')
-      .update({
-        voice_id: settings.voiceId,
-        language: settings.language,
-      })
-      .eq('id', id);
+  // Load initial data
+  const { data: agent, isLoading, error } = useQuery({
+    queryKey: ['agent', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch agent"
+        });
+        throw error;
+      }
 
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update agent settings"
-      });
-      return;
+      if (data.flow?.nodes && data.flow?.edges) {
+        setNodes(data.flow.nodes);
+        setEdges(data.flow.edges);
+      }
+      
+      return data as Agent;
     }
+  });
 
-    toast({
-      title: "Success",
-      description: "Agent settings updated successfully"
-    });
-  };
-
-  const saveFlowChanges = useCallback(async () => {
-    if (!agent) return;
-
-    const flowData = {
-      nodes: nodes.map(node => ({
-        id: node.id,
-        type: node.type as NodeType,
-        position: node.position,
-        data: node.data as Record<string, unknown>
-      })) as FlowNode[],
-      edges: edges.map(edge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        sourceHandle: edge.sourceHandle,
-        targetHandle: edge.targetHandle
-      })) as FlowEdge[]
-    };
-
+  // 2. Update nodes in Supabase
+  const handleUpdateFlow = useCallback(async (newNodes, newEdges) => {
     const { error } = await supabase
       .from('agents')
       .update({
-        flow: flowData
-      } as { flow: Json })
+        flow: {
+          nodes: newNodes,
+          edges: newEdges
+        }
+      })
       .eq('id', id);
 
     if (error) {
@@ -137,48 +92,17 @@ export default function AgentFlowPage() {
         description: "Failed to save flow changes"
       });
     }
-  }, [agent, id, nodes, edges, toast]);
+  }, [id, toast]);
 
-  // Debounced save function
-  const debouncedSave = useCallback(() => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = setTimeout(() => {
-      saveFlowChanges();
-    }, 1000); // Save after 1 second of no changes
-  }, [saveFlowChanges]);
+  const handleNodesChange = useCallback((newNodes) => {
+    setNodes(newNodes);
+    handleUpdateFlow(newNodes, edges);
+  }, [edges, handleUpdateFlow]);
 
-  const handleNodesChange = useCallback((changes: NodeChange[]) => {
-    onNodesChange(changes);
-    debouncedSave();
-  }, [onNodesChange, debouncedSave]);
-
-  const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
-    onEdgesChange(changes);
-    debouncedSave();
-  }, [onEdgesChange, debouncedSave]);
-
-  useEffect(() => {
-    // Listen for node updates from other components
-    const handleNodeUpdate = (event: CustomEvent) => {
-      const { id: nodeId, data } = event.detail;
-      setNodes(nds => 
-        nds.map(node => 
-          node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
-        )
-      );
-      debouncedSave();
-    };
-
-    window.addEventListener('nodeupdate', handleNodeUpdate as EventListener);
-    return () => {
-      window.removeEventListener('nodeupdate', handleNodeUpdate as EventListener);
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [setNodes, debouncedSave]);
+  const handleEdgesChange = useCallback((newEdges) => {
+    setEdges(newEdges);
+    handleUpdateFlow(nodes, newEdges);
+  }, [nodes, handleUpdateFlow]);
 
   if (isLoading) return <div className="flex items-center justify-center h-screen"><p className="text-lg">Loading agent...</p></div>;
   if (error || !agent) return <div className="flex items-center justify-center h-screen"><p className="text-lg text-destructive">Failed to load agent</p></div>;
@@ -189,7 +113,6 @@ export default function AgentFlowPage() {
         <Header 
           agent={agent}
           onBack={() => navigate('/dashboard/agents')}
-          onUpdateSettings={handleUpdateSettings}
         />
         <div className="absolute top-20 right-4 z-50 flex items-center gap-2">
           <div className={`relative ${isConnected ? 'animate-pulse' : ''}`}>
