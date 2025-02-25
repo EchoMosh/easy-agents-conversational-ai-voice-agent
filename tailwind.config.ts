@@ -34,19 +34,19 @@ export default {
 				},
 				breathing: {
 					"0%, 100%": { 
-						backgroundPosition: "0% 50%",
+						backgroundPosition: "50% 50%",
 						filter: "saturate(100%) brightness(100%)"
 					},
 					"50%": { 
-						backgroundPosition: "100% 50%",
-						filter: "saturate(120%) brightness(105%)"
+						backgroundPosition: "51% 50%",
+						filter: "saturate(102%) brightness(101%)"
 					}
 				}
 			},
 			animation: {
 				"accordion-down": "accordion-down 0.2s ease-out",
 				"accordion-up": "accordion-up 0.2s ease-out",
-				"breathing": "breathing 8s ease-in-out infinite",
+				"breathing": "breathing 4s ease-in-out infinite",
 			},
 			colors: {
 				border: "hsl(var(--border))",
