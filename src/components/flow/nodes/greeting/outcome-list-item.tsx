@@ -34,11 +34,11 @@ export function OutcomeListItem({ outcome, index, onEdit, onRemove }: OutcomeLis
           <X className="h-3 w-3" />
         </Button>
       </div>
-      <Handle
-        type="source"
-        position={Position.Right}
+      <Handle 
+        type="source" 
+        position={Position.Right} 
         id={`outcome-${index}`}
-        className="w-2 h-4 !bg-blue-400 rounded-sm border-none !right-0 translate-x-[50%] transition-all duration-300 hover:!bg-blue-500"
+        className="w-2 h-4 !bg-blue-400 rounded-sm border-none !right-0 translate-x-[250%] -translate-y-[2px] transition-all duration-300 hover:!bg-blue-500"
       />
     </div>
   );
