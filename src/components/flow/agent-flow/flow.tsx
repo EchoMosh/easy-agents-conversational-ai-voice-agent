@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
@@ -76,19 +77,28 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
     if (!sourceNode || !targetNode) return false;
 
-    if (!connection.sourceHandle) {
-      return true;
+    // Always allow connections from trigger nodes
+    if (sourceNode.type === 'triggerNode') {
+      return targetNode.type === 'greetingNode' || targetNode.type === 'speakNode';
     }
 
-    if (sourceNode.type === 'greetingNode' && targetNode.type === 'speakNode') {
-      return connection.sourceHandle?.startsWith('outcome-');
+    // Allow connections from greeting nodes
+    if (sourceNode.type === 'greetingNode') {
+      // If connecting from a specific outcome handle
+      if (connection.sourceHandle?.startsWith('outcome-')) {
+        return targetNode.type === 'speakNode' || targetNode.type === 'endNode';
+      }
+      // Allow default connections
+      return targetNode.type === 'speakNode' || targetNode.type === 'endNode';
     }
 
-    if (sourceNode.type === 'speakNode' && targetNode.type === 'speakNode') return true;
-    if (sourceNode.type === 'greetingNode' && targetNode.type === 'endNode') return true;
-    if (sourceNode.type === 'speakNode' && targetNode.type === 'endNode') return true;
-    if (sourceNode.type === 'triggerNode' && targetNode.type === 'greetingNode') return true;
-    if (sourceNode.type === 'triggerNode' && targetNode.type === 'speakNode') return true;
+    // Allow connections from speak nodes
+    if (sourceNode.type === 'speakNode') {
+      if (connection.sourceHandle?.startsWith('outcome-')) {
+        return targetNode.type === 'speakNode' || targetNode.type === 'endNode';
+      }
+      return targetNode.type === 'speakNode' || targetNode.type === 'endNode';
+    }
 
     return false;
   };
