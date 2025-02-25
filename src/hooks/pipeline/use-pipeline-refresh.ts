@@ -1,10 +1,16 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
+import { Pipeline } from "@/types/pipeline";
+import { Lead } from "@/pages/dashboard/leads";
+
+type RefetchPipelines = (options?: RefetchOptions | undefined) => Promise<QueryObserverResult<Pipeline[], Error>>;
+type RefetchLeads = (options?: RefetchOptions | undefined) => Promise<QueryObserverResult<Lead[], Error>>;
 
 export function usePipelineRefresh(
-  refetchPipelines: () => Promise<void>,
-  refetchLeads: () => Promise<void>
+  refetchPipelines: RefetchPipelines,
+  refetchLeads: RefetchLeads
 ) {
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
