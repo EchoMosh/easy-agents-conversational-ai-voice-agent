@@ -26,6 +26,12 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
     const phone = formData.get("phone") as string;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user found");
+      }
+
       // Insert the lead
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
@@ -34,6 +40,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
             name,
             email: email || null,
             phone: phone || null,
+            user_id: user.id
           },
         ])
         .select()
