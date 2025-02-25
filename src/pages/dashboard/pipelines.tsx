@@ -159,7 +159,7 @@ export default function PipelinesPage() {
     setEditedColumns(newColumns);
 
     // Update the status of all leads in this stage
-    const leadsInStage = leads.filter(lead => lead.status === columnId);
+    const leadsInStage = leads.filter(lead => lead.status === oldTitle);
     if (leadsInStage.length > 0) {
       try {
         const { error } = await supabase
