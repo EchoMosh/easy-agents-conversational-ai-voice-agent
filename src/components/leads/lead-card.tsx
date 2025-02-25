@@ -3,6 +3,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme/theme-provider";
 
 interface LeadCardProps {
   lead: Lead;
@@ -10,6 +11,7 @@ interface LeadCardProps {
 }
 
 export function LeadCard({ lead, onClick }: LeadCardProps) {
+  const { theme } = useTheme();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
   });
@@ -36,7 +38,12 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
       onClick={onClick}
     >
       <CardContent className="p-4 space-y-2">
-        <div className="font-medium">{lead.name}</div>
+        <div className={cn(
+          "font-medium",
+          theme === "light" ? "text-black" : "text-white"
+        )}>
+          {lead.name}
+        </div>
         {lead.email && (
           <div className="text-sm text-muted-foreground/80">{lead.email}</div>
         )}
