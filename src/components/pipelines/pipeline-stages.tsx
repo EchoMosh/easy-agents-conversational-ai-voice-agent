@@ -2,7 +2,7 @@ import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSenso
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Plus, Settings, Trash2, Palette } from "lucide-react";
+import { GripVertical, Plus, Settings, Trash2 } from "lucide-react";
 import { DroppableColumn } from "@/pages/dashboard/pipelines";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -70,14 +70,17 @@ interface PipelineStagesProps {
   onReorderColumns: (newOrder: PipelineColumn[]) => void;
 }
 
-function SortableStage({ column, children }: { column: PipelineColumn; children: React.ReactNode }) {
+function SortableStage({ column, children, disabled }: { column: PipelineColumn; children: React.ReactNode; disabled: boolean }) {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: column.id });
+  } = useSortable({ 
+    id: column.id,
+    disabled
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -86,9 +89,13 @@ function SortableStage({ column, children }: { column: PipelineColumn; children:
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-      <div {...listeners}>
-        {children}
-      </div>
+      {!disabled ? (
+        <div {...listeners}>
+          {children}
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 }
@@ -264,7 +271,7 @@ export function PipelineStages({
               const columnLeads = leads.filter((lead) => lead.status === column.id);
               
               return (
-                <SortableStage key={column.id} column={column}>
+                <SortableStage key={column.id} column={column} disabled={!editingColumns}>
                   <DroppableColumn id={column.id}>
                     <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 shadow-md hover:shadow-lg">
                       <CardHeader className="space-y-2 pb-4">
