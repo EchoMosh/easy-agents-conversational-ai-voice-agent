@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus, Trash, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -58,6 +57,17 @@ export function LeadVariables({
   const saveEditing = async (variableId: string) => {
     try {
       const editedVariable = editingVariables[variableId];
+      
+      const isDuplicate = variables.some(v => 
+        v.id !== variableId && 
+        v.name.toLowerCase() === editedVariable.name.toLowerCase()
+      );
+
+      if (isDuplicate) {
+        toast.error("A variable with this name already exists");
+        return;
+      }
+
       const { error } = await supabase
         .from("lead_variables")
         .update({
@@ -82,6 +92,23 @@ export function LeadVariables({
     setIsLoading(true);
 
     try {
+      const duplicateInNew = newVariables.some((v1, i1) =>
+        newVariables.some((v2, i2) => 
+          i1 !== i2 && v1.name.toLowerCase() === v2.name.toLowerCase()
+        )
+      );
+
+      const duplicateWithExisting = newVariables.some(newVar =>
+        variables.some(existingVar => 
+          existingVar.name.toLowerCase() === newVar.name.toLowerCase()
+        )
+      );
+
+      if (duplicateInNew || duplicateWithExisting) {
+        toast.error("Duplicate variable names are not allowed");
+        return;
+      }
+
       const { error } = await supabase.from("lead_variables").insert(
         newVariables.map((v) => ({
           lead_id: leadId,

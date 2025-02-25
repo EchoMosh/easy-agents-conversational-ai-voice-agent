@@ -78,6 +78,16 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
 
   const addVariable = () => {
     if (newVariable.name && newVariable.value) {
+      // Check if variable name already exists
+      const isDuplicate = variables.some(
+        v => v.name.toLowerCase() === newVariable.name.toLowerCase()
+      );
+
+      if (isDuplicate) {
+        toast.error("A variable with this name already exists");
+        return;
+      }
+
       setVariables([...variables, { ...newVariable }]);
       setNewVariable({ name: "", value: "" });
       setIsAddingVariable(false);
