@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Lead } from "@/pages/dashboard/leads";
 import {
   Table,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tag, Pencil } from "lucide-react";
+import { Tag, Pencil, Square, CheckSquare } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +21,9 @@ import {
 } from "@/components/ui/dialog";
 import { LeadVariables } from "./lead-variables";
 import { EditLeadForm } from "./edit-lead-form";
-import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { DeleteDialog } from "@/components/agents/table/delete-dialog";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -38,6 +41,43 @@ const statusColors = {
 
 export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps) {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedLeads(prev =>
+      prev.includes(id) ? prev.filter(leadId => leadId !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    setSelectedLeads(prev => 
+      prev.length === leads.length ? [] : leads.map(lead => lead.id)
+    );
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .delete()
+        .in('id', selectedLeads);
+
+      if (error) throw error;
+
+      toast.success(`Successfully deleted ${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''}`);
+      setSelectedLeads([]);
+      onLeadUpdated();
+    } catch (error) {
+      console.error('Error deleting leads:', error);
+      toast.error('Failed to delete leads');
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
 
   if (isLoading) {
     return <div className="text-center py-4">Loading leads...</div>;
@@ -53,10 +93,40 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
 
   return (
     <>
+      {selectedLeads.length > 0 && (
+        <div className="mb-4 flex items-center justify-between bg-muted p-4 rounded-lg">
+          <span className="text-sm font-medium">
+            {selectedLeads.length} lead{selectedLeads.length > 1 ? 's' : ''} selected
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setIsDeleteDialogOpen(true)}
+            disabled={isDeleting}
+          >
+            Delete Selected
+          </Button>
+        </div>
+      )}
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleSelectAll}
+                  className="h-8 w-8"
+                  disabled={isDeleting}
+                >
+                  {selectedLeads.length === leads.length ? (
+                    <CheckSquare className="h-4 w-4" />
+                  ) : (
+                    <Square className="h-4 w-4" />
+                  )}
+                </Button>
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
@@ -68,6 +138,21 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
           <TableBody>
             {leads.map((lead) => (
               <TableRow key={lead.id}>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleToggleSelect(lead.id)}
+                    className="h-8 w-8"
+                    disabled={isDeleting}
+                  >
+                    {selectedLeads.includes(lead.id) ? (
+                      <CheckSquare className="h-4 w-4" />
+                    ) : (
+                      <Square className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TableCell>
                 <TableCell>{lead.name}</TableCell>
                 <TableCell>{lead.email || "-"}</TableCell>
                 <TableCell>{lead.phone || "-"}</TableCell>
@@ -132,6 +217,15 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
           </TableBody>
         </Table>
       </div>
+
+      <DeleteDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+        title={`Delete ${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''}?`}
+        description="This action cannot be undone. This will permanently delete the selected leads and remove their data from our servers."
+      />
     </>
   );
 }
