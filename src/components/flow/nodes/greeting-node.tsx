@@ -6,72 +6,55 @@ import { useState } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { OutcomeInput } from './greeting/outcome-input';
 import { OutcomeListItem } from './greeting/outcome-list-item';
-
 type GreetingNodeData = {
   greeting: string;
   outcomes?: string[];
 };
-
-export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string }) {
+export function GreetingNode({
+  data,
+  id
+}: {
+  data: GreetingNodeData;
+  id: string;
+}) {
   const [showOutcomeInput, setShowOutcomeInput] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [greeting, setGreeting] = useState(data.greeting);
   const [outcomes, setOutcomes] = useState(data.outcomes || []);
-
   const addOutcome = () => {
     if (outcomes.length >= 5) return;
     if (!newOutcome.trim()) return;
-    
     setOutcomes([...outcomes, newOutcome]);
     setNewOutcome('');
     setShowOutcomeInput(false);
   };
-
   const removeOutcome = (index: number) => {
     setOutcomes(outcomes.filter((_, i) => i !== index));
   };
-
   const startEditing = (index: number) => {
     setEditingIndex(index);
     setNewOutcome(outcomes[index]);
   };
-
   const saveEdit = () => {
     if (!newOutcome.trim() || editingIndex === null) return;
-    
     const updatedOutcomes = [...outcomes];
     updatedOutcomes[editingIndex] = newOutcome;
     setOutcomes(updatedOutcomes);
     setEditingIndex(null);
     setNewOutcome('');
   };
-
   const cancelEdit = () => {
     setShowOutcomeInput(false);
     setEditingIndex(null);
     setNewOutcome('');
   };
-
-  return (
-    <div className="relative group bg-gradient-to-br from-blue-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-blue-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[320px] transition-all duration-300 hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] dark:hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.2)] hover:translate-y-[-2px] hover:z-10">
+  return <div className="relative group bg-gradient-to-br from-blue-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-blue-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[320px] transition-all duration-300 hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] dark:hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.2)] hover:translate-y-[-2px] hover:z-10">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-transparent dark:from-blue-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
       
-      <Handle 
-        type="target" 
-        position={Position.Left} 
-        id="target"
-        className="w-2 h-4 !bg-blue-400 rounded-sm border-none !left-[-10px] transition-all duration-300 hover:!bg-blue-500" 
-      />
+      <Handle type="target" position={Position.Left} id="target" className="w-2 h-4 !bg-blue-400 rounded-sm border-none !left-[0px] transition-all duration-300 hover:!bg-blue-500" />
 
-      {outcomes.length === 0 && (
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="default"
-          className="w-2 h-4 !bg-blue-400 rounded-sm border-none !right-[-10px] transition-all duration-300 hover:!bg-blue-500"
-        />
-      )}
+      {outcomes.length === 0 && <Handle type="source" position={Position.Right} id="default" className="w-2 h-4 !bg-blue-400 rounded-sm border-none !right-[-10px] transition-all duration-300 hover:!bg-blue-500" />}
       
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 pb-3 border-b border-blue-100/50 dark:border-gray-700/50">
@@ -81,53 +64,26 @@ export function GreetingNode({ data, id }: { data: GreetingNodeData; id: string 
           <span className="font-medium text-blue-700 dark:text-blue-300">Greeting</span>
         </div>
         
-        <GreetingInput 
-          value={greeting}
-          onChange={setGreeting}
-        />
+        <GreetingInput value={greeting} onChange={setGreeting} />
 
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
               Possible outcomes ({outcomes.length}/5)
             </Label>
-            {!showOutcomeInput && outcomes.length < 5 && !editingIndex && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-md"
-                onClick={() => setShowOutcomeInput(true)}
-              >
+            {!showOutcomeInput && outcomes.length < 5 && !editingIndex && <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-md" onClick={() => setShowOutcomeInput(true)}>
                 <Plus className="h-4 w-4" />
-              </Button>
-            )}
+              </Button>}
           </div>
 
-          {(showOutcomeInput || editingIndex !== null) && (
-            <OutcomeInput
-              value={newOutcome}
-              onChange={setNewOutcome}
-              onSave={() => editingIndex !== null ? saveEdit() : addOutcome()}
-              onCancel={cancelEdit}
-              isEditing={editingIndex !== null}
-            />
-          )}
+          {(showOutcomeInput || editingIndex !== null) && <OutcomeInput value={newOutcome} onChange={setNewOutcome} onSave={() => editingIndex !== null ? saveEdit() : addOutcome()} onCancel={cancelEdit} isEditing={editingIndex !== null} />}
 
           <div className="space-y-2.5">
-            {outcomes.map((outcome, index) => (
-              <OutcomeListItem
-                key={index}
-                outcome={outcome}
-                index={index}
-                onEdit={startEditing}
-                onRemove={removeOutcome}
-              />
-            ))}
+            {outcomes.map((outcome, index) => <OutcomeListItem key={index} outcome={outcome} index={index} onEdit={startEditing} onRemove={removeOutcome} />)}
           </div>
         </div>
       </div>
       
       <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-blue-500/[0.03] pointer-events-none" />
-    </div>
-  );
+    </div>;
 }
