@@ -12,17 +12,17 @@ interface OutcomeInputProps {
 
 export function OutcomeInput({ value, onChange, onSave, onCancel, isEditing }: OutcomeInputProps) {
   return (
-    <div className="flex gap-3 bg-blue-50/30 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100/50 dark:border-blue-800/50">
+    <div className="flex gap-3 bg-white/5 backdrop-blur-xl p-4 rounded-xl border border-white/10">
       <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Enter possible response..."
-        className="nodrag text-sm resize-none min-h-[80px] bg-white/80 dark:bg-gray-900/80 border-blue-100/50 dark:border-blue-800/50"
+        className="nodrag text-sm resize-none min-h-[80px] bg-white/10 border-white/20"
       />
       <div className="flex flex-col gap-2">
         <Button 
           size="sm" 
-          className="px-4 bg-blue-500 hover:bg-blue-600 text-white shadow-md"
+          className="px-4 bg-white/20 hover:bg-white/30 text-white backdrop-blur-xl shadow-lg"
           onClick={onSave}
         >
           {isEditing ? 'Save' : 'Add'}
@@ -30,7 +30,7 @@ export function OutcomeInput({ value, onChange, onSave, onCancel, isEditing }: O
         <Button 
           size="sm" 
           variant="ghost" 
-          className="px-4 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/50"
+          className="px-4 text-white/70 hover:text-white hover:bg-white/10"
           onClick={onCancel}
         >
           Cancel

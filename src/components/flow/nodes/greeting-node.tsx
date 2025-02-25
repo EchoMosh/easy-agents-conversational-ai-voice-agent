@@ -1,15 +1,18 @@
+
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageCircle } from 'lucide-react';
+import { Plus, MessagesSquare } from 'lucide-react';
 import { useState } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { OutcomeInput } from './greeting/outcome-input';
 import { OutcomeListItem } from './greeting/outcome-list-item';
+
 type GreetingNodeData = {
   greeting: string;
   outcomes?: string[];
 };
+
 export function GreetingNode({
   data,
   id
@@ -22,6 +25,7 @@ export function GreetingNode({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [greeting, setGreeting] = useState(data.greeting);
   const [outcomes, setOutcomes] = useState(data.outcomes || []);
+
   const addOutcome = () => {
     if (outcomes.length >= 5) return;
     if (!newOutcome.trim()) return;
@@ -29,13 +33,16 @@ export function GreetingNode({
     setNewOutcome('');
     setShowOutcomeInput(false);
   };
+
   const removeOutcome = (index: number) => {
     setOutcomes(outcomes.filter((_, i) => i !== index));
   };
+
   const startEditing = (index: number) => {
     setEditingIndex(index);
     setNewOutcome(outcomes[index]);
   };
+
   const saveEdit = () => {
     if (!newOutcome.trim() || editingIndex === null) return;
     const updatedOutcomes = [...outcomes];
@@ -44,46 +51,98 @@ export function GreetingNode({
     setEditingIndex(null);
     setNewOutcome('');
   };
+
   const cancelEdit = () => {
     setShowOutcomeInput(false);
     setEditingIndex(null);
     setNewOutcome('');
   };
-  return <div className="relative group bg-gradient-to-br from-blue-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-blue-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[320px] transition-all duration-300 hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)] dark:hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.2)] hover:translate-y-[-2px] hover:z-10">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-transparent dark:from-blue-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
-      
-      <Handle type="target" position={Position.Left} id="target" className="w-2 h-4 !bg-blue-400 rounded-sm border-none !left-[0px] transition-all duration-300 hover:!bg-blue-500" />
 
-      {outcomes.length === 0 && <Handle type="source" position={Position.Right} id="default" className="w-2 h-4 !bg-blue-400 rounded-sm border-none !right-[-10px] transition-all duration-300 hover:!bg-blue-500" />}
+  return (
+    <div className="relative group">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-blue-500 via-blue-600 to-blue-700 rounded-2xl opacity-90 group-hover:opacity-100 transition-opacity duration-500" />
       
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 pb-3 border-b border-blue-100/50 dark:border-gray-700/50">
-          <span className="text-blue-500 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-900/50 p-1.5 rounded-md">
-            <MessageCircle className="h-4 w-4" />
-          </span>
-          <span className="font-medium text-blue-700 dark:text-blue-300">Greeting</span>
+      {/* Card content with glass effect */}
+      <div className="relative backdrop-blur-xl rounded-2xl border border-white/20 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.5)] p-5 min-w-[320px] transition-all duration-500 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)] hover:translate-y-[-2px]">
+        {/* Floating particles effect */}
+        <div className="absolute inset-0 overflow-hidden rounded-2xl">
+          <div className="absolute h-[500px] w-[500px] -top-[250px] -left-[250px] bg-white/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute h-[400px] w-[400px] -bottom-[200px] -right-[200px] bg-blue-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
-        
-        <GreetingInput value={greeting} onChange={setGreeting} />
 
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
-              Possible outcomes ({outcomes.length}/5)
-            </Label>
-            {!showOutcomeInput && outcomes.length < 5 && !editingIndex && <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-md" onClick={() => setShowOutcomeInput(true)}>
-                <Plus className="h-4 w-4" />
-              </Button>}
+        {/* Content */}
+        <div className="relative z-10 flex flex-col gap-4">
+          {/* Header */}
+          <div className="flex items-center gap-3 pb-4 border-b border-white/20">
+            <span className="relative flex h-10 w-10">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-lg bg-blue-300 opacity-20" />
+              <span className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 backdrop-blur-xl text-white/90">
+                <MessagesSquare className="h-5 w-5" />
+              </span>
+            </span>
+            <span className="font-semibold text-lg bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">Greeting</span>
           </div>
+          
+          <GreetingInput value={greeting} onChange={setGreeting} />
 
-          {(showOutcomeInput || editingIndex !== null) && <OutcomeInput value={newOutcome} onChange={setNewOutcome} onSave={() => editingIndex !== null ? saveEdit() : addOutcome()} onCancel={cancelEdit} isEditing={editingIndex !== null} />}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium text-white/70">
+                Possible outcomes ({outcomes.length}/5)
+              </Label>
+              {!showOutcomeInput && outcomes.length < 5 && !editingIndex && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-white/70 hover:text-white hover:bg-white/10 backdrop-blur-xl rounded-lg"
+                  onClick={() => setShowOutcomeInput(true)}
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
 
-          <div className="space-y-2.5">
-            {outcomes.map((outcome, index) => <OutcomeListItem key={index} outcome={outcome} index={index} onEdit={startEditing} onRemove={removeOutcome} />)}
+            {(showOutcomeInput || editingIndex !== null) && (
+              <OutcomeInput
+                value={newOutcome}
+                onChange={setNewOutcome}
+                onSave={() => editingIndex !== null ? saveEdit() : addOutcome()}
+                onCancel={cancelEdit}
+                isEditing={editingIndex !== null}
+              />
+            )}
+
+            <div className="space-y-2.5">
+              {outcomes.map((outcome, index) => (
+                <OutcomeListItem
+                  key={index}
+                  outcome={outcome}
+                  index={index}
+                  onEdit={startEditing}
+                  onRemove={removeOutcome}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
       
-      <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-blue-500/[0.03] pointer-events-none" />
-    </div>;
+      {/* Handles */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="w-2 h-4 !bg-white/50 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-white/70"
+      />
+
+      {outcomes.length === 0 && (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="default"
+          className="w-2 h-4 !bg-white/50 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-white/70"
+        />
+      )}
+    </div>
+  );
 }
