@@ -19,7 +19,7 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
       return (data || []).map(convertJsonToPipeline);
     },
     staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache the data
+    gcTime: 0, // Don't cache the data
   });
 
   const { data: leads = [], refetch: refetchLeads, isLoading: isLeadsLoading } = useQuery({
@@ -38,7 +38,7 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
     },
     enabled: !!selectedPipelineId,
     staleTime: 0,
-    cacheTime: 0,
+    gcTime: 0,
   });
 
   const invalidateAndRefetch = async () => {
