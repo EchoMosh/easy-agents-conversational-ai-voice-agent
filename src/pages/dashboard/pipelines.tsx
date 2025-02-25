@@ -74,6 +74,26 @@ export default function PipelinesPage() {
     setEditedColumns(prev => [...prev, newStage]);
   };
 
+  const handleReorderColumns = async (newColumns: PipelineColumn[]) => {
+    if (!selectedPipeline) return;
+    
+    try {
+      // Update the local state immediately
+      setEditedColumns(newColumns);
+      
+      // Also update the selectedPipeline state
+      setSelectedPipeline(prev => prev ? { ...prev, columns: newColumns } : null);
+      
+    } catch (error) {
+      console.error("Error updating columns:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update pipeline columns",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
       <PipelineHeader 
@@ -93,7 +113,7 @@ export default function PipelinesPage() {
           onAddStage={handleAddStage}
           onDeletePipeline={handleDeletePipeline}
           onEditPipelineName={handleEditPipelineName}
-          onReorderColumns={setEditedColumns}
+          onReorderColumns={handleReorderColumns}
         />
       )}
 

@@ -11,6 +11,8 @@ import { useState } from "react";
 import { useSortable, SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/toast";
 
 const colorOptions = [
   { name: "Gray", value: "bg-gray-500" },
@@ -143,9 +145,28 @@ export function PipelineStages({
         col.id === columnId ? { ...col, color: newColor } : col
       );
       
+      const { error } = await supabase
+        .from("pipelines")
+        .update({
+          columns: newColumns
+        })
+        .eq("id", selectedPipeline.id);
+
+      if (error) throw error;
+
       onReorderColumns(newColumns);
+
+      toast({
+        title: "Color updated",
+        description: "Column color has been updated successfully"
+      });
     } catch (error) {
       console.error("Error updating column color:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update column color",
+        variant: "destructive"
+      });
     }
   };
 
