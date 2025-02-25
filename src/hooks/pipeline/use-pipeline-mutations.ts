@@ -4,10 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "./default-columns";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function usePipelineMutations(refetchPipelines: () => void, refetchLeads: () => void) {
   const { toast } = useToast();
   const [isUpdatingPipelineName, setIsUpdatingPipelineName] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleEditColumnTitle = async (pipeline: Pipeline, columnId: string, newTitle: string) => {
     const newColumns = [...pipeline.columns];
@@ -37,15 +39,16 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
         .from("leads")
         .update({ status: newTitle })
         .eq("status", oldTitle)
-        .eq('pipeline_id', pipeline.id);  // Added pipeline_id check for safety
+        .eq('pipeline_id', pipeline.id);
 
       if (leadsError) throw leadsError;
 
-      // Wait for both refetch operations to complete before showing success
-      await Promise.all([
-        refetchPipelines(),
-        refetchLeads()
-      ]);
+      // Invalidate queries before refetching
+      await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+      await queryClient.invalidateQueries({ queryKey: ["leads", pipeline.id] });
+
+      // Now refetch the data
+      await Promise.all([refetchPipelines(), refetchLeads()]);
 
       toast({
         title: "Stage updated",
