@@ -3,9 +3,10 @@ import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Plus, X, Pencil, Sparkle } from 'lucide-react';
+import { Plus, X, Pencil, MessageSquare } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { VariableSelector } from './variable-mention/variable-selector';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type SpeakNodeData = {
   message: string;
@@ -15,7 +16,7 @@ type SpeakNodeData = {
 export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [message, setMessage] = useState(data.message);
-  const [showOutcomeInput, setShowOutcomeInput] = useState(false);
+  const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState(data.outcomes || []);
@@ -25,7 +26,7 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
     if (!newOutcome.trim()) return;
     setOutcomes([...outcomes, newOutcome]);
     setNewOutcome('');
-    setShowOutcomeInput(false);
+    setShowOutcomeDialog(false);
   };
 
   const removeOutcome = (index: number) => {
@@ -35,6 +36,7 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
   const startEditing = (index: number) => {
     setEditingIndex(index);
     setNewOutcome(outcomes[index]);
+    setShowOutcomeDialog(true);
   };
 
   const saveEdit = () => {
@@ -44,10 +46,11 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
     setOutcomes(updatedOutcomes);
     setEditingIndex(null);
     setNewOutcome('');
+    setShowOutcomeDialog(false);
   };
 
   const cancelEdit = () => {
-    setShowOutcomeInput(false);
+    setShowOutcomeDialog(false);
     setEditingIndex(null);
     setNewOutcome('');
   };
@@ -71,10 +74,10 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
           <span className="relative flex h-8 w-8 items-center justify-center">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-indigo-400 opacity-20" />
             <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-lg">
-              <Sparkle className="h-4 w-4" />
+              <MessageSquare className="h-4 w-4" />
             </span>
           </span>
-          <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">AI Response</span>
+          <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">Speak</span>
         </div>
 
         {/* Message input */}
@@ -113,46 +116,17 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
             <Label className="text-xs font-medium text-indigo-600/75 dark:text-indigo-300/75">
               Possible outcomes ({outcomes.length}/5)
             </Label>
-            {!showOutcomeInput && outcomes.length < 5 && !editingIndex && (
+            {outcomes.length < 5 && !editingIndex && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-900/50 rounded-lg"
-                onClick={() => setShowOutcomeInput(true)}
+                onClick={() => setShowOutcomeDialog(true)}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             )}
           </div>
-
-          {/* Outcome input form */}
-          {(showOutcomeInput || editingIndex !== null) && (
-            <div className="animate-fade-in flex gap-3 bg-indigo-50/50 dark:bg-indigo-900/20 backdrop-blur-sm p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-800/50">
-              <Textarea
-                value={newOutcome}
-                onChange={(e) => setNewOutcome(e.target.value)}
-                placeholder="Enter possible response..."
-                className="nodrag text-sm resize-none min-h-[80px] bg-white/80 dark:bg-gray-900/80 border-indigo-100/50 dark:border-indigo-800/50"
-              />
-              <div className="flex flex-col gap-2">
-                <Button 
-                  size="sm" 
-                  className="px-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-lg shadow-indigo-500/25"
-                  onClick={() => editingIndex !== null ? saveEdit() : addOutcome()}
-                >
-                  {editingIndex !== null ? 'Save' : 'Add'}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="px-4 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
-                  onClick={cancelEdit}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* Outcomes list */}
           <div className="space-y-2">
@@ -209,6 +183,37 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
           className="!w-2 !h-4 !bg-indigo-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-indigo-500"
         />
       )}
+
+      {/* Outcome Dialog */}
+      <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{editingIndex !== null ? 'Edit Outcome' : 'Add New Outcome'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Textarea
+              value={newOutcome}
+              onChange={(e) => setNewOutcome(e.target.value)}
+              placeholder="Enter possible response..."
+              className="text-sm resize-none min-h-[120px]"
+            />
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline" 
+                onClick={cancelEdit}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
+                onClick={() => editingIndex !== null ? saveEdit() : addOutcome()}
+              >
+                {editingIndex !== null ? 'Save Changes' : 'Add Outcome'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
