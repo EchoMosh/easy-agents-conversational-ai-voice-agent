@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -35,18 +36,21 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
       const { error: leadsError } = await supabase
         .from("leads")
         .update({ status: newTitle })
-        .eq("status", oldTitle);
+        .eq("status", oldTitle)
+        .eq('pipeline_id', pipeline.id);  // Added pipeline_id check for safety
 
       if (leadsError) throw leadsError;
+
+      // Wait for both refetch operations to complete before showing success
+      await Promise.all([
+        refetchPipelines(),
+        refetchLeads()
+      ]);
 
       toast({
         title: "Stage updated",
         description: "Pipeline stage has been updated successfully"
       });
-
-      // Update local state immediately
-      refetchLeads();
-      refetchPipelines();
     } catch (error) {
       console.error("Error updating pipeline stage:", error);
       toast({
@@ -89,12 +93,12 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
+      await refetchPipelines();
+
       toast({
         title: "Pipeline created",
         description: "New pipeline has been created successfully",
       });
-
-      refetchPipelines();
     } catch (error) {
       console.error("Error creating pipeline:", error);
       toast({
@@ -114,12 +118,12 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
+      await refetchPipelines();
+
       toast({
         title: "Pipeline deleted",
         description: "Pipeline has been deleted successfully",
       });
-
-      refetchPipelines();
     } catch (error) {
       console.error("Error deleting pipeline:", error);
       toast({
@@ -131,7 +135,6 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
   };
 
   const handleEditPipelineName = async (pipelineId: string, name: string) => {
-    console.log("Starting pipeline name update...");
     setIsUpdatingPipelineName(true);
     
     try {
@@ -142,14 +145,12 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
-      console.log("Pipeline name updated successfully");
+      await refetchPipelines();
+
       toast({
         title: "Pipeline updated",
         description: "Pipeline name has been updated successfully"
       });
-
-      await refetchPipelines();
-      console.log("Pipeline data refetched");
     } catch (error) {
       console.error("Error updating pipeline name:", error);
       toast({
@@ -159,7 +160,6 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
       });
     } finally {
       setIsUpdatingPipelineName(false);
-      console.log("Pipeline update completed");
     }
   };
 
