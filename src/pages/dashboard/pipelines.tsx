@@ -12,8 +12,8 @@ import { usePipeline } from "@/hooks/use-pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "@/hooks/use-pipeline";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
@@ -147,32 +147,37 @@ export default function PipelinesPage() {
         columns={selectedPipeline?.columns || defaultColumns}
       />
 
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Pipeline</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this pipeline? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-4 mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowDeleteDialog(false)}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={onDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Simple modal without Portal */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-[400px]">
+            <CardHeader>
+              <CardTitle>Delete Pipeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-muted-foreground">
+                Are you sure you want to delete this pipeline? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDeleteDialog(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={onDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
