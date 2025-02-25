@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +17,6 @@ export const defaultColumns: PipelineColumn[] = [
 export function usePipeline() {
   const { toast } = useToast();
   const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
-  const [editingColumns, setEditingColumns] = useState(false);
   const [editedColumns, setEditedColumns] = useState<PipelineColumn[]>([]);
   const [showNewPipelineDialog, setShowNewPipelineDialog] = useState(false);
 
@@ -52,76 +50,55 @@ export function usePipeline() {
     enabled: !!selectedPipeline?.id,
   });
 
-  const handleEditColumns = () => {
+  const handleEditColumnTitle = async (columnId: string, newTitle: string) => {
     if (!selectedPipeline) return;
-    setEditedColumns([...selectedPipeline.columns]);
-    setEditingColumns(true);
-  };
 
-  const handleSaveColumns = async () => {
-    if (!selectedPipeline) return;
+    const newColumns = [...selectedPipeline.columns];
+    const index = newColumns.findIndex(c => c.id === columnId);
+    const oldTitle = newColumns[index].title;
+    newColumns[index] = { ...newColumns[index], title: newTitle };
 
     try {
-      const columnsJson = editedColumns.map(col => ({
+      const columnsJson = newColumns.map(col => ({
         id: col.id,
         title: col.title,
         color: col.color,
       })) as Json;
 
-      const { error: pipelineError } = await supabase
+      const { error } = await supabase
         .from("pipelines")
         .update({
           columns: columnsJson
         })
         .eq("id", selectedPipeline.id);
 
-      if (pipelineError) throw pipelineError;
+      if (error) throw error;
 
-      toast({
-        title: "Pipeline updated",
-        description: "Pipeline stages have been updated successfully"
-      });
-
-      refetchPipelines();
-      setEditingColumns(false);
-      setSelectedPipeline(prev => prev ? { ...prev, columns: editedColumns } : null);
-    } catch (error) {
-      console.error("Error updating pipeline:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update pipeline stages",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleEditColumnTitle = async (columnId: string, newTitle: string) => {
-    const newColumns = [...editedColumns];
-    const index = newColumns.findIndex(c => c.id === columnId);
-    const oldTitle = newColumns[index].title;
-    newColumns[index] = { ...newColumns[index], title: newTitle };
-    setEditedColumns(newColumns);
-
-    // Update the status of all leads in this stage
-    const leadsInStage = leads.filter(lead => lead.status === oldTitle);
-    if (leadsInStage.length > 0) {
-      try {
-        const { error } = await supabase
+      // Update lead statuses
+      const leadsInStage = leads.filter(lead => lead.status === oldTitle);
+      if (leadsInStage.length > 0) {
+        const { error: leadsError } = await supabase
           .from("leads")
           .update({ status: newTitle })
           .eq("status", oldTitle);
 
-        if (error) throw error;
-
-        refetchLeads();
-      } catch (error) {
-        console.error("Error updating lead statuses:", error);
-        toast({
-          title: "Error",
-          description: "Failed to update lead statuses",
-          variant: "destructive"
-        });
+        if (leadsError) throw leadsError;
       }
+
+      setSelectedPipeline(prev => prev ? { ...prev, columns: newColumns } : null);
+      toast({
+        title: "Stage updated",
+        description: "Pipeline stage has been updated successfully"
+      });
+
+      refetchLeads();
+    } catch (error) {
+      console.error("Error updating pipeline stage:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update pipeline stage",
+        variant: "destructive"
+      });
     }
   };
 
@@ -235,14 +212,11 @@ export function usePipeline() {
     pipelines,
     leads,
     selectedPipeline,
-    editingColumns,
     editedColumns,
     showNewPipelineDialog,
     setSelectedPipeline,
     setEditedColumns,
     setShowNewPipelineDialog,
-    handleEditColumns,
-    handleSaveColumns,
     handleEditColumnTitle,
     handleEditPipelineName,
     handleDeletePipeline,

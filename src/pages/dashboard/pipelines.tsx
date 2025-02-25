@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DragEndEvent } from "@dnd-kit/core";
 import { useDroppable } from "@dnd-kit/core";
@@ -26,14 +25,11 @@ export default function PipelinesPage() {
     pipelines,
     leads,
     selectedPipeline,
-    editingColumns,
     editedColumns,
     showNewPipelineDialog,
     setSelectedPipeline,
     setEditedColumns,
     setShowNewPipelineDialog,
-    handleEditColumns,
-    handleSaveColumns,
     handleEditColumnTitle,
     handleEditPipelineName,
     handleDeletePipeline,
@@ -91,10 +87,6 @@ export default function PipelinesPage() {
         <PipelineStages
           selectedPipeline={selectedPipeline}
           leads={leads}
-          editingColumns={editingColumns}
-          editedColumns={editedColumns}
-          onEditColumns={handleEditColumns}
-          onSaveColumns={handleSaveColumns}
           onDragEnd={handleDragEnd}
           onEditColumnTitle={handleEditColumnTitle}
           onLeadClick={setSelectedLead}
