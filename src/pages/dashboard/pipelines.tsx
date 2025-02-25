@@ -49,7 +49,7 @@ export default function PipelinesPage() {
     
     if (!over) return;
 
-    const leadId = active.id;
+    const leadId = String(active.id); // Convert UniqueIdentifier to string
     const newStatus = over.id as Lead["status"];
 
     try {
