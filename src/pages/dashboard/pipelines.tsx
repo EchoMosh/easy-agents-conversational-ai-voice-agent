@@ -8,20 +8,13 @@ import { PipelineHeader } from "@/components/pipelines/pipeline-header";
 import { PipelineStages } from "@/components/pipelines/pipeline-stages";
 import { LeadDetailsDialog } from "@/components/pipelines/lead-details-dialog";
 import { NewPipelineDialog } from "@/components/pipelines/new-pipeline-dialog";
+import { DeletePipelineDialog } from "@/components/pipelines/delete-pipeline-dialog";
+import { RefreshButton } from "@/components/pipelines/refresh-button";
 import { usePipeline } from "@/hooks/use-pipeline";
+import { useDeletePipeline } from "@/hooks/pipeline/use-delete-pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "@/hooks/use-pipeline";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
@@ -31,8 +24,6 @@ export function DroppableColumn({ id, children }: { id: string; children: React.
 export default function PipelinesPage() {
   const { toast } = useToast();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   const {
@@ -51,6 +42,13 @@ export default function PipelinesPage() {
     refetchPipelines,
     refetchLeads,
   } = usePipeline();
+
+  const {
+    showDeleteDialog,
+    setShowDeleteDialog,
+    isDeleting,
+    onDelete,
+  } = useDeletePipeline(handleDeletePipeline);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -76,11 +74,10 @@ export default function PipelinesPage() {
     const leadId = String(active.id);
     const newColumnId = String(over.id);
 
-    // Find the column title that matches the destination
     const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
     if (!targetColumn) return;
 
-    const newStatus = targetColumn.title; // Use the exact column title as the status
+    const newStatus = targetColumn.title;
     const lead = leads.find(l => l.id === leadId);
     
     if (lead?.status === newStatus) return;
@@ -132,36 +129,11 @@ export default function PipelinesPage() {
     }
   };
 
-  const onDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await handleDeletePipeline();
-      setShowDeleteDialog(false);
-    } catch (error) {
-      console.error("Error deleting pipeline:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete pipeline",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
   return (
     <div className="relative">
       <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
         <div className="flex justify-between items-center mb-6">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="w-8 h-8"
-          >
-            <Loader2 className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
+          <RefreshButton isRefreshing={isRefreshing} onRefresh={handleRefresh} />
         </div>
         
         <PipelineHeader 
@@ -197,34 +169,12 @@ export default function PipelinesPage() {
           columns={selectedPipeline?.columns || defaultColumns}
         />
 
-        <Sheet open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-          <SheetContent side="right" className="sm:max-w-md">
-            <SheetHeader>
-              <SheetTitle>Delete Pipeline</SheetTitle>
-              <SheetDescription>
-                Are you sure you want to delete this pipeline? This action cannot be undone.
-              </SheetDescription>
-            </SheetHeader>
-            <SheetFooter className="mt-4">
-              <div className="flex justify-end gap-4 w-full">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDeleteDialog(false)}
-                  disabled={isDeleting}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={onDelete}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </Button>
-              </div>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+        <DeletePipelineDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onDelete={onDelete}
+          isDeleting={isDeleting}
+        />
       </div>
     </div>
   );
