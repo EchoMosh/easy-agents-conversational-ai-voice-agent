@@ -1,10 +1,10 @@
-
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Pencil, MessageCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { VariableSelector } from './variable-mention/variable-selector';
 
 type SpeakNodeData = {
   message: string;
@@ -12,6 +12,7 @@ type SpeakNodeData = {
 };
 
 export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [message, setMessage] = useState(data.message);
   const [showOutcomeInput, setShowOutcomeInput] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
@@ -52,6 +53,13 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
     setNewOutcome('');
   };
 
+  const highlightVariables = (text: string) => {
+    return text.replace(
+      /{{([^}]+)}}/g,
+      '<span class="bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200 px-1 rounded">{{$1}}</span>'
+    );
+  };
+
   return (
     <div className="relative group bg-gradient-to-br from-purple-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-purple-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[320px]">
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent dark:from-purple-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
@@ -73,11 +81,28 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
           <Label className="text-xs font-medium text-purple-600/75 dark:text-purple-300/75">
             Message
           </Label>
-          <Textarea 
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            className="nodrag text-sm resize-y min-h-[80px] bg-white/80 dark:bg-gray-900/50 border-purple-100/50 dark:border-purple-800/50 shadow-sm rounded-lg focus-visible:ring-purple-500/50 focus-visible:border-purple-200"
-            placeholder="Type your message..."
+          <div className="relative">
+            <Textarea 
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="nodrag text-sm resize-y min-h-[80px] bg-white/80 dark:bg-gray-900/50 border-purple-100/50 dark:border-purple-800/50 shadow-sm rounded-lg focus-visible:ring-purple-500/50 focus-visible:border-purple-200"
+              placeholder="Type @ to insert a variable..."
+            />
+            <div 
+              className="absolute inset-0 pointer-events-none p-[9px] text-sm"
+              dangerouslySetInnerHTML={{ 
+                __html: highlightVariables(message)
+                  .split('\n')
+                  .map(line => line || '&#8203;')
+                  .join('<br/>') 
+              }}
+            />
+          </div>
+          <VariableSelector
+            text={message}
+            onTextChange={setMessage}
+            textareaRef={textareaRef}
           />
         </div>
 
