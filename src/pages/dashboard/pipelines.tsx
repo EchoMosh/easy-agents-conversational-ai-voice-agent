@@ -5,6 +5,7 @@ import { Lead } from "@/pages/dashboard/leads";
 import { Pipeline, PipelineColumn, convertJsonToPipeline } from "@/types/pipeline";
 import { useToast } from "@/components/ui/use-toast";
 import { useDroppable } from "@dnd-kit/core";
+import { DragEndEvent } from "@dnd-kit/core";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,9 @@ import { Label } from "@/components/ui/label";
 import { PipelineHeader } from "@/components/pipelines/pipeline-header";
 import { PipelineStages } from "@/components/pipelines/pipeline-stages";
 import { LeadDetailsDialog } from "@/components/pipelines/lead-details-dialog";
+import { Json } from "@/integrations/supabase/types";
 
-const defaultColumns = [
+const defaultColumns: PipelineColumn[] = [
   { id: "new", title: "New", color: "bg-blue-500" },
   { id: "contacted", title: "Contacted", color: "bg-yellow-500" },
   { id: "qualified", title: "Qualified", color: "bg-green-500" },
@@ -112,10 +114,16 @@ export default function PipelinesPage() {
     if (!selectedPipeline) return;
 
     try {
+      const columnsJson = editedColumns.map(col => ({
+        id: col.id,
+        title: col.title,
+        color: col.color,
+      })) as Json;
+
       const { error } = await supabase
         .from("pipelines")
         .update({
-          columns: editedColumns
+          columns: columnsJson
         })
         .eq("id", selectedPipeline.id);
 
@@ -155,11 +163,17 @@ export default function PipelinesPage() {
     }
 
     try {
+      const columnsJson = defaultColumns.map(col => ({
+        id: col.id,
+        title: col.title,
+        color: col.color,
+      })) as Json;
+
       const { data, error } = await supabase
         .from("pipelines")
         .insert({
           name: newPipelineName,
-          columns: defaultColumns,
+          columns: columnsJson,
           user_id: userId,
         })
         .select()

@@ -1,6 +1,6 @@
 
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { Pipeline } from "@/types/pipeline";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
