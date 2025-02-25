@@ -1,225 +1,62 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { Pipeline, PipelineColumn, convertJsonToPipeline } from "@/types/pipeline";
-import { Lead } from "@/pages/dashboard/leads";
-import { Json } from "@/integrations/supabase/types";
 
-export const defaultColumns: PipelineColumn[] = [
-  { id: "new", title: "New", color: "bg-blue-500" },
-  { id: "contacted", title: "Contacted", color: "bg-yellow-500" },
-  { id: "qualified", title: "Qualified", color: "bg-green-500" },
-  { id: "converted", title: "Converted", color: "bg-purple-500" },
-  { id: "lost", title: "Lost", color: "bg-red-500" },
-];
+import { useState } from "react";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
+import { usePipelineQueries } from "./pipeline/use-pipeline-queries";
+import { usePipelineMutations } from "./pipeline/use-pipeline-mutations";
+export { defaultColumns } from "./pipeline/default-columns";
 
 export function usePipeline() {
-  const { toast } = useToast();
   const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
   const [editedColumns, setEditedColumns] = useState<PipelineColumn[]>([]);
   const [showNewPipelineDialog, setShowNewPipelineDialog] = useState(false);
 
-  const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
-    queryKey: ["pipelines"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const { 
+    pipelines, 
+    leads, 
+    refetchPipelines, 
+    refetchLeads 
+  } = usePipelineQueries(selectedPipeline?.id);
 
-      if (error) throw error;
-      return (data || []).map(convertJsonToPipeline);
-    },
-  });
-
-  const { data: leads = [], refetch: refetchLeads } = useQuery({
-    queryKey: ["leads", selectedPipeline?.id],
-    queryFn: async () => {
-      if (!selectedPipeline?.id) return [];
-      
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*")
-        .eq('pipeline_id', selectedPipeline.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as unknown as Lead[];
-    },
-    enabled: !!selectedPipeline?.id,
-  });
-
-  const handleEditColumnTitle = async (columnId: string, newTitle: string) => {
-    if (!selectedPipeline) return;
-
-    const newColumns = [...selectedPipeline.columns];
-    const index = newColumns.findIndex(c => c.id === columnId);
-    const oldTitle = newColumns[index].title;
-    newColumns[index] = { ...newColumns[index], title: newTitle };
-
-    try {
-      const columnsJson = newColumns.map(col => ({
-        id: col.id,
-        title: col.title,
-        color: col.color,
-      })) as Json;
-
-      const { error } = await supabase
-        .from("pipelines")
-        .update({
-          columns: columnsJson
-        })
-        .eq("id", selectedPipeline.id);
-
-      if (error) throw error;
-
-      // Update lead statuses
-      const leadsInStage = leads.filter(lead => lead.status === oldTitle);
-      if (leadsInStage.length > 0) {
-        const { error: leadsError } = await supabase
-          .from("leads")
-          .update({ status: newTitle })
-          .eq("status", oldTitle);
-
-        if (leadsError) throw leadsError;
-      }
-
-      setSelectedPipeline(prev => prev ? { ...prev, columns: newColumns } : null);
-      toast({
-        title: "Stage updated",
-        description: "Pipeline stage has been updated successfully"
-      });
-
-      refetchLeads();
-    } catch (error) {
-      console.error("Error updating pipeline stage:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update pipeline stage",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const createNewPipeline = async (name: string) => {
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id;
-
-    if (!userId) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to create a pipeline",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const columnsJson = defaultColumns.map(col => ({
-        id: col.id,
-        title: col.title,
-        color: col.color,
-      })) as Json;
-
-      const { data, error } = await supabase
-        .from("pipelines")
-        .insert({
-          name,
-          columns: columnsJson,
-          user_id: userId,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Pipeline created",
-        description: "New pipeline has been created successfully",
-      });
-
-      setShowNewPipelineDialog(false);
-      refetchPipelines();
-      setSelectedPipeline(convertJsonToPipeline(data));
-    } catch (error) {
-      console.error("Error creating pipeline:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create pipeline",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeletePipeline = async () => {
-    if (!selectedPipeline) return;
-
-    try {
-      const { error } = await supabase
-        .from("pipelines")
-        .delete()
-        .eq("id", selectedPipeline.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Pipeline deleted",
-        description: "Pipeline has been deleted successfully",
-      });
-
-      setSelectedPipeline(null);
-      refetchPipelines();
-    } catch (error) {
-      console.error("Error deleting pipeline:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete pipeline",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEditPipelineName = async (name: string) => {
-    if (!selectedPipeline) return;
-
-    try {
-      const { error } = await supabase
-        .from("pipelines")
-        .update({ name })
-        .eq("id", selectedPipeline.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Pipeline updated",
-        description: "Pipeline name has been updated successfully"
-      });
-
-      refetchPipelines();
-      setSelectedPipeline(prev => prev ? { ...prev, name } : null);
-    } catch (error) {
-      console.error("Error updating pipeline name:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update pipeline name",
-        variant: "destructive"
-      });
-    }
-  };
+  const {
+    handleEditColumnTitle,
+    createNewPipeline,
+    handleDeletePipeline,
+    handleEditPipelineName,
+  } = usePipelineMutations(refetchPipelines, refetchLeads);
 
   return {
+    // State
     pipelines,
     leads,
     selectedPipeline,
     editedColumns,
     showNewPipelineDialog,
+
+    // State setters
     setSelectedPipeline,
     setEditedColumns,
     setShowNewPipelineDialog,
-    handleEditColumnTitle,
-    handleEditPipelineName,
-    handleDeletePipeline,
-    createNewPipeline,
+
+    // Actions
+    handleEditColumnTitle: (columnId: string, newTitle: string) => {
+      if (selectedPipeline) {
+        handleEditColumnTitle(selectedPipeline, columnId, newTitle);
+      }
+    },
+    handleEditPipelineName: (name: string) => {
+      if (selectedPipeline) {
+        handleEditPipelineName(selectedPipeline.id, name);
+      }
+    },
+    handleDeletePipeline: () => {
+      if (selectedPipeline) {
+        handleDeletePipeline(selectedPipeline.id);
+        setSelectedPipeline(null);
+      }
+    },
+    createNewPipeline: async (name: string) => {
+      await createNewPipeline(name);
+      setShowNewPipelineDialog(false);
+    },
   };
 }
