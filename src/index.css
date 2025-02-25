@@ -61,11 +61,11 @@
 
 /* React Flow Dark Mode Styles */
 .react-flow__controls {
-  @apply bg-background border-border;
+  @apply bg-transparent border-border;
 }
 
 .react-flow__controls button {
-  @apply bg-background border-border text-foreground hover:bg-accent;
+  @apply bg-background/20 backdrop-blur-sm border-border text-foreground hover:bg-accent;
 }
 
 .react-flow__controls button path {
@@ -73,11 +73,11 @@
 }
 
 .react-flow__panel.react-flow__attribution {
-  @apply bg-background text-foreground;
+  @apply bg-transparent text-foreground;
 }
 
 .react-flow__minimap {
-  @apply bg-background;
+  @apply bg-transparent;
 }
 
 .react-flow__minimap-mask {
@@ -89,7 +89,7 @@
 }
 
 .react-flow__node {
-  @apply bg-background border-border text-foreground 
+  @apply bg-background/20 border-border text-foreground 
          backdrop-blur-xl rounded-2xl p-6;
 }
 
