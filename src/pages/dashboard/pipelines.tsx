@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "@/pages/dashboard/leads";
@@ -120,14 +119,23 @@ export default function PipelinesPage() {
         color: col.color,
       })) as Json;
 
-      const { error } = await supabase
+      const { error: pipelineError } = await supabase
         .from("pipelines")
         .update({
           columns: columnsJson
         })
         .eq("id", selectedPipeline.id);
 
-      if (error) throw error;
+      if (pipelineError) throw pipelineError;
+
+      const renamedColumns = editedColumns.filter(newCol => {
+        const oldCol = selectedPipeline.columns.find(c => c.id === newCol.id);
+        return oldCol && oldCol.title !== newCol.title;
+      });
+
+      if (renamedColumns.length > 0) {
+        await refetchLeads();
+      }
 
       toast({
         title: "Pipeline updated",
@@ -145,6 +153,10 @@ export default function PipelinesPage() {
         variant: "destructive"
       });
     }
+  };
+
+  const handleAddStage = (newStage: PipelineColumn) => {
+    setEditedColumns(prev => [...prev, newStage]);
   };
 
   const createNewPipeline = async () => {
@@ -225,6 +237,7 @@ export default function PipelinesPage() {
             setEditedColumns(newColumns);
           }}
           onLeadClick={setSelectedLead}
+          onAddStage={handleAddStage}
         />
       )}
 
