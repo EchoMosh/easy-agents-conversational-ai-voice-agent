@@ -1,4 +1,3 @@
-
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
@@ -138,11 +137,16 @@ export function PipelineStages({
     setCollapsedColumns(newCollapsed);
   };
 
-  const handleColorChange = (columnId: string, newColor: string) => {
-    const newColumns = [...selectedPipeline.columns];
-    const index = newColumns.findIndex(c => c.id === columnId);
-    newColumns[index] = { ...newColumns[index], color: newColor };
-    onReorderColumns(newColumns);
+  const handleColorChange = async (columnId: string, newColor: string) => {
+    try {
+      const newColumns = selectedPipeline.columns.map(col => 
+        col.id === columnId ? { ...col, color: newColor } : col
+      );
+      
+      onReorderColumns(newColumns);
+    } catch (error) {
+      console.error("Error updating column color:", error);
+    }
   };
 
   const handleAddStage = () => {
@@ -238,7 +242,9 @@ export function PipelineStages({
                                           className={`w-8 h-8 rounded-full ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
                                             column.color === option.value ? "ring-2" : ""
                                           }`}
-                                          onClick={() => handleColorChange(column.id, option.value)}
+                                          onClick={() => {
+                                            handleColorChange(column.id, option.value);
+                                          }}
                                           title={option.name}
                                         />
                                       ))}
@@ -299,7 +305,6 @@ export function PipelineStages({
             })}
           </SortableContext>
           
-          {/* Add new stage button */}
           <Button
             variant="outline"
             className="h-full min-h-[300px] border-2 border-dashed hover:border-solid"
