@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
@@ -6,6 +6,7 @@ import { defaultColumns } from "./default-columns";
 
 export function usePipelineMutations(refetchPipelines: () => void, refetchLeads: () => void) {
   const { toast } = useToast();
+  const [isUpdatingPipelineName, setIsUpdatingPipelineName] = useState(false);
 
   const handleEditColumnTitle = async (pipeline: Pipeline, columnId: string, newTitle: string) => {
     const newColumns = [...pipeline.columns];
@@ -127,6 +128,9 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
   };
 
   const handleEditPipelineName = async (pipelineId: string, name: string) => {
+    console.log("Starting pipeline name update...");
+    setIsUpdatingPipelineName(true);
+    
     try {
       const { error } = await supabase
         .from("pipelines")
@@ -135,12 +139,14 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
+      console.log("Pipeline name updated successfully");
       toast({
         title: "Pipeline updated",
         description: "Pipeline name has been updated successfully"
       });
 
-      refetchPipelines();
+      await refetchPipelines();
+      console.log("Pipeline data refetched");
     } catch (error) {
       console.error("Error updating pipeline name:", error);
       toast({
@@ -148,6 +154,9 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
         description: "Failed to update pipeline name",
         variant: "destructive"
       });
+    } finally {
+      setIsUpdatingPipelineName(false);
+      console.log("Pipeline update completed");
     }
   };
 
@@ -156,5 +165,6 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
     createNewPipeline,
     handleDeletePipeline,
     handleEditPipelineName,
+    isUpdatingPipelineName,
   };
 }
