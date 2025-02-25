@@ -91,72 +91,78 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
 
   return (
     <>
-      <div className="relative group bg-gradient-to-br from-emerald-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-emerald-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[300px] transition-all duration-300 hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.3)] dark:hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.2)] hover:translate-y-[-2px] hover:z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent dark:from-emerald-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
-        <div className="fixed inset-[-200%] -z-10 bg-emerald-500/5 dark:bg-emerald-400/5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="group relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-emerald-100/50 dark:border-gray-700/50">
-            <span className="text-emerald-500 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-900/50 p-1.5 rounded-md">
-              <PhoneForwarded className="h-4 w-4" />
-            </span>
-            <span className="font-medium text-emerald-700 dark:text-emerald-300">Transfer Call</span>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
-                Transfer Message
-              </Label>
-              <Input
-                value={message}
-                onChange={(e) => handleChange('message', e.target.value)}
-                className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
-                placeholder="Enter transfer message..."
-              />
+        <div className="relative backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 rounded-2xl border border-emerald-200/50 dark:border-emerald-800/50 shadow-[0_8px_16px_-6px_rgba(16,185,129,0.2)] dark:shadow-[0_8px_16px_-6px_rgba(16,185,129,0.3)] p-5 min-w-[300px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] dark:hover:shadow-[0_20px_40px_-12px_rgba(16,185,129,0.5)]">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-8 w-8 items-center justify-center">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-emerald-400 opacity-20" />
+                <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
+                  <PhoneForwarded className="h-4 w-4" />
+                </span>
+              </span>
+              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">
+                Transfer Call
+              </span>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3">
+              <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
-                  Contact List ({contacts.length})
+                  Transfer Message
                 </Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
-                  onClick={() => setIsDialogOpen(true)}
-                >
-                  <Pencil className="h-3 w-3 mr-1" />
-                  Edit Contacts
-                </Button>
+                <Input
+                  value={message}
+                  onChange={(e) => handleChange('message', e.target.value)}
+                  className="bg-white/80 dark:bg-gray-900/50 border-emerald-100/50 dark:border-emerald-800/50 shadow-sm"
+                  placeholder="Enter transfer message..."
+                />
               </div>
 
-              <div className="bg-white/80 dark:bg-gray-900/50 rounded-lg border border-emerald-100/50 dark:border-emerald-800/50">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">Name</TableHead>
-                      <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">Phone</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {contacts.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={2} className="text-center text-sm text-emerald-600/50 dark:text-emerald-300/50">
-                          No contacts added
-                        </TableCell>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">
+                    Contact List ({contacts.length})
+                  </Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    <Pencil className="h-3 w-3 mr-1" />
+                    Edit Contacts
+                  </Button>
+                </div>
+
+                <div className="bg-white/80 dark:bg-gray-900/50 rounded-lg border border-emerald-100/50 dark:border-emerald-800/50">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">Name</TableHead>
+                        <TableHead className="text-xs font-medium text-emerald-600/75 dark:text-emerald-300/75">Phone</TableHead>
                       </TableRow>
-                    ) : (
-                      contacts.map((contact) => (
-                        <TableRow key={contact.id}>
-                          <TableCell className="py-2 text-sm">{contact.name || '—'}</TableCell>
-                          <TableCell className="py-2 text-sm">{contact.phoneNumber || '—'}</TableCell>
+                    </TableHeader>
+                    <TableBody>
+                      {contacts.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={2} className="text-center text-sm text-emerald-600/50 dark:text-emerald-300/50">
+                            No contacts added
+                          </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                      ) : (
+                        contacts.map((contact) => (
+                          <TableRow key={contact.id}>
+                            <TableCell className="py-2 text-sm">{contact.name || '—'}</TableCell>
+                            <TableCell className="py-2 text-sm">{contact.phoneNumber || '—'}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           </div>
@@ -165,15 +171,13 @@ export function TransferNode({ data }: { data: TransferNodeData }) {
         <Handle
           type="target"
           position={Position.Left}
-          className="w-2 h-4 !bg-emerald-400 rounded-sm border-none transition-all duration-300 hover:!bg-emerald-500"
+          className="!w-2 !h-4 !bg-emerald-400 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-emerald-500"
         />
         <Handle
           type="source"
           position={Position.Right}
-          className="w-2 h-4 !bg-emerald-400 rounded-sm border-none transition-all duration-300 hover:!bg-emerald-500"
+          className="!w-2 !h-4 !bg-emerald-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-emerald-500"
         />
-        
-        <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-emerald-500/[0.03] pointer-events-none" />
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

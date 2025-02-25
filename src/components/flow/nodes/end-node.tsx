@@ -4,22 +4,29 @@ import { X } from 'lucide-react';
 
 export function EndNode() {
   return (
-    <div className="relative group bg-gradient-to-br from-rose-50/90 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border border-rose-100/50 dark:border-gray-700/50 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.5),0_2px_4px_-2px_rgba(0,0,0,0.25)] backdrop-blur-xl p-4 min-w-[200px] transition-all duration-300 bg-[length:200%_200%] animate-breathing hover:shadow-[0_0_30px_-5px_rgba(244,63,94,0.3)] dark:hover:shadow-[0_0_30px_-5px_rgba(244,63,94,0.2)] hover:translate-y-[-2px] hover:z-10">
-      <div className="absolute inset-0 bg-gradient-to-br from-rose-500/[0.02] to-transparent dark:from-rose-500/[0.05] rounded-xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100" />
-      <div className="fixed inset-[-200%] -z-10 bg-rose-500/5 dark:bg-rose-400/5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <div className="group relative">
+      {/* Glowing background effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-rose-500/20 via-orange-500/20 to-amber-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       
+      <div className="relative backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 rounded-2xl border border-rose-200/50 dark:border-rose-800/50 shadow-[0_8px_16px_-6px_rgba(225,29,72,0.2)] dark:shadow-[0_8px_16px_-6px_rgba(225,29,72,0.3)] p-5 min-w-[200px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(225,29,72,0.4)] dark:hover:shadow-[0_20px_40px_-12px_rgba(225,29,72,0.5)]">
+        <div className="flex items-center gap-3">
+          <span className="relative flex h-8 w-8 items-center justify-center">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-rose-400 opacity-20" />
+            <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-lg">
+              <X className="h-4 w-4" />
+            </span>
+          </span>
+          <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-500">
+            End Conversation
+          </span>
+        </div>
+      </div>
+
       <Handle 
         type="target" 
         position={Position.Left} 
-        className="w-2 h-4 !bg-rose-400 rounded-sm border-none transition-all duration-300 hover:!bg-rose-500" 
+        className="!w-2 !h-4 !bg-rose-400 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-rose-500" 
       />
-      <div className="flex items-center gap-2 pb-1">
-        <span className="text-rose-500 dark:text-rose-400 bg-rose-100/50 dark:bg-rose-900/50 p-1.5 rounded-md">
-          <X className="h-4 w-4" />
-        </span>
-        <span className="font-medium text-rose-700 dark:text-rose-300">End Conversation</span>
-      </div>
-      <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-rose-500/[0.03] pointer-events-none" />
     </div>
   );
 }
