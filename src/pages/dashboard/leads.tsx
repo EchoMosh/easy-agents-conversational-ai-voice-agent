@@ -32,14 +32,8 @@ export interface Lead {
 
 export default function LeadsPage() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | undefined>();
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | undefined>(undefined);
   const { pipelines, leads, invalidateAndRefetch } = usePipelineQueries(selectedPipelineId);
-
-  useEffect(() => {
-    if (pipelines?.length > 0 && !selectedPipelineId) {
-      setSelectedPipelineId(pipelines[0].id);
-    }
-  }, [pipelines, selectedPipelineId]);
 
   return (
     <div className="p-6 space-y-6">
@@ -83,6 +77,13 @@ export default function LeadsPage() {
             <div key={lead.id} className="p-4 border rounded-lg">
               <h3 className="font-medium">{lead.name}</h3>
               {lead.email && <p className="text-sm text-muted-foreground">{lead.email}</p>}
+              <p className="text-sm text-muted-foreground mt-1">
+                Pipeline: {lead.pipeline_id ? (
+                  pipelines.find(p => p.id === lead.pipeline_id)?.name || 'Loading...'
+                ) : (
+                  'No Pipeline'
+                )}
+              </p>
             </div>
           ))}
         </div>

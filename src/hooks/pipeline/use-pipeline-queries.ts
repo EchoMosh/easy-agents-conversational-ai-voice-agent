@@ -41,8 +41,20 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
     queryKey: ["leads", selectedPipelineId],
     queryFn: async () => {
       console.log("Fetching leads for pipeline:", selectedPipelineId);
-      if (!selectedPipelineId) return [];
       
+      // If no pipeline is selected, fetch all leads
+      if (!selectedPipelineId) {
+        const { data, error } = await supabase
+          .from("leads")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        console.log("All leads fetched:", data?.length);
+        return data as unknown as Lead[];
+      }
+      
+      // If a pipeline is selected, fetch leads for that pipeline
       const { data, error } = await supabase
         .from("leads")
         .select("*")
@@ -50,10 +62,10 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      console.log("Leads fetched:", data?.length);
+      console.log("Pipeline leads fetched:", data?.length);
       return data as unknown as Lead[];
     },
-    enabled: !!selectedPipelineId,
+    enabled: true, // Always enabled to fetch all leads when no pipeline is selected
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
