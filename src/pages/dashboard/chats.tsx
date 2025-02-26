@@ -1,3 +1,4 @@
+
 import { Mail, Phone, Send } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -30,6 +31,11 @@ export default function ChatsPage() {
     content: '',
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
+      const formattedHtml = html.replace(
+        /{{([^}]+)}}/g,
+        '<span class="bg-white/40 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
+      );
+      editor.commands.setContent(formattedHtml);
       setMessage(html);
     },
   });
