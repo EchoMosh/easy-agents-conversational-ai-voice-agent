@@ -42,7 +42,7 @@ export function LeadProgress({ currentStage, stages }: LeadProgressProps) {
               )}
             </div>
             <span 
-              className="text-[10px] text-muted-foreground mt-2 text-center origin-top-left transform -rotate-45 translate-x-3 inline-block w-16"
+              className="text-[10px] text-muted-foreground mt-2 text-center origin-top transform -rotate-45 translate-y-1 inline-block w-16"
             >
               {stage.label}
             </span>
