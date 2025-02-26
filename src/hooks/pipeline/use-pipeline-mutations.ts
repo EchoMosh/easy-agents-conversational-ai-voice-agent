@@ -45,11 +45,17 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (leadsError) throw leadsError;
 
-      // Immediately update the pipeline in the cache
+      // Create a completely new pipeline object to force a re-render
+      const updatedPipeline = {
+        ...pipeline,
+        columns: newColumns,
+      };
+
+      // Update the pipeline in the cache with the new object
       queryClient.setQueryData(["pipelines"], (old: Pipeline[] | undefined) => {
         if (!old) return old;
         return old.map(p => 
-          p.id === pipeline.id ? { ...p, columns: newColumns } : p
+          p.id === pipeline.id ? updatedPipeline : p
         );
       });
 
