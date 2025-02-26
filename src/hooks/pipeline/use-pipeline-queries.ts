@@ -26,8 +26,7 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
       console.log("Pipelines fetched:", data?.length);
       return (data || []).map(convertJsonToPipeline);
     },
-    staleTime: 0,
-    gcTime: 0,
+    // Remove staleTime and gcTime to ensure updates are reflected immediately
   });
 
   const { 
@@ -53,8 +52,7 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
       return data as unknown as Lead[];
     },
     enabled: !!selectedPipelineId,
-    staleTime: 0,
-    gcTime: 0,
+    // Remove staleTime and gcTime to ensure updates are reflected immediately
   });
 
   console.log("Query States:", {
@@ -69,12 +67,18 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
   const invalidateAndRefetch = async () => {
     console.log("Starting invalidation and refetch...");
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["pipelines"] }),
-      queryClient.invalidateQueries({ queryKey: ["leads", selectedPipelineId] }),
-      refetchPipelines(),
-      refetchLeads()
+      queryClient.invalidateQueries({
+        queryKey: ["pipelines"],
+        refetchType: "active",
+        exact: true
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["leads", selectedPipelineId],
+        refetchType: "active",
+        exact: true
+      })
     ]);
-    console.log("Invalidation and refetch completed");
+    console.log("Invalidation completed");
   };
 
   return {
