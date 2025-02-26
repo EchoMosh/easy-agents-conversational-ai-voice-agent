@@ -6,18 +6,20 @@ import { VariableBadge } from "./variables/variable-badge";
 import { LeadVariable } from "@/pages/dashboard/leads";
 import { EmptyState } from "./variables/empty-state";
 
-interface LeadVariablesProps {
+export interface LeadVariablesProps {
+  leadId: string;
   variables: LeadVariable[];
-  onEdit: (variable: LeadVariable) => void;
-  onDelete: (id: string) => void;
-  onAddClick: () => void;
+  onEdit?: (variable: LeadVariable) => void;
+  onDelete?: (id: string) => void;
+  onAddClick?: () => void;
+  onVariablesUpdated?: () => void;
 }
 
 export function LeadVariables({
   variables,
-  onEdit,
-  onDelete,
-  onAddClick,
+  onEdit = () => {},
+  onDelete = () => {},
+  onAddClick = () => {},
 }: LeadVariablesProps) {
   return (
     <div className="space-y-4">

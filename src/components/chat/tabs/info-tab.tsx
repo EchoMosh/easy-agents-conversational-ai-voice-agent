@@ -1,7 +1,7 @@
 import { Mail, Phone, User, Tag, PlusCircle, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lead } from "@/pages/dashboard/leads";
+import { Lead, LeadVariable } from "@/pages/dashboard/leads";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -14,6 +14,7 @@ import { TagsManager } from "@/components/leads/components/tags/tags-manager";
 import { PipelineSelect } from "@/components/leads/components/pipeline-select";
 import { useQuery } from "@tanstack/react-query";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
+import { LeadTag } from "@/types/tag-types";
 
 interface InfoTabProps {
   lead: Lead;

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -144,6 +143,9 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
             leadId={lead.id}
             variables={lead.variables || []}
             onVariablesUpdated={onSuccess}
+            onAddClick={() => {}}
+            onEdit={() => {}}
+            onDelete={() => {}}
           />
         </div>
       </div>
