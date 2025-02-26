@@ -63,7 +63,12 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
 
       const activities: Activity[] = (activitiesResponse.data || []).map(activity => ({
         id: activity.id,
-        type: activity.activity_type,
+        type: activity.content.includes('Email') ? 'contact_update' :
+              activity.content.includes('Phone') ? 'contact_update' :
+              activity.content.includes('Name') ? 'name_update' :
+              activity.content.includes('Status') ? 'status_change' :
+              activity.content.includes('variable') ? 'variable_add' :
+              'status_change', // fallback
         content: activity.content,
         timestamp: activity.created_at,
         old_value: activity.old_value,

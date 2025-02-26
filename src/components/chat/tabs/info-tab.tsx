@@ -1,22 +1,125 @@
 
-import { Tag, Star, PlusCircle } from "lucide-react";
+import { Tag, Star, PlusCircle, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Lead } from "@/pages/dashboard/leads";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface InfoTabProps {
   lead: Lead;
 }
 
 export function InfoTab({ lead }: InfoTabProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedLead, setEditedLead] = useState(lead);
+  const queryClient = useQueryClient();
+
+  const handleSave = async () => {
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({
+          name: editedLead.name,
+          email: editedLead.email,
+          phone: editedLead.phone,
+          status: editedLead.status
+        })
+        .eq('id', lead.id);
+
+      if (error) throw error;
+
+      toast.success("Lead information updated successfully");
+      setIsEditing(false);
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['lead_activities', lead.id] });
+    } catch (error) {
+      console.error('Error updating lead:', error);
+      toast.error("Failed to update lead information");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (isEditing) {
+                handleSave();
+              } else {
+                setIsEditing(true);
+              }
+            }}
+          >
+            {isEditing ? (
+              <>
+                <Check className="h-4 w-4 mr-2" />
+                Save
+              </>
+            ) : (
+              <>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
+              </>
+            )}
+          </Button>
+        </div>
         <div className="space-y-3 bg-muted/50 rounded-lg p-4">
-          <p className="text-sm"><span className="font-medium">Name:</span> {lead.name}</p>
-          <p className="text-sm"><span className="font-medium">Email:</span> {lead.email || "Not provided"}</p>
-          <p className="text-sm"><span className="font-medium">Phone:</span> {lead.phone || "Not provided"}</p>
+          {isEditing ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input
+                  value={editedLead.name}
+                  onChange={(e) => setEditedLead({ ...editedLead, name: e.target.value })}
+                  placeholder="Enter name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={editedLead.email || ''}
+                  onChange={(e) => setEditedLead({ ...editedLead, email: e.target.value })}
+                  placeholder="Enter email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <PhoneInput
+                  value={editedLead.phone || ''}
+                  onChange={(value) => setEditedLead({ ...editedLead, phone: value })}
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditedLead(lead);
+                }}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm"><span className="font-medium">Name:</span> {lead.name}</p>
+              <p className="text-sm"><span className="font-medium">Email:</span> {lead.email || "Not provided"}</p>
+              <p className="text-sm"><span className="font-medium">Phone:</span> {lead.phone || "Not provided"}</p>
+            </>
+          )}
         </div>
       </div>
 
