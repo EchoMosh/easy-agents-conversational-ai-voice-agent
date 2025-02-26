@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineHeader } from "@/components/pipelines/pipeline-header";
@@ -37,6 +37,13 @@ export default function PipelinesPage() {
     refetchPipelines,
     refetchLeads,
   } = usePipeline();
+
+  // Automatically select the first pipeline when pipelines are loaded
+  useEffect(() => {
+    if (pipelines?.length > 0 && !selectedPipeline) {
+      setSelectedPipeline(pipelines[0]);
+    }
+  }, [pipelines, selectedPipeline, setSelectedPipeline]);
 
   const {
     showDeleteDialog,
