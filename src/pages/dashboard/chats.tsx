@@ -1,11 +1,13 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "./leads";
-import { Clock, User, FileText } from "lucide-react";
+import { Clock, User, FileText, PlusCircle } from "lucide-react";
 import { Command, CommandInput } from "@/components/ui/command";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { LeadSidebar } from "@/components/chat/lead-sidebar";
 import { ChatArea } from "@/components/chat/chat-area";
 import { TimelineTab } from "@/components/chat/tabs/timeline-tab";
