@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { 
   Mail, 
@@ -8,11 +9,10 @@ import {
   Check, 
   X, 
   UserPlus,
-  Tags,
+  Tag,
   User,
-  ArrowRightLeft,
+  Variable,
   MessageSquare,
-  Binary,
   GitBranch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,7 @@ export function TimelineItemComponent({
       case 'name_update':
         return <User className="h-4 w-4" />;
       case 'variable_add':
-        return <ArrowRightLeft className="h-4 w-4" />;
+        return <Variable className="h-4 w-4" />;
       case 'lead_created':
         return <UserPlus className="h-4 w-4" />;
       default:
