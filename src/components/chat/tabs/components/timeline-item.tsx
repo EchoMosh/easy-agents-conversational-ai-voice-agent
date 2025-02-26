@@ -62,7 +62,7 @@ export function TimelineItemComponent({
           {!isLast && <Separator orientation="vertical" className="absolute h-full top-8 left-1/2 -translate-x-1/2 bg-gray-200/50" />}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="p-3 rounded-lg bg-white/60 backdrop-blur-sm border border-white/40 shadow-sm">
+          <div className="p-3 rounded-lg bg-white/60 backdrop-blur-sm border border-white/40 shadow-sm py-0">
             {isNote(item) && editingNoteId === item.id ? <div className="space-y-2">
                 <Textarea value={editedContent} onChange={e => onEditContentChange(e.target.value)} className="min-h-[60px] bg-white/80" />
                 <div className="flex gap-2">
