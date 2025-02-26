@@ -2,12 +2,15 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface DeleteDialogProps {
   isOpen: boolean;
@@ -26,7 +29,8 @@ export function DeleteDialog({
   title,
   description
 }: DeleteDialogProps) {
-  const handleConfirm = async () => {
+  const handleConfirm = async (e: React.MouseEvent) => {
+    e.preventDefault();
     try {
       await onConfirm();
     } finally {
@@ -35,31 +39,25 @@ export function DeleteDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="text-red-600">{title}</DialogTitle>
-          <DialogDescription className="text-base">
+    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-red-600">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-base">
             {description}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-col gap-4 mt-8">
-          <Button
-            variant="destructive"
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
             onClick={handleConfirm}
             disabled={isDeleting}
+            className="bg-red-600 hover:bg-red-700 text-white"
           >
             {isDeleting ? "Deleting..." : "Delete"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isDeleting}
-          >
-            Cancel
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
