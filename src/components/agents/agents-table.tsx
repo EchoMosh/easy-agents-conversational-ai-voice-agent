@@ -28,43 +28,41 @@ interface AgentsTableProps {
 
 export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const navigate = useNavigate();
-  const [deleteState, setDeleteState] = useState<{
-    agentId: string | null;
-    isOpen: boolean;
-    isDeleting: boolean;
-  }>({
-    agentId: null,
-    isOpen: false,
-    isDeleting: false
-  });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getAvatarUrl = (agentId: string, role: string) => {
     const seed = `${agentId}-${role}`;
     return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&size=200`;
   };
 
+  const handleDelete = (agentId: string) => {
+    setSelectedAgentId(agentId);
+    setDeleteDialogOpen(true);
+  };
+
   const handleDeleteConfirm = async () => {
-    if (!deleteState.agentId || deleteState.isDeleting) return;
+    if (!selectedAgentId || isDeleting) return;
     
-    setDeleteState(prev => ({ ...prev, isDeleting: true }));
+    setIsDeleting(true);
     try {
-      await onDelete(deleteState.agentId);
+      await onDelete(selectedAgentId);
     } catch (error) {
       console.error("Error deleting agent:", error);
     } finally {
-      setDeleteState({ agentId: null, isOpen: false, isDeleting: false });
+      setIsDeleting(false);
+      setSelectedAgentId(null);
+      setDeleteDialogOpen(false);
     }
   };
 
-  const handleOpenChange = (open: boolean) => {
-    setDeleteState(prev => ({
-      ...prev,
-      isOpen: open,
-      // Reset agentId only when closing and not in the middle of deleting
-      agentId: open ? prev.agentId : null,
-      // Reset isDeleting when dialog closes
-      isDeleting: open ? prev.isDeleting : false
-    }));
+  const handleDialogOpenChange = (open: boolean) => {
+    setDeleteDialogOpen(open);
+    if (!open) {
+      setSelectedAgentId(null);
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -117,7 +115,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                       Edit Flow
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setDeleteState({ agentId: agent.id, isOpen: true, isDeleting: false })}
+                      onClick={() => handleDelete(agent.id)}
                       className="text-red-600 focus:text-red-600"
                     >
                       <Trash className="mr-2 h-4 w-4" />
@@ -159,10 +157,10 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
       </div>
 
       <DeleteDialog
-        isOpen={deleteState.isOpen}
-        onOpenChange={handleOpenChange}
+        isOpen={deleteDialogOpen}
+        onOpenChange={handleDialogOpenChange}
         onConfirm={handleDeleteConfirm}
-        isDeleting={deleteState.isDeleting}
+        isDeleting={isDeleting}
         title="Are you sure?"
         description="This action cannot be undone. This will permanently delete the agent and all of its data."
       />
