@@ -78,13 +78,8 @@ const AgentsPage = () => {
   };
 
   const handleCreateSuccess = async (agentId: string) => {
-    // First invalidate the query to refresh the data
     await queryClient.invalidateQueries({ queryKey: ['agents'] });
-    
-    // Then close the dialog
     setIsCreating(false);
-    
-    // Only show the success toast after everything is done
     toast({
       title: "Success",
       description: "Agent created successfully",
@@ -144,3 +139,4 @@ const AgentsPage = () => {
 };
 
 export default AgentsPage;
+

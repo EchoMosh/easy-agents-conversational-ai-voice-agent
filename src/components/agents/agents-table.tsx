@@ -56,11 +56,11 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     <div className="w-full relative">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {agents.map((agent) => (
-          <Card key={agent.id} className="flex flex-col">
-            <CardHeader>
+          <Card key={agent.id} className="flex flex-col hover:shadow-lg transition-shadow duration-200">
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-12 w-12 border-2 border-primary/10">
                     <AvatarImage 
                       src={getAvatarUrl(agent.id, agent.role)} 
                       alt={agent.name} 
@@ -78,7 +78,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
                       <span className="sr-only">Open menu</span>
                       <svg
                         className="h-4 w-4"
@@ -112,8 +112,8 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                 </DropdownMenu>
               </div>
             </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="flex items-center mt-2">
+            <CardContent className="flex-grow pb-4">
+              <div className="flex items-center">
                 <span className="text-sm text-muted-foreground">Status:</span>
                 <span 
                   className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -136,7 +136,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                 </span>
               </div>
             </CardContent>
-            <CardFooter className="text-sm text-muted-foreground">
+            <CardFooter className="text-sm text-muted-foreground pt-0 border-t">
               Created {new Date(agent.created_at).toLocaleDateString()}
             </CardFooter>
           </Card>
