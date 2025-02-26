@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface TagFormData {
   name: string;
@@ -11,9 +12,10 @@ interface TagFormData {
 interface TagFormProps {
   defaultValues?: TagFormData;
   onSubmit: (data: TagFormData) => void;
+  isSubmitting?: boolean;
 }
 
-export function TagForm({ defaultValues, onSubmit }: TagFormProps) {
+export function TagForm({ defaultValues, onSubmit, isSubmitting = false }: TagFormProps) {
   const { register, handleSubmit } = useForm<TagFormData>({
     defaultValues: defaultValues || { name: "" }
   });
@@ -27,9 +29,19 @@ export function TagForm({ defaultValues, onSubmit }: TagFormProps) {
           {...register("name", { required: true })}
           placeholder="Enter tag name"
           className="h-10"
+          disabled={isSubmitting}
         />
       </div>
-      <Button type="submit" className="w-full">Save Tag</Button>
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          'Save Tag'
+        )}
+      </Button>
     </form>
   );
 }

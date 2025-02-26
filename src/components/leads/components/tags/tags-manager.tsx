@@ -22,6 +22,7 @@ interface CreateTagData {
 export function TagsManager({ leadId, tags }: TagsManagerProps) {
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
   const invalidateQueries = () => {
@@ -30,41 +31,54 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
   };
 
   const handleCreateTag = async (data: CreateTagData) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     try {
-      const user = await supabase.auth.getUser();
-      if (!user.data.user) {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      
+      if (!userData.user) {
         toast.error("You must be logged in to create tags");
         return;
       }
 
+      // First create the tag
       const { data: tag, error: tagError } = await supabase
         .from('tags')
         .insert({
           name: data.name,
-          user_id: user.data.user.id
+          user_id: userData.user.id
         })
         .select()
         .single();
 
       if (tagError) throw tagError;
 
+      // Then create the lead_tag association
       const { error: linkError } = await supabase
         .from('lead_tags')
-        .insert([{ lead_id: leadId, tag_id: tag.id }]);
+        .insert({
+          lead_id: leadId,
+          tag_id: tag.id
+        });
 
       if (linkError) throw linkError;
 
       toast.success("Tag added successfully");
       setIsAddingTag(false);
       invalidateQueries();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating tag:', error);
-      toast.error("Failed to create tag");
+      toast.error(error.message || "Failed to create tag");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleUpdateTag = async (data: CreateTagData) => {
-    if (!editingTag) return;
+    if (!editingTag || isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       const { error } = await supabase
@@ -79,13 +93,18 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
       toast.success("Tag updated successfully");
       setEditingTag(null);
       invalidateQueries();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating tag:', error);
-      toast.error("Failed to update tag");
+      toast.error(error.message || "Failed to update tag");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteTag = async (tagId: string) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     try {
       const { error } = await supabase
         .from('lead_tags')
@@ -97,9 +116,11 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
 
       toast.success("Tag removed successfully");
       invalidateQueries();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing tag:', error);
-      toast.error("Failed to remove tag");
+      toast.error(error.message || "Failed to remove tag");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -118,7 +139,10 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
             <DialogHeader>
               <DialogTitle>Add Tag</DialogTitle>
             </DialogHeader>
-            <TagForm onSubmit={handleCreateTag} />
+            <TagForm 
+              onSubmit={handleCreateTag}
+              isSubmitting={isSubmitting}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -142,6 +166,7 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
             <TagForm
               defaultValues={editingTag}
               onSubmit={handleUpdateTag}
+              isSubmitting={isSubmitting}
             />
           )}
         </DialogContent>
