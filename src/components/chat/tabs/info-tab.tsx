@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface InfoTabProps {
   lead: Lead;
@@ -18,12 +19,13 @@ interface InfoTabProps {
 export function InfoTab({ lead }: InfoTabProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedLead, setEditedLead] = useState(lead);
+  const [isAddingVariable, setIsAddingVariable] = useState(false);
+  const [newVariable, setNewVariable] = useState({ name: "", value: "" });
+  const [editingVariable, setEditingVariable] = useState<{ id: string; name: string; value: string } | null>(null);
   const queryClient = useQueryClient();
 
   const handleSave = async () => {
     try {
-      console.log("Saving lead...", editedLead);
-      
       const { error } = await supabase
         .from('leads')
         .update({
@@ -38,16 +40,80 @@ export function InfoTab({ lead }: InfoTabProps) {
       toast.success("Lead information updated successfully");
       setIsEditing(false);
       
-      // Invalidate and refetch queries to refresh the data
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['leads'] }),
         queryClient.invalidateQueries({ queryKey: ['lead_activities', lead.id] })
       ]);
-
-      console.log("Lead updated successfully");
     } catch (error) {
       console.error('Error updating lead:', error);
       toast.error("Failed to update lead information");
+    }
+  };
+
+  const handleAddVariable = async () => {
+    if (!newVariable.name || !newVariable.value) {
+      toast.error("Please fill in both name and value");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('lead_variables')
+        .insert([{
+          lead_id: lead.id,
+          name: newVariable.name,
+          value: newVariable.value
+        }]);
+
+      if (error) throw error;
+
+      toast.success("Variable added successfully");
+      setIsAddingVariable(false);
+      setNewVariable({ name: "", value: "" });
+      await queryClient.invalidateQueries({ queryKey: ['leads'] });
+    } catch (error) {
+      console.error('Error adding variable:', error);
+      toast.error("Failed to add variable");
+    }
+  };
+
+  const handleUpdateVariable = async () => {
+    if (!editingVariable) return;
+
+    try {
+      const { error } = await supabase
+        .from('lead_variables')
+        .update({
+          name: editingVariable.name,
+          value: editingVariable.value
+        })
+        .eq('id', editingVariable.id);
+
+      if (error) throw error;
+
+      toast.success("Variable updated successfully");
+      setEditingVariable(null);
+      await queryClient.invalidateQueries({ queryKey: ['leads'] });
+    } catch (error) {
+      console.error('Error updating variable:', error);
+      toast.error("Failed to update variable");
+    }
+  };
+
+  const handleDeleteVariable = async (variableId: string) => {
+    try {
+      const { error } = await supabase
+        .from('lead_variables')
+        .delete()
+        .eq('id', variableId);
+
+      if (error) throw error;
+
+      toast.success("Variable deleted successfully");
+      await queryClient.invalidateQueries({ queryKey: ['leads'] });
+    } catch (error) {
+      console.error('Error deleting variable:', error);
+      toast.error("Failed to delete variable");
     }
   };
 
@@ -128,18 +194,97 @@ export function InfoTab({ lead }: InfoTabProps) {
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-muted-foreground">Lead Variables</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-muted-foreground">Lead Variables</h3>
+          <Dialog open={isAddingVariable} onOpenChange={setIsAddingVariable}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8">
+                <PlusCircle className="w-4 h-4 mr-2" />
+                Add Variable
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add Variable</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={newVariable.name}
+                    onChange={(e) => setNewVariable({ ...newVariable, name: e.target.value })}
+                    placeholder="Enter variable name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="value">Value</Label>
+                  <Input
+                    id="value"
+                    value={newVariable.value}
+                    onChange={(e) => setNewVariable({ ...newVariable, value: e.target.value })}
+                    placeholder="Enter variable value"
+                  />
+                </div>
+              </div>
+              <Button onClick={handleAddVariable}>Add Variable</Button>
+            </DialogContent>
+          </Dialog>
+        </div>
         <div className="flex flex-wrap gap-2">
           {lead.variables?.map((variable) => (
-            <Badge key={variable.id} variant="secondary">
-              <Tag className="w-3 h-3 mr-1" />
-              {variable.name}: {variable.value}
-            </Badge>
+            editingVariable?.id === variable.id ? (
+              <div key={variable.id} className="flex items-center gap-2 bg-white p-2 rounded-md border">
+                <Input
+                  value={editingVariable.name}
+                  onChange={(e) => setEditingVariable({ ...editingVariable, name: e.target.value })}
+                  className="h-7 w-32"
+                />
+                <Input
+                  value={editingVariable.value}
+                  onChange={(e) => setEditingVariable({ ...editingVariable, value: e.target.value })}
+                  className="h-7 w-32"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleUpdateVariable}
+                  className="h-7 w-7 p-0"
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditingVariable(null)}
+                  className="h-7 w-7 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Badge key={variable.id} variant="secondary">
+                <Tag className="w-3 h-3 mr-1" />
+                {variable.name}: {variable.value}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditingVariable(variable)}
+                  className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeleteVariable(variable.id)}
+                  className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            )
           ))}
-          <Button variant="outline" size="sm" className="h-6">
-            <PlusCircle className="w-3 h-3 mr-1" />
-            Add Variable
-          </Button>
         </div>
       </div>
 
@@ -158,16 +303,6 @@ export function InfoTab({ lead }: InfoTabProps) {
             <PlusCircle className="w-3 h-3 mr-1" />
             Add Tag
           </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium text-muted-foreground">Lead Score</h3>
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">85/100</span>
-            <Badge variant="secondary" className="bg-green-100 text-green-700">High Value</Badge>
-          </div>
         </div>
       </div>
     </div>
