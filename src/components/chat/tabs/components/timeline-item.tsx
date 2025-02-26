@@ -14,7 +14,7 @@ import {
   ArrowRightLeft,
   MessageSquare,
   Variable,
-  Pipeline
+  GitBranch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,7 +45,7 @@ export function TimelineItemComponent({
       case 'note':
         return <StickyNote className="h-4 w-4" />;
       case 'status_change':
-        return <Pipeline className="h-4 w-4" />;
+        return <GitBranch className="h-4 w-4" />;
       case 'contact_update':
         if (content.toLowerCase().includes('email')) {
           return <Mail className="h-4 w-4" />;
