@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Tag } from "@/types/tag-types";
 
 export interface Lead {
   id: string;
@@ -66,23 +65,6 @@ const LeadsPage = () => {
     }
   });
 
-  const { data: pipelines = [] } = useQuery({
-    queryKey: ['pipelines'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('pipelines')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const pipelineMap = Object.fromEntries(
-    pipelines.map(pipeline => [pipeline.id, pipeline.name])
-  );
-
   const filteredLeads = leads?.filter(lead => {
     const matchesSearch = lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (lead.email && lead.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -92,11 +74,6 @@ const LeadsPage = () => {
     
     return matchesSearch && matchesStatus;
   }) || [];
-
-  const leadsWithPipelineNames = filteredLeads.map(lead => ({
-    ...lead,
-    pipelineName: pipelineMap[lead.pipeline_id]
-  }));
 
   return (
     <div className="p-6 space-y-6">
@@ -148,7 +125,7 @@ const LeadsPage = () => {
         </Select>
       </div>
 
-      <LeadsTable leads={leadsWithPipelineNames} isLoading={isLoading} onLeadUpdated={() => refetch()} />
+      <LeadsTable leads={filteredLeads} isLoading={isLoading} onLeadUpdated={() => refetch()} />
     </div>
   );
 };

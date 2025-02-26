@@ -12,7 +12,7 @@ import OnboardingPage from './pages/onboarding';
 
 // Dashboard pages
 import AgentsPage from './pages/dashboard/agents';
-import LeadsPage from './pages/dashboard/leads';
+import LeadsPage from './pages/dashboard/leads'; // Changed from leads.ts to leads
 import SettingsPage from './pages/dashboard/settings';
 import ProfilePage from './pages/dashboard/profile';
 import AgentFlowPage from './pages/dashboard/agent-flow';
