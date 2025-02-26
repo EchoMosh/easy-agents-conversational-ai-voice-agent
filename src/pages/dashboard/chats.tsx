@@ -1,4 +1,3 @@
-
 import { Mail, MessageSquare, Phone, Send } from "lucide-react";
 import { useState } from "react";
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -10,14 +9,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "./leads";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { EmailTagInput } from "@/components/ui/email-tag-input";
+import { Bold, Italic, List, ListOrdered, Quote, Undo, Redo } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'chat' | 'email' | 'sms'>('chat');
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
-  const [cc, setCC] = useState("");
-  const [bcc, setBCC] = useState("");
+  const [cc, setCC] = useState<string[]>([]);
+  const [bcc, setBCC] = useState<string[]>([]);
 
   const editor = useEditor({
     extensions: [
@@ -46,7 +48,6 @@ export default function ChatsPage() {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement sending message based on messageType
     console.log(`Sending ${messageType}:`, {
       message: messageType === 'email' ? message : editor?.getHTML() || message,
       subject,
@@ -57,8 +58,8 @@ export default function ChatsPage() {
     editor?.commands.setContent('');
     if (messageType === 'email') {
       setSubject("");
-      setCC("");
-      setBCC("");
+      setCC([]);
+      setBCC([]);
     }
   };
 
@@ -155,33 +156,115 @@ export default function ChatsPage() {
 
                 <form onSubmit={handleSend} className="space-y-2">
                   {messageType === 'email' && (
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Email subject"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        className="w-full"
-                      />
-                      <Input
-                        placeholder="CC (separate emails with commas)"
-                        value={cc}
-                        onChange={(e) => setCC(e.target.value)}
-                        className="w-full"
-                      />
-                      <Input
-                        placeholder="BCC (separate emails with commas)"
-                        value={bcc}
-                        onChange={(e) => setBCC(e.target.value)}
-                        className="w-full"
-                      />
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <div className="relative">
+                            <Input
+                              placeholder="Subject"
+                              value={subject}
+                              onChange={(e) => setSubject(e.target.value)}
+                              className="w-full"
+                            />
+                            <span className="absolute left-2 -top-2.5 px-1 bg-background text-xs text-muted-foreground">
+                              Subject
+                            </span>
+                          </div>
+                        </div>
+                        <EmailTagInput
+                          label="CC"
+                          value={cc}
+                          onChange={setCC}
+                          placeholder="Add CC emails..."
+                        />
+                        <EmailTagInput
+                          label="BCC"
+                          value={bcc}
+                          onChange={setBCC}
+                          placeholder="Add BCC emails..."
+                        />
+                      </div>
+                      <div className="border rounded-md overflow-hidden">
+                        <div className="flex items-center gap-1 p-2 border-b bg-muted/50">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => editor?.chain().focus().toggleBold().run()}
+                            data-active={editor?.isActive('bold')}
+                          >
+                            <Bold className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => editor?.chain().focus().toggleItalic().run()}
+                            data-active={editor?.isActive('italic')}
+                          >
+                            <Italic className="h-4 w-4" />
+                          </Button>
+                          <Separator orientation="vertical" className="mx-1 h-6" />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                            data-active={editor?.isActive('bulletList')}
+                          >
+                            <List className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                            data-active={editor?.isActive('orderedList')}
+                          >
+                            <ListOrdered className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+                            data-active={editor?.isActive('blockquote')}
+                          >
+                            <Quote className="h-4 w-4" />
+                          </Button>
+                          <Separator orientation="vertical" className="mx-1 h-6" />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => editor?.chain().focus().undo().run()}
+                          >
+                            <Undo className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => editor?.chain().focus().redo().run()}
+                          >
+                            <Redo className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="p-2 min-h-[150px]">
+                          <EditorContent editor={editor} className="prose prose-sm max-w-none min-h-[150px]" />
+                        </div>
+                      </div>
                     </div>
                   )}
                   <div className="flex flex-col gap-2">
-                    {messageType === 'email' ? (
-                      <div className="border rounded-md p-2 min-h-[150px]">
-                        <EditorContent editor={editor} className="prose prose-sm max-w-none min-h-[150px]" />
-                      </div>
-                    ) : (
+                    {messageType !== 'email' && (
                       <div className="flex gap-2">
                         <Input
                           placeholder={`Type your ${messageType} message...`}
