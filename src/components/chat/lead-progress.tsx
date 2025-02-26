@@ -13,7 +13,7 @@ interface LeadProgressProps {
 }
 
 export function LeadProgress({ currentStage, stages }: LeadProgressProps) {
-  const currentIndex = stages.findIndex(stage => stage.label.toLowerCase() === currentStage.toLowerCase()) || 0;
+  const currentIndex = stages.findIndex(stage => stage.label.toLowerCase() === currentStage.toLowerCase());
 
   return (
     <ScrollArea className="max-w-[500px]" type="scroll">
