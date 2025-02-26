@@ -4,18 +4,43 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MessageComposerProps {
   messageType: 'email' | 'sms' | 'note';
   onMessageTypeChange: (type: 'email' | 'sms' | 'note') => void;
+  leadId: string;
 }
 
-export function MessageComposer({ messageType, onMessageTypeChange }: MessageComposerProps) {
+export function MessageComposer({ messageType, onMessageTypeChange, leadId }: MessageComposerProps) {
   const [message, setMessage] = useState("");
+  const queryClient = useQueryClient();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement sending message/note
+    if (!message.trim()) return;
+
+    if (messageType === 'note') {
+      const { error } = await supabase
+        .from('lead_notes')
+        .insert([
+          { 
+            lead_id: leadId,
+            content: message,
+          }
+        ]);
+
+      if (error) {
+        console.error("Error adding note:", error);
+        return;
+      }
+
+      // Refresh the timeline data
+      queryClient.invalidateQueries({ queryKey: ['lead_notes', leadId] });
+    }
+    
+    // TODO: Implement email and SMS sending
     console.log("Sending:", messageType, message);
     setMessage("");
   };
@@ -42,7 +67,7 @@ export function MessageComposer({ messageType, onMessageTypeChange }: MessageCom
           </ToggleGroup>
           <Button type="submit">
             <Send className="mr-2 h-4 w-4" />
-            Send {messageType === 'email' ? 'Email' : messageType === 'sms' ? 'SMS' : 'Note'}
+            {messageType === 'note' ? 'Add Note' : `Send ${messageType === 'email' ? 'Email' : 'SMS'}`}
           </Button>
         </div>
         
