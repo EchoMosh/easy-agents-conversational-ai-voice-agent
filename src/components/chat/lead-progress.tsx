@@ -2,20 +2,18 @@
 import { Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const stages = [
-  { id: 'new', label: 'New Lead' },
-  { id: 'contacted', label: 'Contacted' },
-  { id: 'qualified', label: 'Qualified' },
-  { id: 'proposal', label: 'Proposal' },
-  { id: 'closed', label: 'Closed' }
-];
+interface Stage {
+  id: string;
+  label: string;
+}
 
 interface LeadProgressProps {
   currentStage: string;
+  stages: Stage[];
 }
 
-export function LeadProgress({ currentStage }: LeadProgressProps) {
-  const currentIndex = stages.findIndex(stage => stage.id === currentStage) || 0;
+export function LeadProgress({ currentStage, stages }: LeadProgressProps) {
+  const currentIndex = stages.findIndex(stage => stage.label.toLowerCase() === currentStage.toLowerCase()) || 0;
 
   return (
     <ScrollArea className="max-w-[500px]" type="scroll">

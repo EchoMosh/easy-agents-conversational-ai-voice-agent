@@ -1,8 +1,12 @@
-import { Mail } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
+import { Mail, MessageCircle, StickyNote } from "lucide-react";
 import { Lead } from "@/pages/dashboard/leads";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LeadProgress } from "./lead-progress";
 import { MessageComposer } from "./message-composer";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 
 interface ChatAreaProps {
   selectedLead: Lead | undefined;
@@ -10,7 +14,29 @@ interface ChatAreaProps {
   onMessageTypeChange: (type: 'email' | 'sms' | 'note') => void;
 }
 
-export function ChatArea({ selectedLead, messageType, onMessageTypeChange }: ChatAreaProps) {
+export function ChatArea({ 
+  selectedLead, 
+  messageType, 
+  onMessageTypeChange 
+}: ChatAreaProps) {
+  // Fetch the current pipeline to get its stages
+  const { data: pipeline } = useQuery({
+    queryKey: ['pipeline', selectedLead?.pipeline_id],
+    queryFn: async () => {
+      if (!selectedLead?.pipeline_id) return null;
+      
+      const { data, error } = await supabase
+        .from('pipelines')
+        .select('*')
+        .eq('id', selectedLead.pipeline_id)
+        .single();
+      
+      if (error) throw error;
+      return convertJsonToPipeline(data);
+    },
+    enabled: !!selectedLead?.pipeline_id
+  });
+
   if (!selectedLead) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -21,6 +47,11 @@ export function ChatArea({ selectedLead, messageType, onMessageTypeChange }: Cha
       </div>
     );
   }
+
+  // Get the current stage index from the pipeline columns
+  const currentStageIndex = pipeline?.columns.findIndex(
+    col => col.title.toLowerCase() === selectedLead.status.toLowerCase()
+  ) ?? 0;
 
   return (
     <div className="flex-1 flex flex-col">
@@ -37,18 +68,46 @@ export function ChatArea({ selectedLead, messageType, onMessageTypeChange }: Cha
               </p>
             </div>
           </div>
-          <LeadProgress currentStage={selectedLead.status || 'new'} />
+          {pipeline && (
+            <LeadProgress 
+              currentStage={selectedLead.status} 
+              stages={pipeline.columns.map(col => ({
+                id: col.id,
+                label: col.title
+              }))}
+            />
+          )}
+        </div>
+
+        <div className="mt-6">
+          <ToggleGroup 
+            type="single" 
+            value={messageType}
+            onValueChange={(value) => value && onMessageTypeChange(value as 'email' | 'sms' | 'note')}
+            className="justify-start"
+          >
+            <ToggleGroupItem value="email" size="sm">
+              <Mail className="h-4 w-4 mr-2" />
+              Email
+            </ToggleGroupItem>
+            <ToggleGroupItem value="sms" size="sm">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              SMS
+            </ToggleGroupItem>
+            <ToggleGroupItem value="note" size="sm">
+              <StickyNote className="h-4 w-4 mr-2" />
+              Note
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-6">
-        <div className="space-y-4 max-w-3xl mx-auto">
-          {/* Chat messages will go here when implemented */}
-        </div>
-      </ScrollArea>
+      <div className="flex-1">
+        {/* Chat messages will go here */}
+      </div>
 
       <MessageComposer 
-        messageType={messageType} 
+        messageType={messageType}
         onMessageTypeChange={onMessageTypeChange}
         leadId={selectedLead.id}
       />
