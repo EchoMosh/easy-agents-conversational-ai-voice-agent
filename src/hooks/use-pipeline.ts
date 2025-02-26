@@ -16,9 +16,6 @@ export function usePipeline() {
     refetchPipelines, 
     refetchLeads,
     invalidateAndRefetch,
-    isLoading,
-    isFetching,
-    isPending
   } = usePipelineQueries(selectedPipeline?.id);
 
   const {
@@ -26,8 +23,7 @@ export function usePipeline() {
     createNewPipeline,
     handleDeletePipeline: deletePipeline,
     handleEditPipelineName,
-    isUpdatingPipelineName,
-  } = usePipelineMutations(refetchPipelines, refetchLeads);  // Changed to individual refetch functions
+  } = usePipelineMutations(refetchPipelines, refetchLeads);
 
   return {
     // State
@@ -36,7 +32,6 @@ export function usePipeline() {
     selectedPipeline,
     editedColumns,
     showNewPipelineDialog,
-    isLoading: isLoading || isUpdatingPipelineName, // Simplified loading state
 
     // State setters
     setSelectedPipeline,
