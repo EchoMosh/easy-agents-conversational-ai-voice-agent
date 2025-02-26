@@ -1,24 +1,21 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "./leads";
-import { History, StickyNote, User, FileText, PlusCircle } from "lucide-react";
+import { Clock, User, FileText } from "lucide-react";
 import { Command, CommandInput } from "@/components/ui/command";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
 import { LeadSidebar } from "@/components/chat/lead-sidebar";
 import { ChatArea } from "@/components/chat/chat-area";
-import { ActivityTab } from "@/components/chat/tabs/activity-tab";
+import { TimelineTab } from "@/components/chat/tabs/timeline-tab";
 import { InfoTab } from "@/components/chat/tabs/info-tab";
-import { TasksTab } from "@/components/chat/tabs/tasks-tab";
 
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'email' | 'sms'>('email');
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentTab, setCurrentTab] = useState<"activity" | "notes" | "info" | "tasks" | "files">("activity");
+  const [currentTab, setCurrentTab] = useState<"timeline" | "details" | "files">("timeline");
   const [tasks, setTasks] = useState([
     { id: '1', title: 'Follow up on proposal', completed: false, created_at: new Date().toISOString() },
     { id: '2', title: 'Send contract draft', completed: true, created_at: new Date().toISOString() }
@@ -41,7 +38,7 @@ export default function ChatsPage() {
 
   const selectedLead = leads?.find(lead => lead.id === selectedLeadId);
 
-  const activities = [
+  const timelineItems = [
     {
       id: '1',
       type: 'email' as const,
@@ -53,6 +50,12 @@ export default function ChatsPage() {
       type: 'sms' as const,
       content: 'SMS reminder about meeting tomorrow',
       timestamp: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: '3',
+      type: 'note' as const,
+      content: 'Called to discuss proposal details',
+      timestamp: new Date(Date.now() - 7200000).toISOString(),
     }
   ];
 
@@ -75,27 +78,21 @@ export default function ChatsPage() {
           <div className="p-4 border-b bg-background">
             <Command className="rounded-lg border shadow-md">
               <CommandInput
-                placeholder="Search activities and notes..."
+                placeholder="Search timeline..."
                 value={searchQuery}
                 onValueChange={setSearchQuery}
               />
             </Command>
           </div>
           
-          <Tabs value={currentTab} onValueChange={(value: "activity" | "notes" | "info" | "tasks" | "files") => setCurrentTab(value)} className="flex-1 flex flex-col">
+          <Tabs value={currentTab} onValueChange={(value: "timeline" | "details" | "files") => setCurrentTab(value)} className="flex-1 flex flex-col">
             <div className="px-4 py-2 border-b bg-background">
-              <TabsList className="w-full grid grid-cols-5">
-                <TabsTrigger value="activity">
-                  <History className="w-4 h-4" />
+              <TabsList className="w-full grid grid-cols-3">
+                <TabsTrigger value="timeline">
+                  <Clock className="w-4 h-4" />
                 </TabsTrigger>
-                <TabsTrigger value="notes">
-                  <StickyNote className="w-4 h-4" />
-                </TabsTrigger>
-                <TabsTrigger value="info">
+                <TabsTrigger value="details">
                   <User className="w-4 h-4" />
-                </TabsTrigger>
-                <TabsTrigger value="tasks">
-                  <FileText className="w-4 h-4" />
                 </TabsTrigger>
                 <TabsTrigger value="files">
                   <FileText className="w-4 h-4" />
@@ -104,16 +101,12 @@ export default function ChatsPage() {
             </div>
 
             <ScrollArea className="flex-1">
-              <TabsContent value="activity" className="m-0 p-4">
-                <ActivityTab activities={activities} />
+              <TabsContent value="timeline" className="m-0 p-4">
+                <TimelineTab items={timelineItems} />
               </TabsContent>
 
-              <TabsContent value="info" className="m-0 p-4">
+              <TabsContent value="details" className="m-0 p-4">
                 <InfoTab lead={selectedLead} />
-              </TabsContent>
-
-              <TabsContent value="tasks" className="m-0 p-4">
-                <TasksTab tasks={tasks} onTasksChange={setTasks} />
               </TabsContent>
 
               <TabsContent value="files" className="m-0 p-4">

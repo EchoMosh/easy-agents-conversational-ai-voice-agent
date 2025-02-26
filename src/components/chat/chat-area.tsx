@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Lead } from "@/pages/dashboard/leads";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useState } from "react";
+import { LeadProgress } from "./lead-progress";
 import { MessageComposer } from "./message-composer";
 
 interface ChatAreaProps {
@@ -28,16 +28,19 @@ export function ChatArea({ selectedLead, messageType, onMessageTypeChange }: Cha
   return (
     <div className="flex-1 flex flex-col">
       <div className="border-b p-6">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-lg">
-            {selectedLead.name[0].toUpperCase()}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-lg">
+              {selectedLead.name[0].toUpperCase()}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">{selectedLead.name}</h2>
+              <p className="text-sm text-muted-foreground">
+                {selectedLead.email || selectedLead.phone || "No contact info"}
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold">{selectedLead.name}</h2>
-            <p className="text-sm text-muted-foreground">
-              {selectedLead.email || selectedLead.phone || "No contact info"}
-            </p>
-          </div>
+          <LeadProgress currentStage={selectedLead.status || 'new'} />
         </div>
       </div>
 
