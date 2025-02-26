@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,13 +14,9 @@ import { InfoTab } from "@/components/chat/tabs/info-tab";
 
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [messageType, setMessageType] = useState<'email' | 'sms'>('email');
+  const [messageType, setMessageType] = useState<'email' | 'sms' | 'note'>('email');
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTab, setCurrentTab] = useState<"timeline" | "details" | "files">("timeline");
-  const [tasks, setTasks] = useState([
-    { id: '1', title: 'Follow up on proposal', completed: false, created_at: new Date().toISOString() },
-    { id: '2', title: 'Send contract draft', completed: true, created_at: new Date().toISOString() }
-  ]);
 
   const { data: leads } = useQuery({
     queryKey: ['leads'],

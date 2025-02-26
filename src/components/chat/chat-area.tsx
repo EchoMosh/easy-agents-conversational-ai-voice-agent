@@ -9,8 +9,8 @@ import { MessageComposer } from "./message-composer";
 
 interface ChatAreaProps {
   selectedLead: Lead | undefined;
-  messageType: 'email' | 'sms';
-  onMessageTypeChange: (type: 'email' | 'sms') => void;
+  messageType: 'email' | 'sms' | 'note';
+  onMessageTypeChange: (type: 'email' | 'sms' | 'note') => void;
 }
 
 export function ChatArea({ selectedLead, messageType, onMessageTypeChange }: ChatAreaProps) {
