@@ -1,4 +1,3 @@
-
 import { Tag, Star, PlusCircle, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +23,13 @@ export function InfoTab({ lead }: InfoTabProps) {
   const [editingVariable, setEditingVariable] = useState<{ id: string; name: string; value: string } | null>(null);
   const queryClient = useQueryClient();
 
+  const invalidateQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['leads'] }),
+      queryClient.invalidateQueries({ queryKey: ['lead_activities', lead.id] })
+    ]);
+  };
+
   const handleSave = async () => {
     try {
       const { error } = await supabase
@@ -39,11 +45,7 @@ export function InfoTab({ lead }: InfoTabProps) {
 
       toast.success("Lead information updated successfully");
       setIsEditing(false);
-      
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['leads'] }),
-        queryClient.invalidateQueries({ queryKey: ['lead_activities', lead.id] })
-      ]);
+      await invalidateQueries();
     } catch (error) {
       console.error('Error updating lead:', error);
       toast.error("Failed to update lead information");
@@ -70,7 +72,7 @@ export function InfoTab({ lead }: InfoTabProps) {
       toast.success("Variable added successfully");
       setIsAddingVariable(false);
       setNewVariable({ name: "", value: "" });
-      await queryClient.invalidateQueries({ queryKey: ['leads'] });
+      await invalidateQueries();
     } catch (error) {
       console.error('Error adding variable:', error);
       toast.error("Failed to add variable");
@@ -93,7 +95,7 @@ export function InfoTab({ lead }: InfoTabProps) {
 
       toast.success("Variable updated successfully");
       setEditingVariable(null);
-      await queryClient.invalidateQueries({ queryKey: ['leads'] });
+      await invalidateQueries();
     } catch (error) {
       console.error('Error updating variable:', error);
       toast.error("Failed to update variable");
@@ -110,7 +112,7 @@ export function InfoTab({ lead }: InfoTabProps) {
       if (error) throw error;
 
       toast.success("Variable deleted successfully");
-      await queryClient.invalidateQueries({ queryKey: ['leads'] });
+      await invalidateQueries();
     } catch (error) {
       console.error('Error deleting variable:', error);
       toast.error("Failed to delete variable");
