@@ -28,8 +28,15 @@ interface AgentsTableProps {
 
 export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const navigate = useNavigate();
-  const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteState, setDeleteState] = useState<{
+    agentId: string | null;
+    isOpen: boolean;
+    isDeleting: boolean;
+  }>({
+    agentId: null,
+    isOpen: false,
+    isDeleting: false
+  });
 
   const getAvatarUrl = (agentId: string, role: string) => {
     const seed = `${agentId}-${role}`;
@@ -37,23 +44,27 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!agentToDelete || isDeleting) return;
+    if (!deleteState.agentId || deleteState.isDeleting) return;
     
-    setIsDeleting(true);
+    setDeleteState(prev => ({ ...prev, isDeleting: true }));
     try {
-      await onDelete(agentToDelete);
+      await onDelete(deleteState.agentId);
     } catch (error) {
       console.error("Error deleting agent:", error);
     } finally {
-      setIsDeleting(false);
-      setAgentToDelete(null);
+      setDeleteState({ agentId: null, isOpen: false, isDeleting: false });
     }
   };
 
   const handleOpenChange = (open: boolean) => {
-    if (!open && !isDeleting) {
-      setAgentToDelete(null);
-    }
+    setDeleteState(prev => ({
+      ...prev,
+      isOpen: open,
+      // Reset agentId only when closing and not in the middle of deleting
+      agentId: open ? prev.agentId : null,
+      // Reset isDeleting when dialog closes
+      isDeleting: open ? prev.isDeleting : false
+    }));
   };
 
   return (
@@ -106,7 +117,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                       Edit Flow
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setAgentToDelete(agent.id)}
+                      onClick={() => setDeleteState({ agentId: agent.id, isOpen: true, isDeleting: false })}
                       className="text-red-600 focus:text-red-600"
                     >
                       <Trash className="mr-2 h-4 w-4" />
@@ -148,10 +159,10 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
       </div>
 
       <DeleteDialog
-        isOpen={!!agentToDelete}
+        isOpen={deleteState.isOpen}
         onOpenChange={handleOpenChange}
         onConfirm={handleDeleteConfirm}
-        isDeleting={isDeleting}
+        isDeleting={deleteState.isDeleting}
         title="Are you sure?"
         description="This action cannot be undone. This will permanently delete the agent and all of its data."
       />
