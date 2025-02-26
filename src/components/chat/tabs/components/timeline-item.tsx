@@ -9,11 +9,11 @@ import {
   Check, 
   X, 
   UserPlus,
-  Tag,
+  Tags,
   User,
   ArrowRightLeft,
   MessageSquare,
-  Variable,
+  Binary,
   GitBranch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,7 @@ export function TimelineItemComponent({
       case 'name_update':
         return <User className="h-4 w-4" />;
       case 'variable_add':
-        return <Variable className="h-4 w-4" />;
+        return <Binary className="h-4 w-4" />;
       case 'lead_created':
         return <UserPlus className="h-4 w-4" />;
       default:
