@@ -27,7 +27,6 @@ export function InfoTab({ lead }: InfoTabProps) {
   const [editingVariable, setEditingVariable] = useState<{ id: string; name: string; value: string } | null>(null);
   const queryClient = useQueryClient();
 
-  // Fetch pipelines
   const { data: pipelines = [] } = useQuery({
     queryKey: ['pipelines'],
     queryFn: async () => {
@@ -50,7 +49,6 @@ export function InfoTab({ lead }: InfoTabProps) {
 
   const handlePipelineChange = async (pipelineId: string) => {
     try {
-      // Get the old pipeline name
       const oldPipeline = pipelines.find(p => p.id === lead.pipeline_id);
       const newPipeline = pipelines.find(p => p.id === pipelineId);
 
@@ -62,7 +60,6 @@ export function InfoTab({ lead }: InfoTabProps) {
         return;
       }
 
-      // Update the lead's pipeline
       const { error: updateError } = await supabase
         .from('leads')
         .update({ pipeline_id: pipelineId })
@@ -70,7 +67,6 @@ export function InfoTab({ lead }: InfoTabProps) {
 
       if (updateError) throw updateError;
 
-      // Create activity log
       const { error: activityError } = await supabase
         .from('lead_activities')
         .insert({
@@ -180,12 +176,11 @@ export function InfoTab({ lead }: InfoTabProps) {
     }
   };
 
-  // Correctly extract tags from the lead
-  const transformedTags = (lead.tags || []).map(tagRelation => ({
-    id: tagRelation.tag.id,
-    name: tagRelation.tag.name,
-    color: tagRelation.tag.color,
-    user_id: tagRelation.tag.user_id,
+  const transformedTags = (lead.tags || []).map((leadTag: LeadTag) => ({
+    id: leadTag.tag.id,
+    name: leadTag.tag.name,
+    color: leadTag.tag.color,
+    user_id: leadTag.tag.user_id,
   }));
 
   return (
@@ -285,7 +280,6 @@ export function InfoTab({ lead }: InfoTabProps) {
         </div>
       </div>
 
-      {/* Pipeline Section */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900">Pipeline</h3>
         <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
@@ -300,12 +294,10 @@ export function InfoTab({ lead }: InfoTabProps) {
         </div>
       </div>
 
-      {/* Tags Section */}
       <div className="space-y-4">
         <TagsManager leadId={lead.id} tags={transformedTags} />
       </div>
 
-      {/* Variables Section */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-medium text-gray-900">Lead Variables</h3>
