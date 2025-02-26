@@ -181,11 +181,12 @@ export function InfoTab({ lead }: InfoTabProps) {
   };
 
   // Correctly extract tags from the lead
-  const transformedTags = lead.tags?.map(tagRelation => ({
+  const transformedTags = (lead.tags || []).map(tagRelation => ({
     id: tagRelation.tag.id,
     name: tagRelation.tag.name,
-    color: tagRelation.tag.color
-  })) || [];
+    color: tagRelation.tag.color,
+    user_id: tagRelation.tag.user_id,
+  }));
 
   return (
     <div className="space-y-8">
@@ -292,6 +293,9 @@ export function InfoTab({ lead }: InfoTabProps) {
             pipelines={pipelines}
             selectedPipelineId={lead.pipeline_id}
             onPipelineChange={handlePipelineChange}
+            refetchPipelines={async () => {
+              await queryClient.invalidateQueries({ queryKey: ['pipelines'] });
+            }}
           />
         </div>
       </div>

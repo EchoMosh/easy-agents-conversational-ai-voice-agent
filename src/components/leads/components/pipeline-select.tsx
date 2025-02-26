@@ -33,12 +33,18 @@ export function PipelineSelect({ pipelines, selectedPipelineId, onPipelineChange
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user found");
 
+      const columnsJson = defaultColumns.map(col => ({
+        id: col.id,
+        title: col.title,
+        color: col.color,
+      }));
+
       const { data: pipeline, error } = await supabase
         .from("pipelines")
         .insert({
           name: newPipelineName,
           user_id: user.id,
-          columns: defaultColumns
+          columns: columnsJson
         })
         .select()
         .single();

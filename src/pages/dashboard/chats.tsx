@@ -33,7 +33,12 @@ export default function ChatsPage() {
         `);
       
       if (error) throw error;
-      return data as Lead[];
+      
+      // Transform the data to match the Lead type
+      return (data || []).map(lead => ({
+        ...lead,
+        tags: (lead.tags || []).map((tagRelation: any) => tagRelation.tag)
+      })) as Lead[];
     }
   });
 
