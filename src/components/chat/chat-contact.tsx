@@ -2,6 +2,7 @@
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Lead } from "@/pages/dashboard/leads";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface ChatContactProps {
   lead: Lead;
@@ -9,10 +10,14 @@ interface ChatContactProps {
   onClick?: () => void;
 }
 
-export function ChatContact({ lead, isSelected, onClick }: ChatContactProps) {
+export function ChatContact({ lead }: ChatContactProps) {
+  const navigate = useNavigate();
+  const { leadId } = useParams();
+  const isSelected = leadId === lead.id;
+
   return (
     <button
-      onClick={onClick}
+      onClick={() => navigate(`/dashboard/chat/${lead.id}`)}
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm",
         isSelected 

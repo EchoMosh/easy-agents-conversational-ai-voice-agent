@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './components/theme/theme-provider';
@@ -17,6 +16,7 @@ import SettingsPage from './pages/dashboard/settings';
 import ProfilePage from './pages/dashboard/profile';
 import AgentFlowPage from './pages/dashboard/agent-flow';
 import PipelinesPage from './pages/dashboard/pipelines';
+import ChatPage from './pages/dashboard/chat';
 
 const queryClient = new QueryClient();
 
@@ -60,6 +60,7 @@ function App() {
                   <Route path="pipelines" element={<PipelinesPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="profile" element={<ProfilePage />} />
+                  <Route path="chat/:leadId" element={<ChatPage />} />
                 </Route>
 
                 {/* Flow editor route without sidebar */}
