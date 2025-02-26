@@ -98,20 +98,22 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
         color: col.color,
       }));
 
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from("pipelines")
         .insert({
           name,
           columns: columnsJson,
           user_id: userId,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      // Invalidate and refetch pipelines
-      await queryClient.invalidateQueries({ 
-        queryKey: ["pipelines"],
-        refetchType: "all"
+      // Immediately update the cache with the new pipeline
+      queryClient.setQueryData(["pipelines"], (old: Pipeline[] | undefined) => {
+        if (!old) return [data];
+        return [...old, data];
       });
 
       toast({
@@ -137,10 +139,10 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
-      // Invalidate and refetch pipelines
-      await queryClient.invalidateQueries({ 
-        queryKey: ["pipelines"],
-        refetchType: "all"
+      // Immediately update the cache by removing the deleted pipeline
+      queryClient.setQueryData(["pipelines"], (old: Pipeline[] | undefined) => {
+        if (!old) return old;
+        return old.filter(p => p.id !== pipelineId);
       });
 
       toast({
