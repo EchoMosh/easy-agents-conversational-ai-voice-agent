@@ -8,14 +8,23 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-interface TimelineItem {
+interface Note {
   id: string;
-  type: 'email' | 'sms' | 'note' | 'status_change' | 'contact_update' | 'name_update' | 'variable_add';
+  type: 'note';
   content: string;
   timestamp: string;
-  old_value?: string | null;
-  new_value?: string | null;
 }
+
+interface Activity {
+  id: string;
+  type: 'status_change' | 'contact_update' | 'name_update' | 'variable_add';
+  content: string;
+  timestamp: string;
+  old_value: string | null;
+  new_value: string | null;
+}
+
+type TimelineItem = Note | Activity;
 
 interface TimelineTabProps {
   leadId: string;
@@ -29,7 +38,6 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
   const { data: activities } = useQuery({
     queryKey: ['lead_activities', leadId],
     queryFn: async () => {
-      // Fetch both notes and activities
       const [notesResponse, activitiesResponse] = await Promise.all([
         supabase
           .from('lead_notes')
@@ -46,22 +54,25 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
       if (notesResponse.error) throw notesResponse.error;
       if (activitiesResponse.error) throw activitiesResponse.error;
 
-      return [
-        ...(notesResponse.data?.map(note => ({
-          id: note.id,
-          type: 'note' as const,
-          content: note.content,
-          timestamp: note.created_at,
-        })) || []),
-        ...(activitiesResponse.data?.map(activity => ({
-          id: activity.id,
-          type: activity.activity_type,
-          content: activity.content,
-          timestamp: activity.created_at,
-          old_value: activity.old_value,
-          new_value: activity.new_value,
-        })) || [])
-      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const notes: Note[] = (notesResponse.data || []).map(note => ({
+        id: note.id,
+        type: 'note',
+        content: note.content,
+        timestamp: note.created_at,
+      }));
+
+      const activities: Activity[] = (activitiesResponse.data || []).map(activity => ({
+        id: activity.id,
+        type: activity.activity_type,
+        content: activity.content,
+        timestamp: activity.created_at,
+        old_value: activity.old_value,
+        new_value: activity.new_value,
+      }));
+
+      return [...notes, ...activities].sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
     },
     enabled: !!leadId,
   });
@@ -84,7 +95,7 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
         console.error("Error updating note:", error);
       }
     } else {
-      const note = activities?.find(a => a.id === noteId && a.type === 'note');
+      const note = activities?.find(a => a.id === noteId && a.type === 'note') as Note;
       if (note) {
         setEditedContent(note.content);
         setEditingNoteId(noteId);
@@ -128,6 +139,11 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
       case 'variable_add':
         return 'bg-teal-100 text-teal-600';
     }
+  };
+
+  const renderValue = (value: string | null) => {
+    if (value === null) return 'None';
+    return value;
   };
 
   return (
@@ -180,11 +196,11 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
                     </Button>
                   )}
                 </div>
-                {(item.old_value || item.new_value) && (
+                {item.type !== 'note' && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    {item.old_value && <span>From: {item.old_value}</span>}
+                    {item.old_value && <span>From: {renderValue(item.old_value)}</span>}
                     {item.old_value && item.new_value && <span> → </span>}
-                    {item.new_value && <span>To: {item.new_value}</span>}
+                    {item.new_value && <span>To: {renderValue(item.new_value)}</span>}
                   </p>
                 )}
               </>
