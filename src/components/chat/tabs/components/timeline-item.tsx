@@ -60,7 +60,7 @@ export function TimelineItemComponent({
       <div className="flex items-start gap-3">
         <div className="relative z-10">
           <div className={`rounded-full p-2 ${getActivityColor(item.type)} bg-background`}>
-            {getActivityIcon(item.type, item.type === 'note' ? 'Note Added' : item.content)}
+            {getActivityIcon(item.type, item.type === 'note' ? item.content : item.content)}
           </div>
           {!isLast && (
             <Separator orientation="vertical" className="absolute h-full top-8 left-1/2 -translate-x-1/2" />
