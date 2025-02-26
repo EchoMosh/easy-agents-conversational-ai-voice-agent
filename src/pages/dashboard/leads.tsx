@@ -32,7 +32,7 @@ export interface Lead {
 
 export default function LeadsPage() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
-  const { leads, invalidateAndRefetch } = usePipelineQueries();
+  const { pipelines, leads, invalidateAndRefetch } = usePipelineQueries(pipelines?.[0]?.id);
 
   return (
     <div className="p-6 space-y-6">
@@ -67,6 +67,17 @@ export default function LeadsPage() {
           >
             Add your first lead
           </Button>
+        </div>
+      )}
+
+      {leads.length > 0 && (
+        <div className="space-y-4">
+          {leads.map((lead) => (
+            <div key={lead.id} className="p-4 border rounded-lg">
+              <h3 className="font-medium">{lead.name}</h3>
+              {lead.email && <p className="text-sm text-muted-foreground">{lead.email}</p>}
+            </div>
+          ))}
         </div>
       )}
     </div>
