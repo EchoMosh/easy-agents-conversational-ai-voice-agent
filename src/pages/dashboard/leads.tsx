@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NewLeadForm } from "@/components/leads/new-lead-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,14 @@ export interface Lead {
 
 export default function LeadsPage() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
-  const { pipelines, leads, invalidateAndRefetch } = usePipelineQueries(pipelines?.[0]?.id);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | undefined>();
+  const { pipelines, leads, invalidateAndRefetch } = usePipelineQueries(selectedPipelineId);
+
+  useEffect(() => {
+    if (pipelines?.length > 0 && !selectedPipelineId) {
+      setSelectedPipelineId(pipelines[0].id);
+    }
+  }, [pipelines, selectedPipelineId]);
 
   return (
     <div className="p-6 space-y-6">
