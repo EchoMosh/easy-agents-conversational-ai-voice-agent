@@ -12,6 +12,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EmailTagInput } from "@/components/ui/email-tag-input";
 import { Bold, Italic, List, ListOrdered, Quote, Undo, Redo } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { GreetingInput } from '@/components/flow/nodes/greeting/greeting-input';
 
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -265,17 +266,10 @@ export default function ChatsPage() {
                   )}
                   <div className="flex flex-col gap-2">
                     {messageType !== 'email' && (
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder={`Type your ${messageType} message...`}
-                          value={message}
-                          onChange={(e) => setMessage(e.target.value)}
-                          className="flex-1"
-                        />
-                        <Button type="submit" size="icon">
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <GreetingInput
+                        value={message}
+                        onChange={setMessage}
+                      />
                     )}
                     {messageType === 'email' && (
                       <div className="flex justify-end">
