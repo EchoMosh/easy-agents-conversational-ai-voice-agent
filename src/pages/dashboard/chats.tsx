@@ -1,6 +1,8 @@
 
 import { Mail, MessageSquare, Phone, Send } from "lucide-react";
 import { useState } from "react";
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -14,6 +16,18 @@ export default function ChatsPage() {
   const [messageType, setMessageType] = useState<'chat' | 'email' | 'sms'>('chat');
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
+  const [cc, setCC] = useState("");
+  const [bcc, setBCC] = useState("");
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+    ],
+    content: '',
+    onUpdate: ({ editor }) => {
+      setMessage(editor.getHTML());
+    },
+  });
 
   const { data: leads } = useQuery({
     queryKey: ['leads'],
@@ -33,9 +47,19 @@ export default function ChatsPage() {
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement sending message based on messageType
-    console.log(`Sending ${messageType}:`, message);
+    console.log(`Sending ${messageType}:`, {
+      message: messageType === 'email' ? message : editor?.getHTML() || message,
+      subject,
+      cc,
+      bcc
+    });
     setMessage("");
-    if (messageType === 'email') setSubject("");
+    editor?.commands.setContent('');
+    if (messageType === 'email') {
+      setSubject("");
+      setCC("");
+      setBCC("");
+    }
   };
 
   return (
@@ -131,23 +155,52 @@ export default function ChatsPage() {
 
                 <form onSubmit={handleSend} className="space-y-2">
                   {messageType === 'email' && (
-                    <Input
-                      placeholder="Email subject"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      className="w-full"
-                    />
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Email subject"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        className="w-full"
+                      />
+                      <Input
+                        placeholder="CC (separate emails with commas)"
+                        value={cc}
+                        onChange={(e) => setCC(e.target.value)}
+                        className="w-full"
+                      />
+                      <Input
+                        placeholder="BCC (separate emails with commas)"
+                        value={bcc}
+                        onChange={(e) => setBCC(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
                   )}
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder={`Type your ${messageType} message...`}
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button type="submit" size="icon">
-                      <Send className="h-4 w-4" />
-                    </Button>
+                  <div className="flex flex-col gap-2">
+                    {messageType === 'email' ? (
+                      <div className="border rounded-md p-2 min-h-[150px]">
+                        <EditorContent editor={editor} className="prose prose-sm max-w-none min-h-[150px]" />
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder={`Type your ${messageType} message...`}
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button type="submit" size="icon">
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                    {messageType === 'email' && (
+                      <div className="flex justify-end">
+                        <Button type="submit">
+                          Send Email
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </form>
               </div>
