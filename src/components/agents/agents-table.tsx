@@ -5,6 +5,7 @@ import { Agent } from "@/types/agent";
 import { DeleteDialog } from "./table/delete-dialog";
 import { Pencil, Trash, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -30,6 +31,13 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const getAvatarUrl = (agentId: string, role: string) => {
+    // Use agent ID and role to generate a consistent avatar
+    const seed = `${agentId}-${role}`;
+    // Using the "bottts" style which creates robot-like 3D avatars
+    return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&size=200`;
+  };
+
   const handleDeleteConfirm = async () => {
     if (!agentToDelete || isDeleting) return;
     
@@ -51,7 +59,23 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
           <Card key={agent.id} className="flex flex-col">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-semibold">{agent.name}</CardTitle>
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage 
+                      src={getAvatarUrl(agent.id, agent.role)} 
+                      alt={agent.name} 
+                    />
+                    <AvatarFallback>
+                      {agent.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <CardTitle className="text-xl font-semibold">{agent.name}</CardTitle>
+                    <CardDescription className="capitalize">
+                      {agent.role.replace('_', ' ')}
+                    </CardDescription>
+                  </div>
+                </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0">
@@ -87,9 +111,6 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <CardDescription className="capitalize mt-2">
-                {agent.role.replace('_', ' ')}
-              </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow">
               <div className="flex items-center mt-2">
