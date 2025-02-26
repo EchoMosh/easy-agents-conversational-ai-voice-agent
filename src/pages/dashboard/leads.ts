@@ -32,5 +32,8 @@ export interface Lead {
   tags: LeadTag[];
 }
 
-const leads = () => {};
-export default leads;
+const LeadsPage = () => {
+  return null;
+};
+
+export default LeadsPage;
