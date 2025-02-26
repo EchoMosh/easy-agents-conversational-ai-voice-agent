@@ -1,4 +1,4 @@
-import { Mail, Phone, Send, FileEdit, Save, X } from "lucide-react";
+import { Mail, Phone, Send, FileEdit, Save, X, Search, PlusCircle, History, StickyNote, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -16,6 +16,8 @@ import { GreetingInput } from '@/components/flow/nodes/greeting/greeting-input';
 import { VariableSelector } from '@/components/flow/nodes/variable-mention/variable-selector';
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface Note {
   id: string;
@@ -34,6 +36,8 @@ export default function ChatsPage() {
   const [newNote, setNewNote] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteContent, setEditingNoteContent] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentTab, setCurrentTab] = useState<"notes" | "activity">("activity");
 
   const queryClient = useQueryClient();
 
@@ -194,6 +198,29 @@ export default function ChatsPage() {
       setBCC([]);
     }
   };
+
+  const filteredNotes = notes?.filter(note => 
+    note.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const activities = [
+    {
+      id: '1',
+      type: 'email',
+      content: 'Sent follow-up email about project timeline',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      id: '2',
+      type: 'sms',
+      content: 'SMS reminder about meeting tomorrow',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+    },
+  ];
+
+  const filteredActivities = activities.filter(activity =>
+    activity.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="flex h-screen bg-background">
@@ -429,96 +456,144 @@ export default function ChatsPage() {
         )}
       </div>
 
-      {/* Notes sidebar */}
+      {/* Right sidebar with tabs for Activity and Notes */}
       {selectedLead && (
-        <div className="w-80 border-l p-6 bg-muted/10">
-          <h3 className="font-semibold mb-4 text-lg">Internal Notes</h3>
-          
-          <form onSubmit={handleAddNote} className="mb-6">
-            <Textarea
-              placeholder="Add a note..."
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              className="min-h-[100px] mb-2"
-            />
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={addNoteMutation.isPending}
-            >
-              Add Note
-            </Button>
-          </form>
-
-          <div className="space-y-4">
-            {notes?.map((note) => (
-              <div key={note.id} className="relative p-3 border rounded-lg bg-background">
-                {editingNoteId === note.id ? (
-                  <div className="space-y-2">
-                    <Textarea
-                      value={editingNoteContent}
-                      onChange={(e) => setEditingNoteContent(e.target.value)}
-                      className="min-h-[100px] mb-2"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => handleUpdateNote(note.id)}
-                        disabled={updateNoteMutation.isPending}
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          setEditingNoteId(null);
-                          setEditingNoteContent("");
-                        }}
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="pr-8">
-                      <p className="whitespace-pre-wrap text-sm">{note.content}</p>
-                      <time className="text-xs text-muted-foreground mt-2 block">
-                        {new Date(note.created_at).toLocaleString()}
-                      </time>
-                    </div>
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                          setEditingNoteId(note.id);
-                          setEditingNoteContent(note.content);
-                        }}
-                      >
-                        <FileEdit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive"
-                        onClick={() => deleteNoteMutation.mutate(note.id)}
-                        disabled={deleteNoteMutation.isPending}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+        <div className="w-80 border-l flex flex-col bg-muted/10">
+          <div className="p-4 border-b bg-background">
+            <Command className="rounded-lg border shadow-md">
+              <CommandInput
+                placeholder="Search activities and notes..."
+                value={searchQuery}
+                onValueChange={setSearchQuery}
+              />
+            </Command>
           </div>
+          
+          <Tabs value={currentTab} onValueChange={(value: "notes" | "activity") => setCurrentTab(value)} className="flex-1 flex flex-col">
+            <div className="px-4 border-b bg-background">
+              <TabsList className="w-full">
+                <TabsTrigger value="activity" className="flex-1">
+                  <History className="w-4 h-4 mr-2" />
+                  Activity
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="flex-1">
+                  <StickyNote className="w-4 h-4 mr-2" />
+                  Notes
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <ScrollArea className="flex-1 p-4">
+              <TabsContent value="activity" className="m-0">
+                <div className="space-y-4">
+                  {filteredActivities.map((activity) => (
+                    <div key={activity.id} className="flex items-start gap-3 p-3 border rounded-lg bg-background">
+                      <div className={`rounded-full p-2 ${
+                        activity.type === 'email' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                      }`}>
+                        {activity.type === 'email' ? <Mail className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm">{activity.content}</p>
+                        <time className="text-xs text-muted-foreground">
+                          {new Date(activity.timestamp).toLocaleString()}
+                        </time>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="notes" className="m-0 space-y-4">
+                <form onSubmit={handleAddNote}>
+                  <Textarea
+                    placeholder="Add a note..."
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    className="min-h-[100px] mb-2"
+                  />
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={addNoteMutation.isPending}
+                  >
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Add Note
+                  </Button>
+                </form>
+
+                <div className="space-y-4">
+                  {filteredNotes?.map((note) => (
+                    <div key={note.id} className="relative p-3 border rounded-lg bg-background">
+                      {editingNoteId === note.id ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            value={editingNoteContent}
+                            onChange={(e) => setEditingNoteContent(e.target.value)}
+                            className="min-h-[100px] mb-2"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleUpdateNote(note.id)}
+                              disabled={updateNoteMutation.isPending}
+                            >
+                              <Save className="h-4 w-4 mr-2" />
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => {
+                                setEditingNoteId(null);
+                                setEditingNoteContent("");
+                              }}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="pr-8">
+                            <p className="whitespace-pre-wrap text-sm">{note.content}</p>
+                            <time className="text-xs text-muted-foreground mt-2 block">
+                              {new Date(note.created_at).toLocaleString()}
+                            </time>
+                          </div>
+                          <div className="absolute top-3 right-3 flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setEditingNoteId(note.id);
+                                setEditingNoteContent(note.content);
+                              }}
+                            >
+                              <FileEdit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              onClick={() => deleteNoteMutation.mutate(note.id)}
+                              disabled={deleteNoteMutation.isPending}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
         </div>
       )}
     </div>
