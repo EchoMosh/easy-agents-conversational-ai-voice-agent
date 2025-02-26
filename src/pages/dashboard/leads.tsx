@@ -43,18 +43,26 @@ const LeadsPage = () => {
   } = useQuery({
     queryKey: ['leads'],
     queryFn: async () => {
-      const {
-        data: leadsData,
-        error: leadsError
-      } = await supabase.from('leads').select(`
+      const { data: leadsData, error: leadsError } = await supabase
+        .from('leads')
+        .select(`
           *,
-          variables:lead_variables(*)
+          variables:lead_variables(*),
+          tags:lead_tags(
+            tag:tags(*)
+          )
         `);
+
       if (leadsError) {
         toast.error("Failed to fetch leads");
         throw leadsError;
       }
-      return leadsData as unknown as Lead[];
+
+      // Transform the nested tag structure
+      return leadsData?.map(lead => ({
+        ...lead,
+        tags: lead.tags?.map((t: any) => t.tag) || []
+      })) as Lead[];
     }
   });
 
@@ -90,7 +98,8 @@ const LeadsPage = () => {
     pipelineName: pipelineMap[lead.pipeline_id]
   }));
 
-  return <div className="p-6 space-y-6">
+  return (
+    <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Leads</h1>
         <Dialog open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen}>
@@ -140,7 +149,8 @@ const LeadsPage = () => {
       </div>
 
       <LeadsTable leads={leadsWithPipelineNames} isLoading={isLoading} onLeadUpdated={() => refetch()} />
-    </div>;
+    </div>
+  );
 };
 
 export default LeadsPage;

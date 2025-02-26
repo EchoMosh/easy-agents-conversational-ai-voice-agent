@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TagForm } from "./tag-form";
 import { TagBadge } from "./tag-badge";
-import { Tag, TagColor } from "@/types/tag-types";
+import { Tag } from "@/types/tag-types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,6 @@ interface TagsManagerProps {
 
 interface CreateTagData {
   name: string;
-  color: TagColor;
 }
 
 export function TagsManager({ leadId, tags }: TagsManagerProps) {
@@ -42,7 +41,6 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
         .from('tags')
         .insert({
           name: data.name,
-          color: data.color,
           user_id: user.data.user.id
         })
         .select()
@@ -72,8 +70,7 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
       const { error } = await supabase
         .from('tags')
         .update({
-          name: data.name,
-          color: data.color
+          name: data.name
         })
         .eq('id', editingTag.id);
 
