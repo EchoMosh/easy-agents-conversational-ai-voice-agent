@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,7 +9,7 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
 
   const handleDeletePipeline = async (
     pipelineId: string,
-    option: "keep" | "move" | "delete" = "keep",
+    option: "keep" | "move" = "keep",
     targetPipelineId?: string
   ) => {
     try {
@@ -26,65 +25,8 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
         if (moveError) {
           throw new Error(`Failed to move leads: ${moveError.message}`);
         }
-      } else if (option === "delete") {
-        console.log("Deleting all leads in pipeline:", pipelineId);
-        
-        // First verify if there are any leads to delete
-        const { data: leadsToDelete, error: checkError } = await supabase
-          .from("leads")
-          .select("id")
-          .eq("pipeline_id", pipelineId);
-
-        if (checkError) {
-          throw new Error(`Failed to check leads: ${checkError.message}`);
-        }
-
-        console.log(`Found ${leadsToDelete?.length || 0} leads to delete`);
-
-        if (leadsToDelete && leadsToDelete.length > 0) {
-          // Delete all lead associations first
-          await Promise.all([
-            // Delete lead variables
-            supabase
-              .from("lead_variables")
-              .delete()
-              .in("lead_id", leadsToDelete.map(l => l.id)),
-            
-            // Delete lead tags
-            supabase
-              .from("lead_tags")
-              .delete()
-              .in("lead_id", leadsToDelete.map(l => l.id)),
-            
-            // Delete lead activities
-            supabase
-              .from("lead_activities")
-              .delete()
-              .in("lead_id", leadsToDelete.map(l => l.id)),
-            
-            // Delete lead notes
-            supabase
-              .from("lead_notes")
-              .delete()
-              .in("lead_id", leadsToDelete.map(l => l.id))
-          ]);
-
-          // Then delete the leads
-          const { error: deleteLeadsError } = await supabase
-            .from("leads")
-            .delete()
-            .eq("pipeline_id", pipelineId);
-
-          if (deleteLeadsError) {
-            throw new Error(`Failed to delete leads: ${deleteLeadsError.message}`);
-          }
-
-          // Invalidate all related queries
-          await queryClient.invalidateQueries({ queryKey: ["leads"] });
-          
-          console.log("Successfully deleted all leads and their associated data");
-        }
-      } else if (option === "keep") {
+      } else {
+        // Default to keeping leads without pipeline
         console.log("Keeping leads without pipeline");
         const { error: keepLeadsError } = await supabase
           .from("leads")
@@ -114,7 +56,7 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
       console.log("Pipeline deletion completed successfully");
       toast({
         title: "Pipeline deleted",
-        description: "Pipeline and associated data deleted successfully",
+        description: "Pipeline deleted successfully",
       });
 
       // Refresh the data

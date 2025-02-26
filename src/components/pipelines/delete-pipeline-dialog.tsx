@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pipeline } from "@/types/pipeline";
 
-type LeadHandlingOption = "keep" | "move" | "delete";
+type LeadHandlingOption = "keep" | "move";
 
 interface DeletePipelineDialogProps {
   open: boolean;
@@ -70,11 +70,6 @@ export function DeletePipelineDialog({
                   <Label htmlFor="move">Move leads to another pipeline</Label>
                 </div>
               )}
-
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="delete" id="delete" />
-                <Label htmlFor="delete">Delete all leads in this pipeline</Label>
-              </div>
             </RadioGroup>
 
             {leadHandling === "move" && otherPipelines.length > 0 && (
