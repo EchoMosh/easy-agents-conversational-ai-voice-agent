@@ -22,21 +22,29 @@ export function MessageComposer({ messageType, onMessageTypeChange, leadId }: Me
     if (!message.trim()) return;
 
     if (messageType === 'note') {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.error("No authenticated user found");
+        return;
+      }
+
       const { error } = await supabase
         .from('lead_notes')
-        .insert([
-          { 
-            lead_id: leadId,
-            content: message,
-          }
-        ]);
+        .insert({
+          lead_id: leadId,
+          content: message,
+          user_id: user.id
+        });
 
       if (error) {
         console.error("Error adding note:", error);
         return;
       }
 
-      // Refresh the timeline data
+      // Refresh both the chat area and timeline data
       queryClient.invalidateQueries({ queryKey: ['lead_notes', leadId] });
     }
     

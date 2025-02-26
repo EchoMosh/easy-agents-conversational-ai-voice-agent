@@ -35,27 +35,6 @@ export default function ChatsPage() {
 
   const selectedLead = leads?.find(lead => lead.id === selectedLeadId);
 
-  const timelineItems = [
-    {
-      id: '1',
-      type: 'email' as const,
-      content: 'Sent follow-up email about project timeline',
-      timestamp: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      type: 'sms' as const,
-      content: 'SMS reminder about meeting tomorrow',
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: '3',
-      type: 'note' as const,
-      content: 'Called to discuss proposal details',
-      timestamp: new Date(Date.now() - 7200000).toISOString(),
-    }
-  ];
-
   return (
     <div className="flex h-screen bg-background">
       <LeadSidebar
@@ -99,7 +78,7 @@ export default function ChatsPage() {
 
             <ScrollArea className="flex-1">
               <TabsContent value="timeline" className="m-0 p-4">
-                <TimelineTab items={timelineItems} />
+                <TimelineTab leadId={selectedLead.id} />
               </TabsContent>
 
               <TabsContent value="details" className="m-0 p-4">
