@@ -145,16 +145,27 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
-      // Immediately update the cache by removing the deleted pipeline
+      // Immediately remove the pipeline from the cache
       queryClient.setQueryData(["pipelines"], (old: Pipeline[] | undefined) => {
         if (!old) return old;
         return old.filter(p => p.id !== pipelineId);
       });
 
+      // Also invalidate the leads query to refresh the leads list
+      await queryClient.invalidateQueries({
+        queryKey: ["leads"],
+      });
+
       toast({
         title: "Pipeline deleted",
-        description: "Pipeline has been deleted successfully",
+        description: "Pipeline and associated leads have been deleted successfully",
       });
+
+      // Refresh both pipelines and leads data
+      await Promise.all([
+        refetchPipelines(),
+        refetchLeads()
+      ]);
     } catch (error) {
       console.error("Error deleting pipeline:", error);
       toast({
