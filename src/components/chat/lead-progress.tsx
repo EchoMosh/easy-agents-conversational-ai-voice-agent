@@ -17,9 +17,9 @@ export function LeadProgress({ currentStage, stages }: LeadProgressProps) {
 
   return (
     <ScrollArea className="max-w-[500px]" type="scroll">
-      <div className="flex items-center gap-2 px-4">
+      <div className="flex items-start gap-1 px-4 py-2">
         {stages.map((stage, index) => (
-          <div key={stage.id} className="flex flex-col items-center min-w-fit">
+          <div key={stage.id} className="flex flex-col items-center min-w-[70px] max-w-[70px]">
             <div className="flex items-center">
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs 
@@ -36,12 +36,12 @@ export function LeadProgress({ currentStage, stages }: LeadProgressProps) {
               </div>
               {index < stages.length - 1 && (
                 <div 
-                  className={`w-12 h-0.5 mx-1 
+                  className={`w-8 h-0.5 mx-0.5 mt-3 rotate-[-15deg] origin-left
                     ${index < currentIndex ? 'bg-primary' : 'bg-muted-foreground/20'}`}
                 />
               )}
             </div>
-            <span className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
+            <span className="text-[10px] text-muted-foreground mt-1 text-center break-words leading-tight">
               {stage.label}
             </span>
           </div>

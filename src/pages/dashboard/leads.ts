@@ -1,4 +1,13 @@
 
+export interface LeadVariable {
+  id: string;
+  name: string;
+  value: string;
+  lead_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Tag {
   id: string;
   name: string;
@@ -19,13 +28,9 @@ export interface Lead {
   user_id: string;
   created_at: string;
   updated_at: string;
-  variables: {
-    id: string;
-    name: string;
-    value: string;
-    lead_id: string;
-    created_at: string;
-    updated_at: string;
-  }[];
+  variables: LeadVariable[];
   tags: LeadTag[];
 }
+
+const leads = () => {};
+export default leads;
