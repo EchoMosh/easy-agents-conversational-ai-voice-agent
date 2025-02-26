@@ -58,7 +58,7 @@ export function TagForm({ defaultValues, onSubmit }: TagFormProps) {
             {colorOptions.map((color) => (
               <SelectItem key={color.value} value={color.value}>
                 <div className="flex items-center">
-                  <Circle className={`w-4 h-4 mr-2 text-${color.value}-500`} fill="currentColor" />
+                  <Circle className={`w-4 h-4 mr-2`} fill={`var(--${color.value}-500)`} />
                   {color.label}
                 </div>
               </SelectItem>

@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Tag } from "@/types/tag-types";
 
-export type Lead = {
+export interface Lead {
   id: string;
   name: string;
   email: string | null;
@@ -20,7 +21,7 @@ export type Lead = {
   created_at: string;
   variables?: LeadVariable[];
   tags?: Tag[];
-};
+}
 
 export type LeadVariable = {
   id: string;
