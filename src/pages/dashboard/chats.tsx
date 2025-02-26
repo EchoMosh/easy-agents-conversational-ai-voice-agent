@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "./leads";
-import { Command } from "@/components/ui/command";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -51,21 +50,21 @@ export default function ChatsPage() {
 
       {selectedLead && (
         <div className="w-80 border-l flex flex-col bg-muted/10">
-          <div className="px-4 py-2 border-b bg-background">
-            <TabsList className="w-full grid grid-cols-3">
-              <TabsTrigger value="timeline">
-                <Clock className="w-4 h-4" />
-              </TabsTrigger>
-              <TabsTrigger value="details">
-                <User className="w-4 h-4" />
-              </TabsTrigger>
-              <TabsTrigger value="files">
-                <FileText className="w-4 h-4" />
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          <Tabs defaultValue="timeline" value={currentTab} onValueChange={setCurrentTab} className="flex-1 flex flex-col">
+            <div className="px-4 py-2 border-b bg-background">
+              <TabsList className="w-full grid grid-cols-3">
+                <TabsTrigger value="timeline">
+                  <Clock className="w-4 h-4" />
+                </TabsTrigger>
+                <TabsTrigger value="details">
+                  <User className="w-4 h-4" />
+                </TabsTrigger>
+                <TabsTrigger value="files">
+                  <FileText className="w-4 h-4" />
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          <Tabs value={currentTab} onValueChange={(value: "timeline" | "details" | "files") => setCurrentTab(value)} className="flex-1 flex flex-col">
             <TabsContent value="timeline" className="m-0 flex-1">
               <TimelineTab leadId={selectedLead.id} />
             </TabsContent>
