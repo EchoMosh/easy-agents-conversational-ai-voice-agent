@@ -26,7 +26,9 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
       console.log("Pipelines fetched:", data?.length);
       return (data || []).map(convertJsonToPipeline);
     },
-    // Remove staleTime and gcTime to ensure updates are reflected immediately
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 
   const { 
@@ -52,7 +54,9 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
       return data as unknown as Lead[];
     },
     enabled: !!selectedPipelineId,
-    // Remove staleTime and gcTime to ensure updates are reflected immediately
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 
   console.log("Query States:", {
@@ -66,19 +70,26 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
 
   const invalidateAndRefetch = async () => {
     console.log("Starting invalidation and refetch...");
+    
+    // First invalidate the queries
     await Promise.all([
       queryClient.invalidateQueries({
         queryKey: ["pipelines"],
-        refetchType: "active",
         exact: true
       }),
       queryClient.invalidateQueries({
         queryKey: ["leads", selectedPipelineId],
-        refetchType: "active",
         exact: true
       })
     ]);
-    console.log("Invalidation completed");
+    
+    // Then explicitly trigger refetches
+    await Promise.all([
+      refetchPipelines(),
+      refetchLeads()
+    ]);
+    
+    console.log("Invalidation and refetch completed");
   };
 
   return {
