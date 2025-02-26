@@ -1,4 +1,5 @@
-import { Tag, Star, PlusCircle, Pencil, Check, X } from "lucide-react";
+
+import { Mail, Phone, User, Tag, Star, PlusCircle, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Lead } from "@/pages/dashboard/leads";
@@ -120,16 +121,17 @@ export function InfoTab({ lead }: InfoTabProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
+    <div className="space-y-8">
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-medium text-gray-900">Contact Information</h3>
           {isEditing ? (
             <div className="flex gap-2">
               <Button
                 variant="default"
                 size="sm"
                 onClick={handleSave}
+                className="h-9 px-4 rounded-lg"
               >
                 <Check className="h-4 w-4 mr-2" />
                 Save
@@ -141,6 +143,7 @@ export function InfoTab({ lead }: InfoTabProps) {
                   setIsEditing(false);
                   setEditedLead(lead);
                 }}
+                className="h-9 px-4 rounded-lg"
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancel
@@ -151,56 +154,75 @@ export function InfoTab({ lead }: InfoTabProps) {
               variant="ghost"
               size="sm"
               onClick={() => setIsEditing(true)}
+              className="h-9 px-4 rounded-lg hover:bg-gray-100"
             >
               <Pencil className="h-4 w-4 mr-2" />
               Edit
             </Button>
           )}
         </div>
-        <div className="space-y-3 bg-muted/50 rounded-lg p-4">
+        <div className="bg-gray-50 rounded-xl p-6 space-y-6 border border-gray-100">
           {isEditing ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Name</Label>
-                <Input
-                  value={editedLead.name}
-                  onChange={(e) => setEditedLead({ ...editedLead, name: e.target.value })}
-                  placeholder="Enter name"
-                />
+                <Label className="text-sm font-medium text-gray-700">Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Input
+                    value={editedLead.name}
+                    onChange={(e) => setEditedLead({ ...editedLead, name: e.target.value })}
+                    placeholder="Enter name"
+                    className="pl-10 h-10 text-base bg-white border-gray-200"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={editedLead.email || ''}
-                  onChange={(e) => setEditedLead({ ...editedLead, email: e.target.value })}
-                  placeholder="Enter email"
-                />
+                <Label className="text-sm font-medium text-gray-700">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="email"
+                    value={editedLead.email || ''}
+                    onChange={(e) => setEditedLead({ ...editedLead, email: e.target.value })}
+                    placeholder="Enter email"
+                    className="pl-10 h-10 text-base bg-white border-gray-200"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
+                <Label className="text-sm font-medium text-gray-700">Phone</Label>
                 <PhoneInput
                   value={editedLead.phone || ''}
                   onChange={(value) => setEditedLead({ ...editedLead, phone: value })}
+                  className="[&>div]:!h-10 [&>div]:!text-base [&>div]:!border-gray-200 [&>div]:!bg-white"
                 />
               </div>
             </div>
           ) : (
-            <>
-              <p className="text-sm"><span className="font-medium">Name:</span> {lead.name}</p>
-              <p className="text-sm"><span className="font-medium">Email:</span> {lead.email || "Not provided"}</p>
-              <p className="text-sm"><span className="font-medium">Phone:</span> {lead.phone || "Not provided"}</p>
-            </>
+            <div className="grid gap-4">
+              <div className="flex items-center">
+                <User className="h-5 w-5 text-gray-400 mr-3" />
+                <span className="text-base text-gray-900">{lead.name}</span>
+              </div>
+              <div className="flex items-center">
+                <Mail className="h-5 w-5 text-gray-400 mr-3" />
+                <span className="text-base text-gray-600">{lead.email || "Not provided"}</span>
+              </div>
+              <div className="flex items-center">
+                <Phone className="h-5 w-5 text-gray-400 mr-3" />
+                <span className="text-base text-gray-600">{lead.phone || "Not provided"}</span>
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">Lead Variables</h3>
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-medium text-gray-900">Lead Variables</h3>
           <Dialog open={isAddingVariable} onOpenChange={setIsAddingVariable}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8">
+              <Button variant="outline" size="sm" className="h-9 px-4 rounded-lg border-gray-200">
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Add Variable
               </Button>
@@ -211,47 +233,49 @@ export function InfoTab({ lead }: InfoTabProps) {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">Name</Label>
                   <Input
                     id="name"
                     value={newVariable.name}
                     onChange={(e) => setNewVariable({ ...newVariable, name: e.target.value })}
                     placeholder="Enter variable name"
+                    className="h-10 text-base bg-white border-gray-200"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="value">Value</Label>
+                  <Label htmlFor="value" className="text-sm font-medium text-gray-700">Value</Label>
                   <Input
                     id="value"
                     value={newVariable.value}
                     onChange={(e) => setNewVariable({ ...newVariable, value: e.target.value })}
                     placeholder="Enter variable value"
+                    className="h-10 text-base bg-white border-gray-200"
                   />
                 </div>
               </div>
-              <Button onClick={handleAddVariable}>Add Variable</Button>
+              <Button onClick={handleAddVariable} className="w-full h-10 text-base">Add Variable</Button>
             </DialogContent>
           </Dialog>
         </div>
         <div className="flex flex-wrap gap-2">
           {lead.variables?.map((variable) => (
             editingVariable?.id === variable.id ? (
-              <div key={variable.id} className="flex items-center gap-2 bg-white p-2 rounded-md border">
+              <div key={variable.id} className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200">
                 <Input
                   value={editingVariable.name}
                   onChange={(e) => setEditingVariable({ ...editingVariable, name: e.target.value })}
-                  className="h-7 w-32"
+                  className="h-8 w-32 text-sm bg-white border-gray-200"
                 />
                 <Input
                   value={editingVariable.value}
                   onChange={(e) => setEditingVariable({ ...editingVariable, value: e.target.value })}
-                  className="h-7 w-32"
+                  className="h-8 w-32 text-sm bg-white border-gray-200"
                 />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleUpdateVariable}
-                  className="h-7 w-7 p-0"
+                  className="h-8 w-8 p-0"
                 >
                   <Check className="h-4 w-4" />
                 </Button>
@@ -259,20 +283,20 @@ export function InfoTab({ lead }: InfoTabProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => setEditingVariable(null)}
-                  className="h-7 w-7 p-0"
+                  className="h-8 w-8 p-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
-              <Badge key={variable.id} variant="secondary">
-                <Tag className="w-3 h-3 mr-1" />
+              <Badge key={variable.id} variant="secondary" className="py-1.5 px-3 text-sm bg-gray-100 hover:bg-gray-200 border-0">
+                <Tag className="w-3.5 h-3.5 mr-2 text-gray-500" />
                 {variable.name}: {variable.value}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setEditingVariable(variable)}
-                  className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                  className="h-4 w-4 p-0 ml-2 hover:bg-transparent"
                 >
                   <Pencil className="h-3 w-3" />
                 </Button>
@@ -290,19 +314,19 @@ export function InfoTab({ lead }: InfoTabProps) {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium text-muted-foreground">Tags</h3>
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Tags</h3>
         <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">
-            <Tag className="w-3 h-3 mr-1" />
+          <Badge variant="secondary" className="py-1.5 px-3 text-sm bg-gray-100 hover:bg-gray-200 border-0">
+            <Tag className="w-3.5 h-3.5 mr-2 text-gray-500" />
             New Lead
           </Badge>
-          <Badge variant="secondary">
-            <Star className="w-3 h-3 mr-1" />
+          <Badge variant="secondary" className="py-1.5 px-3 text-sm bg-gray-100 hover:bg-gray-200 border-0">
+            <Star className="w-3.5 h-3.5 mr-2 text-gray-500" />
             High Priority
           </Badge>
-          <Button variant="outline" size="sm" className="h-6">
-            <PlusCircle className="w-3 h-3 mr-1" />
+          <Button variant="outline" size="sm" className="h-8 px-3 rounded-lg border-gray-200 bg-white hover:bg-gray-50">
+            <PlusCircle className="w-3.5 h-3.5 mr-2" />
             Add Tag
           </Button>
         </div>
