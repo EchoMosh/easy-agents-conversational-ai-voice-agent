@@ -22,13 +22,15 @@ export function LeadProgress({ currentStage, stages }: LeadProgressProps) {
           <div key={stage.id} className="flex flex-col items-center min-w-[60px] max-w-[60px]">
             <div className="flex items-center">
               <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs 
-                  ${index <= currentIndex 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted border-2 border-muted-foreground/20'
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors duration-200
+                  ${index < currentIndex 
+                    ? 'bg-primary text-primary-foreground' // Completed stages
+                    : index === currentIndex
+                    ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2' // Current stage
+                    : 'bg-muted border-2 border-muted-foreground/20' // Future stages
                   }`}
               >
-                {index <= currentIndex ? (
+                {index < currentIndex ? (
                   <Check className="h-3 w-3" />
                 ) : (
                   index + 1
@@ -36,7 +38,7 @@ export function LeadProgress({ currentStage, stages }: LeadProgressProps) {
               </div>
               {index < stages.length - 1 && (
                 <div 
-                  className={`w-8 h-0.5 mx-0.5
+                  className={`w-8 h-0.5 mx-0.5 transition-colors duration-200
                     ${index < currentIndex ? 'bg-primary' : 'bg-muted-foreground/20'}`}
                 />
               )}
