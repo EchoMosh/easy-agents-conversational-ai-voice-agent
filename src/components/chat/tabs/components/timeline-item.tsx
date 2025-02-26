@@ -1,6 +1,19 @@
 
 import { format } from "date-fns";
-import { Mail, Phone, StickyNote, Clock, Pencil, Check, X, UserCog, Tag, User } from "lucide-react";
+import { 
+  Mail, 
+  Phone, 
+  StickyNote, 
+  Clock, 
+  Pencil, 
+  Check, 
+  X, 
+  UserPlus, 
+  Tag, 
+  User,
+  ArrowRight,
+  MessageSquare
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -30,13 +43,22 @@ export function TimelineItemComponent({
       case 'note':
         return <StickyNote className="h-4 w-4" />;
       case 'status_change':
-        return <UserCog className="h-4 w-4" />;
+        return <ArrowRight className="h-4 w-4" />;
       case 'contact_update':
-        return content.includes('Email') ? <Mail className="h-4 w-4" /> : <Phone className="h-4 w-4" />;
+        if (content.toLowerCase().includes('email')) {
+          return <Mail className="h-4 w-4" />;
+        } else if (content.toLowerCase().includes('phone')) {
+          return <Phone className="h-4 w-4" />;
+        }
+        return <MessageSquare className="h-4 w-4" />;
       case 'name_update':
         return <User className="h-4 w-4" />;
       case 'variable_add':
         return <Tag className="h-4 w-4" />;
+      case 'lead_created':
+        return <UserPlus className="h-4 w-4" />;
+      default:
+        return <MessageSquare className="h-4 w-4" />;
     }
   };
 
@@ -52,6 +74,10 @@ export function TimelineItemComponent({
         return 'bg-rose-100 text-rose-600';
       case 'variable_add':
         return 'bg-teal-100 text-teal-600';
+      case 'lead_created':
+        return 'bg-green-100 text-green-600';
+      default:
+        return 'bg-gray-100 text-gray-600';
     }
   };
 
