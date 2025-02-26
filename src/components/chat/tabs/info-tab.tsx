@@ -1,5 +1,4 @@
-
-import { Mail, Phone, User, Tag, Star, PlusCircle, Pencil, Check, X } from "lucide-react";
+import { Mail, Phone, User, Tag, PlusCircle, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Lead } from "@/pages/dashboard/leads";
@@ -11,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { TagsManager } from "@/components/leads/components/tags/tags-manager";
 
 interface InfoTabProps {
   lead: Lead;
@@ -314,23 +314,7 @@ export function InfoTab({ lead }: InfoTabProps) {
         </div>
       </div>
 
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Tags</h3>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary" className="py-1.5 px-3 text-sm bg-gray-100 hover:bg-gray-200 border-0">
-            <Tag className="w-3.5 h-3.5 mr-2 text-gray-500" />
-            New Lead
-          </Badge>
-          <Badge variant="secondary" className="py-1.5 px-3 text-sm bg-gray-100 hover:bg-gray-200 border-0">
-            <Star className="w-3.5 h-3.5 mr-2 text-gray-500" />
-            High Priority
-          </Badge>
-          <Button variant="outline" size="sm" className="h-8 px-3 rounded-lg border-gray-200 bg-white hover:bg-gray-50">
-            <PlusCircle className="w-3.5 h-3.5 mr-2" />
-            Add Tag
-          </Button>
-        </div>
-      </div>
+      <TagsManager leadId={lead.id} tags={lead.tags || []} />
     </div>
   );
 }

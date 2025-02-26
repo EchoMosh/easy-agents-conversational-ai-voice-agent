@@ -124,6 +124,39 @@ export type Database = {
           },
         ]
       }
+      lead_tags: {
+        Row: {
+          created_at: string
+          lead_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          lead_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          lead_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_tags_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_variables: {
         Row: {
           created_at: string
@@ -266,6 +299,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tags: {
+        Row: {
+          color: Database["public"]["Enums"]["tag_color"] | null
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: Database["public"]["Enums"]["tag_color"] | null
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: Database["public"]["Enums"]["tag_color"] | null
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -289,6 +346,14 @@ export type Database = {
         | "product_specialist"
         | "virtual_assistant"
       lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
+      tag_color:
+        | "gray"
+        | "red"
+        | "yellow"
+        | "green"
+        | "blue"
+        | "purple"
+        | "pink"
     }
     CompositeTypes: {
       [_ in never]: never

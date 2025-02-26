@@ -15,11 +15,11 @@ export type Lead = {
   name: string;
   email: string | null;
   phone: string | null;
-  // Make sure these match your pipeline column titles exactly
-  status: 'New' | 'Contacted' | 'Qualified' | 'Converted' | 'Lost';
+  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
   pipeline_id: string;
   created_at: string;
   variables?: LeadVariable[];
+  tags?: Tag[];
 };
 
 export type LeadVariable = {
@@ -56,7 +56,6 @@ const LeadsPage = () => {
     }
   });
 
-  // Fetch pipelines for mapping pipeline_id to names
   const { data: pipelines = [] } = useQuery({
     queryKey: ['pipelines'],
     queryFn: async () => {
@@ -129,11 +128,11 @@ const LeadsPage = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="New">New</SelectItem>
-            <SelectItem value="Contacted">Contacted</SelectItem>
-            <SelectItem value="Qualified">Qualified</SelectItem>
-            <SelectItem value="Converted">Converted</SelectItem>
-            <SelectItem value="Lost">Lost</SelectItem>
+            <SelectItem value="new">New</SelectItem>
+            <SelectItem value="contacted">Contacted</SelectItem>
+            <SelectItem value="qualified">Qualified</SelectItem>
+            <SelectItem value="converted">Converted</SelectItem>
+            <SelectItem value="lost">Lost</SelectItem>
           </SelectContent>
         </Select>
       </div>
