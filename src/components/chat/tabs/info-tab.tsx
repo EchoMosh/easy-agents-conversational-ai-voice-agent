@@ -1,4 +1,3 @@
-
 import { Mail, Phone, User, Tag, PlusCircle, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { TagsManager } from "@/components/leads/components/tags/tags-manager";
 import { PipelineSelect } from "@/components/leads/components/pipeline-select";
 import { useQuery } from "@tanstack/react-query";
+import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 
 interface InfoTabProps {
   lead: Lead;
@@ -37,7 +37,7 @@ export function InfoTab({ lead }: InfoTabProps) {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data.map(convertJsonToPipeline);
     }
   });
 
@@ -50,12 +50,29 @@ export function InfoTab({ lead }: InfoTabProps) {
 
   const handlePipelineChange = async (pipelineId: string) => {
     try {
-      const { error } = await supabase
+      // Get the old pipeline name
+      const oldPipeline = pipelines.find(p => p.id === lead.pipeline_id);
+      const newPipeline = pipelines.find(p => p.id === pipelineId);
+
+      // Update the lead's pipeline
+      const { error: updateError } = await supabase
         .from('leads')
         .update({ pipeline_id: pipelineId })
         .eq('id', lead.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Create activity log
+      const { error: activityError } = await supabase
+        .from('lead_activities')
+        .insert({
+          lead_id: lead.id,
+          content: 'Pipeline changed',
+          old_value: oldPipeline?.name || 'Unknown',
+          new_value: newPipeline?.name || 'Unknown'
+        });
+
+      if (activityError) throw activityError;
 
       toast.success("Pipeline updated successfully");
       await invalidateQueries();
@@ -153,6 +170,13 @@ export function InfoTab({ lead }: InfoTabProps) {
       toast.error(error.message || "Failed to delete variable");
     }
   };
+
+  // Transform the lead tags data structure
+  const transformedTags = lead.tags?.map(tag => ({
+    id: tag.tag.id,
+    name: tag.tag.name,
+    color: tag.tag.color
+  })) || [];
 
   return (
     <div className="space-y-8">
@@ -265,7 +289,7 @@ export function InfoTab({ lead }: InfoTabProps) {
 
       {/* Tags Section */}
       <div className="space-y-4">
-        <TagsManager leadId={lead.id} tags={lead.tags || []} />
+        <TagsManager leadId={lead.id} tags={transformedTags} />
       </div>
 
       {/* Variables Section */}
