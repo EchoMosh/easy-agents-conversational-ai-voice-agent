@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Agent } from "@/types/agent";
@@ -32,9 +31,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const getAvatarUrl = (agentId: string, role: string) => {
-    // Use agent ID and role to generate a consistent avatar
     const seed = `${agentId}-${role}`;
-    // Using the "bottts" style which creates robot-like avatars for AI agents
     return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&size=200`;
   };
 
@@ -44,11 +41,17 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     setIsDeleting(true);
     try {
       await onDelete(agentToDelete);
-      setAgentToDelete(null);
     } catch (error) {
       console.error("Error deleting agent:", error);
     } finally {
       setIsDeleting(false);
+      setAgentToDelete(null);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && !isDeleting) {
+      setAgentToDelete(null);
     }
   };
 
@@ -145,12 +148,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
 
       <DeleteDialog
         isOpen={!!agentToDelete}
-        onOpenChange={(open) => {
-          if (!open) {
-            setAgentToDelete(null);
-            setIsDeleting(false);
-          }
-        }}
+        onOpenChange={handleOpenChange}
         onConfirm={handleDeleteConfirm}
         isDeleting={isDeleting}
         title="Are you sure?"
