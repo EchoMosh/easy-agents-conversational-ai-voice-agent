@@ -1,4 +1,3 @@
-
 import { Mail, Phone, Send } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -292,23 +291,27 @@ export default function ChatsPage() {
                         }}
                         textareaRef={null}
                       />
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2">
-                    {messageType === 'sms' && (
-                      <GreetingInput
-                        value={message}
-                        onChange={setMessage}
-                      />
-                    )}
-                    {messageType === 'email' && (
                       <div className="flex justify-end">
                         <Button type="submit">
                           Send Email
                         </Button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  {messageType === 'sms' && (
+                    <div className="space-y-4">
+                      <GreetingInput
+                        value={message}
+                        onChange={setMessage}
+                      />
+                      <div className="flex justify-end">
+                        <Button type="submit">
+                          <Send className="mr-2 h-4 w-4" />
+                          Send SMS
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </form>
               </div>
             </div>
