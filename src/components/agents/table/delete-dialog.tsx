@@ -28,6 +28,11 @@ export function DeleteDialog({
   title,
   description
 }: DeleteDialogProps) {
+  const handleConfirm = (event: React.MouseEvent) => {
+    event.preventDefault();
+    onConfirm();
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -40,7 +45,7 @@ export function DeleteDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onConfirm}
+            onClick={handleConfirm}
             disabled={isDeleting}
             className="bg-red-600 hover:bg-red-700 text-white"
           >
