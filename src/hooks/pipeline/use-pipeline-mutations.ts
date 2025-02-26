@@ -138,6 +138,7 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
   const handleDeletePipeline = async (pipelineId: string) => {
     try {
+      // Delete pipeline (leads and activities will cascade delete)
       const { error } = await supabase
         .from("pipelines")
         .delete()
@@ -145,15 +146,15 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
-      // Immediately remove the pipeline from the cache
+      // Remove the pipeline from the cache immediately
       queryClient.setQueryData(["pipelines"], (old: Pipeline[] | undefined) => {
         if (!old) return old;
         return old.filter(p => p.id !== pipelineId);
       });
 
-      // Also invalidate the leads query to refresh the leads list
-      await queryClient.invalidateQueries({
-        queryKey: ["leads"],
+      // Remove the leads data for this pipeline from the cache
+      queryClient.removeQueries({
+        queryKey: ["leads", pipelineId],
       });
 
       toast({
@@ -161,7 +162,7 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
         description: "Pipeline and associated leads have been deleted successfully",
       });
 
-      // Refresh both pipelines and leads data
+      // Refresh data to ensure everything is in sync
       await Promise.all([
         refetchPipelines(),
         refetchLeads()
