@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +42,6 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
   const queryClient = useQueryClient();
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<Set<TimelineItem['type']>>(new Set(['note', 'status_change', 'contact_update', 'name_update', 'variable_add']));
 
   const { data: activities } = useQuery({
@@ -91,14 +91,8 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
     enabled: !!leadId,
   });
 
-  // Filter activities based on search query and selected types
-  const filteredActivities = activities?.filter(item => {
-    const matchesSearch = item.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (item.old_value?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                         (item.new_value?.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesType = selectedTypes.has(item.type);
-    return matchesSearch && matchesType;
-  });
+  // Filter activities based on selected types
+  const filteredActivities = activities?.filter(item => selectedTypes.has(item.type));
 
   const handleEditNote = async (noteId: string) => {
     if (editingNoteId === noteId) {
@@ -171,11 +165,6 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
     }
   };
 
-  const renderValue = (value: string | null) => {
-    if (value === null) return 'None';
-    return value;
-  };
-
   const toggleType = (type: TimelineItem['type']) => {
     const newTypes = new Set(selectedTypes);
     if (newTypes.has(type)) {
@@ -188,16 +177,7 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Search activities..."
-            className="w-full px-3 py-1 text-sm border rounded-md"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+      <div className="flex items-center justify-end">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-8">
@@ -221,68 +201,84 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
 
       <ScrollArea className="h-[calc(100vh-220px)]">
         <div className="space-y-4 pr-4">
-          {filteredActivities?.map((item) => (
-            <div key={item.id} className="flex items-start gap-3 p-3 border rounded-lg bg-background">
-              <div className={`rounded-full p-2 ${getActivityColor(item.type)}`}>
-                {getActivityIcon(item.type, item.content)}
-              </div>
-              <div className="flex-1 min-w-0">
-                {item.type === 'note' && editingNoteId === item.id ? (
-                  <div className="space-y-2">
-                    <Textarea
-                      value={editedContent}
-                      onChange={(e) => setEditedContent(e.target.value)}
-                      className="min-h-[60px]"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleEditNote(item.id)}
-                        className="h-7"
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setEditingNoteId(null)}
-                        className="h-7"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Cancel
-                      </Button>
-                    </div>
+          {filteredActivities?.map((item, index) => (
+            <div key={item.id} className="relative">
+              <div className="flex items-start gap-3">
+                <div className="relative z-10">
+                  <div className={`rounded-full p-2 ${getActivityColor(item.type)} bg-background`}>
+                    {getActivityIcon(item.type, 'content' in item ? item.content : '')}
                   </div>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">{item.content}</p>
-                      {item.type === 'note' && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEditNote(item.id)}
-                          className="h-7 px-2"
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                    {item.type !== 'note' && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {item.old_value && <span>From: {renderValue(item.old_value)}</span>}
-                        {item.old_value && item.new_value && <span> → </span>}
-                        {item.new_value && <span>To: {renderValue(item.new_value)}</span>}
-                      </p>
+                  {index < (filteredActivities.length - 1) && (
+                    <Separator orientation="vertical" className="absolute h-full top-8 left-1/2 -translate-x-1/2" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="p-3 border rounded-lg bg-background">
+                    {item.type === 'note' && editingNoteId === item.id ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={editedContent}
+                          onChange={(e) => setEditedContent(e.target.value)}
+                          className="min-h-[60px]"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleEditNote(item.id)}
+                            className="h-7"
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEditingNoteId(null)}
+                            className="h-7"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium">
+                            {item.type === 'note' ? "Note Added" : item.content}
+                          </p>
+                          {item.type === 'note' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditNote(item.id)}
+                              className="h-7 px-2"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {item.type === 'note' && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
+                            {item.content}
+                          </p>
+                        )}
+                        {'old_value' in item && item.type !== 'note' && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {item.old_value && <span>From: {item.old_value}</span>}
+                            {item.old_value && item.new_value && <span> → </span>}
+                            {item.new_value && <span>To: {item.new_value}</span>}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-1 mt-1">
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <time className="text-xs text-muted-foreground">
+                            {format(new Date(item.timestamp), 'MMM d, yyyy h:mm a')}
+                          </time>
+                        </div>
+                      </>
                     )}
-                  </>
-                )}
-                <div className="flex items-center gap-1 mt-1">
-                  <Clock className="h-3 w-3 text-muted-foreground" />
-                  <time className="text-xs text-muted-foreground">
-                    {format(new Date(item.timestamp), 'MMM d, yyyy h:mm a')}
-                  </time>
+                  </div>
                 </div>
               </div>
             </div>
