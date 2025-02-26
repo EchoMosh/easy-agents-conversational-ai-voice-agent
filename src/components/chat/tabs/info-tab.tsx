@@ -1,3 +1,4 @@
+
 import { Mail, Phone, User, Tag, PlusCircle, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TagsManager } from "@/components/leads/components/tags/tags-manager";
+import { PipelineSelect } from "@/components/leads/components/pipeline-select";
+import { useQuery } from "@tanstack/react-query";
 
 interface InfoTabProps {
   lead: Lead;
@@ -24,11 +27,42 @@ export function InfoTab({ lead }: InfoTabProps) {
   const [editingVariable, setEditingVariable] = useState<{ id: string; name: string; value: string } | null>(null);
   const queryClient = useQueryClient();
 
+  // Fetch pipelines
+  const { data: pipelines = [] } = useQuery({
+    queryKey: ['pipelines'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pipelines')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const invalidateQueries = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['leads'] }),
       queryClient.invalidateQueries({ queryKey: ['lead_activities', lead.id] })
     ]);
+  };
+
+  const handlePipelineChange = async (pipelineId: string) => {
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ pipeline_id: pipelineId })
+        .eq('id', lead.id);
+
+      if (error) throw error;
+
+      toast.success("Pipeline updated successfully");
+      await invalidateQueries();
+    } catch (error: any) {
+      console.error('Error updating pipeline:', error);
+      toast.error(error.message || "Failed to update pipeline");
+    }
   };
 
   const handleSave = async () => {
@@ -47,9 +81,9 @@ export function InfoTab({ lead }: InfoTabProps) {
       toast.success("Lead information updated successfully");
       setIsEditing(false);
       await invalidateQueries();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating lead:', error);
-      toast.error("Failed to update lead information");
+      toast.error(error.message || "Failed to update lead information");
     }
   };
 
@@ -74,9 +108,9 @@ export function InfoTab({ lead }: InfoTabProps) {
       setIsAddingVariable(false);
       setNewVariable({ name: "", value: "" });
       await invalidateQueries();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding variable:', error);
-      toast.error("Failed to add variable");
+      toast.error(error.message || "Failed to add variable");
     }
   };
 
@@ -97,9 +131,9 @@ export function InfoTab({ lead }: InfoTabProps) {
       toast.success("Variable updated successfully");
       setEditingVariable(null);
       await invalidateQueries();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating variable:', error);
-      toast.error("Failed to update variable");
+      toast.error(error.message || "Failed to update variable");
     }
   };
 
@@ -114,9 +148,9 @@ export function InfoTab({ lead }: InfoTabProps) {
 
       toast.success("Variable deleted successfully");
       await invalidateQueries();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting variable:', error);
-      toast.error("Failed to delete variable");
+      toast.error(error.message || "Failed to delete variable");
     }
   };
 
@@ -217,6 +251,24 @@ export function InfoTab({ lead }: InfoTabProps) {
         </div>
       </div>
 
+      {/* Pipeline Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium text-gray-900">Pipeline</h3>
+        <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+          <PipelineSelect
+            pipelines={pipelines}
+            selectedPipelineId={lead.pipeline_id}
+            onPipelineChange={handlePipelineChange}
+          />
+        </div>
+      </div>
+
+      {/* Tags Section */}
+      <div className="space-y-4">
+        <TagsManager leadId={lead.id} tags={lead.tags || []} />
+      </div>
+
+      {/* Variables Section */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-medium text-gray-900">Lead Variables</h3>
@@ -313,8 +365,6 @@ export function InfoTab({ lead }: InfoTabProps) {
           ))}
         </div>
       </div>
-
-      <TagsManager leadId={lead.id} tags={lead.tags || []} />
     </div>
   );
 }
