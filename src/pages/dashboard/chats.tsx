@@ -10,7 +10,7 @@ import { LeadSidebar } from "@/components/chat/lead-sidebar";
 import { ChatArea } from "@/components/chat/chat-area";
 import { TimelineTab } from "@/components/chat/tabs/timeline-tab";
 import { InfoTab } from "@/components/chat/tabs/info-tab";
-import { Clock, User, FileText, PlusCircle } from "lucide-react";
+import { History, UserCircle2, Files, PlusCircle } from "lucide-react";
 
 type TabType = "timeline" | "details" | "files";
 
@@ -60,13 +60,13 @@ export default function ChatsPage() {
             <div className="px-4 py-2 border-b bg-white/50 backdrop-blur-sm">
               <TabsList className="w-full grid grid-cols-3 bg-white/80">
                 <TabsTrigger value="timeline" className="data-[state=active]:bg-white">
-                  <Clock className="w-4 h-4" />
+                  <History className="w-4 h-4 stroke-[1.5]" />
                 </TabsTrigger>
                 <TabsTrigger value="details" className="data-[state=active]:bg-white">
-                  <User className="w-4 h-4" />
+                  <UserCircle2 className="w-4 h-4 stroke-[1.5]" />
                 </TabsTrigger>
                 <TabsTrigger value="files" className="data-[state=active]:bg-white">
-                  <FileText className="w-4 h-4" />
+                  <Files className="w-4 h-4 stroke-[1.5]" />
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -89,7 +89,7 @@ export default function ChatsPage() {
                 <div className="space-y-2">
                   <div className="p-3 rounded-lg bg-white/60 backdrop-blur-sm border shadow-sm">
                     <div className="flex items-center gap-3">
-                      <FileText className="h-8 w-8 text-blue-600" />
+                      <Files className="h-8 w-8 text-blue-600" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">proposal.pdf</p>
                         <p className="text-xs text-muted-foreground">Added 2 days ago</p>
