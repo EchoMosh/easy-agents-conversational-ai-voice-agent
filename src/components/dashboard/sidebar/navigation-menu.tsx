@@ -10,7 +10,6 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { ChatList } from "@/components/chat/chat-list";
 
 const mainMenuItems = [
   {
@@ -27,6 +26,11 @@ const mainMenuItems = [
     title: "Pipelines",
     icon: GitMerge,
     url: "/dashboard/pipelines",
+  },
+  {
+    title: "Chats",
+    icon: MessageSquare,
+    url: "/dashboard/chats",
   },
 ];
 
@@ -68,18 +72,6 @@ export function NavigationMenu() {
       </SidebarGroup>
 
       <SidebarSeparator />
-
-      <SidebarGroup>
-        <SidebarGroupContent>
-          <div className="px-2 py-2">
-            <div className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-muted-foreground">
-              <MessageSquare className="h-4 w-4" />
-              <span>Chats</span>
-            </div>
-          </div>
-          <ChatList />
-        </SidebarGroupContent>
-      </SidebarGroup>
 
       <SidebarGroup className="mt-auto border-t pt-4">
         <SidebarGroupContent>

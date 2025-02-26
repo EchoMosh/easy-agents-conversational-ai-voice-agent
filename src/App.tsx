@@ -17,6 +17,7 @@ import SettingsPage from './pages/dashboard/settings';
 import ProfilePage from './pages/dashboard/profile';
 import AgentFlowPage from './pages/dashboard/agent-flow';
 import PipelinesPage from './pages/dashboard/pipelines';
+import ChatsPage from './pages/dashboard/chats';
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ function App() {
                   <Route path="pipelines" element={<PipelinesPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="profile" element={<ProfilePage />} />
+                  <Route path="chats" element={<ChatsPage />} />
                 </Route>
 
                 {/* Flow editor route without sidebar */}
