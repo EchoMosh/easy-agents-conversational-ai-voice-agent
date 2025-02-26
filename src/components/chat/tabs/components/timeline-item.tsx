@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { 
   Mail, 
@@ -7,11 +8,13 @@ import {
   Pencil, 
   Check, 
   X, 
-  UserPlus, 
-  Tag, 
+  UserPlus,
+  Tag,
   User,
-  ArrowRight,
-  MessageSquare
+  ArrowRightLeft,
+  MessageSquare,
+  Variable,
+  Pipeline
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,7 +45,7 @@ export function TimelineItemComponent({
       case 'note':
         return <StickyNote className="h-4 w-4" />;
       case 'status_change':
-        return <ArrowRight className="h-4 w-4" />;
+        return <Pipeline className="h-4 w-4" />;
       case 'contact_update':
         if (content.toLowerCase().includes('email')) {
           return <Mail className="h-4 w-4" />;
@@ -53,7 +56,7 @@ export function TimelineItemComponent({
       case 'name_update':
         return <User className="h-4 w-4" />;
       case 'variable_add':
-        return <Tag className="h-4 w-4" />;
+        return <Variable className="h-4 w-4" />;
       case 'lead_created':
         return <UserPlus className="h-4 w-4" />;
       default:
