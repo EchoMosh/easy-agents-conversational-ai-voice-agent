@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { NewLeadForm } from "@/components/leads/new-lead-form";
-import { LeadVariablesDialog } from "@/components/leads/variables/variables-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
