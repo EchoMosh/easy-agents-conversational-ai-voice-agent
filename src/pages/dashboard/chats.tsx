@@ -1,5 +1,6 @@
+
 import { Mail, Phone, Send } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { EmailTagInput } from "@/components/ui/email-tag-input";
 import { Bold, Italic, List, ListOrdered, Quote, Undo, Redo } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { GreetingInput } from '@/components/flow/nodes/greeting/greeting-input';
-import { VariableSelector } from '@/components/flow/nodes/variable-selector';
+import { VariableSelector } from '@/components/flow/nodes/variable-mention/variable-selector';
 
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -315,7 +316,7 @@ export default function ChatsPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-2">
-              <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/50" />
+              <div className="h-12 w-12 mx-auto text-muted-foreground/50" />
               <p className="text-muted-foreground">Select a lead to start messaging</p>
             </div>
           </div>
