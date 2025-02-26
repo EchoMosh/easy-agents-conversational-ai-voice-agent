@@ -25,6 +25,7 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
         color: col.color,
       }));
 
+      // First update pipeline columns
       const { error } = await supabase
         .from("pipelines")
         .update({
@@ -34,7 +35,7 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
-      // Update lead statuses
+      // Then update lead statuses
       const { error: leadsError } = await supabase
         .from("leads")
         .update({ status: newTitle })
@@ -43,12 +44,16 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (leadsError) throw leadsError;
 
-      // Invalidate queries before refetching
-      await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
-      await queryClient.invalidateQueries({ queryKey: ["leads", pipeline.id] });
-
-      // Now refetch the data
-      await Promise.all([refetchPipelines(), refetchLeads()]);
+      // Invalidate and refetch in one go
+      await queryClient.invalidateQueries({ 
+        queryKey: ["pipelines"],
+        refetchType: "all"
+      });
+      
+      await queryClient.invalidateQueries({ 
+        queryKey: ["leads", pipeline.id],
+        refetchType: "all"
+      });
 
       toast({
         title: "Stage updated",
@@ -96,7 +101,10 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
-      await refetchPipelines();
+      await queryClient.invalidateQueries({ 
+        queryKey: ["pipelines"],
+        refetchType: "all"
+      });
 
       toast({
         title: "Pipeline created",
@@ -121,7 +129,10 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
-      await refetchPipelines();
+      await queryClient.invalidateQueries({ 
+        queryKey: ["pipelines"],
+        refetchType: "all"
+      });
 
       toast({
         title: "Pipeline deleted",
@@ -148,7 +159,10 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
       if (error) throw error;
 
-      await refetchPipelines();
+      await queryClient.invalidateQueries({ 
+        queryKey: ["pipelines"],
+        refetchType: "all"
+      });
 
       toast({
         title: "Pipeline updated",
