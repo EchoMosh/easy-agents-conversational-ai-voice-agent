@@ -26,7 +26,7 @@ export function LeadProgress({ currentStage, stages }: LeadProgressProps) {
                   ${index < currentIndex 
                     ? 'bg-primary text-primary-foreground' // Completed stages
                     : index === currentIndex
-                    ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2' // Current stage
+                    ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2' // Current stage (including first stage)
                     : 'bg-muted border-2 border-muted-foreground/20' // Future stages
                   }`}
               >
@@ -39,7 +39,7 @@ export function LeadProgress({ currentStage, stages }: LeadProgressProps) {
               {index < stages.length - 1 && (
                 <div 
                   className={`w-8 h-0.5 mx-0.5 transition-colors duration-200
-                    ${index < currentIndex ? 'bg-primary' : 'bg-muted-foreground/20'}`}
+                    ${index <= currentIndex ? 'bg-primary' : 'bg-muted-foreground/20'}`}
                 />
               )}
             </div>
