@@ -57,6 +57,8 @@ export function TimelineItemComponent({
         return <User className="h-4 w-4" />;
       case 'variable_add':
         return <Binary className="h-4 w-4" />;
+      case 'tag_added':
+        return <Tags className="h-4 w-4" />;
       case 'lead_created':
         return <UserPlus className="h-4 w-4" />;
       default:
@@ -76,6 +78,8 @@ export function TimelineItemComponent({
         return 'bg-rose-100 text-rose-600';
       case 'variable_add':
         return 'bg-teal-100 text-teal-600';
+      case 'tag_added':
+        return 'bg-indigo-100 text-indigo-600';
       case 'lead_created':
         return 'bg-green-100 text-green-600';
       default:
