@@ -2,15 +2,23 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-export function useDeletePipeline(handleDeletePipeline: () => Promise<void>) {
+type LeadHandlingOption = "keep" | "move" | "delete";
+
+export function useDeletePipeline(
+  handleDeletePipeline: (
+    pipelineId: string,
+    option: LeadHandlingOption,
+    targetPipelineId?: string
+  ) => Promise<void>
+) {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const onDelete = async () => {
+  const onDelete = async (option: LeadHandlingOption, targetPipelineId?: string) => {
     setIsDeleting(true);
     try {
-      await handleDeletePipeline();
+      await handleDeletePipeline(pipelineId, option, targetPipelineId);
       setShowDeleteDialog(false);
     } catch (error) {
       console.error("Error deleting pipeline:", error);
