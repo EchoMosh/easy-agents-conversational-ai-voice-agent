@@ -27,41 +27,39 @@ export function DeleteDialog({
   title,
   description
 }: DeleteDialogProps) {
+  const handleConfirm = async () => {
+    try {
+      await onConfirm();
+    } finally {
+      onOpenChange(false);
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md">
-        <SheetHeader className="space-y-4">
+      <SheetContent side="right">
+        <SheetHeader>
           <SheetTitle className="text-red-600">{title}</SheetTitle>
           <SheetDescription className="text-base">
             {description}
           </SheetDescription>
         </SheetHeader>
-        <SheetFooter className="mt-8">
-          <div className="flex w-full space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isDeleting}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                try {
-                  await onConfirm();
-                } finally {
-                  onOpenChange(false);
-                }
-              }}
-              disabled={isDeleting}
-              className="flex-1"
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </Button>
-          </div>
-        </SheetFooter>
+        <div className="flex flex-col gap-4 mt-8">
+          <Button
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isDeleting}
+          >
+            Cancel
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   );

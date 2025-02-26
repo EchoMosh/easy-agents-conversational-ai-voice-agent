@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Agent } from "@/types/agent";
@@ -145,8 +146,9 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
       <DeleteDialog
         isOpen={!!agentToDelete}
         onOpenChange={(open) => {
-          if (!open && !isDeleting) {
+          if (!open) {
             setAgentToDelete(null);
+            setIsDeleting(false);
           }
         }}
         onConfirm={handleDeleteConfirm}
