@@ -7,6 +7,8 @@ import { MessageComposer } from "./message-composer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
+import { useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ChatAreaProps {
   selectedLead: Lead | undefined;
@@ -19,6 +21,8 @@ export function ChatArea({
   messageType, 
   onMessageTypeChange 
 }: ChatAreaProps) {
+  const { toast } = useToast();
+
   // Fetch the current pipeline to get its stages
   const { data: pipeline } = useQuery({
     queryKey: ['pipeline', selectedLead?.pipeline_id],
@@ -37,6 +41,40 @@ export function ChatArea({
     enabled: !!selectedLead?.pipeline_id
   });
 
+  // Effect to handle pipeline changes
+  useEffect(() => {
+    const updateLeadStatus = async () => {
+      if (!selectedLead || !pipeline) return;
+      
+      // Get the first stage of the pipeline
+      const firstStage = pipeline.columns[0]?.title;
+      if (!firstStage || selectedLead.status === firstStage) return;
+
+      // Update the lead's status to the first stage
+      const { error } = await supabase
+        .from('leads')
+        .update({ status: firstStage })
+        .eq('id', selectedLead.id);
+
+      if (error) {
+        console.error('Error updating lead status:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update lead status",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Lead Updated",
+        description: `Lead moved to ${firstStage} stage`
+      });
+    };
+
+    updateLeadStatus();
+  }, [selectedLead?.pipeline_id, pipeline]);
+
   if (!selectedLead) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -47,11 +85,6 @@ export function ChatArea({
       </div>
     );
   }
-
-  // Get the current stage index from the pipeline columns
-  const currentStageIndex = pipeline?.columns.findIndex(
-    col => col.title.toLowerCase() === selectedLead.status.toLowerCase()
-  ) ?? 0;
 
   return (
     <div className="flex-1 flex flex-col">
