@@ -24,7 +24,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const [phone, setPhone] = useState("");
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
 
-  const { data: pipelines = [] } = useQuery({
+  const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -100,6 +100,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           pipelines={pipelines}
           selectedPipelineId={selectedPipelineId}
           onPipelineChange={setSelectedPipelineId}
+          refetchPipelines={refetchPipelines}
         />
         
         <ContactInfoForm 
