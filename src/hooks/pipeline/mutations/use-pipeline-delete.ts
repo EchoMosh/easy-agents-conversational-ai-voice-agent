@@ -16,7 +16,6 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
     try {
       console.log("Deleting pipeline with option:", option);
 
-      // First, handle the leads based on the selected option
       if (option === "move" && targetPipelineId) {
         console.log("Moving leads to pipeline:", targetPipelineId);
         const { error: moveError } = await supabase
@@ -43,7 +42,7 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
         console.log(`Found ${leadsToDelete?.length || 0} leads to delete`);
 
         if (leadsToDelete && leadsToDelete.length > 0) {
-          // Delete all leads in this pipeline
+          // Delete the leads first
           const { error: deleteLeadsError } = await supabase
             .from("leads")
             .delete()
@@ -52,20 +51,13 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
           if (deleteLeadsError) {
             throw new Error(`Failed to delete leads: ${deleteLeadsError.message}`);
           }
-
-          // Verify deletion
-          const { data: checkRemaining, error: verifyError } = await supabase
-            .from("leads")
-            .select("id")
-            .eq("pipeline_id", pipelineId);
-
-          if (verifyError) {
-            throw new Error(`Failed to verify lead deletion: ${verifyError.message}`);
-          }
-
-          if (checkRemaining && checkRemaining.length > 0) {
-            throw new Error("Failed to delete all leads in the pipeline");
-          }
+          
+          // Clear the leads cache
+          queryClient.setQueryData(["leads", pipelineId], []);
+          queryClient.setQueryData(["leads", undefined], (old: any[] | undefined) => {
+            if (!old) return [];
+            return old.filter(lead => lead.pipeline_id !== pipelineId);
+          });
 
           console.log("Successfully deleted all leads in the pipeline");
         }
@@ -80,22 +72,18 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
           throw new Error(`Failed to update leads: ${keepLeadsError.message}`);
         }
 
-        // Verify the update was successful
-        const { data: checkLeads, error: checkError } = await supabase
-          .from("leads")
-          .select("id")
-          .eq("pipeline_id", pipelineId);
-
-        if (checkError) {
-          throw new Error(`Failed to verify lead updates: ${checkError.message}`);
-        }
-
-        if (checkLeads && checkLeads.length > 0) {
-          throw new Error("Failed to remove pipeline from leads");
-        }
+        // Update the leads cache to reflect the changes
+        queryClient.setQueryData(["leads", undefined], (old: any[] | undefined) => {
+          if (!old) return [];
+          return old.map(lead => 
+            lead.pipeline_id === pipelineId 
+              ? { ...lead, pipeline_id: null }
+              : lead
+          );
+        });
       }
 
-      // Only delete the pipeline if lead operations were successful
+      // Delete the pipeline
       console.log("Deleting pipeline:", pipelineId);
       const { error: pipelineError } = await supabase
         .from("pipelines")
@@ -106,15 +94,10 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
         throw new Error(`Failed to delete pipeline: ${pipelineError.message}`);
       }
 
-      // Remove the pipeline from the cache immediately
+      // Update the cache
       queryClient.setQueryData(["pipelines"], (old: Pipeline[] | undefined) => {
-        if (!old) return old;
+        if (!old) return [];
         return old.filter(p => p.id !== pipelineId);
-      });
-
-      // Remove the leads data for this pipeline from the cache
-      queryClient.removeQueries({
-        queryKey: ["leads", pipelineId],
       });
 
       console.log("Pipeline deletion completed successfully");
@@ -123,7 +106,7 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
         description: "Pipeline has been deleted successfully",
       });
 
-      // Refresh data to ensure everything is in sync
+      // Refresh the data
       await Promise.all([
         refetchPipelines(),
         refetchLeads()
@@ -135,7 +118,7 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
         description: error instanceof Error ? error.message : "Failed to delete pipeline",
         variant: "destructive",
       });
-      throw error; // Re-throw to be handled by the calling code
+      throw error;
     }
   };
 
