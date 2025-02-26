@@ -22,13 +22,14 @@ export function InfoTab({ lead }: InfoTabProps) {
 
   const handleSave = async () => {
     try {
+      console.log("Saving lead...", editedLead);
+      
       const { error } = await supabase
         .from('leads')
         .update({
           name: editedLead.name,
           email: editedLead.email,
           phone: editedLead.phone,
-          status: editedLead.status
         })
         .eq('id', lead.id);
 
@@ -36,9 +37,14 @@ export function InfoTab({ lead }: InfoTabProps) {
 
       toast.success("Lead information updated successfully");
       setIsEditing(false);
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
-      queryClient.invalidateQueries({ queryKey: ['lead_activities', lead.id] });
+      
+      // Invalidate and refetch queries to refresh the data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['leads'] }),
+        queryClient.invalidateQueries({ queryKey: ['lead_activities', lead.id] })
+      ]);
+
+      console.log("Lead updated successfully");
     } catch (error) {
       console.error('Error updating lead:', error);
       toast.error("Failed to update lead information");
@@ -50,29 +56,38 @@ export function InfoTab({ lead }: InfoTabProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (isEditing) {
-                handleSave();
-              } else {
-                setIsEditing(true);
-              }
-            }}
-          >
-            {isEditing ? (
-              <>
+          {isEditing ? (
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSave}
+              >
                 <Check className="h-4 w-4 mr-2" />
                 Save
-              </>
-            ) : (
-              <>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit
-              </>
-            )}
-          </Button>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditedLead(lead);
+                }}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          )}
         </div>
         <div className="space-y-3 bg-muted/50 rounded-lg p-4">
           {isEditing ? (
@@ -101,17 +116,6 @@ export function InfoTab({ lead }: InfoTabProps) {
                   onChange={(value) => setEditedLead({ ...editedLead, phone: value })}
                 />
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setIsEditing(false);
-                  setEditedLead(lead);
-                }}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
             </div>
           ) : (
             <>
