@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Agent } from "@/types/agent";
@@ -34,8 +33,8 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
   const getAvatarUrl = (agentId: string, role: string) => {
     // Use agent ID and role to generate a consistent avatar
     const seed = `${agentId}-${role}`;
-    // Using the "lorelei-neutral" style which creates modern, friendly avatars
-    return `https://api.dicebear.com/7.x/lorelei-neutral/svg?seed=${seed}&size=200`;
+    // Using the "bottts" style which creates robot-like avatars for AI agents
+    return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&size=200`;
   };
 
   const handleDeleteConfirm = async () => {
