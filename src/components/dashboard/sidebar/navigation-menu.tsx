@@ -1,5 +1,5 @@
 
-import { Users, Target, Settings, GitMerge } from "lucide-react";
+import { Users, Target, Settings, GitMerge, MessageSquare } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   SidebarContent,
@@ -8,7 +8,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { ChatList } from "@/components/chat/chat-list";
 
 const mainMenuItems = [
   {
@@ -62,6 +64,20 @@ export function NavigationMenu() {
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarSeparator />
+
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <div className="px-2 py-2">
+            <div className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-muted-foreground">
+              <MessageSquare className="h-4 w-4" />
+              <span>Chats</span>
+            </div>
+          </div>
+          <ChatList />
         </SidebarGroupContent>
       </SidebarGroup>
 
