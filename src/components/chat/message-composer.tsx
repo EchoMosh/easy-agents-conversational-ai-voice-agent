@@ -44,8 +44,11 @@ export function MessageComposer({ messageType, onMessageTypeChange, leadId }: Me
         return;
       }
 
-      // Refresh both the chat area and timeline data
-      queryClient.invalidateQueries({ queryKey: ['lead_notes', leadId] });
+      // Invalidate both queries to ensure data is refreshed
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['lead_notes', leadId] }),
+        queryClient.invalidateQueries({ queryKey: ['lead_activities', leadId] })
+      ]);
     }
     
     // TODO: Implement email and SMS sending
