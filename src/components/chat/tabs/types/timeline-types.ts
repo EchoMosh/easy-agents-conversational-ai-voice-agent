@@ -8,7 +8,7 @@ export interface Note {
 
 export interface Activity {
   id: string;
-  type: 'status_change' | 'contact_update' | 'name_update' | 'variable_add';
+  type: 'status_change' | 'contact_update' | 'name_update' | 'variable_add' | 'lead_created';
   content: string;
   timestamp: string;
   old_value: string | null;
