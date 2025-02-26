@@ -1,12 +1,11 @@
-
-import { Mail, Phone, Send } from "lucide-react";
+import { Mail, Phone, Send, FileEdit, Save, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "./leads";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -15,6 +14,15 @@ import { Bold, Italic, List, ListOrdered, Quote, Undo, Redo } from "lucide-react
 import { Separator } from "@/components/ui/separator";
 import { GreetingInput } from '@/components/flow/nodes/greeting/greeting-input';
 import { VariableSelector } from '@/components/flow/nodes/variable-mention/variable-selector';
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+
+interface Note {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+}
 
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -23,6 +31,11 @@ export default function ChatsPage() {
   const [subject, setSubject] = useState("");
   const [cc, setCC] = useState<string[]>([]);
   const [bcc, setBCC] = useState<string[]>([]);
+  const [newNote, setNewNote] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteContent, setEditingNoteContent] = useState("");
+
+  const queryClient = useQueryClient();
 
   const editor = useEditor({
     extensions: [
@@ -31,12 +44,13 @@ export default function ChatsPage() {
     content: '',
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
+      setMessage(html);
+      
       const formattedHtml = html.replace(
         /{{([^}]+)}}/g,
-        '<span class="bg-white/40 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
+        '<span style="background-color: rgba(255, 255, 255, 0.4); color: rgb(37, 99, 235); padding: 2px 6px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); backdrop-filter: blur(4px); font-weight: 500;">{{$1}}</span>'
       );
       editor.commands.setContent(formattedHtml);
-      setMessage(html);
     },
   });
 
@@ -70,6 +84,99 @@ export default function ChatsPage() {
   });
 
   const selectedLead = leads?.find(lead => lead.id === selectedLeadId);
+
+  const { data: notes, isLoading: isLoadingNotes } = useQuery({
+    queryKey: ['notes', selectedLeadId],
+    queryFn: async () => {
+      if (!selectedLeadId) return [];
+      const { data, error } = await supabase
+        .from('lead_notes')
+        .select('*')
+        .eq('lead_id', selectedLeadId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Note[];
+    },
+    enabled: !!selectedLeadId
+  });
+
+  const addNoteMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !selectedLeadId) throw new Error('Unauthorized');
+
+      const { data, error } = await supabase
+        .from('lead_notes')
+        .insert([{
+          lead_id: selectedLeadId,
+          user_id: user.id,
+          content
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', selectedLeadId] });
+      setNewNote("");
+      toast.success("Note added successfully");
+    },
+    onError: () => {
+      toast.error("Failed to add note");
+    }
+  });
+
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ id, content }: { id: string; content: string }) => {
+      const { error } = await supabase
+        .from('lead_notes')
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', selectedLeadId] });
+      setEditingNoteId(null);
+      setEditingNoteContent("");
+      toast.success("Note updated successfully");
+    },
+    onError: () => {
+      toast.error("Failed to update note");
+    }
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from('lead_notes')
+        .delete()
+        .eq('id', noteId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', selectedLeadId] });
+      toast.success("Note deleted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to delete note");
+    }
+  });
+
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNote.trim()) return;
+    addNoteMutation.mutate(newNote.trim());
+  };
+
+  const handleUpdateNote = (noteId: string) => {
+    if (!editingNoteContent.trim()) return;
+    updateNoteMutation.mutate({ id: noteId, content: editingNoteContent.trim() });
+  };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -322,23 +429,95 @@ export default function ChatsPage() {
         )}
       </div>
 
-      {/* Activity/History sidebar */}
+      {/* Notes sidebar */}
       {selectedLead && (
         <div className="w-80 border-l p-6 bg-muted/10">
-          <h3 className="font-semibold mb-4 text-lg">Activity History</h3>
+          <h3 className="font-semibold mb-4 text-lg">Internal Notes</h3>
+          
+          <form onSubmit={handleAddNote} className="mb-6">
+            <Textarea
+              placeholder="Add a note..."
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              className="min-h-[100px] mb-2"
+            />
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={addNoteMutation.isPending}
+            >
+              Add Note
+            </Button>
+          </form>
+
           <div className="space-y-4">
-            <div className="relative pl-4 border-l-2 border-muted-foreground/20">
-              <time className="text-xs text-muted-foreground block mb-1">Today at 2:30 PM</time>
-              <p className="text-sm">Email sent: Follow-up meeting</p>
-            </div>
-            <div className="relative pl-4 border-l-2 border-muted-foreground/20">
-              <time className="text-xs text-muted-foreground block mb-1">Today at 1:15 PM</time>
-              <p className="text-sm">Status changed to Qualified</p>
-            </div>
-            <div className="relative pl-4 border-l-2 border-muted-foreground/20">
-              <time className="text-xs text-muted-foreground block mb-1">Yesterday at 4:45 PM</time>
-              <p className="text-sm">Added to Pipeline: Sales 2024</p>
-            </div>
+            {notes?.map((note) => (
+              <div key={note.id} className="relative p-3 border rounded-lg bg-background">
+                {editingNoteId === note.id ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={editingNoteContent}
+                      onChange={(e) => setEditingNoteContent(e.target.value)}
+                      className="min-h-[100px] mb-2"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleUpdateNote(note.id)}
+                        disabled={updateNoteMutation.isPending}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          setEditingNoteId(null);
+                          setEditingNoteContent("");
+                        }}
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="pr-8">
+                      <p className="whitespace-pre-wrap text-sm">{note.content}</p>
+                      <time className="text-xs text-muted-foreground mt-2 block">
+                        {new Date(note.created_at).toLocaleString()}
+                      </time>
+                    </div>
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          setEditingNoteId(note.id);
+                          setEditingNoteContent(note.content);
+                        }}
+                      >
+                        <FileEdit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => deleteNoteMutation.mutate(note.id)}
+                        disabled={deleteNoteMutation.isPending}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
