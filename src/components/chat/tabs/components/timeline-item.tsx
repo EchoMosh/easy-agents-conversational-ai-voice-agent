@@ -4,7 +4,7 @@ import { Mail, Phone, StickyNote, Clock, Pencil, Check, X, UserCog, Tag, User } 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { TimelineItem } from "../types/timeline-types";
+import { TimelineItem, Note } from "../types/timeline-types";
 
 interface TimelineItemProps {
   item: TimelineItem;
@@ -55,12 +55,16 @@ export function TimelineItemComponent({
     }
   };
 
+  const isNote = (item: TimelineItem): item is Note => {
+    return item.type === 'note';
+  };
+
   return (
     <div className="relative">
       <div className="flex items-start gap-3">
         <div className="relative z-10">
           <div className={`rounded-full p-2 ${getActivityColor(item.type)} bg-background`}>
-            {getActivityIcon(item.type, item.type === 'note' ? item.content : item.content)}
+            {getActivityIcon(item.type, item.content)}
           </div>
           {!isLast && (
             <Separator orientation="vertical" className="absolute h-full top-8 left-1/2 -translate-x-1/2" />
@@ -68,7 +72,7 @@ export function TimelineItemComponent({
         </div>
         <div className="flex-1 min-w-0">
           <div className="p-3 border rounded-lg bg-background">
-            {item.type === 'note' && editingNoteId === item.id ? (
+            {isNote(item) && editingNoteId === item.id ? (
               <div className="space-y-2">
                 <Textarea
                   value={editedContent}
@@ -99,9 +103,9 @@ export function TimelineItemComponent({
               <>
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">
-                    {item.type === 'note' ? "Note Added" : item.content}
+                    {isNote(item) ? "Note Added" : item.content}
                   </p>
-                  {item.type === 'note' && (
+                  {isNote(item) && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -112,12 +116,12 @@ export function TimelineItemComponent({
                     </Button>
                   )}
                 </div>
-                {item.type === 'note' && (
+                {isNote(item) && (
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
                     {item.content}
                   </p>
                 )}
-                {'old_value' in item && item.type !== 'note' && (
+                {!isNote(item) && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {item.old_value && <span>From: {item.old_value}</span>}
                     {item.old_value && item.new_value && <span> → </span>}
