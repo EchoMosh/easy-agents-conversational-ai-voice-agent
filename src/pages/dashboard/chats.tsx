@@ -1,4 +1,4 @@
-import { Mail, MessageSquare, Phone, Send } from "lucide-react";
+import { Mail, Phone, Send } from "lucide-react";
 import { useState } from "react";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -13,10 +13,11 @@ import { EmailTagInput } from "@/components/ui/email-tag-input";
 import { Bold, Italic, List, ListOrdered, Quote, Undo, Redo } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { GreetingInput } from '@/components/flow/nodes/greeting/greeting-input';
+import { VariableSelector } from '@/components/flow/nodes/variable-selector';
 
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [messageType, setMessageType] = useState<'chat' | 'email' | 'sms'>('chat');
+  const [messageType, setMessageType] = useState<'email' | 'sms'>('email');
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
   const [cc, setCC] = useState<string[]>([]);
@@ -28,9 +29,31 @@ export default function ChatsPage() {
     ],
     content: '',
     onUpdate: ({ editor }) => {
-      setMessage(editor.getHTML());
+      const html = editor.getHTML();
+      const formattedHtml = html.replace(
+        /{{([^}]+)}}/g,
+        '<span class="bg-white/40 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
+      );
+      editor.commands.setContent(formattedHtml);
+      setMessage(html);
     },
   });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '@' && editor) {
+        const { state } = editor;
+        editor.chain().focus().insertContent('@').run();
+      }
+    };
+
+    const element = document.querySelector('.ProseMirror');
+    element?.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      element?.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [editor]);
 
   const { data: leads } = useQuery({
     queryKey: ['leads'],
@@ -144,9 +167,6 @@ export default function ChatsPage() {
             <div className="border-t p-6">
               <div className="max-w-3xl mx-auto space-y-4">
                 <ToggleGroup type="single" value={messageType} onValueChange={(v) => setMessageType(v as typeof messageType)} className="justify-start">
-                  <ToggleGroupItem value="chat" aria-label="Chat message">
-                    <MessageSquare className="h-4 w-4" />
-                  </ToggleGroupItem>
                   <ToggleGroupItem value="email" aria-label="Email">
                     <Mail className="h-4 w-4" />
                   </ToggleGroupItem>
@@ -262,10 +282,19 @@ export default function ChatsPage() {
                           <EditorContent editor={editor} className="prose prose-sm max-w-none min-h-[150px]" />
                         </div>
                       </div>
+                      <VariableSelector
+                        text={message}
+                        onTextChange={(newText) => {
+                          if (editor) {
+                            editor.commands.setContent(newText);
+                          }
+                        }}
+                        textareaRef={null}
+                      />
                     </div>
                   )}
                   <div className="flex flex-col gap-2">
-                    {messageType !== 'email' && (
+                    {messageType === 'sms' && (
                       <GreetingInput
                         value={message}
                         onChange={setMessage}
