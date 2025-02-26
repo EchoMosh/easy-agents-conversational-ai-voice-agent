@@ -30,11 +30,6 @@ export default function ChatsPage() {
     content: '',
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
-      const formattedHtml = html.replace(
-        /{{([^}]+)}}/g,
-        '<span class="bg-white/40 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
-      );
-      editor.commands.setContent(formattedHtml);
       setMessage(html);
     },
   });
@@ -166,16 +161,22 @@ export default function ChatsPage() {
 
             <div className="border-t p-6">
               <div className="max-w-3xl mx-auto space-y-4">
-                <ToggleGroup type="single" value={messageType} onValueChange={(v) => setMessageType(v as typeof messageType)} className="justify-start">
-                  <ToggleGroupItem value="email" aria-label="Email">
-                    <Mail className="h-4 w-4" />
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="sms" aria-label="SMS">
-                    <Phone className="h-4 w-4" />
-                  </ToggleGroupItem>
-                </ToggleGroup>
+                <div className="flex items-center justify-between">
+                  <ToggleGroup type="single" value={messageType} onValueChange={(v) => setMessageType(v as typeof messageType)} className="justify-start">
+                    <ToggleGroupItem value="email" aria-label="Email">
+                      <Mail className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="sms" aria-label="SMS">
+                      <Phone className="h-4 w-4" />
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                  <Button type="submit" form="message-form">
+                    <Send className="mr-2 h-4 w-4" />
+                    Send {messageType === 'email' ? 'Email' : 'SMS'}
+                  </Button>
+                </div>
 
-                <form onSubmit={handleSend} className="space-y-2">
+                <form id="message-form" onSubmit={handleSend} className="space-y-2">
                   {messageType === 'email' && (
                     <div className="space-y-4">
                       <div className="flex gap-2">
@@ -278,7 +279,7 @@ export default function ChatsPage() {
                             <Redo className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div className="p-2 min-h-[150px]">
+                        <div className="p-2 min-h-[150px] [&_.ProseMirror_span]:bg-white/40 [&_.ProseMirror_span]:text-blue-600 [&_.ProseMirror_span]:dark:text-blue-300 [&_.ProseMirror_span]:px-1.5 [&_.ProseMirror_span]:py-0.5 [&_.ProseMirror_span]:rounded-md [&_.ProseMirror_span]:shadow-sm [&_.ProseMirror_span]:backdrop-blur-sm [&_.ProseMirror_span]:font-medium">
                           <EditorContent editor={editor} className="prose prose-sm max-w-none min-h-[150px]" />
                         </div>
                       </div>
@@ -291,11 +292,6 @@ export default function ChatsPage() {
                         }}
                         textareaRef={null}
                       />
-                      <div className="flex justify-end">
-                        <Button type="submit">
-                          Send Email
-                        </Button>
-                      </div>
                     </div>
                   )}
                   {messageType === 'sms' && (
@@ -304,12 +300,6 @@ export default function ChatsPage() {
                         value={message}
                         onChange={setMessage}
                       />
-                      <div className="flex justify-end">
-                        <Button type="submit">
-                          <Send className="mr-2 h-4 w-4" />
-                          Send SMS
-                        </Button>
-                      </div>
                     </div>
                   )}
                 </form>
