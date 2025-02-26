@@ -1,4 +1,3 @@
-
 import { Mail, Phone, StickyNote, Clock, Pencil, Check, X, UserCog, Tag, User } from "lucide-react";
 import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -63,7 +62,7 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
 
       const activities: Activity[] = (activitiesResponse.data || []).map(activity => ({
         id: activity.id,
-        type: activity.content.includes('Email') ? 'contact_update' :
+        type: activity.content.includes('Email updated') ? 'contact_update' :
               activity.content.includes('Phone') ? 'contact_update' :
               activity.content.includes('Name') ? 'name_update' :
               activity.content.includes('Status') ? 'status_change' :
@@ -108,14 +107,14 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
     }
   };
 
-  const getActivityIcon = (type: TimelineItem['type']) => {
+  const getActivityIcon = (type: TimelineItem['type'], content: string) => {
     switch (type) {
       case 'note':
         return <StickyNote className="h-4 w-4" />;
       case 'status_change':
         return <UserCog className="h-4 w-4" />;
       case 'contact_update':
-        return <Phone className="h-4 w-4" />;
+        return content.includes('Email') ? <Mail className="h-4 w-4" /> : <Phone className="h-4 w-4" />;
       case 'name_update':
         return <User className="h-4 w-4" />;
       case 'variable_add':
@@ -148,7 +147,7 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
       {activities?.map((item) => (
         <div key={item.id} className="flex items-start gap-3 p-3 border rounded-lg bg-background">
           <div className={`rounded-full p-2 ${getActivityColor(item.type)}`}>
-            {getActivityIcon(item.type)}
+            {getActivityIcon(item.type, item.content)}
           </div>
           <div className="flex-1 min-w-0">
             {item.type === 'note' && editingNoteId === item.id ? (
