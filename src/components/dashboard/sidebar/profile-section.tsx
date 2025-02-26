@@ -16,7 +16,7 @@ export function ProfileSection() {
 
   const generateRandomAvatar = () => {
     const seed = Math.random().toString(36).substring(7);
-    return `https://api.dicebear.com/7.x/shapes/svg?seed=${seed}&backgroundColor=8b5cf6&radius=10`;
+    return `https://api.dicebear.com/7.x/lorelei-neutral/svg?seed=${seed}&backgroundColor=8b5cf6&radius=10`;
   };
 
   const fetchProfile = async () => {
