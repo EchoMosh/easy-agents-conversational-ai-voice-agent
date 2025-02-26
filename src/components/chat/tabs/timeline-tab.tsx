@@ -105,10 +105,6 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
 
   const getActivityIcon = (type: TimelineItem['type']) => {
     switch (type) {
-      case 'email':
-        return <Mail className="h-4 w-4" />;
-      case 'sms':
-        return <Phone className="h-4 w-4" />;
       case 'note':
         return <StickyNote className="h-4 w-4" />;
       case 'status_change':
@@ -124,10 +120,6 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
 
   const getActivityColor = (type: TimelineItem['type']) => {
     switch (type) {
-      case 'email':
-        return 'bg-blue-100 text-blue-600';
-      case 'sms':
-        return 'bg-green-100 text-green-600';
       case 'note':
         return 'bg-purple-100 text-purple-600';
       case 'status_change':

@@ -53,7 +53,6 @@ export type Database = {
       }
       lead_activities: {
         Row: {
-          activity_type: Database["public"]["Enums"]["activity_type"]
           content: string
           created_at: string
           id: string
@@ -63,7 +62,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          activity_type: Database["public"]["Enums"]["activity_type"]
           content: string
           created_at?: string
           id?: string
@@ -73,7 +71,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          activity_type?: Database["public"]["Enums"]["activity_type"]
           content?: string
           created_at?: string
           id?: string
