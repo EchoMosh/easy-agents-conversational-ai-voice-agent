@@ -54,6 +54,14 @@ export function InfoTab({ lead }: InfoTabProps) {
       const oldPipeline = pipelines.find(p => p.id === lead.pipeline_id);
       const newPipeline = pipelines.find(p => p.id === pipelineId);
 
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      
+      if (!userData.user) {
+        toast.error("You must be logged in to update pipeline");
+        return;
+      }
+
       // Update the lead's pipeline
       const { error: updateError } = await supabase
         .from('leads')
@@ -67,6 +75,7 @@ export function InfoTab({ lead }: InfoTabProps) {
         .from('lead_activities')
         .insert({
           lead_id: lead.id,
+          user_id: userData.user.id,
           content: 'Pipeline changed',
           old_value: oldPipeline?.name || 'Unknown',
           new_value: newPipeline?.name || 'Unknown'
@@ -171,11 +180,11 @@ export function InfoTab({ lead }: InfoTabProps) {
     }
   };
 
-  // Transform the lead tags data structure
-  const transformedTags = lead.tags?.map(tag => ({
-    id: tag.tag.id,
-    name: tag.tag.name,
-    color: tag.tag.color
+  // Correctly extract tags from the lead
+  const transformedTags = lead.tags?.map(tagRelation => ({
+    id: tagRelation.tag.id,
+    name: tagRelation.tag.name,
+    color: tagRelation.tag.color
   })) || [];
 
   return (

@@ -19,14 +19,17 @@ export default function ChatsPage() {
   const [messageType, setMessageType] = useState<'email' | 'sms' | 'note'>('email');
   const [currentTab, setCurrentTab] = useState<TabType>("timeline");
 
-  const { data: leads } = useQuery({
+  const { data: leads, refetch: refetchLeads } = useQuery({
     queryKey: ['leads'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('leads')
         .select(`
           *,
-          variables:lead_variables(*)
+          variables:lead_variables(*),
+          tags:lead_tags(
+            tag:tags(*)
+          )
         `);
       
       if (error) throw error;
