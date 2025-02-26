@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { PipelineSelect } from "@/components/leads/components/pipeline-select";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 
 export interface LeadVariable {
@@ -33,8 +32,7 @@ export interface Lead {
 
 export default function LeadsPage() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string>();
-  const { pipelines, leads, invalidateAndRefetch } = usePipelineQueries(selectedPipelineId);
+  const { leads, invalidateAndRefetch } = usePipelineQueries();
 
   return (
     <div className="p-6 space-y-6">
@@ -59,16 +57,9 @@ export default function LeadsPage() {
 
       <Separator className="my-6" />
 
-      <PipelineSelect
-        pipelines={pipelines}
-        selectedPipelineId={selectedPipelineId || ""}
-        onPipelineChange={setSelectedPipelineId}
-        refetchPipelines={invalidateAndRefetch}
-      />
-
-      {leads.length === 0 && selectedPipelineId && (
+      {leads.length === 0 && (
         <div className="text-center py-10">
-          <p className="text-muted-foreground">No leads found in this pipeline.</p>
+          <p className="text-muted-foreground">No leads found.</p>
           <Button
             variant="outline"
             className="mt-4"
