@@ -38,29 +38,30 @@ export function TimelineControls({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 p-4">
       <div className="flex-1">
         <input
           type="text"
           placeholder="Search activities..."
-          className="w-full px-3 py-1 text-sm border rounded-md"
+          className="w-full px-3 py-1.5 text-sm border rounded-md bg-white/60 backdrop-blur-sm focus:bg-white/80 transition-colors"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8">
+          <Button variant="outline" size="sm" className="h-8 bg-white/60 hover:bg-white/80">
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-48 bg-white/80 backdrop-blur-xl">
           {(['note', 'status_change', 'contact_update', 'name_update', 'variable_add'] as const).map((type) => (
             <DropdownMenuCheckboxItem
               key={type}
               checked={selectedTypes.has(type)}
               onCheckedChange={() => onToggleType(type)}
+              className="hover:bg-white/60"
             >
               {getActivityLabel(type)}
             </DropdownMenuCheckboxItem>

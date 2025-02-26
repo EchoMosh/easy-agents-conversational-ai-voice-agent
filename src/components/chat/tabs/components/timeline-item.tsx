@@ -43,15 +43,15 @@ export function TimelineItemComponent({
   const getActivityColor = (type: TimelineItem['type']) => {
     switch (type) {
       case 'note':
-        return 'bg-purple-100 text-purple-600';
+        return 'bg-purple-100/80 text-purple-600 backdrop-blur-sm';
       case 'status_change':
-        return 'bg-amber-100 text-amber-600';
+        return 'bg-amber-100/80 text-amber-600 backdrop-blur-sm';
       case 'contact_update':
-        return 'bg-indigo-100 text-indigo-600';
+        return 'bg-indigo-100/80 text-indigo-600 backdrop-blur-sm';
       case 'name_update':
-        return 'bg-rose-100 text-rose-600';
+        return 'bg-rose-100/80 text-rose-600 backdrop-blur-sm';
       case 'variable_add':
-        return 'bg-teal-100 text-teal-600';
+        return 'bg-teal-100/80 text-teal-600 backdrop-blur-sm';
     }
   };
 
@@ -63,27 +63,27 @@ export function TimelineItemComponent({
     <div className="relative">
       <div className="flex items-start gap-3">
         <div className="relative z-10">
-          <div className={`rounded-full p-2 ${getActivityColor(item.type)} bg-background`}>
+          <div className={`rounded-full p-2 ${getActivityColor(item.type)} shadow-sm border border-white/20`}>
             {getActivityIcon(item.type, item.content)}
           </div>
           {!isLast && (
-            <Separator orientation="vertical" className="absolute h-full top-8 left-1/2 -translate-x-1/2" />
+            <Separator orientation="vertical" className="absolute h-full top-8 left-1/2 -translate-x-1/2 bg-gray-200/50" />
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="p-3 border rounded-lg bg-background">
+          <div className="p-3 rounded-lg bg-white/60 backdrop-blur-sm border border-white/40 shadow-sm">
             {isNote(item) && editingNoteId === item.id ? (
               <div className="space-y-2">
                 <Textarea
                   value={editedContent}
                   onChange={(e) => onEditContentChange(e.target.value)}
-                  className="min-h-[60px]"
+                  className="min-h-[60px] bg-white/80"
                 />
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     onClick={() => onEditNote(item.id)}
-                    className="h-7"
+                    className="h-7 bg-white/80 text-black hover:bg-white/90"
                   >
                     <Check className="h-4 w-4 mr-1" />
                     Save
@@ -102,7 +102,7 @@ export function TimelineItemComponent({
             ) : (
               <>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium text-gray-900">
                     {isNote(item) ? "Note Added" : item.content}
                   </p>
                   {isNote(item) && (
@@ -110,27 +110,27 @@ export function TimelineItemComponent({
                       size="sm"
                       variant="ghost"
                       onClick={() => onEditNote(item.id)}
-                      className="h-7 px-2"
+                      className="h-7 px-2 hover:bg-white/60"
                     >
                       <Pencil className="h-3 w-3" />
                     </Button>
                   )}
                 </div>
                 {isNote(item) && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-3">
                     {item.content}
                   </p>
                 )}
                 {!isNote(item) && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     {item.old_value && <span>From: {item.old_value}</span>}
                     {item.old_value && item.new_value && <span> → </span>}
                     {item.new_value && <span>To: {item.new_value}</span>}
                   </p>
                 )}
                 <div className="flex items-center gap-1 mt-1">
-                  <Clock className="h-3 w-3 text-muted-foreground" />
-                  <time className="text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3 text-gray-400" />
+                  <time className="text-xs text-gray-400">
                     {format(new Date(item.timestamp), 'MMM d, yyyy h:mm a')}
                   </time>
                 </div>
