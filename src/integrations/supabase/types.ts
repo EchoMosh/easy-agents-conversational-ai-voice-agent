@@ -51,6 +51,47 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_activities: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          content: string
+          created_at: string
+          id: string
+          lead_id: string
+          new_value: string | null
+          old_value: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          content: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["activity_type"]
+          content?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_notes: {
         Row: {
           content: string
@@ -236,6 +277,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      activity_type:
+        | "note"
+        | "status_change"
+        | "contact_update"
+        | "name_update"
+        | "variable_add"
       agent_role:
         | "receptionist"
         | "sales_agent"

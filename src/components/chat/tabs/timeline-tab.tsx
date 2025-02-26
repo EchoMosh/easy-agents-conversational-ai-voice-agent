@@ -1,14 +1,20 @@
 
-import { Mail, Phone, StickyNote, Clock } from "lucide-react";
+import { Mail, Phone, StickyNote, Clock, Pencil, Check, X, UserCog, Tag, User } from "lucide-react";
 import { format } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 interface TimelineItem {
   id: string;
-  type: 'email' | 'sms' | 'note';
+  type: 'email' | 'sms' | 'note' | 'status_change' | 'contact_update' | 'name_update' | 'variable_add';
   content: string;
   timestamp: string;
+  old_value?: string | null;
+  new_value?: string | null;
 }
 
 interface TimelineTabProps {
@@ -16,52 +22,173 @@ interface TimelineTabProps {
 }
 
 export function TimelineTab({ leadId }: TimelineTabProps) {
-  const { data: notes } = useQuery({
-    queryKey: ['lead_notes', leadId],
+  const queryClient = useQueryClient();
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editedContent, setEditedContent] = useState("");
+
+  const { data: activities } = useQuery({
+    queryKey: ['lead_activities', leadId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('lead_notes')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      // Fetch both notes and activities
+      const [notesResponse, activitiesResponse] = await Promise.all([
+        supabase
+          .from('lead_notes')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('lead_activities')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('created_at', { ascending: false })
+      ]);
+
+      if (notesResponse.error) throw notesResponse.error;
+      if (activitiesResponse.error) throw activitiesResponse.error;
+
+      return [
+        ...(notesResponse.data?.map(note => ({
+          id: note.id,
+          type: 'note' as const,
+          content: note.content,
+          timestamp: note.created_at,
+        })) || []),
+        ...(activitiesResponse.data?.map(activity => ({
+          id: activity.id,
+          type: activity.activity_type,
+          content: activity.content,
+          timestamp: activity.created_at,
+          old_value: activity.old_value,
+          new_value: activity.new_value,
+        })) || [])
+      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     },
     enabled: !!leadId,
   });
 
-  // Convert notes to timeline items
-  const timelineItems: TimelineItem[] = [
-    ...(notes?.map(note => ({
-      id: note.id,
-      type: 'note' as const,
-      content: note.content,
-      timestamp: note.created_at
-    })) || []),
-  ];
+  const handleEditNote = async (noteId: string) => {
+    if (editingNoteId === noteId) {
+      try {
+        const { error } = await supabase
+          .from('lead_notes')
+          .update({ content: editedContent })
+          .eq('id', noteId);
+
+        if (error) throw error;
+
+        toast.success("Note updated successfully");
+        setEditingNoteId(null);
+        queryClient.invalidateQueries({ queryKey: ['lead_activities', leadId] });
+      } catch (error) {
+        toast.error("Failed to update note");
+        console.error("Error updating note:", error);
+      }
+    } else {
+      const note = activities?.find(a => a.id === noteId && a.type === 'note');
+      if (note) {
+        setEditedContent(note.content);
+        setEditingNoteId(noteId);
+      }
+    }
+  };
+
+  const getActivityIcon = (type: TimelineItem['type']) => {
+    switch (type) {
+      case 'email':
+        return <Mail className="h-4 w-4" />;
+      case 'sms':
+        return <Phone className="h-4 w-4" />;
+      case 'note':
+        return <StickyNote className="h-4 w-4" />;
+      case 'status_change':
+        return <UserCog className="h-4 w-4" />;
+      case 'contact_update':
+        return <Phone className="h-4 w-4" />;
+      case 'name_update':
+        return <User className="h-4 w-4" />;
+      case 'variable_add':
+        return <Tag className="h-4 w-4" />;
+    }
+  };
+
+  const getActivityColor = (type: TimelineItem['type']) => {
+    switch (type) {
+      case 'email':
+        return 'bg-blue-100 text-blue-600';
+      case 'sms':
+        return 'bg-green-100 text-green-600';
+      case 'note':
+        return 'bg-purple-100 text-purple-600';
+      case 'status_change':
+        return 'bg-amber-100 text-amber-600';
+      case 'contact_update':
+        return 'bg-indigo-100 text-indigo-600';
+      case 'name_update':
+        return 'bg-rose-100 text-rose-600';
+      case 'variable_add':
+        return 'bg-teal-100 text-teal-600';
+    }
+  };
 
   return (
     <div className="space-y-4">
-      {timelineItems.map((item) => (
+      {activities?.map((item) => (
         <div key={item.id} className="flex items-start gap-3 p-3 border rounded-lg bg-background">
-          <div className={`rounded-full p-2 ${
-            item.type === 'email' 
-              ? 'bg-blue-100 text-blue-600' 
-              : item.type === 'sms'
-              ? 'bg-green-100 text-green-600'
-              : 'bg-purple-100 text-purple-600'
-          }`}>
-            {item.type === 'email' ? (
-              <Mail className="h-4 w-4" />
-            ) : item.type === 'sms' ? (
-              <Phone className="h-4 w-4" />
-            ) : (
-              <StickyNote className="h-4 w-4" />
-            )}
+          <div className={`rounded-full p-2 ${getActivityColor(item.type)}`}>
+            {getActivityIcon(item.type)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm">{item.content}</p>
+            {item.type === 'note' && editingNoteId === item.id ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  className="min-h-[60px]"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleEditNote(item.id)}
+                    className="h-7"
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setEditingNoteId(null)}
+                    className="h-7"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">{item.content}</p>
+                  {item.type === 'note' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleEditNote(item.id)}
+                      className="h-7 px-2"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                {(item.old_value || item.new_value) && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {item.old_value && <span>From: {item.old_value}</span>}
+                    {item.old_value && item.new_value && <span> → </span>}
+                    {item.new_value && <span>To: {item.new_value}</span>}
+                  </p>
+                )}
+              </>
+            )}
             <div className="flex items-center gap-1 mt-1">
               <Clock className="h-3 w-3 text-muted-foreground" />
               <time className="text-xs text-muted-foreground">
