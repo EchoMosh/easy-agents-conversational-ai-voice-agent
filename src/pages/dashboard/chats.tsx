@@ -1,4 +1,4 @@
-import { Mail, Phone, Send, FileEdit, Save, X, Search, PlusCircle, History, StickyNote, Filter } from "lucide-react";
+import { Mail, Phone, Send, FileEdit, Save, X, Search, PlusCircle, History, StickyNote, Filter, User, FileText, Tag, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -18,12 +18,20 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface Note {
   id: string;
   content: string;
   created_at: string;
   user_id: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+  created_at: string;
 }
 
 export default function ChatsPage() {
@@ -37,7 +45,12 @@ export default function ChatsPage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteContent, setEditingNoteContent] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentTab, setCurrentTab] = useState<"notes" | "activity">("activity");
+  const [currentTab, setCurrentTab] = useState<"activity" | "notes" | "info" | "tasks" | "files">("activity");
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: '1', title: 'Follow up on proposal', completed: false, created_at: new Date().toISOString() },
+    { id: '2', title: 'Send contract draft', completed: true, created_at: new Date().toISOString() }
+  ]);
+  const [newTask, setNewTask] = useState("");
 
   const queryClient = useQueryClient();
 
@@ -299,6 +312,7 @@ export default function ChatsPage() {
               </div>
             </ScrollArea>
 
+            {/* Message composer */}
             <div className="border-t p-6">
               <div className="max-w-3xl mx-auto space-y-4">
                 <div className="flex items-center justify-between">
@@ -449,14 +463,14 @@ export default function ChatsPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-2">
-              <div className="h-12 w-12 mx-auto text-muted-foreground/50" />
+              <Mail className="h-12 w-12 mx-auto text-muted-foreground/50" />
               <p className="text-muted-foreground">Select a lead to start messaging</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Right sidebar with tabs for Activity and Notes */}
+      {/* Right sidebar with multiple tabs */}
       {selectedLead && (
         <div className="w-80 border-l flex flex-col bg-muted/10">
           <div className="p-4 border-b bg-background">
@@ -469,22 +483,29 @@ export default function ChatsPage() {
             </Command>
           </div>
           
-          <Tabs value={currentTab} onValueChange={(value: "notes" | "activity") => setCurrentTab(value)} className="flex-1 flex flex-col">
-            <div className="px-4 border-b bg-background">
-              <TabsList className="w-full">
-                <TabsTrigger value="activity" className="flex-1">
-                  <History className="w-4 h-4 mr-2" />
-                  Activity
+          <Tabs value={currentTab} onValueChange={(value: "activity" | "notes" | "info" | "tasks" | "files") => setCurrentTab(value)} className="flex-1 flex flex-col">
+            <div className="px-4 py-2 border-b bg-background">
+              <TabsList className="w-full grid grid-cols-5">
+                <TabsTrigger value="activity">
+                  <History className="w-4 h-4" />
                 </TabsTrigger>
-                <TabsTrigger value="notes" className="flex-1">
-                  <StickyNote className="w-4 h-4 mr-2" />
-                  Notes
+                <TabsTrigger value="notes">
+                  <StickyNote className="w-4 h-4" />
+                </TabsTrigger>
+                <TabsTrigger value="info">
+                  <User className="w-4 h-4" />
+                </TabsTrigger>
+                <TabsTrigger value="tasks">
+                  <FileText className="w-4 h-4" />
+                </TabsTrigger>
+                <TabsTrigger value="files">
+                  <FileText className="w-4 h-4" />
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <ScrollArea className="flex-1 p-4">
-              <TabsContent value="activity" className="m-0">
+            <ScrollArea className="flex-1">
+              <TabsContent value="activity" className="m-0 p-4">
                 <div className="space-y-4">
                   {filteredActivities.map((activity) => (
                     <div key={activity.id} className="flex items-start gap-3 p-3 border rounded-lg bg-background">
@@ -504,7 +525,7 @@ export default function ChatsPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="notes" className="m-0 space-y-4">
+              <TabsContent value="notes" className="m-0 p-4 space-y-4">
                 <form onSubmit={handleAddNote}>
                   <Textarea
                     placeholder="Add a note..."
@@ -590,6 +611,119 @@ export default function ChatsPage() {
                       )}
                     </div>
                   ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="info" className="m-0 p-4">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
+                    <div className="space-y-3 bg-muted/50 rounded-lg p-4">
+                      <p className="text-sm"><span className="font-medium">Name:</span> {selectedLead.name}</p>
+                      <p className="text-sm"><span className="font-medium">Email:</span> {selectedLead.email || "Not provided"}</p>
+                      <p className="text-sm"><span className="font-medium">Phone:</span> {selectedLead.phone || "Not provided"}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">Tags</h3>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">
+                        <Tag className="w-3 h-3 mr-1" />
+                        New Lead
+                      </Badge>
+                      <Badge variant="secondary">
+                        <Star className="w-3 h-3 mr-1" />
+                        High Priority
+                      </Badge>
+                      <Button variant="outline" size="sm" className="h-6">
+                        <PlusCircle className="w-3 h-3 mr-1" />
+                        Add Tag
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">Lead Score</h3>
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">85/100</span>
+                        <Badge variant="secondary" className="bg-green-100 text-green-700">High Value</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="tasks" className="m-0 p-4">
+                <div className="space-y-4">
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newTask.trim()) return;
+                    setTasks([
+                      { id: crypto.randomUUID(), title: newTask, completed: false, created_at: new Date().toISOString() },
+                      ...tasks
+                    ]);
+                    setNewTask("");
+                  }}>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add a task..."
+                        value={newTask}
+                        onChange={(e) => setNewTask(e.target.value)}
+                      />
+                      <Button type="submit">Add</Button>
+                    </div>
+                  </form>
+
+                  <div className="space-y-2">
+                    {tasks.map((task) => (
+                      <div key={task.id} className="flex items-center gap-2 p-3 border rounded-lg bg-background">
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={() => {
+                            setTasks(tasks.map(t =>
+                              t.id === task.id ? { ...t, completed: !t.completed } : t
+                            ));
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <span className={`text-sm flex-1 ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
+                          {task.title}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={() => setTasks(tasks.filter(t => t.id !== task.id))}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="files" className="m-0 p-4">
+                <div className="space-y-4">
+                  <Button className="w-full">
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Upload File
+                  </Button>
+
+                  <div className="space-y-2">
+                    <div className="p-3 border rounded-lg bg-background">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-8 w-8 text-blue-600" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">proposal.pdf</p>
+                          <p className="text-xs text-muted-foreground">Added 2 days ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
             </ScrollArea>
