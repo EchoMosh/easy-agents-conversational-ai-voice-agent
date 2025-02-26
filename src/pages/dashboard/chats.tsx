@@ -55,23 +55,32 @@ export default function ChatsPage() {
       />
 
       {selectedLead && (
-        <div className="w-80 border-l flex flex-col bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-xl">
+        <div className="w-80 border-l flex flex-col bg-white">
           <Tabs defaultValue="timeline" value={currentTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
-            <div className="px-4 py-2 border-b bg-white/50 backdrop-blur-sm">
-              <TabsList className="w-full grid grid-cols-3 bg-white/80">
-                <TabsTrigger value="timeline" className="data-[state=active]:bg-white">
-                  <History className="w-4 h-4 stroke-[1.5]" />
+            <div className="px-2 py-1 border-b">
+              <TabsList className="w-full grid grid-cols-3 bg-transparent p-0 h-14">
+                <TabsTrigger 
+                  value="timeline" 
+                  className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 h-full"
+                >
+                  <History className="w-6 h-6 stroke-[1.5]" />
                 </TabsTrigger>
-                <TabsTrigger value="details" className="data-[state=active]:bg-white">
-                  <UserCircle2 className="w-4 h-4 stroke-[1.5]" />
+                <TabsTrigger 
+                  value="details" 
+                  className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 h-full"
+                >
+                  <UserCircle2 className="w-6 h-6 stroke-[1.5]" />
                 </TabsTrigger>
-                <TabsTrigger value="files" className="data-[state=active]:bg-white">
-                  <Files className="w-4 h-4 stroke-[1.5]" />
+                <TabsTrigger 
+                  value="files" 
+                  className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 h-full"
+                >
+                  <Files className="w-6 h-6 stroke-[1.5]" />
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <TabsContent value="timeline" className="m-0 flex-1">
+            <TabsContent value="timeline" className="flex-1 m-0">
               <TimelineTab leadId={selectedLead.id} />
             </TabsContent>
 
@@ -81,15 +90,15 @@ export default function ChatsPage() {
 
             <TabsContent value="files" className="m-0 p-4">
               <div className="space-y-4">
-                <Button className="w-full bg-white/80 hover:bg-white/90 text-black border shadow-sm">
+                <Button className="w-full bg-white hover:bg-gray-50 text-black border shadow-sm">
                   <PlusCircle className="w-4 h-4 mr-2" />
                   Upload File
                 </Button>
 
                 <div className="space-y-2">
-                  <div className="p-3 rounded-lg bg-white/60 backdrop-blur-sm border shadow-sm">
+                  <div className="p-3 rounded-lg bg-gray-50 border">
                     <div className="flex items-center gap-3">
-                      <Files className="h-8 w-8 text-blue-600" />
+                      <Files className="h-8 w-8 text-purple-600" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">proposal.pdf</p>
                         <p className="text-xs text-muted-foreground">Added 2 days ago</p>
