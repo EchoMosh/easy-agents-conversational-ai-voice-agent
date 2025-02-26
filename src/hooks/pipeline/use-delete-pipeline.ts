@@ -9,13 +9,16 @@ export function useDeletePipeline(
     pipelineId: string,
     option: LeadHandlingOption,
     targetPipelineId?: string
-  ) => Promise<void>
+  ) => Promise<void>,
+  pipelineId?: string
 ) {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const onDelete = async (option: LeadHandlingOption, targetPipelineId?: string) => {
+    if (!pipelineId) return;
+    
     setIsDeleting(true);
     try {
       await handleDeletePipeline(pipelineId, option, targetPipelineId);

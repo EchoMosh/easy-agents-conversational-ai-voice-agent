@@ -38,7 +38,6 @@ export default function PipelinesPage() {
     refetchLeads,
   } = usePipeline();
 
-  // Automatically select the first pipeline when pipelines are loaded
   useEffect(() => {
     if (pipelines?.length > 0 && !selectedPipeline) {
       setSelectedPipeline(pipelines[0]);
@@ -50,7 +49,7 @@ export default function PipelinesPage() {
     setShowDeleteDialog,
     isDeleting,
     onDelete,
-  } = useDeletePipeline(handleDeletePipeline);
+  } = useDeletePipeline(handleDeletePipeline, selectedPipeline?.id);
 
   const { handleDragEnd } = usePipelineDrag(selectedPipeline, leads, refetchLeads);
   
@@ -61,6 +60,12 @@ export default function PipelinesPage() {
     handleAddStage,
     handleReorderColumns,
   } = usePipelineColumns(setSelectedPipeline);
+
+  // Get other pipelines (excluding the selected one)
+  const otherPipelines = pipelines?.filter(p => p.id !== selectedPipeline?.id) || [];
+  
+  // Check if the selected pipeline has any leads
+  const hasLeads = leads?.some(lead => lead.pipeline_id === selectedPipeline?.id) || false;
 
   return (
     <div className="relative">
@@ -107,6 +112,8 @@ export default function PipelinesPage() {
           onOpenChange={setShowDeleteDialog}
           onDelete={onDelete}
           isDeleting={isDeleting}
+          hasLeads={hasLeads}
+          otherPipelines={otherPipelines}
         />
       </div>
     </div>
