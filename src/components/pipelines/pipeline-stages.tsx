@@ -40,6 +40,12 @@ export function PipelineStages({
   const [editingColumnTitle, setEditingColumnTitle] = useState("");
   const [collapsedColumns, setCollapsedColumns] = useState<Map<string, Set<string>>>(new Map());
   const [stageToDelete, setStageToDelete] = useState<PipelineColumn | null>(null);
+  const [localColumns, setLocalColumns] = useState<PipelineColumn[]>(selectedPipeline.columns);
+
+  // Update local columns when selectedPipeline changes
+  if (JSON.stringify(localColumns) !== JSON.stringify(selectedPipeline.columns)) {
+    setLocalColumns(selectedPipeline.columns);
+  }
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -76,9 +82,15 @@ export function PipelineStages({
     });
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && editingColumnId && editingColumnTitle.trim()) {
-      onEditColumnTitle(editingColumnId, editingColumnTitle);
+      const newColumns = localColumns.map(col => 
+        col.id === editingColumnId ? { ...col, title: editingColumnTitle.trim() } : col
+      );
+      
+      // Update local state immediately for optimistic UI update
+      setLocalColumns(newColumns);
+      onEditColumnTitle(editingColumnId, editingColumnTitle.trim());
       setEditingColumnId(null);
     } else if (e.key === 'Escape') {
       setEditingColumnId(null);
@@ -87,9 +99,12 @@ export function PipelineStages({
 
   const handleColorChange = async (columnId: string, newColor: string) => {
     try {
-      const newColumns = selectedPipeline.columns.map(col => 
+      const newColumns = localColumns.map(col => 
         col.id === columnId ? { ...col, color: newColor } : col
       );
+      
+      // Update local state immediately
+      setLocalColumns(newColumns);
       
       const columnsForDb = newColumns.map(col => ({
         id: col.id,
@@ -113,6 +128,8 @@ export function PipelineStages({
         description: "Column color has been updated successfully"
       });
     } catch (error) {
+      // Revert local state on error
+      setLocalColumns(selectedPipeline.columns);
       console.error("Error updating column color:", error);
       toast({
         title: "Error",
@@ -129,7 +146,8 @@ export function PipelineStages({
       color: "bg-gray-500",
     };
     
-    const newColumns = [...selectedPipeline.columns, newStage];
+    const newColumns = [...localColumns, newStage];
+    setLocalColumns(newColumns);
     onAddStage(newStage);
     onReorderColumns(newColumns);
     
@@ -139,7 +157,11 @@ export function PipelineStages({
 
   const handleDeleteStage = async (column: PipelineColumn) => {
     try {
-      const newColumns = selectedPipeline.columns.filter(col => col.id !== column.id);
+      const newColumns = localColumns.filter(col => col.id !== column.id);
+      
+      // Update local state immediately
+      setLocalColumns(newColumns);
+      
       const columnsForDb = newColumns.map(col => ({
         id: col.id,
         title: col.title,
@@ -163,6 +185,8 @@ export function PipelineStages({
         description: `${column.title} stage has been deleted successfully`
       });
     } catch (error) {
+      // Revert local state on error
+      setLocalColumns(selectedPipeline.columns);
       console.error("Error deleting stage:", error);
       toast({
         title: "Error",
@@ -183,8 +207,8 @@ export function PipelineStages({
 
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div className="flex flex-wrap gap-6">
-          <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
-            {selectedPipeline.columns.map((column) => {
+          <SortableContext items={localColumns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
+            {localColumns.map((column) => {
               const columnLeads = leads.filter((lead) => 
                 lead.status.toLowerCase() === column.title.toLowerCase()
               );
