@@ -1,4 +1,3 @@
-
 import { Mail, Phone, StickyNote, Clock, Pencil, Check, X, UserCog, Tag, User, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,6 +41,7 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
   const queryClient = useQueryClient();
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<Set<TimelineItem['type']>>(new Set(['note', 'status_change', 'contact_update', 'name_update', 'variable_add']));
 
   const { data: activities } = useQuery({
@@ -91,8 +91,13 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
     enabled: !!leadId,
   });
 
-  // Filter activities based on selected types
-  const filteredActivities = activities?.filter(item => selectedTypes.has(item.type));
+  const filteredActivities = activities?.filter(item => {
+    const matchesSearch = item.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         ('old_value' in item && item.old_value?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         ('new_value' in item && item.new_value?.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesType = selectedTypes.has(item.type);
+    return matchesSearch && matchesType;
+  });
 
   const handleEditNote = async (noteId: string) => {
     if (editingNoteId === noteId) {
@@ -177,7 +182,16 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end">
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search activities..."
+            className="w-full px-3 py-1 text-sm border rounded-md"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-8">
@@ -206,7 +220,7 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
               <div className="flex items-start gap-3">
                 <div className="relative z-10">
                   <div className={`rounded-full p-2 ${getActivityColor(item.type)} bg-background`}>
-                    {getActivityIcon(item.type, 'content' in item ? item.content : '')}
+                    {getActivityIcon(item.type, item.type === 'note' ? 'Note Added' : item.content)}
                   </div>
                   {index < (filteredActivities.length - 1) && (
                     <Separator orientation="vertical" className="absolute h-full top-8 left-1/2 -translate-x-1/2" />
