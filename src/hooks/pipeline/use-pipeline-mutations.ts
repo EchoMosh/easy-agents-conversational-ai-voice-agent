@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -138,13 +137,62 @@ export function usePipelineMutations(refetchPipelines: () => void, refetchLeads:
 
   const handleDeletePipeline = async (pipelineId: string) => {
     try {
-      // Delete pipeline (leads and activities will cascade delete)
-      const { error } = await supabase
+      // First, get all leads for this pipeline
+      const { data: leads, error: leadsError } = await supabase
+        .from("leads")
+        .select("id")
+        .eq("pipeline_id", pipelineId);
+
+      if (leadsError) throw leadsError;
+
+      // Delete lead activities first
+      if (leads && leads.length > 0) {
+        const leadIds = leads.map(lead => lead.id);
+        const { error: activitiesError } = await supabase
+          .from("lead_activities")
+          .delete()
+          .in("lead_id", leadIds);
+
+        if (activitiesError) throw activitiesError;
+      }
+
+      // Delete lead variables
+      if (leads && leads.length > 0) {
+        const leadIds = leads.map(lead => lead.id);
+        const { error: variablesError } = await supabase
+          .from("lead_variables")
+          .delete()
+          .in("lead_id", leadIds);
+
+        if (variablesError) throw variablesError;
+      }
+
+      // Delete lead tags
+      if (leads && leads.length > 0) {
+        const leadIds = leads.map(lead => lead.id);
+        const { error: tagsError } = await supabase
+          .from("lead_tags")
+          .delete()
+          .in("lead_id", leadIds);
+
+        if (tagsError) throw tagsError;
+      }
+
+      // Delete leads
+      const { error: leadsDeleteError } = await supabase
+        .from("leads")
+        .delete()
+        .eq("pipeline_id", pipelineId);
+
+      if (leadsDeleteError) throw leadsDeleteError;
+
+      // Finally delete pipeline
+      const { error: pipelineError } = await supabase
         .from("pipelines")
         .delete()
         .eq("id", pipelineId);
 
-      if (error) throw error;
+      if (pipelineError) throw pipelineError;
 
       // Remove the pipeline from the cache immediately
       queryClient.setQueryData(["pipelines"], (old: Pipeline[] | undefined) => {
