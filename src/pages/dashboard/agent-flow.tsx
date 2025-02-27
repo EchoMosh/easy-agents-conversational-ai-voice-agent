@@ -60,20 +60,23 @@ export default function AgentFlowPage() {
       // Ensure we have the required node properties
       const validNodes = (flowData.nodes || []).map((node: any) => ({
         ...node,
-        // Ensure required properties exist
-        id: node.id || `node-${Math.random()}`,
-        type: node.type || 'default',
-        position: node.position || { x: 0, y: 0 },
-        data: node.data || {}
+        id: node.id,
+        type: node.type,
+        position: node.position,
+        data: node.data,
+        draggable: true,
+        selected: false,
+        dragging: false
       }));
 
       // Ensure we have the required edge properties
       const validEdges = (flowData.edges || []).map((edge: any) => ({
         ...edge,
-        // Ensure required properties exist
-        id: edge.id || `edge-${Math.random()}`,
+        id: edge.id,
         source: edge.source,
-        target: edge.target
+        target: edge.target,
+        type: edge.type || 'default',
+        animated: edge.animated || false
       }));
 
       setNodes(validNodes);
