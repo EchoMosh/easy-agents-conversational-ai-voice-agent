@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
@@ -64,11 +64,18 @@ interface FlowProps {
 }
 
 export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange }: FlowProps) {
-  const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
+  const [nodes, setNodes] = useNodesState([]);
+  const [edges, setEdges] = useEdgesState([]);
   const [showWidgets, setShowWidgets] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { project } = useReactFlow();
+
+  useEffect(() => {
+    console.log('Setting initial nodes:', initialNodes);
+    console.log('Setting initial edges:', initialEdges);
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   const isValidConnection = (connection: Connection) => {
     return true;
@@ -85,76 +92,75 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
   const onConnect = useCallback((connection: Connection) => {
     if (isValidConnection(connection)) {
-      const newEdge = {
-        ...connection,
-        ...defaultEdgeOptions
-      };
-      setEdges(eds => addEdge(newEdge, eds));
+      setEdges((eds) => addEdge({ ...connection, type: 'smoothstep', animated: true }, eds));
     }
-  }, []);
+  }, [setEdges]);
 
   const handleNodesChange = useCallback((changes: any) => {
-    onNodesChangeInternal(changes);
-    const updatedNodes = nodes.map(node => ({ ...node }));
-    onNodesChange(updatedNodes);
-  }, [nodes, onNodesChange, onNodesChangeInternal]);
+    setNodes((nds) => {
+      const updatedNodes = [...nds];
+      onNodesChange(updatedNodes);
+      return updatedNodes;
+    });
+  }, [onNodesChange, setNodes]);
 
   const handleEdgesChange = useCallback((changes: any) => {
-    onEdgesChangeInternal(changes);
-    const updatedEdges = edges.map(edge => ({ ...edge }));
-    onEdgesChange(updatedEdges);
-  }, [edges, onEdgesChange, onEdgesChangeInternal]);
+    setEdges((eds) => {
+      const updatedEdges = [...eds];
+      onEdgesChange(updatedEdges);
+      return updatedEdges;
+    });
+  }, [onEdgesChange, setEdges]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const onDragStart = (event: React.DragEvent, nodeType: string) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
-  };
-
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
 
-    if (reactFlowWrapper.current) {
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = screenToFlowPosition({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
-      });
+    if (!reactFlowWrapper.current) return;
 
-      const nodeType = event.dataTransfer.getData('application/reactflow');
-      if (!nodeType) return;
+    const bounds = reactFlowWrapper.current.getBoundingClientRect();
+    const position = project({
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top,
+    });
 
-      let newNodeData: NodeData = {};
-      
-      switch (nodeType) {
-        case 'speakNode':
-          newNodeData = { message: 'Enter your message here' };
-          break;
-        case 'greetingNode':
-          newNodeData = { greeting: 'Enter your greeting here', outcomes: [] };
-          break;
-        case 'triggerNode':
-          newNodeData = { platform: undefined, action: undefined };
-          break;
-        case 'transferNode':
-          newNodeData = { message: 'Transfer to agent', outcomes: [] };
-          break;
-      }
+    const nodeType = event.dataTransfer.getData('application/reactflow');
+    if (!nodeType) return;
 
-      const newNode: Node = {
-        id: `${nodeType}-${Math.random()}`,
-        type: nodeType,
-        position,
-        data: newNodeData
-      };
-
-      setNodes(nds => [...nds, newNode]);
+    let newNodeData: NodeData = {};
+    
+    switch (nodeType) {
+      case 'speakNode':
+        newNodeData = { message: 'Enter your message here' };
+        break;
+      case 'greetingNode':
+        newNodeData = { greeting: 'Enter your greeting here', outcomes: [] };
+        break;
+      case 'triggerNode':
+        newNodeData = { platform: undefined, action: undefined };
+        break;
+      case 'transferNode':
+        newNodeData = { message: 'Transfer to agent', outcomes: [] };
+        break;
     }
-  }, [screenToFlowPosition, setNodes]);
+
+    const newNode: Node = {
+      id: `${nodeType}-${Math.random()}`,
+      type: nodeType,
+      position,
+      data: newNodeData
+    };
+
+    setNodes((nds) => {
+      const updatedNodes = [...nds, newNode];
+      onNodesChange(updatedNodes);
+      return updatedNodes;
+    });
+  }, [project, setNodes, onNodesChange]);
 
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
@@ -173,6 +179,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         className="bg-white dark:bg-gray-950"
       >
         <Background className="opacity-40" />
+        <Controls />
         <MiniMap
           className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
           nodeColor={node => {
