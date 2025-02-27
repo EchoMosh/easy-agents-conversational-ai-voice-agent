@@ -74,18 +74,19 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     const sourceNode = nodes.find(node => node.id === connection.source);
     const targetNode = nodes.find(node => node.id === connection.target);
 
-    if (!sourceNode || !targetNode) return false;
+    if (connection.source === connection.target) {
+      return false;
+    }
 
-    const validConnections = {
-      triggerNode: ['greetingNode', 'speakNode'],
-      greetingNode: ['speakNode', 'endNode'],
-      speakNode: ['speakNode', 'endNode'],
-    };
+    const existingConnection = edges.find(edge => 
+      edge.target === connection.target && edge.source === connection.source
+    );
+    
+    if (existingConnection) {
+      return false;
+    }
 
-    const sourceType = sourceNode.type as keyof typeof validConnections;
-    const targetType = targetNode.type;
-
-    return validConnections[sourceType]?.includes(targetType) ?? false;
+    return !!(sourceNode && targetNode);
   };
 
   const defaultEdgeOptions = {
@@ -105,7 +106,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       };
       setEdges(eds => addEdge(newEdge, eds));
     }
-  }, []);
+  }, [edges, nodes]);
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
@@ -183,7 +184,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         nodeTypes={nodeTypes}
         fitView
         defaultEdgeOptions={defaultEdgeOptions}
-        connectionMode={ConnectionMode.Strict}
+        connectionMode={ConnectionMode.Loose}
         className="bg-white dark:bg-gray-950"
       >
         <Background className="opacity-40" />
