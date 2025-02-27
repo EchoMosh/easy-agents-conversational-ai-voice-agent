@@ -42,6 +42,10 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     setDeleteDialogOpen(true);
   };
 
+  const handleEditFlow = (agentId: string) => {
+    navigate(`/dashboard/agents/flow/${agentId}`);
+  };
+
   const handleDeleteConfirm = async () => {
     if (!selectedAgentId || isDeleting) return;
     
@@ -110,7 +114,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate(`/dashboard/agents/flow/${agent.id}`)}>
+                    <DropdownMenuItem onClick={() => handleEditFlow(agent.id)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit Flow
                     </DropdownMenuItem>
