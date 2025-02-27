@@ -6,19 +6,9 @@ import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
 import { useCallback, useState } from 'react';
 import { Node, Edge } from '@xyflow/react';
-
-// Sample initial data for development
-const sampleAgent = {
-  id: 'sample-id',
-  name: 'Sample Agent',
-  role: 'virtual_assistant' as const,
-  is_active: true,
-  created_at: new Date().toISOString(),
-  user_id: 'sample-user-id',
-  interaction_type: ['chat'],
-  language: 'en',
-  voice_id: null
-};
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Agent } from '@/types/agent';
 
 const initialNodes: Node[] = [
   {
@@ -51,6 +41,22 @@ export default function AgentFlowPage() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
+  const { data: agent } = useQuery({
+    queryKey: ['agent', id],
+    queryFn: async () => {
+      if (!id) throw new Error('No agent ID provided');
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data as Agent;
+    },
+    enabled: !!id
+  });
+
   const handleNodesChange = useCallback((newNodes: Node[]) => {
     console.log('Nodes changed:', newNodes);
     setNodes(newNodes);
@@ -61,15 +67,27 @@ export default function AgentFlowPage() {
     setEdges(newEdges);
   }, []);
 
+  const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
+    if (!id) return;
+    const { error } = await supabase
+      .from('agents')
+      .update(settings)
+      .eq('id', id);
+
+    if (error) throw error;
+  };
+
+  if (!agent) {
+    return null; // or a loading state
+  }
+
   return (
     <DragProvider>
       <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
         <Header 
-          agent={sampleAgent}
+          agent={agent}
           onBack={() => navigate('/dashboard/agents')}
-          onUpdateSettings={async () => {
-            console.log('Settings update requested');
-          }}
+          onUpdateSettings={handleUpdateSettings}
         />
         <div className="flex-1 relative">
           <ReactFlowProvider>
