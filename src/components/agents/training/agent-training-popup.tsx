@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Check, Mic, Send, X } from "lucide-react";
+import { Check, Headphones, Send, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -116,30 +116,23 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                     : "bg-gray-200 dark:bg-gray-800 rounded-bl-none"
                 }`}
               >
-                <p className="text-sm leading-relaxed">{message.content}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <div 
-                    className={`text-[10px] ${
-                      message.role === "user"
-                        ? "text-blue-100"
+                {message.role === "agent" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`absolute -top-1 -right-1 h-6 w-6 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity ${
+                      speakingMessageId === message.id 
+                        ? "text-blue-500 dark:text-blue-400 opacity-100" 
                         : "text-gray-500 dark:text-gray-400"
                     }`}
+                    onClick={() => playTextToSpeech(message.id, message.content)}
+                    title="Listen to AI response"
                   >
-                    {message.role === "agent" && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={`h-5 w-5 p-0 opacity-70 hover:opacity-100 ${
-                          speakingMessageId === message.id 
-                            ? "text-blue-500 dark:text-blue-400 opacity-100" 
-                            : "text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-70"
-                        }`}
-                        onClick={() => playTextToSpeech(message.id, message.content)}
-                      >
-                        <Mic className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
+                    <Headphones className="h-3 w-3" />
+                  </Button>
+                )}
+                <p className="text-sm leading-relaxed">{message.content}</p>
+                <div className="flex justify-end mt-1">
                   <div
                     className={`text-[10px] ${
                       message.role === "user"
