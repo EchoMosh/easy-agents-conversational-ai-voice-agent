@@ -60,6 +60,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           user_id: session.user.id,
           flow: JSON.stringify(flow),
           is_active: true,
+          objective: 'answer_calls', // Setting default objective
+          interaction_type: ['inbound'] // Setting default interaction type
         })
         .select()
         .single();
@@ -100,6 +102,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
               setNewAgent(prev => ({ ...prev, template: templateId, role }));
               handleCreateAgent();
             }}
+            onNext={() => {}} // Added to satisfy type requirement
             onBack={() => setStep(1)}
             showOnlyScratch={true}
           />
