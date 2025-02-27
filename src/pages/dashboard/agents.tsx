@@ -42,35 +42,55 @@ const AgentsPage = () => {
         throw error;
       }
 
-      // Add console.log to inspect the data
-      console.log('Raw agent data:', data);
+      console.log('Raw agent data from database:', data);
 
       return (data || []).map(agent => {
         let flowData;
         try {
-          // If flow is a string, parse it
           if (typeof agent.flow === 'string') {
             flowData = JSON.parse(agent.flow);
-          } else {
-            // If flow is already an object, use it directly
+          } else if (agent.flow && typeof agent.flow === 'object') {
             flowData = agent.flow;
           }
-          
-          // Add console.log to inspect parsed flow
-          console.log(`Parsed flow for agent ${agent.id}:`, flowData);
-          
-          return {
-            ...agent,
-            flow: flowData ? {
-              nodes: flowData.nodes || [],
-              edges: flowData.edges || []
-            } : undefined
-          };
+
+          // Ensure we have a valid flow object with nodes and edges
+          if (flowData && (flowData.nodes || flowData.edges)) {
+            console.log(`Valid flow data found for agent ${agent.id}:`, flowData);
+            return {
+              ...agent,
+              flow: {
+                nodes: flowData.nodes || [],
+                edges: flowData.edges || []
+              }
+            };
+          } else if (flowData?.flow && (flowData.flow.nodes || flowData.flow.edges)) {
+            // Handle nested flow data
+            console.log(`Nested flow data found for agent ${agent.id}:`, flowData.flow);
+            return {
+              ...agent,
+              flow: {
+                nodes: flowData.flow.nodes || [],
+                edges: flowData.flow.edges || []
+              }
+            };
+          } else {
+            console.log(`No valid flow data found for agent ${agent.id}`);
+            return {
+              ...agent,
+              flow: {
+                nodes: [],
+                edges: []
+              }
+            };
+          }
         } catch (e) {
           console.error(`Error parsing flow for agent ${agent.id}:`, e);
           return {
             ...agent,
-            flow: undefined
+            flow: {
+              nodes: [],
+              edges: []
+            }
           };
         }
       }) as Agent[];
