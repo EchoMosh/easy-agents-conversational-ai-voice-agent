@@ -4,12 +4,13 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent } from '@/types/agent';
 import { useToast } from '@/hooks/use-toast';
+import { FlowData } from '@/types/agent-types';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,32 +37,36 @@ export default function AgentFlowPage() {
   });
 
   const saveFlowMutation = useMutation({
-    mutationFn: async (flowData: { nodes: Node[]; edges: Edge[] }) => {
+    mutationFn: async (flowData: FlowData) => {
       if (!id) throw new Error('No agent ID provided');
-      await supabase
+      const { error } = await supabase
         .from('agents')
         .update({ flow: flowData })
         .eq('id', id);
+      
+      if (error) throw error;
       await refetch();
     }
   });
 
-  const handleNodesChange = useCallback((nodes: Node[]) => {
+  const handleNodesChange = useCallback((newNodes: Node[]) => {
     if (!agent?.flow) return;
     const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-    saveFlowMutation.mutate({
-      nodes,
+    const flowData: FlowData = {
+      nodes: newNodes,
       edges: currentFlow.edges || []
-    });
+    };
+    saveFlowMutation.mutate(flowData);
   }, [agent, saveFlowMutation]);
 
-  const handleEdgesChange = useCallback((edges: Edge[]) => {
+  const handleEdgesChange = useCallback((newEdges: Edge[]) => {
     if (!agent?.flow) return;
     const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-    saveFlowMutation.mutate({
+    const flowData: FlowData = {
       nodes: currentFlow.nodes || [],
-      edges
-    });
+      edges: newEdges
+    };
+    saveFlowMutation.mutate(flowData);
   }, [agent, saveFlowMutation]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
