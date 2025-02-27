@@ -19,20 +19,37 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    console.log('Setting up Supabase realtime connection...');
+    
     // Subscribe to the real-time channel
     const channel = supabase.channel('agent-flow')
       .on('presence', { event: 'sync' }, () => {
+        console.log('Presence sync event received');
         setIsConnected(true);
       })
       .subscribe((status) => {
+        console.log('Channel status changed:', status);
         setIsConnected(status === 'SUBSCRIBED');
       });
 
+    console.log('Channel created:', channel);
+
+    // Log connection state changes
+    const subscription = supabase.getChannels().forEach(channel => {
+      console.log('Current channel state:', channel.state);
+    });
+
     // Cleanup subscription
     return () => {
+      console.log('Cleaning up Supabase channel...');
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Log whenever connection status changes
+  useEffect(() => {
+    console.log('Connection status changed:', isConnected);
+  }, [isConnected]);
 
   return (
     <>
