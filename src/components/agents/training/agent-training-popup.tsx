@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Check, Volume2, Send, X } from "lucide-react";
+import { Check, Volume2, Send, X, ThumbsUp, ThumbsDown, Edit } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Agent } from "@/types/agent";
+import { Input } from "@/components/ui/input";
 
 interface AgentTrainingPopupProps {
   agent: Agent;
@@ -18,8 +19,17 @@ interface AgentTrainingPopupProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface Message {
+  id: string;
+  role: "user" | "agent";
+  content: string;
+  timestamp: Date;
+  feedback?: "positive" | "negative";
+  correction?: string;
+}
+
 export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingPopupProps) {
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "agent",
@@ -27,15 +37,18 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
       timestamp: new Date(),
     },
   ]);
+  
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [correctionInput, setCorrectionInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to the bottom when messages change
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [messages, isTyping, editingMessageId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -45,7 +58,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
     if (!userInput.trim()) return;
 
     // Add user message
-    const newUserMessage = {
+    const newUserMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content: userInput,
@@ -58,7 +71,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
 
     // Simulate agent response after a delay
     setTimeout(() => {
-      const agentResponse = {
+      const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
         content: `I understand you're saying "${userInput}". As ${agent.name}, I'm designed to help with ${agent.role.replace('_', ' ')} tasks. Could you provide more details about what you need assistance with?`,
@@ -73,7 +86,11 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      if (editingMessageId) {
+        handleSubmitCorrection();
+      } else {
+        handleSendMessage();
+      }
     }
   };
 
@@ -92,6 +109,81 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
     }
     
     console.log("Playing speech for:", text);
+  };
+
+  const provideFeedback = (messageId: string, type: "positive" | "negative") => {
+    setMessages(prev => 
+      prev.map(message => 
+        message.id === messageId 
+          ? { ...message, feedback: type } 
+          : message
+      )
+    );
+
+    // If negative feedback, allow for correction
+    if (type === "negative") {
+      const message = messages.find(m => m.id === messageId);
+      if (message) {
+        setEditingMessageId(messageId);
+        setCorrectionInput(message.content);
+      }
+    } else {
+      // For positive feedback, log this for future training data
+      const message = messages.find(m => m.id === messageId);
+      if (message) {
+        console.log("Positive feedback provided for:", message.content);
+        // In a real implementation, you would send this to your backend
+        // to reinforce this as a good response
+      }
+    }
+  };
+
+  const handleStartEditing = (messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (message) {
+      setEditingMessageId(messageId);
+      setCorrectionInput(message.content);
+    }
+  };
+
+  const handleCancelEditing = () => {
+    setEditingMessageId(null);
+    setCorrectionInput("");
+  };
+
+  const handleSubmitCorrection = () => {
+    if (!correctionInput.trim() || !editingMessageId) return;
+
+    // Store the correction
+    setMessages(prev => 
+      prev.map(message => 
+        message.id === editingMessageId 
+          ? { 
+              ...message, 
+              correction: correctionInput,
+              feedback: "negative" // Ensure feedback is set to negative
+            } 
+          : message
+      )
+    );
+
+    // In a real implementation, you would send this correction to your backend
+    // to use for retraining the model
+    console.log("Correction submitted for message:", editingMessageId, "Correction:", correctionInput);
+
+    // Reset the editing state
+    setEditingMessageId(null);
+    setCorrectionInput("");
+
+    // Add a note that the correction has been recorded
+    const correctionNote: Message = {
+      id: Date.now().toString(),
+      role: "agent",
+      content: "Thank you for the correction. I'll learn from this feedback to provide better responses in the future.",
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, correctionNote]);
   };
 
   return (
@@ -123,39 +215,121 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                 className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm relative group ${
                   message.role === "user"
                     ? "bg-blue-500 text-white rounded-br-none"
+                    : message.feedback === "negative"
+                    ? "bg-red-100 dark:bg-red-900 rounded-bl-none"
+                    : message.feedback === "positive"
+                    ? "bg-green-100 dark:bg-green-900 rounded-bl-none"
                     : "bg-gray-200 dark:bg-gray-800 rounded-bl-none"
                 }`}
               >
                 {message.role === "agent" && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`absolute -top-1 -right-1 h-7 w-7 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${
-                      speakingMessageId === message.id 
-                        ? "text-blue-500 dark:text-blue-400 opacity-100" 
-                        : "text-gray-500 dark:text-gray-400"
-                    }`}
-                    onClick={() => playTextToSpeech(message.id, message.content)}
-                    title="Listen to AI response"
-                  >
-                    <Volume2 className="h-4 w-4" />
-                  </Button>
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`absolute -top-1 -right-1 h-7 w-7 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${
+                        speakingMessageId === message.id 
+                          ? "text-blue-500 dark:text-blue-400 opacity-100" 
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}
+                      onClick={() => playTextToSpeech(message.id, message.content)}
+                      title="Listen to AI response"
+                    >
+                      <Volume2 className="h-4 w-4" />
+                    </Button>
+                    
+                    {/* Feedback buttons that appear on hover */}
+                    <div className="absolute -top-8 right-0 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-6 w-6 bg-white dark:bg-gray-800"
+                        onClick={() => provideFeedback(message.id, "positive")}
+                        title="This response is good"
+                      >
+                        <ThumbsUp className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-6 w-6 bg-white dark:bg-gray-800"
+                        onClick={() => provideFeedback(message.id, "negative")}
+                        title="This response needs correction"
+                      >
+                        <ThumbsDown className="h-3 w-3 text-red-600 dark:text-red-400" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-6 w-6 bg-white dark:bg-gray-800"
+                        onClick={() => handleStartEditing(message.id)}
+                        title="Edit this response"
+                      >
+                        <Edit className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                      </Button>
+                    </div>
+                  </>
                 )}
-                <p className="text-sm leading-relaxed">{message.content}</p>
-                <div className="flex justify-end mt-1">
-                  <div
-                    className={`text-[10px] ${
-                      message.role === "user"
-                        ? "text-blue-100"
-                        : "text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    {new Date(message.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                
+                {editingMessageId === message.id ? (
+                  <div className="mt-2">
+                    <p className="text-xs mb-1 text-gray-600 dark:text-gray-300">
+                      Provide the correct answer:
+                    </p>
+                    <div className="flex flex-col space-y-2">
+                      <Textarea
+                        value={correctionInput}
+                        onChange={(e) => setCorrectionInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="min-h-[80px] text-sm border border-gray-300 dark:border-gray-700"
+                        placeholder="Enter the correct response..."
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={handleCancelEditing}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={handleSubmitCorrection}
+                        >
+                          Submit Correction
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    
+                    {/* Show the correction if there is one */}
+                    {message.correction && (
+                      <div className="mt-2 p-2 bg-white dark:bg-gray-950 rounded border border-green-300 dark:border-green-700">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Corrected to:</p>
+                        <p className="text-sm leading-relaxed text-green-700 dark:text-green-400">{message.correction}</p>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-end mt-1">
+                      <div
+                        className={`text-[10px] ${
+                          message.role === "user"
+                            ? "text-blue-100"
+                            : "text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        {new Date(message.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ))}
@@ -177,23 +351,25 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
         </div>
 
         <div className="p-4 border-t bg-white dark:bg-gray-950">
-          <div className="relative">
-            <Textarea
-              placeholder="Type your message..."
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="min-h-[40px] h-10 max-h-[100px] resize-none pr-12 rounded-md border-gray-300 dark:border-gray-700 focus-visible:ring-blue-500 text-sm py-2 shadow-sm"
-            />
-            <Button
-              size="icon"
-              onClick={handleSendMessage}
-              disabled={!userInput.trim()}
-              className="absolute right-1 bottom-[6px] h-8 w-8 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+          {!editingMessageId && (
+            <div className="relative">
+              <Textarea
+                placeholder="Type your message..."
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="min-h-[40px] h-10 max-h-[100px] resize-none pr-12 rounded-md border-gray-300 dark:border-gray-700 focus-visible:ring-blue-500 text-sm py-2 shadow-sm"
+              />
+              <Button
+                size="icon"
+                onClick={handleSendMessage}
+                disabled={!userInput.trim()}
+                className="absolute right-1 bottom-[6px] h-8 w-8 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           <div className="flex justify-between items-center mt-4">
             <p className="text-xs text-gray-500">Training helps improve agent responses</p>
             <Button 
