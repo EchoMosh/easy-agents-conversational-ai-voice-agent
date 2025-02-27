@@ -1,11 +1,13 @@
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { 
   ReactFlow, 
   Background, 
   useNodesState, 
   useEdgesState,
-  ReactFlowProvider
+  ReactFlowProvider,
+  Node,
+  Edge
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { FlowData } from '@/types/agent-types';
@@ -16,27 +18,72 @@ interface AgentFlowPreviewProps {
 }
 
 export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlowPreviewProps) {
-  // Parse flow data if it's a string
-  const parsedFlow = typeof flowData === 'string' 
-    ? JSON.parse(flowData) 
-    : flowData || { nodes: [], edges: [] };
+  const [parsedNodes, setParsedNodes] = useState<Node[]>([]);
+  const [parsedEdges, setParsedEdges] = useState<Edge[]>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   
-  const [nodes, setNodes] = useNodesState(parsedFlow.nodes || []);
-  const [edges, setEdges] = useEdgesState(parsedFlow.edges || []);
-  
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
+  // Process flow data when it changes
   useEffect(() => {
-    // Update nodes and edges when flowData changes
-    if (flowData) {
-      const flow = typeof flowData === 'string' 
-        ? JSON.parse(flowData) 
-        : flowData;
-      
-      setNodes(flow.nodes || []);
-      setEdges(flow.edges || []);
+    if (!flowData) {
+      setParsedNodes([]);
+      setParsedEdges([]);
+      return;
     }
-  }, [flowData, setNodes, setEdges]);
+    
+    try {
+      let processedFlow: any;
+      
+      // Parse string if needed
+      if (typeof flowData === 'string') {
+        processedFlow = JSON.parse(flowData);
+      } else {
+        processedFlow = flowData;
+      }
+      
+      // Log what we're working with
+      console.log('Processing flow data:', processedFlow);
+      
+      // Set the nodes and edges
+      const flowNodes = Array.isArray(processedFlow.nodes) ? processedFlow.nodes : [];
+      const flowEdges = Array.isArray(processedFlow.edges) ? processedFlow.edges : [];
+      
+      // Apply styling to nodes for better preview
+      const styledNodes = flowNodes.map((node: any) => ({
+        ...node,
+        // Apply visual styles for the preview
+        style: {
+          ...node.style,
+          background: getNodeColor(node.type),
+          color: '#ffffff',
+          border: 'none',
+          borderRadius: '6px',
+          fontSize: '9px',
+          padding: '4px',
+          width: node.width || 100,
+          height: node.height || 40,
+        },
+        // Simplify labels for the small preview
+        data: {
+          ...node.data,
+          label: node.data?.label || node.type || 'node'
+        }
+      }));
+      
+      setParsedNodes(styledNodes);
+      setParsedEdges(flowEdges);
+    } catch (error) {
+      console.error('Error processing flow data:', error);
+      setParsedNodes([]);
+      setParsedEdges([]);
+    }
+  }, [flowData]);
+
+  // Update ReactFlow when our parsed data changes
+  useEffect(() => {
+    setNodes(parsedNodes);
+    setEdges(parsedEdges);
+  }, [parsedNodes, parsedEdges, setNodes, setEdges]);
 
   const getNodeColor = useCallback((type: string | undefined) => {
     switch (type) {
@@ -57,13 +104,14 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
 
   return (
     <div 
-      ref={wrapperRef} 
       style={{ height: maxHeight, width: '100%' }}
       className="rounded-md overflow-hidden border border-muted bg-background/50"
     >
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}
