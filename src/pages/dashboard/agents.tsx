@@ -139,4 +139,3 @@ const AgentsPage = () => {
 };
 
 export default AgentsPage;
-

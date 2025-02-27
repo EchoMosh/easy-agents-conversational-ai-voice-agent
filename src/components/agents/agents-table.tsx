@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Agent } from "@/types/agent";
 import { DeleteDialog } from "./table/delete-dialog";
-import { Pencil, Trash, CheckCircle, XCircle, Share2 } from "lucide-react";
+import { Pencil, Trash, CheckCircle, XCircle, Share2, Fingerprint } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -131,27 +131,34 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
               </div>
             </CardHeader>
             <CardContent className="flex-grow pb-4 space-y-4">
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground">Status:</span>
-                <span 
-                  className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    agent.is_active 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                  }`}
-                >
-                  {agent.is_active ? (
-                    <>
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Active
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-3 h-3 mr-1" />
-                      Inactive
-                    </>
-                  )}
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-sm text-muted-foreground">Status:</span>
+                  <span 
+                    className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      agent.is_active 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                    }`}
+                  >
+                    {agent.is_active ? (
+                      <>
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Active
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-3 h-3 mr-1" />
+                        Inactive
+                      </>
+                    )}
+                  </span>
+                </div>
+                
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Fingerprint className="w-3 h-3 mr-1" />
+                  <span className="font-mono">{agent.id.substring(0, 8)}</span>
+                </div>
               </div>
               
               {/* Flow Preview */}

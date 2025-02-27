@@ -71,7 +71,7 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
         panOnScroll={false}
         preventScrolling={false}
         fitView
-        attributionPosition="none"
+        attributionPosition="bottom-right"
         minZoom={0.2}
         maxZoom={0.8}
         defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
