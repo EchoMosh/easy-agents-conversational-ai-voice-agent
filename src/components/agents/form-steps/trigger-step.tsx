@@ -34,12 +34,21 @@ export function TriggerStep({
   platforms,
   platformActions,
 }: TriggerStepProps) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && platform && action && !isCreating) {
+      e.preventDefault();
+      onSubmit();
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       className="space-y-6"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
     >
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">Set Up Triggers</h2>

@@ -12,6 +12,13 @@ interface NameStepProps {
 }
 
 export function NameStep({ name, onNameChange, onNext }: NameStepProps) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && name.trim()) {
+      e.preventDefault();
+      onNext();
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -31,6 +38,7 @@ export function NameStep({ name, onNameChange, onNext }: NameStepProps) {
           placeholder="Enter agent name"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
+          onKeyDown={handleKeyDown}
           className="text-lg py-6"
         />
       </div>
