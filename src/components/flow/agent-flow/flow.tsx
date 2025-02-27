@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
@@ -90,7 +91,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   };
 
   const defaultEdgeOptions = {
-    type: 'smoothstep',
+    type: 'default', // Changed from 'smoothstep' to 'default' for smooth curves
     animated: true,
     style: {
       strokeWidth: 2,
