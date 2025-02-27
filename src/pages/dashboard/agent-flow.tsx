@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -18,7 +17,6 @@ export default function AgentFlowPage() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
-  // First, let's verify we're working with the correct agent
   const { data: agent, refetch, isError } = useQuery({
     queryKey: ['agent', id],
     queryFn: async () => {
@@ -45,11 +43,9 @@ export default function AgentFlowPage() {
     },
     enabled: !!id,
     retry: false,
-    staleTime: 0, // Always fetch fresh data
-    cacheTime: 0  // Don't cache the data
+    staleTime: 0 // Always fetch fresh data
   });
 
-  // Handle error state with useEffect
   useEffect(() => {
     if (isError) {
       console.error('Error loading agent');
@@ -62,7 +58,6 @@ export default function AgentFlowPage() {
     }
   }, [isError, navigate, toast]);
 
-  // Load initial flow data
   useEffect(() => {
     if (agent?.flow) {
       try {
@@ -87,14 +82,12 @@ export default function AgentFlowPage() {
         });
       }
     } else {
-      // Initialize with empty flow if none exists
       console.log('No flow data found for agent:', id);
       setNodes([]);
       setEdges([]);
     }
   }, [agent, id, toast]);
 
-  // Setup real-time updates
   const saveFlowMutation = useMutation({
     mutationFn: async (flowData: { nodes: Node[]; edges: Edge[] }) => {
       if (!id) throw new Error('No agent ID provided');
@@ -117,7 +110,6 @@ export default function AgentFlowPage() {
       
       console.log('Successfully saved flow for agent:', id);
       
-      // Immediately refetch to ensure we have the latest data
       refetch();
     },
     onSuccess: () => {
@@ -141,7 +133,6 @@ export default function AgentFlowPage() {
     console.log('New nodes:', newNodes);
     setNodes(newNodes);
     
-    // Save immediately without debounce
     saveFlowMutation.mutate({
       nodes: newNodes.map(node => ({
         ...node,
@@ -157,7 +148,6 @@ export default function AgentFlowPage() {
     console.log('New edges:', newEdges);
     setEdges(newEdges);
     
-    // Save immediately without debounce
     saveFlowMutation.mutate({
       nodes: nodes.map(node => ({
         ...node,
