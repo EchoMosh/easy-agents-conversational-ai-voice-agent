@@ -91,7 +91,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   };
 
   const defaultEdgeOptions = {
-    type: 'default', // Changed from 'smoothstep' to 'default' for smooth curves
+    type: 'default',
     animated: true,
     style: {
       strokeWidth: 2,
@@ -99,15 +99,18 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     }
   };
 
-  const onConnect = useCallback((connection: Connection) => {
-    if (isValidConnection(connection)) {
+  const onConnect = useCallback((params: Connection) => {
+    if (isValidConnection(params)) {
       const newEdge = {
-        ...connection,
-        ...defaultEdgeOptions
+        ...params,
+        ...defaultEdgeOptions,
+        id: `e${params.source}-${params.target}`
       };
-      setEdges(eds => addEdge(newEdge, eds));
+      const newEdges = addEdge(newEdge, edges);
+      setEdges(newEdges);
+      onEdgesChange(newEdges);
     }
-  }, [edges, nodes]);
+  }, [edges, onEdgesChange, setEdges]);
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
