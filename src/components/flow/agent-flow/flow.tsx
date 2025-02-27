@@ -68,7 +68,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const [edges, setEdges] = useEdgesState([]);
   const [showWidgets, setShowWidgets] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { project: reactFlowProject } = useReactFlow();
+  const { viewport } = useReactFlow();
 
   useEffect(() => {
     if (initialNodes.length > 0) {
@@ -133,10 +133,10 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     if (!reactFlowWrapper.current) return;
 
     const bounds = reactFlowWrapper.current.getBoundingClientRect();
-    const position = reactFlowProject({
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top,
-    });
+    const position = {
+      x: (event.clientX - bounds.left - viewport.x) / viewport.zoom,
+      y: (event.clientY - bounds.top - viewport.y) / viewport.zoom
+    };
 
     const nodeType = event.dataTransfer.getData('application/reactflow');
     if (!nodeType) return;
@@ -158,9 +158,9 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         break;
     }
 
-    const newNode: Node = {
+    const newNode: FlowNode = {
       id: `${nodeType}-${Math.random()}`,
-      type: nodeType,
+      type: nodeType as NodeType,
       position,
       data: newNodeData,
       draggable: true,
@@ -172,7 +172,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       onNodesChange(updatedNodes);
       return updatedNodes;
     });
-  }, [reactFlowProject, setNodes, onNodesChange]);
+  }, [viewport, setNodes, onNodesChange]);
 
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
