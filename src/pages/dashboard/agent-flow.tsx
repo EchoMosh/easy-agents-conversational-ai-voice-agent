@@ -39,8 +39,15 @@ export default function AgentFlowPage() {
     if (agent?.flow) {
       try {
         const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-        if (flowData.nodes) setNodes(flowData.nodes);
-        if (flowData.edges) setEdges(flowData.edges);
+        console.log('Loading flow data:', flowData);
+        if (flowData.nodes) {
+          console.log('Setting nodes:', flowData.nodes);
+          setNodes(flowData.nodes);
+        }
+        if (flowData.edges) {
+          console.log('Setting edges:', flowData.edges);
+          setEdges(flowData.edges);
+        }
       } catch (error) {
         console.error('Error parsing flow data:', error);
       }
@@ -52,11 +59,13 @@ export default function AgentFlowPage() {
     mutationFn: async (flowData: { nodes: Node[]; edges: Edge[] }) => {
       if (!id) throw new Error('No agent ID provided');
       
-      console.log('Saving flow to Supabase:', flowData);
+      const flowString = JSON.stringify(flowData);
+      console.log('Saving flow to Supabase:', flowString);
+      
       const { error } = await supabase
         .from('agents')
         .update({
-          flow: JSON.stringify(flowData)
+          flow: flowString
         })
         .eq('id', id);
 
@@ -78,8 +87,16 @@ export default function AgentFlowPage() {
 
   // Debounced save function
   const debouncedSave = useCallback((newNodes: Node[], newEdges: Edge[]) => {
-    console.log('Debounced save triggered with:', { nodes: newNodes, edges: newEdges });
-    saveFlowMutation.mutate({ nodes: newNodes, edges: newEdges });
+    const flowData = {
+      nodes: newNodes.map(node => ({
+        ...node,
+        selected: false,
+        dragging: false
+      })),
+      edges: newEdges
+    };
+    console.log('Debounced save triggered with:', flowData);
+    saveFlowMutation.mutate(flowData);
   }, [saveFlowMutation]);
 
   const handleNodesChange = useCallback((newNodes: Node[]) => {
