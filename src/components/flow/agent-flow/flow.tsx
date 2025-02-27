@@ -91,7 +91,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   };
 
   const defaultEdgeOptions = {
-    type: 'default',
+    type: 'default' as const,
     animated: true,
     style: {
       strokeWidth: 2,
@@ -101,11 +101,20 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
   const onConnect = useCallback((params: Connection) => {
     if (isValidConnection(params)) {
-      const newEdge = {
-        ...params,
-        ...defaultEdgeOptions,
-        id: `e${params.source}-${params.target}`
+      const newEdge: Edge = {
+        id: `e${params.source}-${params.target}`,
+        source: params.source,
+        target: params.target,
+        sourceHandle: params.sourceHandle,
+        targetHandle: params.targetHandle,
+        type: 'default',
+        animated: true,
+        style: {
+          strokeWidth: 2,
+          stroke: '#94a3b8',
+        }
       };
+      
       const newEdges = addEdge(newEdge, edges);
       setEdges(newEdges);
       onEdgesChange(newEdges);
