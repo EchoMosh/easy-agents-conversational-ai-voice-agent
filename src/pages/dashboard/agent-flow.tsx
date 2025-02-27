@@ -10,36 +10,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent } from '@/types/agent';
 
-const initialNodes: Node[] = [
-  {
-    id: 'trigger-1',
-    type: 'triggerNode',
-    position: { x: 100, y: 100 },
-    data: { platform: 'facebook', action: 'new_lead' }
-  },
-  {
-    id: 'greeting-1',
-    type: 'greetingNode',
-    position: { x: 400, y: 100 },
-    data: { greeting: 'Hello! How can I help you today?', outcomes: ['I need help', 'Just browsing'] }
-  }
-];
-
-const initialEdges: Edge[] = [
-  {
-    id: 'e1-2',
-    source: 'trigger-1',
-    target: 'greeting-1',
-    type: 'smoothstep',
-    animated: true
-  }
-];
-
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
 
   const { data: agent } = useQuery({
     queryKey: ['agent', id],
