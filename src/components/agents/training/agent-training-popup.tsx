@@ -238,12 +238,12 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                       <Volume2 className="h-4 w-4" />
                     </Button>
                     
-                    {/* Feedback buttons that appear on hover */}
-                    <div className="absolute -top-8 right-0 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Feedback buttons that are now positioned at the bottom left with the same opacity as volume */}
+                    <div className="absolute -bottom-3 left-1 flex space-x-1 opacity-40 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-6 w-6 bg-white dark:bg-gray-800"
+                        className="h-6 w-6 bg-white dark:bg-gray-700"
                         onClick={() => provideFeedback(message.id, "positive")}
                         title="This response is good"
                       >
@@ -252,7 +252,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-6 w-6 bg-white dark:bg-gray-800"
+                        className="h-6 w-6 bg-white dark:bg-gray-700"
                         onClick={() => provideFeedback(message.id, "negative")}
                         title="This response needs correction"
                       >
@@ -261,7 +261,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-6 w-6 bg-white dark:bg-gray-800"
+                        className="h-6 w-6 bg-white dark:bg-gray-700"
                         onClick={() => handleStartEditing(message.id)}
                         title="Edit this response"
                       >
