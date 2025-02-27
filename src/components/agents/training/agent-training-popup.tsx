@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Check, Volume, Send, X } from "lucide-react";
+import { Check, Waves, Send, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -128,7 +128,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                     onClick={() => playTextToSpeech(message.id, message.content)}
                     title="Listen to AI response"
                   >
-                    <Volume className="h-4 w-4" />
+                    <Waves className="h-4 w-4" />
                   </Button>
                 )}
                 <p className="text-sm leading-relaxed">{message.content}</p>
