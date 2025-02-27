@@ -219,7 +219,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                     <Button
                       variant="ghost"
                       size="icon"
-                      className={`absolute -top-1 -right-1 h-7 w-7 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${
+                      className={`absolute -top-1 right-[calc(100%+4px)] h-8 w-8 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${
                         speakingMessageId === message.id 
                           ? "text-blue-500 dark:text-blue-400 opacity-100" 
                           : "text-gray-500 dark:text-gray-400"
@@ -227,7 +227,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                       onClick={() => playTextToSpeech(message.id, message.content)}
                       title="Listen to AI response"
                     >
-                      <Volume2 className="h-4 w-4" />
+                      <Volume2 className="h-5 w-5" />
                     </Button>
                     
                     {/* Feedback buttons that are now positioned at the bottom left with the same opacity as volume */}
