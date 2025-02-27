@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -27,6 +26,7 @@ type AgentSettingsProps = {
   agentId: string;
   currentVoice?: string;
   currentLanguage?: string;
+  children?: React.ReactNode;
   onUpdateSettings: (settings: { voiceId?: string; language?: string; humorLevel?: number }) => Promise<void>;
 };
 
@@ -52,7 +52,7 @@ const voices = [
   { id: "shimmer", name: "Shimmer", description: "Clear and expressive" },
 ];
 
-export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdateSettings }: AgentSettingsProps) {
+export function AgentSettings({ agentId, currentVoice, currentLanguage, children, onUpdateSettings }: AgentSettingsProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(currentVoice || "alloy");
@@ -60,10 +60,8 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
   const [humorLevel, setHumorLevel] = useState(50);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
 
-  // Change handler for voice selection
   const handleVoiceChange = (voiceId: string) => {
     setSelectedVoice(voiceId);
-    // Automatically save when voice changes
     onUpdateSettings({
       voiceId,
       language: selectedLanguage,
@@ -72,8 +70,8 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
   };
 
   const playVoiceSample = async (e: React.MouseEvent, voiceId: string) => {
-    e.preventDefault(); // Prevent the dropdown from closing
-    e.stopPropagation(); // Prevent the click from bubbling up
+    e.preventDefault();
+    e.stopPropagation();
     
     try {
       setIsPlayingVoice(true);
@@ -123,9 +121,11 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, onUpdate
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Settings className="h-4 w-4" />
-        </Button>
+        {children || (
+          <Button variant="outline" size="icon">
+            <Settings className="h-4 w-4" />
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
