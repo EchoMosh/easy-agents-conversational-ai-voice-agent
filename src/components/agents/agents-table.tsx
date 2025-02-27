@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Agent } from "@/types/agent";
 import { DeleteDialog } from "./table/delete-dialog";
-import { Pencil, Trash, CheckCircle, XCircle } from "lucide-react";
+import { Pencil, Trash, CheckCircle, XCircle, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AgentFlowPreview } from "./agent-flow-preview";
 
 interface AgentsTableProps {
   agents: Agent[];
@@ -129,7 +130,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                 </DropdownMenu>
               </div>
             </CardHeader>
-            <CardContent className="flex-grow pb-4">
+            <CardContent className="flex-grow pb-4 space-y-4">
               <div className="flex items-center">
                 <span className="text-sm text-muted-foreground">Status:</span>
                 <span 
@@ -152,9 +153,28 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                   )}
                 </span>
               </div>
+              
+              {/* Flow Preview */}
+              <div className="pt-2">
+                <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground">
+                  <Share2 className="h-3 w-3" />
+                  <span>Flow Preview</span>
+                </div>
+                <AgentFlowPreview flowData={agent.flow} maxHeight={120} />
+              </div>
             </CardContent>
             <CardFooter className="text-sm text-muted-foreground pt-0 border-t">
-              Created {new Date(agent.created_at).toLocaleDateString()}
+              <div className="flex w-full justify-between items-center">
+                <span>Created {new Date(agent.created_at).toLocaleDateString()}</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleEditFlow(agent.id)}
+                  className="h-8 text-xs"
+                >
+                  Edit Flow
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         ))}
