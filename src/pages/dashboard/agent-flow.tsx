@@ -52,6 +52,7 @@ export default function AgentFlowPage() {
     mutationFn: async (flowData: { nodes: Node[]; edges: Edge[] }) => {
       if (!id) throw new Error('No agent ID provided');
       
+      console.log('Saving flow to Supabase:', flowData);
       const { error } = await supabase
         .from('agents')
         .update({
@@ -59,7 +60,11 @@ export default function AgentFlowPage() {
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving to Supabase:', error);
+        throw error;
+      }
+      console.log('Successfully saved flow to Supabase');
     },
     onError: (error) => {
       console.error('Error saving flow:', error);
@@ -73,6 +78,7 @@ export default function AgentFlowPage() {
 
   // Debounced save function
   const debouncedSave = useCallback((newNodes: Node[], newEdges: Edge[]) => {
+    console.log('Debounced save triggered with:', { nodes: newNodes, edges: newEdges });
     saveFlowMutation.mutate({ nodes: newNodes, edges: newEdges });
   }, [saveFlowMutation]);
 
