@@ -42,13 +42,38 @@ const AgentsPage = () => {
         throw error;
       }
 
-      return (data || []).map(agent => ({
-        ...agent,
-        flow: agent.flow ? {
-          nodes: (agent.flow as any).nodes || [],
-          edges: (agent.flow as any).edges || []
-        } : undefined
-      })) as Agent[];
+      // Add console.log to inspect the data
+      console.log('Raw agent data:', data);
+
+      return (data || []).map(agent => {
+        let flowData;
+        try {
+          // If flow is a string, parse it
+          if (typeof agent.flow === 'string') {
+            flowData = JSON.parse(agent.flow);
+          } else {
+            // If flow is already an object, use it directly
+            flowData = agent.flow;
+          }
+          
+          // Add console.log to inspect parsed flow
+          console.log(`Parsed flow for agent ${agent.id}:`, flowData);
+          
+          return {
+            ...agent,
+            flow: flowData ? {
+              nodes: flowData.nodes || [],
+              edges: flowData.edges || []
+            } : undefined
+          };
+        } catch (e) {
+          console.error(`Error parsing flow for agent ${agent.id}:`, e);
+          return {
+            ...agent,
+            flow: undefined
+          };
+        }
+      }) as Agent[];
     },
   });
 
