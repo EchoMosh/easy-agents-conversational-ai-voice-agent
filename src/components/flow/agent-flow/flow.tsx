@@ -68,18 +68,20 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const [edges, setEdges] = useEdgesState([]);
   const [showWidgets, setShowWidgets] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const reactFlowInstance = useReactFlow();
+  const { project: reactFlowProject } = useReactFlow();
 
   useEffect(() => {
-    console.log('Setting initial nodes:', initialNodes);
-    console.log('Setting initial edges:', initialEdges);
-    setNodes(initialNodes);
-    setEdges(initialEdges);
+    if (initialNodes.length > 0) {
+      setNodes(initialNodes.map(node => ({
+        ...node,
+        draggable: true,
+        deletable: true
+      })));
+    }
+    if (initialEdges.length > 0) {
+      setEdges(initialEdges);
+    }
   }, [initialNodes, initialEdges, setNodes, setEdges]);
-
-  const isValidConnection = (connection: Connection) => {
-    return true;
-  };
 
   const defaultEdgeOptions = {
     type: 'smoothstep',
@@ -91,14 +93,22 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   };
 
   const onConnect = useCallback((connection: Connection) => {
-    if (isValidConnection(connection)) {
-      setEdges((eds) => addEdge({ ...connection, type: 'smoothstep', animated: true }, eds));
-    }
+    setEdges((eds) => addEdge({ ...connection, type: 'smoothstep' }, eds));
   }, [setEdges]);
 
   const handleNodesChange = useCallback((changes: any) => {
     setNodes((nds) => {
-      const updatedNodes = [...nds];
+      const updatedNodes = changes.reduce((acc: Node[], change: any) => {
+        if (change.type === 'position' || change.type === 'dimensions') {
+          return acc.map(node => 
+            node.id === change.id 
+              ? { ...node, position: change.position || node.position }
+              : node
+          );
+        }
+        return acc;
+      }, nds);
+      
       onNodesChange(updatedNodes);
       return updatedNodes;
     });
@@ -123,7 +133,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     if (!reactFlowWrapper.current) return;
 
     const bounds = reactFlowWrapper.current.getBoundingClientRect();
-    const position = reactFlowInstance.project({
+    const position = reactFlowProject({
       x: event.clientX - bounds.left,
       y: event.clientY - bounds.top,
     });
@@ -135,16 +145,16 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     
     switch (nodeType) {
       case 'speakNode':
-        newNodeData = { message: 'Enter your message here' };
+        newNodeData = { message: 'Enter your message here', outcomes: ["Continue"] };
         break;
       case 'greetingNode':
-        newNodeData = { greeting: 'Enter your greeting here', outcomes: [] };
+        newNodeData = { greeting: 'Enter your greeting here', outcomes: ["Continue"] };
         break;
       case 'triggerNode':
         newNodeData = { platform: undefined, action: undefined };
         break;
       case 'transferNode':
-        newNodeData = { message: 'Transfer to agent', outcomes: [] };
+        newNodeData = { message: 'Transfer to agent', outcomes: ["Continue"] };
         break;
     }
 
@@ -152,7 +162,9 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       id: `${nodeType}-${Math.random()}`,
       type: nodeType,
       position,
-      data: newNodeData
+      data: newNodeData,
+      draggable: true,
+      deletable: true
     };
 
     setNodes((nds) => {
@@ -160,7 +172,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       onNodesChange(updatedNodes);
       return updatedNodes;
     });
-  }, [reactFlowInstance, setNodes, onNodesChange]);
+  }, [reactFlowProject, setNodes, onNodesChange]);
 
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);

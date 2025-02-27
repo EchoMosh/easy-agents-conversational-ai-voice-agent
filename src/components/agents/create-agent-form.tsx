@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,31 +39,39 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           data: {
             platform: platform as NodeData['platform'],
             action: action as NodeData['action']
-          }
+          },
+          draggable: true,
+          deletable: true
         },
         {
           id: 'greeting-1',
           type: 'greetingNode' as NodeType,
-          position: { x: 350, y: 150 },
+          position: { x: 400, y: 150 },
           data: {
             greeting: "Hi! How can I help you today?",
             outcomes: ["Continue"]
-          }
+          },
+          draggable: true,
+          deletable: true
         },
         {
           id: 'speak-1',
           type: 'speakNode' as NodeType,
-          position: { x: 650, y: 150 },
+          position: { x: 750, y: 150 },
           data: {
             message: "I'm here to assist you. What would you like to know?",
             outcomes: ["End Call"]
-          }
+          },
+          draggable: true,
+          deletable: true
         },
         {
           id: 'end-1',
           type: 'endNode' as NodeType,
-          position: { x: 950, y: 150 },
-          data: {}
+          position: { x: 1100, y: 150 },
+          data: {},
+          draggable: true,
+          deletable: true
         }
       ],
       edges: [
@@ -70,20 +79,20 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           id: 'e1-2',
           source: 'trigger-1',
           target: 'greeting-1',
-          animated: true
+          type: 'smoothstep'
         },
         {
           id: 'e2-3',
           source: 'greeting-1',
           target: 'speak-1',
-          animated: true,
+          type: 'smoothstep',
           sourceHandle: 'outcome-0'
         },
         {
           id: 'e3-4',
           source: 'speak-1',
           target: 'end-1',
-          animated: true,
+          type: 'smoothstep',
           sourceHandle: 'outcome-0'
         }
       ]
