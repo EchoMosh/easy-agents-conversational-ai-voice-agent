@@ -2,12 +2,12 @@
 import React, { useState } from "react";
 import { Check, Send, X } from "lucide-react";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Agent } from "@/types/agent";
@@ -68,9 +68,9 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md p-0 flex flex-col h-full overflow-hidden">
-        <SheetHeader className="p-4 border-b sticky top-0 bg-background z-10">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px] p-0 flex flex-col h-[600px] max-h-[80vh] overflow-hidden bg-background">
+        <DialogHeader className="p-4 border-b sticky top-0 bg-background z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10 bg-purple-600 text-white">
@@ -79,17 +79,17 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                 </span>
               </Avatar>
               <div>
-                <SheetTitle className="text-left">{agent.name}</SheetTitle>
-                <SheetDescription className="text-left capitalize">
+                <DialogTitle className="text-left">{agent.name}</DialogTitle>
+                <DialogDescription className="text-left capitalize">
                   {agent.role.replace('_', ' ')}
-                </SheetDescription>
+                </DialogDescription>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
-        </SheetHeader>
+        </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message) => (
@@ -167,7 +167,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
             </Button>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
