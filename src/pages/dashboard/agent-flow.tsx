@@ -29,7 +29,7 @@ export default function AgentFlowPage() {
         .from('agents')
         .select('*')
         .eq('id', id)
-        .maybeSingle(); // Using maybeSingle instead of single to handle no results gracefully
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching agent:', error);
@@ -44,7 +44,9 @@ export default function AgentFlowPage() {
       return data as Agent;
     },
     enabled: !!id,
-    retry: false // Don't retry if agent doesn't exist
+    retry: false,
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0  // Don't cache the data
   });
 
   // Handle error state with useEffect
@@ -56,7 +58,6 @@ export default function AgentFlowPage() {
         description: "The requested agent could not be found or accessed.",
         variant: "destructive"
       });
-      // Redirect back to agents list after a short delay
       setTimeout(() => navigate('/dashboard/agents'), 2000);
     }
   }, [isError, navigate, toast]);
@@ -86,11 +87,14 @@ export default function AgentFlowPage() {
         });
       }
     } else {
+      // Initialize with empty flow if none exists
       console.log('No flow data found for agent:', id);
+      setNodes([]);
+      setEdges([]);
     }
-  }, [agent, id]);
+  }, [agent, id, toast]);
 
-  // Setup real-time updates with debounce
+  // Setup real-time updates
   const saveFlowMutation = useMutation({
     mutationFn: async (flowData: { nodes: Node[]; edges: Edge[] }) => {
       if (!id) throw new Error('No agent ID provided');
@@ -99,24 +103,28 @@ export default function AgentFlowPage() {
       console.log('Attempting to save flow for agent:', id);
       console.log('Flow data to save:', flowString);
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('agents')
         .update({
           flow: flowString
         })
-        .eq('id', id)
-        .select();
+        .eq('id', id);
 
       if (error) {
         console.error('Error saving to Supabase:', error);
         throw error;
       }
       
-      console.log('Successfully saved flow to Supabase for agent:', id);
-      console.log('Updated agent data:', data);
+      console.log('Successfully saved flow for agent:', id);
       
-      // Refetch the agent data to ensure we have the latest state
+      // Immediately refetch to ensure we have the latest data
       refetch();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Flow saved",
+        description: "Your changes have been saved successfully.",
+      });
     },
     onError: (error) => {
       console.error('Error saving flow:', error);
@@ -128,34 +136,37 @@ export default function AgentFlowPage() {
     }
   });
 
-  // Debounced save function
-  const debouncedSave = useCallback((newNodes: Node[], newEdges: Edge[]) => {
-    const flowData = {
+  const handleNodesChange = useCallback((newNodes: Node[]) => {
+    console.log('Nodes changed for agent:', id);
+    console.log('New nodes:', newNodes);
+    setNodes(newNodes);
+    
+    // Save immediately without debounce
+    saveFlowMutation.mutate({
       nodes: newNodes.map(node => ({
         ...node,
         selected: false,
         dragging: false
       })),
-      edges: newEdges
-    };
-    console.log('Debounced save triggered for agent:', id);
-    console.log('Flow data to be saved:', flowData);
-    saveFlowMutation.mutate(flowData);
-  }, [saveFlowMutation, id]);
-
-  const handleNodesChange = useCallback((newNodes: Node[]) => {
-    console.log('Nodes changed for agent:', id);
-    console.log('New nodes:', newNodes);
-    setNodes(newNodes);
-    debouncedSave(newNodes, edges);
-  }, [edges, debouncedSave, id]);
+      edges
+    });
+  }, [edges, saveFlowMutation, id]);
 
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
     console.log('Edges changed for agent:', id);
     console.log('New edges:', newEdges);
     setEdges(newEdges);
-    debouncedSave(nodes, newEdges);
-  }, [nodes, debouncedSave, id]);
+    
+    // Save immediately without debounce
+    saveFlowMutation.mutate({
+      nodes: nodes.map(node => ({
+        ...node,
+        selected: false,
+        dragging: false
+      })),
+      edges: newEdges
+    });
+  }, [nodes, saveFlowMutation, id]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
     if (!id) return;
@@ -167,12 +178,10 @@ export default function AgentFlowPage() {
     if (error) throw error;
   };
 
-  // If there's an error, the toast and redirect will handle it
   if (isError) {
     return null;
   }
 
-  // Show loading state if no agent data yet
   if (!agent) {
     return null;
   }
