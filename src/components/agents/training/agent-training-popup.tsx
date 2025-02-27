@@ -344,21 +344,22 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
 
         <div className="p-4 border-t bg-white dark:bg-gray-950">
           {!editingMessageId && (
-            <div className="relative">
+            <div className="relative flex items-center">
               <Textarea
                 placeholder="Type your message..."
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="min-h-[40px] h-10 max-h-[100px] resize-none pr-12 rounded-md border-gray-300 dark:border-gray-700 focus-visible:ring-blue-500 text-sm py-2 shadow-sm"
+                className="min-h-[40px] h-10 max-h-[100px] resize-none pr-3 rounded-md border-gray-300 dark:border-gray-700 focus-visible:ring-blue-500 text-sm py-2 shadow-sm flex-1"
               />
               <Button
-                size="icon"
                 onClick={handleSendMessage}
                 disabled={!userInput.trim()}
-                className="absolute right-1 bottom-[6px] h-8 w-8 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors"
+                className="ml-2 h-8 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors"
+                size="sm"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-4 w-4 mr-1" />
+                Send
               </Button>
             </div>
           )}
