@@ -1,7 +1,7 @@
 
 import { NodeData, FlowData, NodeType } from "@/types/agent";
 
-export const getDefaultFlow = (platform?: string, action?: string, objective?: string): FlowData => {
+export const getDefaultFlow = (platform?: string, action?: string): FlowData => {
   const baseFlow = {
     nodes: [
       {
@@ -16,19 +16,28 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
       {
         id: 'greeting-1',
         type: 'greetingNode' as NodeType,
-        position: { x: 500, y: 100 },
+        position: { x: 400, y: 100 },
         data: {
           greeting: "Hello! How can I help you today?",
-          outcomes: ["I need help with a product", "I have a question"]
+          outcomes: []
         } as NodeData
       },
       {
         id: 'speak-1',
         type: 'speakNode' as NodeType,
-        position: { x: 900, y: 100 },
+        position: { x: 700, y: 100 },
         data: {
           message: "I'd be happy to assist you. Please let me know what you need help with.",
-          outcomes: ["Thanks, that's all", "I have another question"]
+          outcomes: []
+        } as NodeData
+      },
+      {
+        id: 'end-1',
+        type: 'endNode' as NodeType,
+        position: { x: 1000, y: 100 },
+        data: {
+          message: "Thank you for your time. Goodbye!",
+          outcomes: []
         } as NodeData
       }
     ],
@@ -36,51 +45,26 @@ export const getDefaultFlow = (platform?: string, action?: string, objective?: s
       {
         id: 'trigger-to-greeting',
         source: 'trigger-1',
-        target: 'greeting-1'
+        target: 'greeting-1',
+        type: 'smoothstep',
+        animated: true
       },
       {
         id: 'greeting-to-speak',
         source: 'greeting-1',
         target: 'speak-1',
-        sourceHandle: 'outcome-0'
+        type: 'smoothstep',
+        animated: true
+      },
+      {
+        id: 'speak-to-end',
+        source: 'speak-1',
+        target: 'end-1',
+        type: 'smoothstep',
+        animated: true
       }
     ]
   };
-
-  if (objective === 'live_transfer') {
-    baseFlow.nodes.push({
-      id: 'transfer-1',
-      type: 'transferNode' as NodeType,
-      position: { x: 1300, y: 100 },
-      data: {
-        message: "I'll transfer you to an available agent now.",
-        outcomes: [],
-        contacts: []
-      } as NodeData
-    });
-    baseFlow.edges.push({
-      id: 'speak-to-transfer',
-      source: 'speak-1',
-      target: 'transfer-1',
-      sourceHandle: 'outcome-0'
-    });
-  } else {
-    baseFlow.nodes.push({
-      id: 'end-1',
-      type: 'endNode' as NodeType,
-      position: { x: 1300, y: 100 },
-      data: {
-        message: "Thank you for your time. Goodbye!",
-        outcomes: []
-      } as NodeData
-    });
-    baseFlow.edges.push({
-      id: 'speak-to-end',
-      source: 'speak-1',
-      target: 'end-1',
-      sourceHandle: 'outcome-0'
-    });
-  }
 
   return baseFlow;
 };

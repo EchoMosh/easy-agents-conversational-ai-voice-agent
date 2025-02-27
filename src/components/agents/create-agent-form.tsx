@@ -64,6 +64,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           user_id: session.user.id,
           flow: JSON.stringify(flow),
           is_active: true,
+          objective: 'answer_calls', // Setting a default objective since it's required
         })
         .select()
         .single();

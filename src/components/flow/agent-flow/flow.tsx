@@ -71,21 +71,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const { screenToFlowPosition } = useReactFlow();
 
   const isValidConnection = (connection: Connection) => {
-    const sourceNode = nodes.find(node => node.id === connection.source);
-    const targetNode = nodes.find(node => node.id === connection.target);
-
-    if (!sourceNode || !targetNode) return false;
-
-    const validConnections = {
-      triggerNode: ['greetingNode', 'speakNode'],
-      greetingNode: ['speakNode', 'endNode'],
-      speakNode: ['speakNode', 'endNode'],
-    };
-
-    const sourceType = sourceNode.type as keyof typeof validConnections;
-    const targetType = targetNode.type;
-
-    return validConnections[sourceType]?.includes(targetType) ?? false;
+    return true;
   };
 
   const defaultEdgeOptions = {
