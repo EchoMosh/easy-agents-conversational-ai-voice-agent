@@ -34,14 +34,8 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
       <div className="flex items-center gap-4 relative">
         <Button 
-          className="bg-gradient-to-b from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium shadow-[0_2px_3px_-1px_rgba(0,0,0,0.1),0_1px_0_0_rgba(25,28,33,0.02),0_0_0_1px_rgba(25,28,33,0.08)] hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_3px_-1px_rgba(0,0,0,0.5),0_1px_0_0_rgba(255,255,255,0.02),0_0_0_1px_rgba(255,255,255,0.05)] transition-all duration-300"
-        >
-          <Play className="h-4 w-4 mr-2" />
-          Train {agent.name}
-        </Button>
-        <Button 
           variant="outline"
-          className="bg-white/40 dark:bg-gray-800/40 hover:bg-white/80 dark:hover:bg-gray-800/80 text-gray-900 dark:text-white border border-gray-200/20 dark:border-gray-700/20 shadow-[0_2px_3px_-1px_rgba(0,0,0,0.1),0_1px_0_0_rgba(25,28,33,0.02),0_0_0_1px_rgba(25,28,33,0.08)] dark:shadow-[0_2px_3px_-1px_rgba(0,0,0,0.5),0_1px_0_0_rgba(255,255,255,0.02),0_0_0_1px_rgba(255,255,255,0.05)] backdrop-blur-xl transition-all duration-300"
+          className="bg-white/40 dark:bg-gray-800/40 hover:bg-white/80 dark:hover:bg-gray-800/80 text-gray-900 dark:text-white border border-gray-200/20 dark:border-gray-700/20 backdrop-blur-xl transition-all duration-300"
         >
           <PhoneCall className="h-4 w-4 mr-2" />
           Call Me
@@ -54,6 +48,13 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
           onUpdateSettings={onUpdateSettings}
         />
         <ThemeToggle />
+        <div className="h-6 w-[1px] bg-gradient-to-b from-gray-200/0 via-gray-200/50 to-gray-200/0 dark:from-gray-700/0 dark:via-gray-700/50 dark:to-gray-700/0" />
+        <Button 
+          className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
+        >
+          <Play className="h-4 w-4 mr-2" />
+          Train {agent.name}
+        </Button>
       </div>
     </div>
   );
