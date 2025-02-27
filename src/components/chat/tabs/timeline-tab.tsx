@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Activity, TimelineItem as TimelineItemType } from "./types/timeline-types";
+import { Activity, TimelineItem as TimelineItemType, Note } from "./types/timeline-types";
 import { TimelineItemComponent } from "./components/timeline-item";
 import { TimelineControls } from "./components/timeline-controls";
 
@@ -27,7 +27,32 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Activity[];
+
+      // Map the database records to our Activity type
+      return (data || []).map(activity => {
+        let activityType: Activity['type'];
+
+        // Determine the activity type based on the content
+        if (activity.content.toLowerCase().includes('status')) {
+          activityType = 'status_change';
+        } else if (activity.content.toLowerCase().includes('email') || 
+                  activity.content.toLowerCase().includes('phone')) {
+          activityType = 'contact_update';
+        } else if (activity.content.toLowerCase().includes('name')) {
+          activityType = 'name_update';
+        } else if (activity.content.toLowerCase().includes('variable')) {
+          activityType = 'variable_add';
+        } else if (activity.content.toLowerCase().includes('created')) {
+          activityType = 'lead_created';
+        } else {
+          activityType = 'status_change'; // Default type
+        }
+
+        return {
+          ...activity,
+          type: activityType
+        } as Activity;
+      });
     }
   });
 
@@ -41,19 +66,18 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      
+      // Map the database records to our Note type
+      return (data || []).map(note => ({
+        ...note,
+        type: 'note' as const
+      })) as Note[];
     }
   });
 
   const allItems = [
-    ...(activities || []).map(activity => ({
-      ...activity,
-      type: 'activity' as const
-    })),
-    ...(notes || []).map(note => ({
-      ...note,
-      type: 'note' as const
-    }))
+    ...(activities || []),
+    ...(notes || [])
   ].sort((a, b) => 
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
