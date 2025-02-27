@@ -16,7 +16,7 @@ export default function AgentFlowPage() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
-  const { data: agent } = useQuery({
+  const { data: agent, refetch } = useQuery({
     queryKey: ['agent', id],
     queryFn: async () => {
       if (!id) throw new Error('No agent ID provided');
@@ -34,21 +34,61 @@ export default function AgentFlowPage() {
 
   useEffect(() => {
     if (agent?.flow) {
-      const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) as FlowData : agent.flow as FlowData;
-      setNodes(flowData.nodes);
-      setEdges(flowData.edges);
+      try {
+        const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) as FlowData : agent.flow as FlowData;
+        
+        // Ensure all edges are smoothstep
+        const updatedEdges = flowData.edges.map(edge => ({
+          ...edge,
+          type: 'smoothstep',
+          animated: true
+        }));
+        
+        setNodes(flowData.nodes);
+        setEdges(updatedEdges);
+      } catch (error) {
+        console.error('Error parsing flow data:', error);
+      }
     }
   }, [agent]);
 
-  const handleNodesChange = useCallback((newNodes: Node[]) => {
-    console.log('Nodes changed:', newNodes);
+  const handleNodesChange = useCallback(async (newNodes: Node[]) => {
+    if (!id) return;
     setNodes(newNodes);
-  }, []);
+    
+    const currentFlow = {
+      nodes: newNodes,
+      edges
+    };
 
-  const handleEdgesChange = useCallback((newEdges: Edge[]) => {
-    console.log('Edges changed:', newEdges);
+    await supabase
+      .from('agents')
+      .update({
+        flow: JSON.stringify(currentFlow)
+      })
+      .eq('id', id);
+
+    refetch();
+  }, [id, edges, refetch]);
+
+  const handleEdgesChange = useCallback(async (newEdges: Edge[]) => {
+    if (!id) return;
     setEdges(newEdges);
-  }, []);
+    
+    const currentFlow = {
+      nodes,
+      edges: newEdges
+    };
+
+    await supabase
+      .from('agents')
+      .update({
+        flow: JSON.stringify(currentFlow)
+      })
+      .eq('id', id);
+
+    refetch();
+  }, [id, nodes, refetch]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
     if (!id) return;
@@ -61,7 +101,7 @@ export default function AgentFlowPage() {
   };
 
   if (!agent) {
-    return null; // or a loading state
+    return null;
   }
 
   return (

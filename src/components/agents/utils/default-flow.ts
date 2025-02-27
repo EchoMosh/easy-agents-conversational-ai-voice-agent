@@ -36,8 +36,7 @@ export const getDefaultFlow = (platform?: string, action?: string): FlowData => 
         type: 'endNode' as NodeType,
         position: { x: 1000, y: 100 },
         data: {
-          message: "Thank you for your time. Goodbye!",
-          outcomes: []
+          message: "Thank you for your time. Goodbye!"
         } as NodeData
       }
     ],
