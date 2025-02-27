@@ -18,17 +18,25 @@ export default function AgentFlowPage() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
-  const { data: agent } = useQuery({
+  // First, let's verify we're working with the correct agent
+  const { data: agent, refetch } = useQuery({
     queryKey: ['agent', id],
     queryFn: async () => {
       if (!id) throw new Error('No agent ID provided');
+      console.log('Fetching agent with ID:', id);
+      
       const { data, error } = await supabase
         .from('agents')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching agent:', error);
+        throw error;
+      }
+      
+      console.log('Fetched agent data:', data);
       return data as Agent;
     },
     enabled: !!id
@@ -38,8 +46,10 @@ export default function AgentFlowPage() {
   useEffect(() => {
     if (agent?.flow) {
       try {
+        console.log('Raw flow data from agent:', agent.flow);
         const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-        console.log('Loading flow data:', flowData);
+        console.log('Parsed flow data:', flowData);
+        
         if (flowData.nodes) {
           console.log('Setting nodes:', flowData.nodes);
           setNodes(flowData.nodes);
@@ -50,9 +60,16 @@ export default function AgentFlowPage() {
         }
       } catch (error) {
         console.error('Error parsing flow data:', error);
+        toast({
+          title: "Error loading flow",
+          description: "There was an error loading the flow data.",
+          variant: "destructive"
+        });
       }
+    } else {
+      console.log('No flow data found for agent:', id);
     }
-  }, [agent]);
+  }, [agent, id]);
 
   // Setup real-time updates with debounce
   const saveFlowMutation = useMutation({
@@ -60,20 +77,27 @@ export default function AgentFlowPage() {
       if (!id) throw new Error('No agent ID provided');
       
       const flowString = JSON.stringify(flowData);
-      console.log('Saving flow to Supabase:', flowString);
+      console.log('Attempting to save flow for agent:', id);
+      console.log('Flow data to save:', flowString);
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('agents')
         .update({
           flow: flowString
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
       if (error) {
         console.error('Error saving to Supabase:', error);
         throw error;
       }
-      console.log('Successfully saved flow to Supabase');
+      
+      console.log('Successfully saved flow to Supabase for agent:', id);
+      console.log('Updated agent data:', data);
+      
+      // Refetch the agent data to ensure we have the latest state
+      refetch();
     },
     onError: (error) => {
       console.error('Error saving flow:', error);
@@ -95,21 +119,24 @@ export default function AgentFlowPage() {
       })),
       edges: newEdges
     };
-    console.log('Debounced save triggered with:', flowData);
+    console.log('Debounced save triggered for agent:', id);
+    console.log('Flow data to be saved:', flowData);
     saveFlowMutation.mutate(flowData);
-  }, [saveFlowMutation]);
+  }, [saveFlowMutation, id]);
 
   const handleNodesChange = useCallback((newNodes: Node[]) => {
-    console.log('Nodes changed:', newNodes);
+    console.log('Nodes changed for agent:', id);
+    console.log('New nodes:', newNodes);
     setNodes(newNodes);
     debouncedSave(newNodes, edges);
-  }, [edges, debouncedSave]);
+  }, [edges, debouncedSave, id]);
 
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
-    console.log('Edges changed:', newEdges);
+    console.log('Edges changed for agent:', id);
+    console.log('New edges:', newEdges);
     setEdges(newEdges);
     debouncedSave(nodes, newEdges);
-  }, [nodes, debouncedSave]);
+  }, [nodes, debouncedSave, id]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
     if (!id) return;
