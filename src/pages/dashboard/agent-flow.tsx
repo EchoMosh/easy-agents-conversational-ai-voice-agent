@@ -4,42 +4,17 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Agent } from '@/types/agent';
-
-const initialNodes: Node[] = [
-  {
-    id: 'trigger-1',
-    type: 'triggerNode',
-    position: { x: 100, y: 100 },
-    data: { platform: 'facebook', action: 'new_lead' }
-  },
-  {
-    id: 'greeting-1',
-    type: 'greetingNode',
-    position: { x: 400, y: 100 },
-    data: { greeting: 'Hello! How can I help you today?', outcomes: ['I need help', 'Just browsing'] }
-  }
-];
-
-const initialEdges: Edge[] = [
-  {
-    id: 'e1-2',
-    source: 'trigger-1',
-    target: 'greeting-1',
-    type: 'smoothstep',
-    animated: true
-  }
-];
+import { Agent, FlowData } from '@/types/agent';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
 
   const { data: agent } = useQuery({
     queryKey: ['agent', id],
@@ -56,6 +31,14 @@ export default function AgentFlowPage() {
     },
     enabled: !!id
   });
+
+  useEffect(() => {
+    if (agent?.flow) {
+      const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) as FlowData : agent.flow as FlowData;
+      setNodes(flowData.nodes);
+      setEdges(flowData.edges);
+    }
+  }, [agent]);
 
   const handleNodesChange = useCallback((newNodes: Node[]) => {
     console.log('Nodes changed:', newNodes);
