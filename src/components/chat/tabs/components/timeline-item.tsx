@@ -66,19 +66,19 @@ export function TimelineItemComponent({
   const getActivityColor = (type: TimelineItem['type']) => {
     switch (type) {
       case 'note':
-        return 'bg-purple-100 text-purple-600';
+        return 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-300';
       case 'status_change':
-        return 'bg-amber-100 text-amber-600';
+        return 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300';
       case 'contact_update':
-        return 'bg-blue-100 text-blue-600';
+        return 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300';
       case 'name_update':
-        return 'bg-rose-100 text-rose-600';
+        return 'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-300';
       case 'variable_add':
-        return 'bg-teal-100 text-teal-600';
+        return 'bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-300';
       case 'lead_created':
-        return 'bg-green-100 text-green-600';
+        return 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-300';
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
@@ -94,13 +94,13 @@ export function TimelineItemComponent({
             {getActivityIcon(item.type, item.content)}
           </div>
           {!isLast && (
-            <Separator orientation="vertical" className="absolute h-full top-8 left-1/2 -translate-x-1/2 bg-gray-200" />
+            <Separator orientation="vertical" className="absolute h-full top-8 left-1/2 -translate-x-1/2 bg-gray-200 dark:bg-gray-700" />
           )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="py-1">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-foreground">
                 {isNote(item) ? "Note Added" : item.content}
               </p>
               {isNote(item) && (
@@ -108,14 +108,14 @@ export function TimelineItemComponent({
                   size="sm"
                   variant="ghost"
                   onClick={() => onEditNote(item.id)}
-                  className="h-7 px-2 hover:bg-gray-100"
+                  className="h-7 px-2 hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
             {isNote(item) && !editingNoteId && (
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {item.content}
               </p>
             )}
@@ -124,7 +124,7 @@ export function TimelineItemComponent({
                 <Textarea
                   value={editedContent}
                   onChange={(e) => onEditContentChange(e.target.value)}
-                  className="min-h-[60px] bg-gray-50 border-gray-200"
+                  className="min-h-[60px] bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700"
                 />
                 <div className="flex gap-2">
                   <Button
@@ -147,17 +147,15 @@ export function TimelineItemComponent({
                 </div>
               </div>
             )}
-            {!isNote(item) && (
-              <p className="text-xs text-gray-500 mt-1">
-                {item.old_value && <span>From: {item.old_value}</span>}
-                {item.old_value && item.new_value && <span> → </span>}
-                {item.new_value && <span>To: {item.new_value}</span>}
+            {!isNote(item) && item.old_value && item.new_value && (
+              <p className="text-xs text-muted-foreground mt-1">
+                From: {item.old_value} → To: {item.new_value}
               </p>
             )}
             <div className="flex items-center gap-1 mt-1">
-              <Clock className="h-3 w-3 text-gray-400" />
-              <time className="text-xs text-gray-400">
-                {format(new Date(item.timestamp), 'MMM d, yyyy h:mm a')}
+              <Clock className="h-3 w-3 text-muted-foreground" />
+              <time className="text-xs text-muted-foreground">
+                {format(new Date(item.created_at), 'MMM d, yyyy h:mm a')}
               </time>
             </div>
           </div>
