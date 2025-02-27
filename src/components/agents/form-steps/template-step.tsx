@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Wand2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { AGENT_TEMPLATES } from "@/types/agent";
 import type { Agent } from "@/types/agent";
 
 interface TemplateStepProps {
@@ -11,13 +10,15 @@ interface TemplateStepProps {
   onTemplateSelect: (templateId: string, role: Agent['role']) => void;
   onNext: () => void;
   onBack: () => void;
+  showOnlyScratch?: boolean;
 }
 
 export function TemplateStep({ 
   selectedTemplate, 
   onTemplateSelect, 
   onNext, 
-  onBack 
+  onBack,
+  showOnlyScratch = false,
 }: TemplateStepProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (selectedTemplate || selectedTemplate === '')) {
@@ -37,10 +38,10 @@ export function TemplateStep({
     >
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">Choose Template</h2>
-        <p className="text-muted-foreground">Start from scratch or use a pre-built template</p>
+        <p className="text-muted-foreground">Start from scratch and build your own flow</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <Card 
           className={`cursor-pointer transition-all h-[140px] flex flex-col justify-center ${
             selectedTemplate === '' ? 'ring-2 ring-primary' : 'hover:border-primary'
@@ -57,21 +58,6 @@ export function TemplateStep({
             </CardDescription>
           </CardHeader>
         </Card>
-
-        {AGENT_TEMPLATES.map((template) => (
-          <Card 
-            key={template.id}
-            className={`cursor-pointer transition-all h-[140px] flex flex-col justify-center ${
-              selectedTemplate === template.id ? 'ring-2 ring-primary' : 'hover:border-primary'
-            }`}
-            onClick={() => onTemplateSelect(template.id, template.role)}
-          >
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">{template.name}</CardTitle>
-              <CardDescription className="text-sm">{template.description}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
       </div>
 
       <div className="flex gap-3">
@@ -87,6 +73,7 @@ export function TemplateStep({
           className="w-full relative"
           size="lg"
           onClick={onNext}
+          disabled={selectedTemplate === undefined}
         >
           Continue
           <ArrowRight className="ml-2 h-4 w-4" />

@@ -19,9 +19,6 @@ export function InfoTab({ pipeline }: InfoTabProps) {
     );
   }
 
-  // Cast the pipeline to the correct type
-  const typedPipeline = pipeline as unknown as Pipeline;
-
   return (
     <div className="p-4 space-y-4">
       <div>
@@ -29,9 +26,9 @@ export function InfoTab({ pipeline }: InfoTabProps) {
         <Button
           variant="outline"
           className="w-full justify-between"
-          onClick={() => navigate(`/dashboard/pipelines/${typedPipeline.id}`)}
+          onClick={() => navigate(`/dashboard/pipelines/${pipeline.id}`)}
         >
-          {typedPipeline.name}
+          {pipeline.name}
           <ExternalLink className="h-4 w-4" />
         </Button>
       </div>

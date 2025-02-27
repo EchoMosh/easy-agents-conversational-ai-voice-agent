@@ -8,6 +8,7 @@ import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
 import { ObjectiveStep } from "./form-steps/objective-step";
 import { TriggerStep } from "./form-steps/trigger-step";
+import { TemplateStep } from "./form-steps/template-step";
 import { getDefaultFlow } from "./utils/default-flow";
 import { platforms, platformActions } from "./utils/platform-constants";
 
@@ -27,6 +28,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     platform: '',
     action: '',
     objective: '' as 'live_transfer' | 'answer_calls' | '',
+    template: '',
   });
 
   const handleCreateAgent = async () => {
@@ -55,14 +57,14 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
     try {
       const flow = getDefaultFlow(newAgent.platform, newAgent.action, newAgent.objective);
-
+      
       const { data, error } = await supabase
         .from('agents')
         .insert({
           name: newAgent.name,
           role: newAgent.role,
           user_id: session.user.id,
-          flow,
+          flow: JSON.stringify(flow),
           is_active: true,
           objective: newAgent.objective,
         })
@@ -87,7 +89,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
   return (
     <div className="space-y-6 py-6">
-      <CreateAgentProgress currentStep={step} totalSteps={3} />
+      <CreateAgentProgress currentStep={step} totalSteps={4} />
       
       <div className="space-y-6">
         {step === 1 && (
@@ -99,17 +101,30 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         )}
 
         {step === 2 && (
+          <TemplateStep
+            selectedTemplate={newAgent.template}
+            onTemplateSelect={(templateId, role) => {
+              setNewAgent(prev => ({ ...prev, template: templateId, role }));
+              setStep(3);
+            }}
+            onNext={() => setStep(3)}
+            onBack={() => setStep(1)}
+            showOnlyScratch={true}
+          />
+        )}
+
+        {step === 3 && (
           <ObjectiveStep
             objective={newAgent.objective}
             onObjectiveSelect={(objective) => 
               setNewAgent(prev => ({ ...prev, objective }))
             }
-            onNext={() => setStep(3)}
-            onBack={() => setStep(1)}
+            onNext={() => setStep(4)}
+            onBack={() => setStep(2)}
           />
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <TriggerStep
             platform={newAgent.platform}
             action={newAgent.action}
@@ -119,7 +134,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             onActionChange={(action) => 
               setNewAgent(prev => ({ ...prev, action }))
             }
-            onBack={() => setStep(2)}
+            onBack={() => setStep(3)}
             onSubmit={handleCreateAgent}
             isCreating={isCreating}
             platforms={platforms}
