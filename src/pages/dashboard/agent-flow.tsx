@@ -18,11 +18,10 @@ export default function AgentFlowPage() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
-  const { data: agent, refetch, isError } = useQuery({
+  const { data: agent, refetch, isError, isLoading } = useQuery({
     queryKey: ['agent', id],
     queryFn: async () => {
       if (!id) throw new Error('No agent ID provided');
-      console.log('Fetching agent with ID:', id);
       
       const { data, error } = await supabase
         .from('agents')
@@ -38,9 +37,7 @@ export default function AgentFlowPage() {
       if (!data) {
         throw new Error('Agent not found');
       }
-      
-      console.log('Raw agent data from Supabase:', data);
-      console.log('Flow data type:', typeof data.flow);
+
       return data as Agent;
     },
     enabled: !!id,
@@ -48,69 +45,55 @@ export default function AgentFlowPage() {
     staleTime: 0
   });
 
+  // Load initial flow data
   useEffect(() => {
-    if (isError) {
-      console.error('Error loading agent');
-      toast({
-        title: "Error loading agent",
-        description: "The requested agent could not be found or accessed.",
-        variant: "destructive"
-      });
-      setTimeout(() => navigate('/dashboard/agents'), 2000);
-    }
-  }, [isError, navigate, toast]);
-
-  useEffect(() => {
-    if (agent?.flow) {
-      try {
-        console.log('Raw flow data before parsing:', agent.flow);
-        let flowData;
-        
-        if (typeof agent.flow === 'string') {
-          console.log('Parsing flow data from string');
-          flowData = JSON.parse(agent.flow);
-        } else {
-          console.log('Using flow data directly');
-          flowData = agent.flow;
-        }
-        
-        console.log('Parsed/processed flow data:', flowData);
-        
-        if (flowData.nodes) {
-          console.log('Node data structure:', flowData.nodes[0]); // Log first node structure if exists
-          setNodes(flowData.nodes);
-        }
-        if (flowData.edges) {
-          console.log('Edge data structure:', flowData.edges[0]); // Log first edge structure if exists
-          setEdges(flowData.edges);
-        }
-      } catch (error) {
-        console.error('Error parsing flow data:', error);
-        toast({
-          title: "Error loading flow",
-          description: "There was an error loading the flow data.",
-          variant: "destructive"
-        });
-      }
-    } else {
-      console.log('No flow data found for agent:', id);
+    if (!agent?.flow) {
+      // Initialize with empty flow
       setNodes([]);
       setEdges([]);
+      return;
     }
-  }, [agent, id, toast]);
+
+    try {
+      const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+
+      // Ensure we have the required node properties
+      const validNodes = (flowData.nodes || []).map((node: any) => ({
+        ...node,
+        // Ensure required properties exist
+        id: node.id || `node-${Math.random()}`,
+        type: node.type || 'default',
+        position: node.position || { x: 0, y: 0 },
+        data: node.data || {}
+      }));
+
+      // Ensure we have the required edge properties
+      const validEdges = (flowData.edges || []).map((edge: any) => ({
+        ...edge,
+        // Ensure required properties exist
+        id: edge.id || `edge-${Math.random()}`,
+        source: edge.source,
+        target: edge.target
+      }));
+
+      setNodes(validNodes);
+      setEdges(validEdges);
+
+    } catch (error) {
+      console.error('Error parsing flow data:', error);
+      toast({
+        title: "Error loading flow",
+        description: "There was an error loading the flow data.",
+        variant: "destructive"
+      });
+    }
+  }, [agent, toast]);
 
   const saveFlowMutation = useMutation({
     mutationFn: async (flowData: { nodes: Node[]; edges: Edge[] }) => {
       if (!id) throw new Error('No agent ID provided');
-      
-      // Log the data we're about to save
-      console.log('Saving flow data structure:', {
-        nodes: flowData.nodes[0], // Log first node structure
-        edges: flowData.edges[0]  // Log first edge structure
-      });
-      
+
       const flowString = JSON.stringify(flowData);
-      console.log('Flow data stringified:', flowString);
       
       const { error } = await supabase
         .from('agents')
@@ -123,9 +106,8 @@ export default function AgentFlowPage() {
         console.error('Error saving to Supabase:', error);
         throw error;
       }
-      
-      console.log('Successfully saved flow for agent:', id);
-      refetch();
+
+      await refetch();
     },
     onSuccess: () => {
       toast({
@@ -144,8 +126,6 @@ export default function AgentFlowPage() {
   });
 
   const handleNodesChange = useCallback((newNodes: Node[]) => {
-    console.log('Nodes changed for agent:', id);
-    console.log('New nodes structure:', newNodes[0]); // Log first node structure
     setNodes(newNodes);
     
     saveFlowMutation.mutate({
@@ -156,11 +136,9 @@ export default function AgentFlowPage() {
       })),
       edges
     });
-  }, [edges, saveFlowMutation, id]);
+  }, [edges, saveFlowMutation]);
 
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
-    console.log('Edges changed for agent:', id);
-    console.log('New edges structure:', newEdges[0]); // Log first edge structure
     setEdges(newEdges);
     
     saveFlowMutation.mutate({
@@ -171,7 +149,7 @@ export default function AgentFlowPage() {
       })),
       edges: newEdges
     });
-  }, [nodes, saveFlowMutation, id]);
+  }, [nodes, saveFlowMutation]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
     if (!id) return;
@@ -185,6 +163,14 @@ export default function AgentFlowPage() {
 
   if (isError) {
     return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (!agent) {
