@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Check, Headphones, Send, X } from "lucide-react";
+import { Check, Ear, Send, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -120,7 +120,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`absolute -top-1 -right-1 h-6 w-6 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity ${
+                    className={`absolute -top-1 -right-1 h-6 w-6 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-25 group-hover:opacity-100 transition-opacity ${
                       speakingMessageId === message.id 
                         ? "text-blue-500 dark:text-blue-400 opacity-100" 
                         : "text-gray-500 dark:text-gray-400"
@@ -128,7 +128,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                     onClick={() => playTextToSpeech(message.id, message.content)}
                     title="Listen to AI response"
                   >
-                    <Headphones className="h-3 w-3" />
+                    <Ear className="h-3 w-3" />
                   </Button>
                 )}
                 <p className="text-sm leading-relaxed">{message.content}</p>
