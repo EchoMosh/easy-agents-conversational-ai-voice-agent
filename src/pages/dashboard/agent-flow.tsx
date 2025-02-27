@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -38,12 +39,13 @@ export default function AgentFlowPage() {
         throw new Error('Agent not found');
       }
       
-      console.log('Fetched agent data:', data);
+      console.log('Raw agent data from Supabase:', data);
+      console.log('Flow data type:', typeof data.flow);
       return data as Agent;
     },
     enabled: !!id,
     retry: false,
-    staleTime: 0 // Always fetch fresh data
+    staleTime: 0
   });
 
   useEffect(() => {
@@ -61,16 +63,25 @@ export default function AgentFlowPage() {
   useEffect(() => {
     if (agent?.flow) {
       try {
-        console.log('Raw flow data from agent:', agent.flow);
-        const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-        console.log('Parsed flow data:', flowData);
+        console.log('Raw flow data before parsing:', agent.flow);
+        let flowData;
+        
+        if (typeof agent.flow === 'string') {
+          console.log('Parsing flow data from string');
+          flowData = JSON.parse(agent.flow);
+        } else {
+          console.log('Using flow data directly');
+          flowData = agent.flow;
+        }
+        
+        console.log('Parsed/processed flow data:', flowData);
         
         if (flowData.nodes) {
-          console.log('Setting nodes:', flowData.nodes);
+          console.log('Node data structure:', flowData.nodes[0]); // Log first node structure if exists
           setNodes(flowData.nodes);
         }
         if (flowData.edges) {
-          console.log('Setting edges:', flowData.edges);
+          console.log('Edge data structure:', flowData.edges[0]); // Log first edge structure if exists
           setEdges(flowData.edges);
         }
       } catch (error) {
@@ -92,9 +103,14 @@ export default function AgentFlowPage() {
     mutationFn: async (flowData: { nodes: Node[]; edges: Edge[] }) => {
       if (!id) throw new Error('No agent ID provided');
       
+      // Log the data we're about to save
+      console.log('Saving flow data structure:', {
+        nodes: flowData.nodes[0], // Log first node structure
+        edges: flowData.edges[0]  // Log first edge structure
+      });
+      
       const flowString = JSON.stringify(flowData);
-      console.log('Attempting to save flow for agent:', id);
-      console.log('Flow data to save:', flowString);
+      console.log('Flow data stringified:', flowString);
       
       const { error } = await supabase
         .from('agents')
@@ -109,7 +125,6 @@ export default function AgentFlowPage() {
       }
       
       console.log('Successfully saved flow for agent:', id);
-      
       refetch();
     },
     onSuccess: () => {
@@ -130,7 +145,7 @@ export default function AgentFlowPage() {
 
   const handleNodesChange = useCallback((newNodes: Node[]) => {
     console.log('Nodes changed for agent:', id);
-    console.log('New nodes:', newNodes);
+    console.log('New nodes structure:', newNodes[0]); // Log first node structure
     setNodes(newNodes);
     
     saveFlowMutation.mutate({
@@ -145,7 +160,7 @@ export default function AgentFlowPage() {
 
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
     console.log('Edges changed for agent:', id);
-    console.log('New edges:', newEdges);
+    console.log('New edges structure:', newEdges[0]); // Log first edge structure
     setEdges(newEdges);
     
     saveFlowMutation.mutate({
