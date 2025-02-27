@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Check, Send, X } from "lucide-react";
+import { Check, Mic, Send, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
   ]);
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
 
   const handleSendMessage = () => {
     if (!userInput.trim()) return;
@@ -66,6 +67,23 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
     }
   };
 
+  const playTextToSpeech = (messageId: string, text: string) => {
+    // This is a placeholder for actual text-to-speech functionality
+    // In a real implementation, you would call a TTS API or use the Web Speech API
+    
+    // For now, we'll just toggle the speaking state to show visual feedback
+    setSpeakingMessageId(messageId === speakingMessageId ? null : messageId);
+    
+    // Simulate speech ending after 3 seconds
+    if (messageId !== speakingMessageId) {
+      setTimeout(() => {
+        setSpeakingMessageId(null);
+      }, 3000);
+    }
+    
+    console.log("Playing speech for:", text);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] p-0 flex flex-col h-[600px] max-h-[80vh] overflow-hidden bg-background">
@@ -92,24 +110,48 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
               }`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${
+                className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm relative group ${
                   message.role === "user"
                     ? "bg-blue-500 text-white rounded-br-none"
                     : "bg-gray-200 dark:bg-gray-800 rounded-bl-none"
                 }`}
               >
                 <p className="text-sm leading-relaxed">{message.content}</p>
-                <div
-                  className={`text-[10px] mt-1 text-right ${
-                    message.role === "user"
-                      ? "text-blue-100"
-                      : "text-gray-500 dark:text-gray-400"
-                  }`}
-                >
-                  {new Date(message.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                <div className="flex items-center justify-between mt-1">
+                  <div 
+                    className={`text-[10px] ${
+                      message.role === "user"
+                        ? "text-blue-100"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    {message.role === "agent" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={`h-5 w-5 p-0 opacity-70 hover:opacity-100 ${
+                          speakingMessageId === message.id 
+                            ? "text-blue-500 dark:text-blue-400 opacity-100" 
+                            : "text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-70"
+                        }`}
+                        onClick={() => playTextToSpeech(message.id, message.content)}
+                      >
+                        <Mic className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                  <div
+                    className={`text-[10px] ${
+                      message.role === "user"
+                        ? "text-blue-100"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    {new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
