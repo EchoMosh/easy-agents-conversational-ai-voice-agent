@@ -4,6 +4,10 @@ import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
 import { Agent } from "@/types/agent";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface HeaderProps {
   agent: Agent;
@@ -12,6 +16,24 @@ interface HeaderProps {
 }
 
 export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    // Subscribe to the real-time channel
+    const channel = supabase.channel('agent-flow')
+      .on('presence', { event: 'sync' }, () => {
+        setIsConnected(true);
+      })
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
+
+    // Cleanup subscription
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <div className="relative h-16 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl flex items-center justify-between px-8 z-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
       <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/30 to-white/60 dark:from-gray-900/60 dark:via-gray-800/30 dark:to-gray-900/60 pointer-events-none" />
@@ -32,6 +54,23 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3 relative">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                <div 
+                  className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                    isConnected ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isConnected ? 'Connected' : 'Disconnected'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
         <AgentSettings
           agentId={agent.id}
           currentVoice={agent.voice_id || undefined}
