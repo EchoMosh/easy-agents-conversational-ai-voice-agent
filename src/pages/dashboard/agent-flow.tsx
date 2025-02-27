@@ -27,6 +27,7 @@ export default function AgentFlowPage() {
         .single();
 
       if (error) throw error;
+      console.log('Fetched agent data:', data); // Debug log
       return data as Agent;
     },
     enabled: !!id
@@ -35,20 +36,22 @@ export default function AgentFlowPage() {
   useEffect(() => {
     if (agent?.flow) {
       try {
+        console.log('Raw flow data:', agent.flow); // Debug log
         const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) as FlowData : agent.flow as FlowData;
+        console.log('Parsed flow data:', flowData); // Debug log
         
-        // Ensure all edges are smoothstep
-        const updatedEdges = flowData.edges.map(edge => ({
-          ...edge,
-          type: 'smoothstep',
-          animated: true
-        }));
-        
+        if (!flowData || !flowData.nodes || !Array.isArray(flowData.nodes)) {
+          console.error('Invalid flow data structure:', flowData);
+          return;
+        }
+
         setNodes(flowData.nodes);
-        setEdges(updatedEdges);
+        setEdges(flowData.edges || []);
       } catch (error) {
         console.error('Error parsing flow data:', error);
       }
+    } else {
+      console.log('No flow data found for agent:', agent); // Debug log
     }
   }, [agent]);
 
@@ -61,14 +64,20 @@ export default function AgentFlowPage() {
       edges
     };
 
-    await supabase
-      .from('agents')
-      .update({
-        flow: JSON.stringify(currentFlow)
-      })
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('agents')
+        .update({
+          flow: JSON.stringify(currentFlow)
+        })
+        .eq('id', id);
 
-    refetch();
+      if (error) throw error;
+      console.log('Flow updated successfully:', currentFlow); // Debug log
+      await refetch();
+    } catch (error) {
+      console.error('Error updating flow:', error);
+    }
   }, [id, edges, refetch]);
 
   const handleEdgesChange = useCallback(async (newEdges: Edge[]) => {
@@ -80,14 +89,20 @@ export default function AgentFlowPage() {
       edges: newEdges
     };
 
-    await supabase
-      .from('agents')
-      .update({
-        flow: JSON.stringify(currentFlow)
-      })
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('agents')
+        .update({
+          flow: JSON.stringify(currentFlow)
+        })
+        .eq('id', id);
 
-    refetch();
+      if (error) throw error;
+      console.log('Flow updated successfully:', currentFlow); // Debug log
+      await refetch();
+    } catch (error) {
+      console.error('Error updating flow:', error);
+    }
   }, [id, nodes, refetch]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
