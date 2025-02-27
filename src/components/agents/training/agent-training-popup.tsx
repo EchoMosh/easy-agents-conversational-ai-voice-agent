@@ -350,12 +350,12 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="min-h-[40px] h-10 max-h-[100px] resize-none pr-3 rounded-md border-gray-300 dark:border-gray-700 focus-visible:ring-blue-500 text-sm py-2 shadow-sm flex-1"
+                className="min-h-[40px] h-10 max-h-[100px] resize-none pr-3 rounded-md border-gray-300 dark:border-gray-700 focus-visible:outline-none focus-visible:ring-0 text-sm py-2 shadow-sm flex-1"
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!userInput.trim()}
-                className="ml-2 h-8 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors"
+                className="ml-2 h-10 py-2.5 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors"
                 size="sm"
               >
                 <Send className="h-4 w-4 mr-1" />
