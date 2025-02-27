@@ -8,8 +8,8 @@ import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
 import { TriggerStep } from "./form-steps/trigger-step";
 import { TemplateStep } from "./form-steps/template-step";
+import { getDefaultFlow } from "./utils/default-flow";
 import { platforms, platformActions } from "./utils/platform-constants";
-import { NodeData, FlowData, NodeType } from "@/types/agent";
 
 interface CreateAgentFormProps {
   onSuccess: (agentId: string) => Promise<void>;
@@ -28,76 +28,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     action: '',
     template: '',
   });
-
-  const createInitialFlow = (platform: string, action: string): FlowData => {
-    return {
-      nodes: [
-        {
-          id: 'trigger-1',
-          type: 'triggerNode' as NodeType,
-          position: { x: 50, y: 150 },
-          data: {
-            platform: platform as NodeData['platform'],
-            action: action as NodeData['action']
-          },
-          draggable: true,
-          deletable: true
-        },
-        {
-          id: 'greeting-1',
-          type: 'greetingNode' as NodeType,
-          position: { x: 400, y: 150 },
-          data: {
-            greeting: "Hi! How can I help you today?",
-            outcomes: ["Continue"]
-          },
-          draggable: true,
-          deletable: true
-        },
-        {
-          id: 'speak-1',
-          type: 'speakNode' as NodeType,
-          position: { x: 750, y: 150 },
-          data: {
-            message: "I'm here to assist you. What would you like to know?",
-            outcomes: ["End Call"]
-          },
-          draggable: true,
-          deletable: true
-        },
-        {
-          id: 'end-1',
-          type: 'endNode' as NodeType,
-          position: { x: 1100, y: 150 },
-          data: {},
-          draggable: true,
-          deletable: true
-        }
-      ],
-      edges: [
-        {
-          id: 'e1-2',
-          source: 'trigger-1',
-          target: 'greeting-1',
-          type: 'smoothstep'
-        },
-        {
-          id: 'e2-3',
-          source: 'greeting-1',
-          target: 'speak-1',
-          type: 'smoothstep',
-          sourceHandle: 'outcome-0'
-        },
-        {
-          id: 'e3-4',
-          source: 'speak-1',
-          target: 'end-1',
-          type: 'smoothstep',
-          sourceHandle: 'outcome-0'
-        }
-      ]
-    };
-  };
 
   const handleCreateAgent = async () => {
     if (!newAgent.name || !newAgent.platform || !newAgent.action) {
@@ -124,8 +54,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     try {
-      const flow = createInitialFlow(newAgent.platform, newAgent.action);
-      console.log('Creating agent with flow:', flow); // Debug log
+      const flow = getDefaultFlow(newAgent.platform, newAgent.action);
       
       const { data, error } = await supabase
         .from('agents')
@@ -135,7 +64,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           user_id: session.user.id,
           flow: JSON.stringify(flow),
           is_active: true,
-          objective: 'answer_calls',
         })
         .select()
         .single();

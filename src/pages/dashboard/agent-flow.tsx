@@ -4,19 +4,44 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Agent, FlowData } from '@/types/agent';
+import { Agent } from '@/types/agent';
+
+const initialNodes: Node[] = [
+  {
+    id: 'trigger-1',
+    type: 'triggerNode',
+    position: { x: 100, y: 100 },
+    data: { platform: 'facebook', action: 'new_lead' }
+  },
+  {
+    id: 'greeting-1',
+    type: 'greetingNode',
+    position: { x: 400, y: 100 },
+    data: { greeting: 'Hello! How can I help you today?', outcomes: ['I need help', 'Just browsing'] }
+  }
+];
+
+const initialEdges: Edge[] = [
+  {
+    id: 'e1-2',
+    source: 'trigger-1',
+    target: 'greeting-1',
+    type: 'smoothstep',
+    animated: true
+  }
+];
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
+  const [nodes, setNodes] = useState<Node[]>(initialNodes);
+  const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
-  const { data: agent, refetch } = useQuery({
+  const { data: agent } = useQuery({
     queryKey: ['agent', id],
     queryFn: async () => {
       if (!id) throw new Error('No agent ID provided');
@@ -27,83 +52,20 @@ export default function AgentFlowPage() {
         .single();
 
       if (error) throw error;
-      console.log('Fetched agent data:', data); // Debug log
       return data as Agent;
     },
     enabled: !!id
   });
 
-  useEffect(() => {
-    if (agent?.flow) {
-      try {
-        console.log('Raw flow data:', agent.flow); // Debug log
-        const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) as FlowData : agent.flow as FlowData;
-        console.log('Parsed flow data:', flowData); // Debug log
-        
-        if (!flowData || !flowData.nodes || !Array.isArray(flowData.nodes)) {
-          console.error('Invalid flow data structure:', flowData);
-          return;
-        }
-
-        setNodes(flowData.nodes);
-        setEdges(flowData.edges || []);
-      } catch (error) {
-        console.error('Error parsing flow data:', error);
-      }
-    } else {
-      console.log('No flow data found for agent:', agent); // Debug log
-    }
-  }, [agent]);
-
-  const handleNodesChange = useCallback(async (newNodes: Node[]) => {
-    if (!id) return;
+  const handleNodesChange = useCallback((newNodes: Node[]) => {
+    console.log('Nodes changed:', newNodes);
     setNodes(newNodes);
-    
-    const currentFlow = {
-      nodes: newNodes,
-      edges
-    };
+  }, []);
 
-    try {
-      const { error } = await supabase
-        .from('agents')
-        .update({
-          flow: JSON.stringify(currentFlow)
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-      console.log('Flow updated successfully:', currentFlow); // Debug log
-      await refetch();
-    } catch (error) {
-      console.error('Error updating flow:', error);
-    }
-  }, [id, edges, refetch]);
-
-  const handleEdgesChange = useCallback(async (newEdges: Edge[]) => {
-    if (!id) return;
+  const handleEdgesChange = useCallback((newEdges: Edge[]) => {
+    console.log('Edges changed:', newEdges);
     setEdges(newEdges);
-    
-    const currentFlow = {
-      nodes,
-      edges: newEdges
-    };
-
-    try {
-      const { error } = await supabase
-        .from('agents')
-        .update({
-          flow: JSON.stringify(currentFlow)
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-      console.log('Flow updated successfully:', currentFlow); // Debug log
-      await refetch();
-    } catch (error) {
-      console.error('Error updating flow:', error);
-    }
-  }, [id, nodes, refetch]);
+  }, []);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
     if (!id) return;
@@ -116,7 +78,7 @@ export default function AgentFlowPage() {
   };
 
   if (!agent) {
-    return null;
+    return null; // or a loading state
   }
 
   return (

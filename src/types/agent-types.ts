@@ -1,5 +1,6 @@
 
 import { Json } from '@/integrations/supabase/types';
+import { Node, Edge } from '@xyflow/react';
 
 export type Agent = {
   id: string;
@@ -45,9 +46,7 @@ export type FlowNode = {
   id: string;
   type: NodeType;
   position: { x: number; y: number };
-  data: NodeData;
-  draggable?: boolean;
-  deletable?: boolean;
+  data: Record<string, unknown>;
 };
 
 export type FlowEdge = {
@@ -56,8 +55,6 @@ export type FlowEdge = {
   target: string;
   sourceHandle?: string;
   targetHandle?: string;
-  type?: string;
-  animated?: boolean;
 };
 
 export type FlowData = {
