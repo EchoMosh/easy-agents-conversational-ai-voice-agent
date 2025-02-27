@@ -10,7 +10,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent } from '@/types/agent';
 import { useToast } from '@/hooks/use-toast';
-import { FlowData } from '@/types/agent-types';
+import { FlowData, FlowNode, FlowEdge } from '@/types/agent-types';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
@@ -41,7 +41,9 @@ export default function AgentFlowPage() {
       if (!id) throw new Error('No agent ID provided');
       const { error } = await supabase
         .from('agents')
-        .update({ flow: flowData })
+        .update({ 
+          flow: JSON.stringify(flowData) // Convert to string to satisfy Json type
+        })
         .eq('id', id);
       
       if (error) throw error;
@@ -53,7 +55,7 @@ export default function AgentFlowPage() {
     if (!agent?.flow) return;
     const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
     const flowData: FlowData = {
-      nodes: newNodes,
+      nodes: newNodes as FlowNode[],
       edges: currentFlow.edges || []
     };
     saveFlowMutation.mutate(flowData);
@@ -64,7 +66,7 @@ export default function AgentFlowPage() {
     const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
     const flowData: FlowData = {
       nodes: currentFlow.nodes || [],
-      edges: newEdges
+      edges: newEdges as FlowEdge[]
     };
     saveFlowMutation.mutate(flowData);
   }, [agent, saveFlowMutation]);

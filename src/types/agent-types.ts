@@ -11,7 +11,7 @@ export type Agent = {
   humor_level?: number;
   is_active: boolean;
   created_at: string;
-  flow?: FlowData;
+  flow?: FlowData | string;
   user_id: string;
   interaction_type: string[];
   objective?: 'live_transfer' | 'answer_calls';
@@ -42,20 +42,8 @@ export type NodeData = {
 
 export type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode';
 
-export type FlowNode = {
-  id: string;
-  type: NodeType;
-  position: { x: number; y: number };
-  data: Record<string, unknown>;
-};
-
-export type FlowEdge = {
-  id: string;
-  source: string;
-  target: string;
-  sourceHandle?: string;
-  targetHandle?: string;
-};
+export type FlowNode = Node<NodeData, NodeType>;
+export type FlowEdge = Edge;
 
 export type FlowData = {
   nodes: FlowNode[];
