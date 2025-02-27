@@ -175,15 +175,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
     setEditingMessageId(null);
     setCorrectionInput("");
 
-    // Add a note that the correction has been recorded
-    const correctionNote: Message = {
-      id: Date.now().toString(),
-      role: "agent",
-      content: "Thank you for the correction. I'll learn from this feedback to provide better responses in the future.",
-      timestamp: new Date(),
-    };
-    
-    setMessages(prev => [...prev, correctionNote]);
+    // Removed the confirmation message that was previously added here
   };
 
   return (
