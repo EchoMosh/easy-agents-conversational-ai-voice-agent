@@ -83,7 +83,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -92,17 +92,17 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
               }`}
             >
               <div
-                className={`max-w-[80%] rounded-lg p-3 ${
+                className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${
                   message.role === "user"
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-100 dark:bg-gray-800"
+                    ? "bg-blue-500 text-white rounded-br-none"
+                    : "bg-gray-200 dark:bg-gray-800 rounded-bl-none"
                 }`}
               >
-                <p className="text-sm">{message.content}</p>
+                <p className="text-sm leading-relaxed">{message.content}</p>
                 <div
-                  className={`text-xs mt-1 ${
+                  className={`text-[10px] mt-1 text-right ${
                     message.role === "user"
-                      ? "text-purple-200"
+                      ? "text-blue-100"
                       : "text-gray-500 dark:text-gray-400"
                   }`}
                 >
@@ -117,31 +117,31 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
           
           {isTyping && (
             <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-lg p-3 bg-gray-100 dark:bg-gray-800">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }}></div>
+              <div className="max-w-[80%] rounded-2xl px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-bl-none">
+                <div className="flex space-x-1 h-5 items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
+                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: "150ms" }}></div>
+                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: "300ms" }}></div>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t mt-auto">
-          <div className="flex items-end gap-2">
+        <div className="p-4 border-t bg-white dark:bg-gray-950">
+          <div className="relative">
             <Textarea
               placeholder="Type your message..."
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="min-h-[80px] resize-none flex-1"
+              className="min-h-[50px] max-h-[120px] resize-none pr-12 rounded-full border-gray-300 dark:border-gray-700 focus-visible:ring-blue-500 text-sm py-3"
             />
             <Button
               size="icon"
               onClick={handleSendMessage}
               disabled={!userInput.trim()}
-              className="h-10 w-10 rounded-full bg-purple-600 hover:bg-purple-700"
+              className="absolute right-1 bottom-[6px] h-9 w-9 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -151,7 +151,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-xs h-8" 
+              className="text-xs h-8 rounded-full" 
               onClick={() => onOpenChange(false)}
             >
               <Check className="h-3 w-3 mr-1" />
