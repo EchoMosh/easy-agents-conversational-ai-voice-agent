@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Check, Volume2, Send, X } from "lucide-react";
 import {
   Dialog,
@@ -30,6 +30,16 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to the bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const handleSendMessage = () => {
     if (!userInput.trim()) return;
@@ -161,6 +171,9 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
               </div>
             </div>
           )}
+          
+          {/* Invisible div at the end of messages to scroll to */}
+          <div ref={messagesEndRef} />
         </div>
 
         <div className="p-4 border-t bg-white dark:bg-gray-950">
