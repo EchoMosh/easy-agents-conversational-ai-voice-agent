@@ -41,6 +41,11 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
         processedFlow = flowData;
       }
       
+      // Handle the case where the flow data might be nested in a 'flow' property
+      if (processedFlow.flow && (processedFlow.flow.nodes || processedFlow.flow.edges)) {
+        processedFlow = processedFlow.flow;
+      }
+      
       // Log what we're working with
       console.log('Processing flow data:', processedFlow);
       
@@ -67,7 +72,10 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
         data: {
           ...node.data,
           label: node.data?.label || node.type || 'node'
-        }
+        },
+        // Make sure handles are properly identified for the preview
+        sourcePosition: node.sourcePosition || 'right',
+        targetPosition: node.targetPosition || 'left',
       }));
       
       setParsedNodes(styledNodes);
