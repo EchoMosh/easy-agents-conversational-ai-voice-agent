@@ -6,9 +6,10 @@ import { ExternalLink } from "lucide-react";
 
 interface InfoTabProps {
   pipeline?: Pipeline | null;
+  lead?: any; // Adding lead prop to match usage
 }
 
-export function InfoTab({ pipeline }: InfoTabProps) {
+export function InfoTab({ pipeline, lead }: InfoTabProps) {
   const navigate = useNavigate();
 
   if (!pipeline) {
