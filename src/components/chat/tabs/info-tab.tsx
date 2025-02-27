@@ -2,12 +2,31 @@
 import { Button } from "@/components/ui/button";
 import { Lead } from "@/pages/dashboard/leads";
 import { Pencil, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Pipeline } from "@/types/pipeline";
 
 interface InfoTabProps {
   lead: Lead;
 }
 
 export function InfoTab({ lead }: InfoTabProps) {
+  const { data: pipeline } = useQuery({
+    queryKey: ['pipeline', lead.pipeline_id],
+    queryFn: async () => {
+      if (!lead.pipeline_id) return null;
+      const { data, error } = await supabase
+        .from('pipelines')
+        .select('*')
+        .eq('id', lead.pipeline_id)
+        .single();
+
+      if (error) throw error;
+      return data as Pipeline;
+    },
+    enabled: !!lead.pipeline_id
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -54,7 +73,7 @@ export function InfoTab({ lead }: InfoTabProps) {
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">Pipeline:</span>{" "}
-                {lead.pipeline_name || "Not assigned"}
+                {pipeline?.name || "Not assigned"}
               </p>
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">Stage:</span>{" "}
