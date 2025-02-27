@@ -19,7 +19,7 @@ export default function AgentFlowPage() {
   const [edges, setEdges] = useState<Edge[]>([]);
 
   // First, let's verify we're working with the correct agent
-  const { data: agent, refetch, isError, error } = useQuery({
+  const { data: agent, refetch, isError } = useQuery({
     queryKey: ['agent', id],
     queryFn: async () => {
       if (!id) throw new Error('No agent ID provided');
@@ -44,9 +44,13 @@ export default function AgentFlowPage() {
       return data as Agent;
     },
     enabled: !!id,
-    retry: false, // Don't retry if agent doesn't exist
-    onError: (err) => {
-      console.error('Error loading agent:', err);
+    retry: false // Don't retry if agent doesn't exist
+  });
+
+  // Handle error state with useEffect
+  useEffect(() => {
+    if (isError) {
+      console.error('Error loading agent');
       toast({
         title: "Error loading agent",
         description: "The requested agent could not be found or accessed.",
@@ -55,7 +59,7 @@ export default function AgentFlowPage() {
       // Redirect back to agents list after a short delay
       setTimeout(() => navigate('/dashboard/agents'), 2000);
     }
-  });
+  }, [isError, navigate, toast]);
 
   // Load initial flow data
   useEffect(() => {
