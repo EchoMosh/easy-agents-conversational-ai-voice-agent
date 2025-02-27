@@ -1,4 +1,3 @@
-
 import { Mail, MessageCircle, StickyNote } from "lucide-react";
 import { Lead } from "@/pages/dashboard/leads";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -23,7 +22,6 @@ export function ChatArea({
 }: ChatAreaProps) {
   const { toast } = useToast();
 
-  // Fetch the current pipeline to get its stages
   const { data: pipeline } = useQuery({
     queryKey: ['pipeline', selectedLead?.pipeline_id],
     queryFn: async () => {
@@ -41,16 +39,13 @@ export function ChatArea({
     enabled: !!selectedLead?.pipeline_id
   });
 
-  // Effect to handle pipeline changes
   useEffect(() => {
     const updateLeadStatus = async () => {
       if (!selectedLead || !pipeline) return;
       
-      // Get the first stage of the pipeline
       const firstStage = pipeline.columns[0]?.title;
       if (!firstStage || selectedLead.status === firstStage) return;
 
-      // Update the lead's status to the first stage
       const { error } = await supabase
         .from('leads')
         .update({ status: firstStage })
@@ -95,7 +90,7 @@ export function ChatArea({
               {selectedLead.name[0].toUpperCase()}
             </div>
             <div>
-              <h2 className="text-xl font-bold">{selectedLead.name}</h2>
+              <h2 className="text-xl font-bold text-foreground">{selectedLead.name}</h2>
               <p className="text-sm text-muted-foreground">
                 {selectedLead.email || selectedLead.phone || "No contact info"}
               </p>
@@ -110,28 +105,6 @@ export function ChatArea({
               }))}
             />
           )}
-        </div>
-
-        <div className="mt-6">
-          <ToggleGroup 
-            type="single" 
-            value={messageType}
-            onValueChange={(value) => value && onMessageTypeChange(value as 'email' | 'sms' | 'note')}
-            className="justify-start"
-          >
-            <ToggleGroupItem value="email" size="sm">
-              <Mail className="h-4 w-4 mr-2" />
-              Email
-            </ToggleGroupItem>
-            <ToggleGroupItem value="sms" size="sm">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              SMS
-            </ToggleGroupItem>
-            <ToggleGroupItem value="note" size="sm">
-              <StickyNote className="h-4 w-4 mr-2" />
-              Note
-            </ToggleGroupItem>
-          </ToggleGroup>
         </div>
       </div>
 
