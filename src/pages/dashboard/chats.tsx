@@ -34,7 +34,6 @@ export default function ChatsPage() {
       
       if (error) throw error;
       
-      // Transform the data to match the Lead type
       return (data || []).map(lead => ({
         ...lead,
         tags: (lead.tags || []).map((tagRelation: any) => tagRelation.tag)
@@ -63,7 +62,7 @@ export default function ChatsPage() {
       />
 
       {selectedLead && (
-        <div className="w-80 border-l flex flex-col bg-white">
+        <div className="w-80 border-l flex flex-col bg-background">
           <Tabs defaultValue="timeline" value={currentTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
             <div className="px-2 py-1 border-b">
               <TabsList className="w-full grid grid-cols-3 bg-transparent p-0 h-14">
@@ -98,13 +97,13 @@ export default function ChatsPage() {
 
             <TabsContent value="files" className="m-0 p-4">
               <div className="space-y-4">
-                <Button className="w-full bg-white hover:bg-gray-50 text-black border shadow-sm">
+                <Button className="w-full bg-white hover:bg-gray-50 text-black border shadow-sm dark:bg-background dark:hover:bg-muted dark:text-foreground">
                   <PlusCircle className="w-4 h-4 mr-2" />
                   Upload File
                 </Button>
 
                 <div className="space-y-2">
-                  <div className="p-3 rounded-lg bg-gray-50 border">
+                  <div className="p-3 rounded-lg bg-gray-50 border dark:bg-muted">
                     <div className="flex items-center gap-3">
                       <Files className="h-8 w-8 text-purple-600" />
                       <div className="flex-1 min-w-0">
