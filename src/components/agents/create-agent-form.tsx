@@ -6,10 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Agent } from "@/types/agent";
 import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
-import { TriggerStep } from "./form-steps/trigger-step";
 import { TemplateStep } from "./form-steps/template-step";
 import { getDefaultFlow } from "./utils/default-flow";
-import { platforms, platformActions } from "./utils/platform-constants";
 
 interface CreateAgentFormProps {
   onSuccess: (agentId: string) => Promise<void>;
@@ -24,13 +22,11 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [newAgent, setNewAgent] = useState({
     name: '',
     role: 'virtual_assistant' as Agent['role'],
-    platform: '',
-    action: '',
     template: '',
   });
 
   const handleCreateAgent = async () => {
-    if (!newAgent.name || !newAgent.platform || !newAgent.action) {
+    if (!newAgent.name) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -54,7 +50,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     try {
-      const flow = getDefaultFlow(newAgent.platform, newAgent.action);
+      const flow = getDefaultFlow();
       
       const { data, error } = await supabase
         .from('agents')
@@ -86,7 +82,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
   return (
     <div className="space-y-6 py-6">
-      <CreateAgentProgress currentStep={step} totalSteps={3} />
+      <CreateAgentProgress currentStep={step} totalSteps={2} />
       
       <div className="space-y-6">
         {step === 1 && (
@@ -102,29 +98,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             selectedTemplate={newAgent.template}
             onTemplateSelect={(templateId, role) => {
               setNewAgent(prev => ({ ...prev, template: templateId, role }));
-              setStep(3);
+              handleCreateAgent();
             }}
-            onNext={() => setStep(3)}
             onBack={() => setStep(1)}
             showOnlyScratch={true}
-          />
-        )}
-
-        {step === 3 && (
-          <TriggerStep
-            platform={newAgent.platform}
-            action={newAgent.action}
-            onPlatformChange={(platform) => 
-              setNewAgent(prev => ({ ...prev, platform, action: '' }))
-            }
-            onActionChange={(action) => 
-              setNewAgent(prev => ({ ...prev, action }))
-            }
-            onBack={() => setStep(2)}
-            onSubmit={handleCreateAgent}
-            isCreating={isCreating}
-            platforms={platforms}
-            platformActions={platformActions}
           />
         )}
       </div>
