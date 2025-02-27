@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Agent } from "@/types/agent";
-import { Avatar } from "@/components/ui/avatar";
 
 interface AgentTrainingPopupProps {
   agent: Agent;
@@ -72,18 +71,11 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
       <DialogContent className="sm:max-w-[500px] p-0 flex flex-col h-[600px] max-h-[80vh] overflow-hidden bg-background">
         <DialogHeader className="p-4 border-b sticky top-0 bg-background z-10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 bg-purple-600 text-white">
-                <span className="text-lg font-semibold">
-                  {agent.name.charAt(0).toUpperCase()}
-                </span>
-              </Avatar>
-              <div>
-                <DialogTitle className="text-left">{agent.name}</DialogTitle>
-                <DialogDescription className="text-left capitalize">
-                  {agent.role.replace('_', ' ')}
-                </DialogDescription>
-              </div>
+            <div>
+              <DialogTitle className="text-left">{agent.name}</DialogTitle>
+              <DialogDescription className="text-left capitalize">
+                {agent.role.replace('_', ' ')}
+              </DialogDescription>
             </div>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
