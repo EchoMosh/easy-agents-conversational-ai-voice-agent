@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, Viewport } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
-import { NodeData } from '@/types/agent';
+import { NodeData, FlowNode, NodeType } from '@/types/agent-types';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
@@ -68,7 +68,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const [edges, setEdges] = useEdgesState([]);
   const [showWidgets, setShowWidgets] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { viewport } = useReactFlow();
+  const { getViewport } = useReactFlow();
 
   useEffect(() => {
     if (initialNodes.length > 0) {
@@ -133,6 +133,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     if (!reactFlowWrapper.current) return;
 
     const bounds = reactFlowWrapper.current.getBoundingClientRect();
+    const viewport = getViewport();
     const position = {
       x: (event.clientX - bounds.left - viewport.x) / viewport.zoom,
       y: (event.clientY - bounds.top - viewport.y) / viewport.zoom
@@ -172,7 +173,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       onNodesChange(updatedNodes);
       return updatedNodes;
     });
-  }, [viewport, setNodes, onNodesChange]);
+  }, [getViewport, setNodes, onNodesChange]);
 
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
