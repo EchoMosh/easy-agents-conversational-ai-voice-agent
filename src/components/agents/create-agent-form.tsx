@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +34,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         {
           id: 'trigger-1',
           type: 'triggerNode' as NodeType,
-          position: { x: 100, y: 100 },
+          position: { x: 50, y: 150 },
           data: {
             platform: platform as NodeData['platform'],
             action: action as NodeData['action']
@@ -44,7 +43,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         {
           id: 'greeting-1',
           type: 'greetingNode' as NodeType,
-          position: { x: 400, y: 100 },
+          position: { x: 350, y: 150 },
           data: {
             greeting: "Hi! How can I help you today?",
             outcomes: ["Continue"]
@@ -53,7 +52,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         {
           id: 'speak-1',
           type: 'speakNode' as NodeType,
-          position: { x: 700, y: 100 },
+          position: { x: 650, y: 150 },
           data: {
             message: "I'm here to assist you. What would you like to know?",
             outcomes: ["End Call"]
@@ -62,7 +61,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         {
           id: 'end-1',
           type: 'endNode' as NodeType,
-          position: { x: 1000, y: 100 },
+          position: { x: 950, y: 150 },
           data: {}
         }
       ],
@@ -71,14 +70,12 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           id: 'e1-2',
           source: 'trigger-1',
           target: 'greeting-1',
-          type: 'smoothstep',
           animated: true
         },
         {
           id: 'e2-3',
           source: 'greeting-1',
           target: 'speak-1',
-          type: 'smoothstep',
           animated: true,
           sourceHandle: 'outcome-0'
         },
@@ -86,7 +83,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           id: 'e3-4',
           source: 'speak-1',
           target: 'end-1',
-          type: 'smoothstep',
           animated: true,
           sourceHandle: 'outcome-0'
         }
