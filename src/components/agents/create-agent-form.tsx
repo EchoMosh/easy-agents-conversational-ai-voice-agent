@@ -8,8 +8,8 @@ import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
 import { TriggerStep } from "./form-steps/trigger-step";
 import { TemplateStep } from "./form-steps/template-step";
-import { getDefaultFlow } from "./utils/default-flow";
 import { platforms, platformActions } from "./utils/platform-constants";
+import { NodeData, FlowData, NodeType } from "@/types/agent";
 
 interface CreateAgentFormProps {
   onSuccess: (agentId: string) => Promise<void>;
@@ -28,6 +28,24 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     action: '',
     template: '',
   });
+
+  const createInitialFlow = (platform: string, action: string): FlowData => {
+    // Create just the trigger node as a starting point
+    return {
+      nodes: [
+        {
+          id: 'trigger-1',
+          type: 'triggerNode' as NodeType,
+          position: { x: 100, y: 100 },
+          data: {
+            platform: platform as NodeData['platform'],
+            action: action as NodeData['action']
+          } as NodeData
+        }
+      ],
+      edges: []
+    };
+  };
 
   const handleCreateAgent = async () => {
     if (!newAgent.name || !newAgent.platform || !newAgent.action) {
@@ -54,7 +72,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     try {
-      const flow = getDefaultFlow(newAgent.platform, newAgent.action);
+      const flow = createInitialFlow(newAgent.platform, newAgent.action);
+      console.log('Creating agent with flow:', flow); // Debug log
       
       const { data, error } = await supabase
         .from('agents')
@@ -64,7 +83,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           user_id: session.user.id,
           flow: JSON.stringify(flow),
           is_active: true,
-          objective: 'answer_calls', // Setting a default objective since it's required
+          objective: 'answer_calls',
         })
         .select()
         .single();
