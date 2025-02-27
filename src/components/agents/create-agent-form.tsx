@@ -3,10 +3,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Agent, AGENT_TEMPLATES } from "@/types/agent";
+import { Agent } from "@/types/agent";
 import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
-import { TemplateStep } from "./form-steps/template-step";
 import { ObjectiveStep } from "./form-steps/objective-step";
 import { TriggerStep } from "./form-steps/trigger-step";
 import { getDefaultFlow } from "./utils/default-flow";
@@ -22,7 +21,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [newAgent, setNewAgent] = useState({
     name: '',
     role: 'virtual_assistant' as Agent['role'],
@@ -32,7 +30,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   });
 
   const handleCreateAgent = async () => {
-    if (!newAgent.name || !newAgent.role || !newAgent.platform || !newAgent.action || !newAgent.objective) {
+    if (!newAgent.name || !newAgent.platform || !newAgent.action || !newAgent.objective) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -56,13 +54,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     try {
-      let flow;
-      if (selectedTemplate) {
-        const template = AGENT_TEMPLATES.find(t => t.id === selectedTemplate);
-        flow = template ? template.flow : getDefaultFlow(newAgent.platform, newAgent.action, newAgent.objective);
-      } else {
-        flow = getDefaultFlow(newAgent.platform, newAgent.action, newAgent.objective);
-      }
+      const flow = getDefaultFlow(newAgent.platform, newAgent.action, newAgent.objective);
 
       const { data, error } = await supabase
         .from('agents')
@@ -95,7 +87,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
   return (
     <div className="space-y-6 py-6">
-      <CreateAgentProgress currentStep={step} totalSteps={4} />
+      <CreateAgentProgress currentStep={step} totalSteps={3} />
       
       <div className="space-y-6">
         {step === 1 && (
@@ -107,29 +99,17 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         )}
 
         {step === 2 && (
-          <TemplateStep
-            selectedTemplate={selectedTemplate}
-            onTemplateSelect={(templateId, role) => {
-              setSelectedTemplate(templateId);
-              setNewAgent(prev => ({ ...prev, role }));
-            }}
+          <ObjectiveStep
+            objective={newAgent.objective}
+            onObjectiveSelect={(objective) => 
+              setNewAgent(prev => ({ ...prev, objective }))
+            }
             onNext={() => setStep(3)}
             onBack={() => setStep(1)}
           />
         )}
 
         {step === 3 && (
-          <ObjectiveStep
-            objective={newAgent.objective}
-            onObjectiveSelect={(objective) => 
-              setNewAgent(prev => ({ ...prev, objective }))
-            }
-            onNext={() => setStep(4)}
-            onBack={() => setStep(2)}
-          />
-        )}
-
-        {step === 4 && (
           <TriggerStep
             platform={newAgent.platform}
             action={newAgent.action}
@@ -139,7 +119,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             onActionChange={(action) => 
               setNewAgent(prev => ({ ...prev, action }))
             }
-            onBack={() => setStep(3)}
+            onBack={() => setStep(2)}
             onSubmit={handleCreateAgent}
             isCreating={isCreating}
             platforms={platforms}
