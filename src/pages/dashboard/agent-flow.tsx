@@ -19,7 +19,7 @@ export default function AgentFlowPage() {
   const [edges, setEdges] = useState<Edge[]>([]);
 
   // First, let's verify we're working with the correct agent
-  const { data: agent, refetch } = useQuery({
+  const { data: agent, refetch, isError, error } = useQuery({
     queryKey: ['agent', id],
     queryFn: async () => {
       if (!id) throw new Error('No agent ID provided');
@@ -29,17 +29,32 @@ export default function AgentFlowPage() {
         .from('agents')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle(); // Using maybeSingle instead of single to handle no results gracefully
 
       if (error) {
         console.error('Error fetching agent:', error);
         throw error;
       }
+
+      if (!data) {
+        throw new Error('Agent not found');
+      }
       
       console.log('Fetched agent data:', data);
       return data as Agent;
     },
-    enabled: !!id
+    enabled: !!id,
+    retry: false, // Don't retry if agent doesn't exist
+    onError: (err) => {
+      console.error('Error loading agent:', err);
+      toast({
+        title: "Error loading agent",
+        description: "The requested agent could not be found or accessed.",
+        variant: "destructive"
+      });
+      // Redirect back to agents list after a short delay
+      setTimeout(() => navigate('/dashboard/agents'), 2000);
+    }
   });
 
   // Load initial flow data
@@ -148,8 +163,14 @@ export default function AgentFlowPage() {
     if (error) throw error;
   };
 
+  // If there's an error, the toast and redirect will handle it
+  if (isError) {
+    return null;
+  }
+
+  // Show loading state if no agent data yet
   if (!agent) {
-    return null; // or a loading state
+    return null;
   }
 
   return (
