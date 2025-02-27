@@ -78,8 +78,20 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
         targetPosition: node.targetPosition || 'left',
       }));
       
+      // Apply styling to edges for better visibility
+      const styledEdges = flowEdges.map((edge: any) => ({
+        ...edge,
+        style: {
+          ...edge.style,
+          stroke: '#94a3b8',
+          strokeWidth: 2,
+        },
+        animated: true,
+        type: 'default',
+      }));
+      
       setParsedNodes(styledNodes);
-      setParsedEdges(flowEdges);
+      setParsedEdges(styledEdges);
     } catch (error) {
       console.error('Error processing flow data:', error);
       setParsedNodes([]);
@@ -131,6 +143,17 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
         minZoom={0.2}
         maxZoom={0.8}
         defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+        defaultEdgeOptions={{
+          animated: true,
+          style: {
+            stroke: '#94a3b8',
+            strokeWidth: 2,
+          },
+        }}
+        fitViewOptions={{ 
+          padding: 0.2,
+          includeHiddenNodes: true, 
+        }}
       >
         <Background color="#eee" gap={12} size={1} />
       </ReactFlow>
