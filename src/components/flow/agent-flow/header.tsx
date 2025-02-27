@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
 
 interface HeaderProps {
   agent: Agent;
@@ -17,6 +18,7 @@ interface HeaderProps {
 
 export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [isConnected, setIsConnected] = useState(false);
+  const [showTrainingPopup, setShowTrainingPopup] = useState(false);
 
   useEffect(() => {
     console.log('Setting up Supabase realtime connection...');
@@ -97,6 +99,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             </Button>
             <Button 
               className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
+              onClick={() => setShowTrainingPopup(true)}
             >
               <Play className="h-4 w-4 mr-2" />
               Train {agent.name}
@@ -122,6 +125,13 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      {/* Agent Training Popup */}
+      <AgentTrainingPopup 
+        agent={agent} 
+        open={showTrainingPopup} 
+        onOpenChange={setShowTrainingPopup} 
+      />
     </>
   );
 }
