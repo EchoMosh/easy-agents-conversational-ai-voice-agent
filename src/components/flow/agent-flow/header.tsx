@@ -72,8 +72,8 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 relative">
-          {/* Settings button */}
+        <div className="flex items-center gap-2 relative">
+          {/* Settings button with reduced spacing */}
           <AgentSettings
             agentId={agent.id}
             currentVoice={agent.voice_id || undefined}
@@ -83,16 +83,16 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             <Button 
               variant="ghost" 
               size="icon"
-              className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5"
+              className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5 mr-1"
             >
               <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </Button>
           </AgentSettings>
           
-          <div className="flex items-center gap-2 ml-2">
+          <div className="flex items-center gap-2">
             <Button 
               variant="secondary"
-              className="bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 text-gray-900 dark:text-white backdrop-blur-xl transition-all duration-300"
+              className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 font-medium"
             >
               <PhoneCall className="h-4 w-4 mr-2" />
               Call Me
