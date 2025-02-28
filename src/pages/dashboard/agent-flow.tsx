@@ -23,12 +23,11 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   // Map to store node ID mappings
   const nodeIdMap = new Map<string, string>();
   
-  // Create simple sequential IDs for the mermaid chart
+  // Create simple sequential IDs for the mermaid chart - using type with sequential counter
   flowData.nodes.forEach((node: FlowNode, index: number) => {
-    // Extract base node type without numeric part
-    const baseNodeType = node.type?.split('-')[0] || 'node';
-    
-    // Create simple node ID like n1, n2, etc.
+    // Extract base node type without any numeric part
+    const baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
+    // Create simple node ID like speakNode-1, triggerNode-2, etc.
     const simpleId = `${baseNodeType}-${index + 1}`;
     nodeIdMap.set(node.id, simpleId);
   });
@@ -47,7 +46,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       .replace(/"/g, '')
       .substring(0, 30); // Limit length
     
-    const simpleId = nodeIdMap.get(node.id) || `n${index + 1}`;
+    const simpleId = nodeIdMap.get(node.id) || `node-${index + 1}`;
     
     mermaidString += `  ${simpleId}["${cleanLabel}"`;
     
@@ -89,9 +88,11 @@ function generateMermaidFromFlow(flowData: FlowData): string {
 // Helper function to ensure no styling classes are in the mermaid chart
 function sanitizeMermaidChart(mermaidChart: string): string {
   // Remove any classDef lines that might be left from previous versions
-  const cleanedChart = mermaidChart.replace(/classDef .+/g, '');
+  const cleanedChart = mermaidChart
+    .replace(/classDef .+/g, '')
+    // Remove any :::style references
+    .replace(/:::[a-zA-Z0-9_-]+/g, '');
   
-  // Remove any numeric IDs or random strings that might appear in the chart
   return cleanedChart;
 }
 
@@ -148,33 +149,56 @@ export default function AgentFlowPage() {
   // Log initial mermaid chart when flow data is loaded
   useEffect(() => {
     if (agent?.flow) {
-      const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-      let mermaidChartStr = generateMermaidFromFlow(flowData);
-      mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
-      console.log('Initial Mermaid Chart:', mermaidChartStr);
-      setMermaidChart(mermaidChartStr);
+      try {
+        const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+        let mermaidChartStr = generateMermaidFromFlow(flowData);
+        mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
+        console.log('Initial Mermaid Chart:', mermaidChartStr);
+        setMermaidChart(mermaidChartStr);
+      } catch (error) {
+        console.error('Error generating mermaid chart:', error);
+        setMermaidChart('graph TD\n  Error[Error generating chart]');
+      }
     }
   }, [agent]);
 
   const handleNodesChange = useCallback((newNodes: Node[]) => {
     if (!agent?.flow) return;
-    const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-    const flowData: FlowData = {
-      nodes: newNodes as FlowNode[],
-      edges: currentFlow.edges || []
-    };
-    saveFlowMutation.mutate(flowData);
-  }, [agent, saveFlowMutation]);
+    try {
+      const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+      const flowData: FlowData = {
+        nodes: newNodes as FlowNode[],
+        edges: currentFlow.edges || []
+      };
+      saveFlowMutation.mutate(flowData);
+    } catch (error) {
+      console.error('Error updating nodes:', error);
+      toast({
+        title: 'Error updating flow',
+        description: 'Unable to update nodes in the flow',
+        variant: 'destructive'
+      });
+    }
+  }, [agent, saveFlowMutation, toast]);
 
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
     if (!agent?.flow) return;
-    const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-    const flowData: FlowData = {
-      nodes: currentFlow.nodes || [],
-      edges: newEdges as FlowEdge[]
-    };
-    saveFlowMutation.mutate(flowData);
-  }, [agent, saveFlowMutation]);
+    try {
+      const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+      const flowData: FlowData = {
+        nodes: currentFlow.nodes || [],
+        edges: newEdges as FlowEdge[]
+      };
+      saveFlowMutation.mutate(flowData);
+    } catch (error) {
+      console.error('Error updating edges:', error);
+      toast({
+        title: 'Error updating flow',
+        description: 'Unable to update connections in the flow',
+        variant: 'destructive'
+      });
+    }
+  }, [agent, saveFlowMutation, toast]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => {
     if (!id) return;
