@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
 import { Button } from "@/components/ui/button";
-import { MoveLeft, Trash2, Satellite } from "lucide-react";
+import { MoveLeft, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,9 +64,22 @@ export default function AgentFlowPage() {
 
   const updateFlowMutation = useMutation({
     mutationFn: async (flow: FlowData) => {
+      // Convert the flow to a simpler structure to work with Supabase JSON
+      const simplifiedFlow = {
+        nodes: flow.nodes.map(node => ({
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: node.data,
+          // Remove complex properties that can't be serialized as JSON
+          ...(node.style ? { style: null } : {}),
+        })),
+        edges: flow.edges
+      };
+      
       const { error } = await supabase
         .from("agents")
-        .update({ flow })
+        .update({ flow: simplifiedFlow })
         .eq("id", agentId!);
         
       if (error) throw error;
@@ -206,7 +219,7 @@ export default function AgentFlowPage() {
             agentId={agent.id}
             currentVoice={agent.voice_id || undefined}
             currentLanguage={agent.language}
-            currentKnowledgeIds={agent.knowledge_ids}
+            currentKnowledgeIds={agent.knowledge_ids || []}
             onUpdateSettings={handleUpdateSettings}
           />
           <Button

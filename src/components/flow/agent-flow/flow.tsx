@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
-import { NodeData } from '@/types/agent';
+import { NodeData, FlowData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
@@ -60,11 +60,10 @@ const widgets = [
 interface FlowProps {
   initialNodes: Node[];
   initialEdges: Edge[];
-  onNodesChange: (nodes: Node[]) => void;
-  onEdgesChange: (edges: Edge[]) => void;
+  onFlowChange?: (flowData: FlowData) => void;
 }
 
-export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange }: FlowProps) {
+export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
   const [showWidgets, setShowWidgets] = useState(false);
@@ -117,21 +116,37 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       
       const newEdges = addEdge(newEdge, edges);
       setEdges(newEdges);
-      onEdgesChange(newEdges);
+      
+      if (onFlowChange) {
+        onFlowChange({
+          nodes: [...nodes],
+          edges: newEdges,
+        });
+      }
     }
-  }, [edges, onEdgesChange, setEdges]);
+  }, [edges, nodes, onFlowChange, setEdges]);
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
-    const updatedNodes = nodes.map(node => ({ ...node }));
-    onNodesChange(updatedNodes);
-  }, [nodes, onNodesChange, onNodesChangeInternal]);
+    
+    if (onFlowChange) {
+      onFlowChange({
+        nodes: [...nodes],
+        edges: [...edges],
+      });
+    }
+  }, [nodes, edges, onFlowChange, onNodesChangeInternal]);
 
   const handleEdgesChange = useCallback((changes: any) => {
     onEdgesChangeInternal(changes);
-    const updatedEdges = edges.map(edge => ({ ...edge }));
-    onEdgesChange(updatedEdges);
-  }, [edges, onEdgesChange, onEdgesChangeInternal]);
+    
+    if (onFlowChange) {
+      onFlowChange({
+        nodes: [...nodes],
+        edges: [...edges],
+      });
+    }
+  }, [nodes, edges, onFlowChange, onEdgesChangeInternal]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -180,9 +195,17 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         data: newNodeData
       };
 
-      setNodes(nds => [...nds, newNode]);
+      const updatedNodes = [...nodes, newNode];
+      setNodes(updatedNodes);
+      
+      if (onFlowChange) {
+        onFlowChange({
+          nodes: updatedNodes,
+          edges: [...edges],
+        });
+      }
     }
-  }, [screenToFlowPosition, setNodes]);
+  }, [screenToFlowPosition, setNodes, nodes, edges, onFlowChange]);
 
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
