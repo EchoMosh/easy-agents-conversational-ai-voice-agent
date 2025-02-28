@@ -89,7 +89,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     const targetNode = nodes.find(node => node.id === connection.target);
     
     if (!sourceNode || !targetNode) {
-      console.log('Connection invalid: Source or target node not found');
+      console.log('Connection invalid: Source or target node not found', { source: connection.source, target: connection.target });
       return false;
     }
 
@@ -99,11 +99,10 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       return false;
     }
 
-    // Prevent duplicate connections
+    // Check for duplicate connections with more relaxed criteria - just source and target
     const existingConnection = edges.find(edge => 
       edge.target === connection.target && 
-      edge.source === connection.source &&
-      edge.sourceHandle === connection.sourceHandle
+      edge.source === connection.source
     );
     
     if (existingConnection) {
@@ -129,8 +128,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     if (isValidConnection(params)) {
       console.log('Connection valid, creating edge');
       
+      // Create a simple, unique ID for the edge
+      const edgeId = `e-${Date.now()}`;
+      
       const newEdge: Edge = {
-        id: `e${params.source}-${params.target}${params.sourceHandle ? `-${params.sourceHandle}` : ''}`,
+        id: edgeId,
         source: params.source,
         target: params.target,
         sourceHandle: params.sourceHandle,
@@ -143,7 +145,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         }
       };
       
-      const newEdges = addEdge(newEdge, edges);
+      // Directly add the edge to the edges array instead of using addEdge
+      const newEdges = [...edges, newEdge];
       console.log('New edges:', newEdges);
       setEdges(newEdges);
       onEdgesChange(newEdges);
@@ -154,13 +157,15 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
-    const updatedNodes = nodes.map(node => ({ ...node }));
+    // Use a deep copy to ensure we're not passing references
+    const updatedNodes = JSON.parse(JSON.stringify(nodes));
     onNodesChange(updatedNodes);
   }, [nodes, onNodesChange, onNodesChangeInternal]);
 
   const handleEdgesChange = useCallback((changes: any) => {
     onEdgesChangeInternal(changes);
-    const updatedEdges = edges.map(edge => ({ ...edge }));
+    // Use a deep copy to ensure we're not passing references
+    const updatedEdges = JSON.parse(JSON.stringify(edges));
     onEdgesChange(updatedEdges);
   }, [edges, onEdgesChange, onEdgesChangeInternal]);
 
@@ -208,15 +213,17 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       }
 
       const newNode: Node = {
-        id: `${nodeType}-${Date.now().toString()}`,
+        id: `${nodeType}-${Date.now()}`,
         type: nodeType,
         position,
         data: newNodeData
       };
 
-      setNodes(nds => [...nds, newNode]);
+      const updatedNodes = [...nodes, newNode];
+      setNodes(updatedNodes);
+      onNodesChange(updatedNodes);
     }
-  }, [screenToFlowPosition, setNodes]);
+  }, [screenToFlowPosition, setNodes, nodes, onNodesChange]);
 
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) {
@@ -251,6 +258,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         defaultEdgeOptions={defaultEdgeOptions}
         connectionMode={ConnectionMode.Loose}
         className="bg-white dark:bg-gray-950"
+        snapToGrid={true}
+        snapGrid={[15, 15]}
       >
         <Background className="opacity-40" />
         <MiniMap
