@@ -134,10 +134,14 @@ export default function AgentFlowPage() {
       console.log('Saving flow data:', JSON.stringify(flowData));
       setMermaidChart(mermaidChartStr);
       
+      // First serialize the flow data to a plain object
+      // This handles complex types like CSSProperties that aren't JSON-serializable
+      const serializedFlow = JSON.parse(JSON.stringify(flowData));
+      
       const { error } = await supabase
         .from('agents')
         .update({ 
-          flow: flowData, // Store as JSON directly
+          flow: serializedFlow, // Store the serialized data
           mermaid_chart: mermaidChartStr // Save sanitized mermaid diagram to database
         })
         .eq('id', id);
