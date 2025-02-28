@@ -106,7 +106,7 @@ export function TimelineTab({ leadId }: TimelineTabProps) {
         selectedTypes={selectedTypes}
         onToggleType={handleToggleType}
       />
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 overflow-auto">
         <div className="space-y-4 p-4">
           {filteredItems.map((item, index) => (
             <TimelineItemComponent 
