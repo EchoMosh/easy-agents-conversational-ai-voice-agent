@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Agent } from "@/types/agent";
+import { Agent } from "@/types/agent-types";
 import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
 import { TemplateStep } from "./form-steps/template-step";
@@ -21,7 +21,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [newAgent, setNewAgent] = useState({
     name: '',
-    role: 'virtual_assistant' as Agent['role'],
+    role: 'virtual_assistant' as const, // Using 'as const' to ensure correct type
     template: '',
   });
 
@@ -56,7 +56,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         .from('agents')
         .insert({
           name: newAgent.name,
-          role: newAgent.role,
+          role: newAgent.role, // This should now be correctly typed
           user_id: session.user.id,
           flow: JSON.stringify(flow),
           is_active: true,

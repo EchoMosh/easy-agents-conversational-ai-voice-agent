@@ -17,7 +17,7 @@ export interface NodeData {
 export interface Agent {
   id: string;
   name: string;
-  role: string;
+  role: "receptionist" | "sales_agent" | "customer_support" | "technical_advisor" | "appointment_scheduler" | "product_specialist" | "virtual_assistant";
   user_id: string;
   flow: FlowData | string;
   is_active: boolean;

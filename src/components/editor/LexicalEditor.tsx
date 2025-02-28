@@ -6,7 +6,7 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, $createParagraphNode, EditorState, LexicalEditor as LexicalEditorType } from 'lexical';
+import { $getRoot, $createParagraphNode, EditorState, LexicalEditor as LexicalEditorType, $createTextNode } from 'lexical';
 import { VariableNode } from './VariableNode';
 import { VariablePlugin, INSERT_VARIABLE_COMMAND } from './VariablePlugin';
 import { VariableHighlightPlugin } from './VariableHighlightPlugin';
@@ -23,7 +23,7 @@ function InitialValuePlugin({ value }: { value: string }) {
       if (root.getTextContent() === '') {
         if (value) {
           const paragraph = $createParagraphNode();
-          paragraph.append(value);
+          paragraph.append($createTextNode(value));
           root.append(paragraph);
         }
       }
@@ -103,7 +103,7 @@ export function LexicalEditor({
         <RichTextPlugin
           contentEditable={<ContentEditable className="editor-input" />}
           placeholder={<div className="editor-placeholder">{placeholder}</div>}
-          ErrorBoundary={({ children }) => <div>{children}</div>}
+          ErrorBoundary={(props) => <div>{props.children}</div>}
         />
         <OnChangePlugin onChange={handleEditorChange} />
         <HistoryPlugin />

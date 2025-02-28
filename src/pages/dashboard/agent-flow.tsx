@@ -6,7 +6,7 @@ import { Header } from '@/components/flow/agent-flow/header';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Agent } from '@/types/agent';
+import { Agent } from '@/types/agent-types';
 import { useToast } from '@/hooks/use-toast';
 import { FlowData } from '@/types/agent-types';
 
@@ -234,11 +234,19 @@ export default function AgentFlowPage() {
     if (agent?.flow) {
       try {
         console.log('[AgentFlowPage] Processing initial flow data:', agent.flow);
+        // Fix for length error - ensure flowData is properly typed
         const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-        let mermaidChartStr = generateMermaidFromFlow(flowData);
-        mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
-        console.log('[AgentFlowPage] Initial Mermaid Chart:', mermaidChartStr);
-        setMermaidChart(mermaidChartStr);
+        
+        // Ensure nodes array exists before accessing length
+        if (flowData && typeof flowData === 'object') {
+          let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
+          mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
+          console.log('[AgentFlowPage] Initial Mermaid Chart:', mermaidChartStr);
+          setMermaidChart(mermaidChartStr);
+        } else {
+          console.log('[AgentFlowPage] Flow data is not properly formatted');
+          setMermaidChart('graph TD\n  EmptyFlow[Empty Flow]');
+        }
       } catch (error) {
         console.error('[AgentFlowPage] Error generating mermaid chart:', error);
         setMermaidChart('graph TD\n  Error[Error generating chart]');
