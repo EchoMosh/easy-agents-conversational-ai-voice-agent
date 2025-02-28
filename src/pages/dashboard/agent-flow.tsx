@@ -36,25 +36,25 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     
     mermaidString += `  ${node.id}["${cleanLabel}"`;
     
-    // Add styling based on node type
+    // Add node type as a comment instead of styling
     switch (node.type) {
       case 'speakNode':
-        mermaidString += ':::speak';
+        mermaidString += ' (Speak)';
         break;
       case 'greetingNode':
-        mermaidString += ':::greeting';
+        mermaidString += ' (Greeting)';
         break;
       case 'endNode':
-        mermaidString += ':::end';
+        mermaidString += ' (End)';
         break;
       case 'triggerNode':
-        mermaidString += ':::trigger';
+        mermaidString += ' (Trigger)';
         break;
       case 'transferNode':
-        mermaidString += ':::transfer';
+        mermaidString += ' (Transfer)';
         break;
       case 'webhookNode':
-        mermaidString += ':::webhook';
+        mermaidString += ' (Webhook)';
         break;
     }
     
@@ -66,13 +66,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     mermaidString += `  ${edge.source} --> ${edge.target}\n`;
   });
   
-  // Add styling classes
-  mermaidString += 'classDef speak fill:#c084fc,color:white\n';
-  mermaidString += 'classDef greeting fill:#60a5fa,color:white\n';
-  mermaidString += 'classDef end fill:#f87171,color:white\n';
-  mermaidString += 'classDef trigger fill:#fbbf24,color:white\n';
-  mermaidString += 'classDef transfer fill:#10b981,color:white\n';
-  mermaidString += 'classDef webhook fill:#d946ef,color:white\n';
+  // No styling classes anymore
   
   return mermaidString;
 }
