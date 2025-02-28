@@ -1,7 +1,6 @@
 
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +10,7 @@ import { FileUploader } from "@/components/knowledge/file-uploader";
 import { DocumentList } from "@/components/knowledge/document-list";
 import { Upload, FileText, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { uploadDocument } from "@/utils/knowledge-api";
 
 export default function KnowledgePage() {
   const { toast } = useToast();
@@ -37,28 +37,10 @@ export default function KnowledgePage() {
     setIsUploading(true);
 
     try {
-      // Upload file to storage
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${crypto.randomUUID()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('knowledge')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Save document metadata
-      const { error: dbError } = await supabase
-        .from('knowledge_documents')
-        .insert({
-          title: title || file.name,
-          description,
-          file_path: filePath,
-          file_type: file.type,
-          file_size: file.size,
-        });
-
-      if (dbError) throw dbError;
+      await uploadDocument(file, {
+        title: title || file.name,
+        description: description || undefined
+      });
 
       toast({
         title: "Document uploaded",

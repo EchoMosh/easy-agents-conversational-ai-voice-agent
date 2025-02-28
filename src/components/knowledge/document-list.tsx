@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,16 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface Document {
-  id: string;
-  title: string;
-  description: string;
-  file_path: string;
-  file_type: string;
-  file_size: number;
-  created_at: string;
-}
+import { KnowledgeDocument } from "@/types/supabase-extended";
+import { fetchDocuments, downloadDocument, deleteDocument } from "@/utils/knowledge-api";
 
 interface DocumentListProps {
   refreshTrigger: number;
@@ -31,24 +22,19 @@ interface DocumentListProps {
 
 export function DocumentList({ refreshTrigger }: DocumentListProps) {
   const { toast } = useToast();
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<KnowledgeDocument | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<KnowledgeDocument[]>([]);
 
   useEffect(() => {
-    const fetchDocuments = async () => {
+    const getDocuments = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from("knowledge_documents")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setDocuments(data || []);
+        const data = await fetchDocuments();
+        setDocuments(data);
       } catch (error) {
         console.error("Error fetching documents:", error);
         toast({
@@ -61,7 +47,7 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
       }
     };
 
-    fetchDocuments();
+    getDocuments();
   }, [toast, refreshTrigger]);
 
   useEffect(() => {
@@ -69,7 +55,7 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
       const filtered = documents.filter(
         doc =>
           doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          doc.description.toLowerCase().includes(searchQuery.toLowerCase())
+          (doc.description && doc.description.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setFilteredDocuments(filtered);
     } else {
@@ -77,16 +63,12 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
     }
   }, [searchQuery, documents]);
 
-  const handleDownload = async (document: Document) => {
+  const handleDownload = async (document: KnowledgeDocument) => {
     try {
-      const { data, error } = await supabase.storage
-        .from("knowledge")
-        .download(document.file_path);
-
-      if (error) throw error;
-
+      const blob = await downloadDocument(document.file_path);
+      
       // Create a download link and trigger it
-      const url = URL.createObjectURL(data);
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = document.title;
@@ -108,22 +90,9 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
     if (!documentToDelete) return;
 
     try {
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from("knowledge")
-        .remove([documentToDelete.file_path]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from("knowledge_documents")
-        .delete()
-        .eq("id", documentToDelete.id);
-
-      if (dbError) throw dbError;
-
+      await deleteDocument(documentToDelete.id, documentToDelete.file_path);
       setDocuments(documents.filter(doc => doc.id !== documentToDelete.id));
+      
       toast({
         title: "Document deleted",
         description: "The document has been deleted successfully",
@@ -141,7 +110,7 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
     }
   };
 
-  const confirmDelete = (document: Document) => {
+  const confirmDelete = (document: KnowledgeDocument) => {
     setDocumentToDelete(document);
     setIsDeleteDialogOpen(true);
   };
@@ -150,10 +119,6 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
     if (bytes < 1024) return bytes + " B";
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     else return (bytes / 1048576).toFixed(1) + " MB";
-  };
-
-  const getFileTypeIcon = (fileType: string) => {
-    return <FileText className="h-6 w-6" />;
   };
 
   if (isLoading) {
@@ -204,7 +169,7 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
             >
               <div className="flex items-center space-x-4">
                 <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-                  {getFileTypeIcon(doc.file_type)}
+                  <FileText className="h-6 w-6" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="font-medium">{doc.title}</h3>
