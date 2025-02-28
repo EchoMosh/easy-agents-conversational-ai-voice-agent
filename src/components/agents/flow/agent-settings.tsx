@@ -46,7 +46,7 @@ const languages = [
 
 // Knowledge base data for dropdown select
 const knowledgeBases = [
-  { id: "", name: "None" },
+  { id: "none", name: "None" },
   { id: "kb-1", name: "Customer Support FAQ" },
   { id: "kb-2", name: "Product Documentation" },
   { id: "kb-3", name: "Company Policies" },
@@ -74,7 +74,7 @@ export function AgentSettings({
   const [open, setOpen] = React.useState(false);
   const [voice, setVoice] = React.useState(currentVoice || "");
   const [language, setLanguage] = React.useState(currentLanguage || "en-US");
-  const [knowledgeBase, setKnowledgeBase] = React.useState("");
+  const [knowledgeBase, setKnowledgeBase] = React.useState("none");
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
 
@@ -84,7 +84,7 @@ export function AgentSettings({
       await onUpdateSettings({
         voiceId: voice,
         language,
-        knowledgeBaseId: knowledgeBase,
+        knowledgeBaseId: knowledgeBase === "none" ? null : knowledgeBase,
       });
       toast({
         title: "Success",
