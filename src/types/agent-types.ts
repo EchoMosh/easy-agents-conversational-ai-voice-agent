@@ -9,6 +9,7 @@ export type Agent = {
   voice_id: string | null;
   language?: string;
   humor_level?: number;
+  max_duration_seconds?: number;
   is_active: boolean;
   created_at: string;
   flow?: FlowData | string;

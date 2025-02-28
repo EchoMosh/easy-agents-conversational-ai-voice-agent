@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -27,7 +28,12 @@ type AgentSettingsProps = {
   currentVoice?: string;
   currentLanguage?: string;
   children?: React.ReactNode;
-  onUpdateSettings: (settings: { voiceId?: string; language?: string; humorLevel?: number }) => Promise<void>;
+  onUpdateSettings: (settings: { 
+    voiceId?: string; 
+    language?: string; 
+    humorLevel?: number;
+    maxDurationSeconds?: number;
+  }) => Promise<void>;
 };
 
 const languages = [
@@ -58,6 +64,7 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, children
   const [selectedVoice, setSelectedVoice] = useState(currentVoice || "alloy");
   const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage || "en");
   const [humorLevel, setHumorLevel] = useState(50);
+  const [maxDurationSeconds, setMaxDurationSeconds] = useState(300); // Default 5 minutes
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
 
   const handleVoiceChange = (voiceId: string) => {
@@ -65,7 +72,8 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, children
     onUpdateSettings({
       voiceId,
       language: selectedLanguage,
-      humorLevel: humorLevel
+      humorLevel: humorLevel,
+      maxDurationSeconds: maxDurationSeconds
     });
   };
 
@@ -99,11 +107,19 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, children
     }
   };
 
+  const handleMaxDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value > 0) {
+      setMaxDurationSeconds(value);
+    }
+  };
+
   const handleSave = async () => {
     await onUpdateSettings({
       voiceId: selectedVoice,
       language: selectedLanguage,
-      humorLevel: humorLevel
+      humorLevel: humorLevel,
+      maxDurationSeconds: maxDurationSeconds
     });
     setIsOpen(false);
   };
@@ -116,6 +132,12 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, children
     if (value === 80) return "Very Humorous";
     if (value === 100) return "Maximum Humor";
     return "";
+  };
+
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -210,6 +232,24 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, children
                   {getHumorLabel(humorLevel)}
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Maximum Conversation Duration</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="number"
+                  min="10"
+                  value={maxDurationSeconds}
+                  onChange={handleMaxDurationChange}
+                  className="w-24"
+                />
+                <span className="text-sm text-gray-500">seconds</span>
+                <span className="text-sm text-gray-500">({formatDuration(maxDurationSeconds)})</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                The agent will automatically end conversations after this duration
+              </p>
             </div>
 
             <Button 

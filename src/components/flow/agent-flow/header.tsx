@@ -13,7 +13,7 @@ import { AgentTrainingPopup } from "@/components/agents/training/agent-training-
 interface HeaderProps {
   agent: Agent;
   onBack: () => void;
-  onUpdateSettings: (settings: { voiceId?: string; language?: string }) => Promise<void>;
+  onUpdateSettings: (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => Promise<void>;
 }
 
 export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
