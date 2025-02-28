@@ -98,12 +98,12 @@ export function LexicalEditor({
   }
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <div className={`editor-container nodrag ${className}`}>
+    <div className={`editor-container nodrag ${className}`}>
+      <LexicalComposer initialConfig={initialConfig}>
         <RichTextPlugin
           contentEditable={<ContentEditable className="editor-input" />}
           placeholder={<div className="editor-placeholder">{placeholder}</div>}
-          ErrorBoundary={(props) => <div>{props.children}</div>}
+          ErrorBoundary={({ children }) => <div>{children}</div>}
         />
         <OnChangePlugin onChange={handleEditorChange} />
         <HistoryPlugin />
@@ -114,8 +114,8 @@ export function LexicalEditor({
         />
         <VariableHighlightPlugin />
         <CaptureEditorPlugin onCaptureEditor={captureEditor} />
-      </div>
-    </LexicalComposer>
+      </LexicalComposer>
+    </div>
   );
 }
 

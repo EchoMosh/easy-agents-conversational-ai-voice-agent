@@ -10,7 +10,6 @@ import { Agent } from '@/types/agent-types';
 import { useToast } from '@/hooks/use-toast';
 import { FlowData } from '@/types/agent-types';
 
-// Function to convert flow data to mermaid chart
 function generateMermaidFromFlow(flowData: FlowData): string {
   if (!flowData || !flowData.nodes || !flowData.edges) {
     return 'graph TD\n  EmptyFlow[Empty Flow]';
@@ -22,44 +21,35 @@ function generateMermaidFromFlow(flowData: FlowData): string {
 
   let mermaidString = 'graph TD\n';
   
-  // Map to store node ID mappings
   const nodeIdMap = new Map<string, string>();
   
-  // Create simple sequential IDs for the mermaid chart - using type with sequential counter
   const nodeTypeCounter: Record<string, number> = {};
   
   flowData.nodes.forEach((node: FlowNode) => {
-    // Extract base node type without any numeric part
     const baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
     
-    // Initialize counter for this node type if not exists
     if (!nodeTypeCounter[baseNodeType]) {
       nodeTypeCounter[baseNodeType] = 1;
     } else {
       nodeTypeCounter[baseNodeType]++;
     }
     
-    // Create simple node ID like speakNode-1, triggerNode-2, etc.
     const simpleId = `${baseNodeType}-${nodeTypeCounter[baseNodeType]}`;
     nodeIdMap.set(node.id, simpleId);
   });
   
-  // Process nodes with simplified IDs
   flowData.nodes.forEach((node: FlowNode) => {
-    // Get the appropriate label based on node type and data
     let nodeLabel = 'Node';
     let outcomeLabels: string[] = [];
     
     if (node.data) {
       if (node.type === 'speakNode' && node.data.message) {
         nodeLabel = String(node.data.message);
-        // Store outcome labels for speakNode
         if (node.data.outcomes && Array.isArray(node.data.outcomes)) {
           outcomeLabels = node.data.outcomes;
         }
       } else if (node.type === 'greetingNode' && node.data.greeting) {
         nodeLabel = String(node.data.greeting);
-        // Store outcome labels for greetingNode
         if (node.data.outcomes && Array.isArray(node.data.outcomes)) {
           outcomeLabels = node.data.outcomes;
         }
@@ -72,17 +62,15 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       }
     }
     
-    // Clean label by removing newlines and quotes
     const cleanLabel = nodeLabel
       .replace(/\n/g, ' ')
       .replace(/"/g, '')
-      .substring(0, 30); // Limit length
+      .substring(0, 30);
     
     const simpleId = nodeIdMap.get(node.id) || `unknown-${node.id}`;
     
     mermaidString += `  ${simpleId}["${cleanLabel}`;
     
-    // Add node type as a comment instead of styling
     switch (node.type) {
       case 'speakNode':
         mermaidString += ' (Speak)';
@@ -106,25 +94,21 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     
     mermaidString += '"]\n';
     
-    // Add outcome information in comments
     if (outcomeLabels.length > 0) {
       mermaidString += `  %% Node ${simpleId} has outcomes: ${outcomeLabels.join(', ')}\n`;
     }
   });
   
-  // Process edges with simplified IDs and add outcome labels
   flowData.edges.forEach((edge: Edge) => {
     const sourceId = nodeIdMap.get(edge.source) || edge.source;
     const targetId = nodeIdMap.get(edge.target) || edge.target;
     
-    // Find the source node to get outcome information
     const sourceNode = flowData.nodes.find(node => node.id === edge.source);
     let edgeLabel = '';
     
     if (sourceNode && sourceNode.data && (sourceNode.type === 'speakNode' || sourceNode.type === 'greetingNode')) {
       const outcomes = sourceNode.data.outcomes || [];
       
-      // If this edge is from a specific handle (which represents an outcome)
       if (edge.sourceHandle && edge.sourceHandle.startsWith('outcome-')) {
         const outcomeIndex = parseInt(edge.sourceHandle.replace('outcome-', ''), 10);
         if (!isNaN(outcomeIndex) && outcomeIndex < outcomes.length) {
@@ -139,15 +123,10 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   return mermaidString;
 }
 
-// Helper function to ensure no styling classes are in the mermaid chart
 function sanitizeMermaidChart(mermaidChart: string): string {
-  // Remove any classDef lines that might be left from previous versions
-  const cleanedChart = mermaidChart
+  return mermaidChart
     .replace(/classDef .+/g, '')
-    // Remove any :::style references
     .replace(/:::[a-zA-Z0-9_-]+/g, '');
-  
-  return cleanedChart;
 }
 
 export default function AgentFlowPage() {
@@ -188,12 +167,10 @@ export default function AgentFlowPage() {
     mutationFn: async (flowData: FlowData) => {
       if (!id) throw new Error('No agent ID provided');
       
-      // Deep clone to avoid reference issues and ensure proper serialization
       const clonedData = JSON.parse(JSON.stringify(flowData));
       
       console.log("[AgentFlowPage] SAVING FLOW DATA TO SUPABASE:", clonedData);
       
-      // Generate mermaid chart and ensure no styling classes are present
       let mermaidChartStr = generateMermaidFromFlow(clonedData);
       mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       
@@ -205,8 +182,8 @@ export default function AgentFlowPage() {
         const { data, error } = await supabase
           .from('agents')
           .update({ 
-            flow: clonedData, // Store the cloned data
-            mermaid_chart: mermaidChartStr // Save sanitized mermaid diagram to database
+            flow: clonedData,
+            mermaid_chart: mermaidChartStr
           })
           .eq('id', id)
           .select();
@@ -218,8 +195,6 @@ export default function AgentFlowPage() {
         
         console.log("[AgentFlowPage] Supabase update response:", data);
         
-        // Removed toast notification
-        
         await refetch();
         return data;
       } catch (error) {
@@ -229,16 +204,16 @@ export default function AgentFlowPage() {
     }
   });
 
-  // Log initial mermaid chart when flow data is loaded
   useEffect(() => {
     if (agent?.flow) {
       try {
         console.log('[AgentFlowPage] Processing initial flow data:', agent.flow);
-        // Fix for length error - ensure flowData is properly typed
         const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
         
-        // Ensure nodes array exists before accessing length
-        if (flowData && typeof flowData === 'object') {
+        const hasNodes = Array.isArray(flowData.nodes);
+        const hasEdges = Array.isArray(flowData.edges);
+        
+        if (hasNodes || hasEdges) {
           let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
           mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
           console.log('[AgentFlowPage] Initial Mermaid Chart:', mermaidChartStr);
@@ -262,20 +237,16 @@ export default function AgentFlowPage() {
     try {
       console.log('[AgentFlowPage] Nodes changed, nodes to save:', newNodes);
       
-      // Deep clone to ensure no reference issues
       const clonedNodes = JSON.parse(JSON.stringify(newNodes));
       
-      // Get the current edges from the agent flow
       const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
       const currentEdges = currentFlow.edges || [];
       
-      // Create a complete flow data object
       const flowData: FlowData = {
         nodes: clonedNodes,
         edges: currentEdges
       };
       
-      // Save the flow data
       console.log('[AgentFlowPage] Saving updated flow data with new nodes');
       saveFlowMutation.mutate(flowData);
     } catch (error) {
@@ -291,20 +262,16 @@ export default function AgentFlowPage() {
     try {
       console.log('[AgentFlowPage] Edges changed, edges to save:', newEdges);
       
-      // Deep clone to ensure no reference issues
       const clonedEdges = JSON.parse(JSON.stringify(newEdges));
       
-      // Get the current nodes from the agent flow
       const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
       const currentNodes = currentFlow.nodes || [];
       
-      // Create a complete flow data object
       const flowData: FlowData = {
         nodes: currentNodes,
         edges: clonedEdges
       };
       
-      // Save the flow data
       console.log('[AgentFlowPage] Saving updated flow data with new edges');
       saveFlowMutation.mutate(flowData);
     } catch (error) {
@@ -339,7 +306,6 @@ export default function AgentFlowPage() {
     return null;
   }
 
-  // Parse flow data once for the render
   const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow || { nodes: [], edges: [] };
 
   return (
@@ -360,7 +326,6 @@ export default function AgentFlowPage() {
             />
           </ReactFlowProvider>
           
-          {/* Mermaid chart display for testing */}
           {showMermaid && (
             <div 
               className="absolute bottom-4 right-4 p-4 bg-white dark:bg-gray-800 border rounded-md shadow-md max-w-md max-h-96 overflow-auto z-50 text-xs"

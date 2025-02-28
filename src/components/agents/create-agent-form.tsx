@@ -19,9 +19,13 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
-  const [newAgent, setNewAgent] = useState({
+  const [newAgent, setNewAgent] = useState<{
+    name: string;
+    role: Agent["role"];
+    template: string;
+  }>({
     name: '',
-    role: 'virtual_assistant' as const, // Using 'as const' to ensure correct type
+    role: 'virtual_assistant',
     template: '',
   });
 
@@ -56,12 +60,12 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         .from('agents')
         .insert({
           name: newAgent.name,
-          role: newAgent.role, // This should now be correctly typed
+          role: newAgent.role,
           user_id: session.user.id,
           flow: JSON.stringify(flow),
           is_active: true,
-          objective: 'answer_calls', // Setting default objective
-          interaction_type: ['inbound'] // Setting default interaction type
+          objective: 'answer_calls',
+          interaction_type: ['inbound']
         })
         .select()
         .single();

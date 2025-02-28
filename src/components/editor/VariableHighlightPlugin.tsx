@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $isVariableNode } from './VariableNode';
-import { LexicalNode, NodeMutation, $getRoot, TextNode } from 'lexical';
+import { LexicalNode, $getRoot, TextNode } from 'lexical';
 
 // This plugin highlights variable nodes and provides proper styling
 export function VariableHighlightPlugin() {
@@ -13,22 +13,29 @@ export function VariableHighlightPlugin() {
     const scanForVariables = () => {
       editor.update(() => {
         const root = $getRoot();
-        const children = root.getChildren();
+        const textNodes: TextNode[] = [];
         
-        children.forEach((child) => {
-          if (child instanceof TextNode) {
-            if ($isVariableNode(child)) {
-              // Apply styling if needed here
-              // This is usually handled by the VariableNode's createDOM method
-            }
-          } else {
-            // Handle non-text nodes if they may contain text (e.g., paragraphs)
-            const textNodes = child.getChildren();
-            textNodes.forEach((textNode) => {
-              if ($isVariableNode(textNode)) {
-                // Apply styling as needed
-              }
-            });
+        // Helper function to recursively collect all text nodes
+        const collectTextNodes = (node: LexicalNode) => {
+          if (node instanceof TextNode) {
+            textNodes.push(node);
+          }
+          
+          // Check if node has children method before calling it
+          if (node.getChildren && typeof node.getChildren === 'function') {
+            const children = node.getChildren();
+            children.forEach(collectTextNodes);
+          }
+        };
+        
+        // Start collecting from root
+        collectTextNodes(root);
+        
+        // Process all found text nodes
+        textNodes.forEach(textNode => {
+          if ($isVariableNode(textNode)) {
+            // Apply styling if needed here
+            // This is usually handled by the VariableNode's createDOM method
           }
         });
       });
@@ -36,7 +43,7 @@ export function VariableHighlightPlugin() {
 
     // Listen for node mutations
     const removeListener = editor.registerMutationListener(
-      (mutationListMap, editor) => {
+      (mutationListMap) => {
         for (const [nodeKey, mutation] of Object.entries(mutationListMap)) {
           if (mutation === 'created') {
             scanForVariables();
