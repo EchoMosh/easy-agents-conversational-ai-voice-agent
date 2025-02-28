@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
 import { Agent } from "@/types/agent";
 import { useEffect, useState } from "react";
@@ -74,10 +73,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3 relative">
-          {/* Theme Toggle first (switched position) */}
-          <ThemeToggle />
-          
-          {/* Settings button second (switched position) */}
+          {/* Settings button */}
           <AgentSettings
             agentId={agent.id}
             currentVoice={agent.voice_id || undefined}
