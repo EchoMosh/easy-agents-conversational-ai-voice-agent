@@ -1,16 +1,14 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
-import { ReactFlowProvider } from '@xyflow/react';
+import { ReactFlowProvider, Node as FlowNode, Edge } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
 import { useCallback, useEffect, useState } from 'react';
-import { Node, Edge } from '@xyflow/react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent } from '@/types/agent';
 import { useToast } from '@/hooks/use-toast';
-import { FlowData, FlowNode, FlowEdge } from '@/types/agent-types';
+import { FlowData } from '@/types/agent-types';
 
 // Function to convert flow data to mermaid chart
 function generateMermaidFromFlow(flowData: FlowData): string {
@@ -115,7 +113,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   });
   
   // Process edges with simplified IDs and add outcome labels
-  flowData.edges.forEach((edge: FlowEdge) => {
+  flowData.edges.forEach((edge: Edge) => {
     const sourceId = nodeIdMap.get(edge.source) || edge.source;
     const targetId = nodeIdMap.get(edge.target) || edge.target;
     
@@ -248,7 +246,7 @@ export default function AgentFlowPage() {
     }
   }, [agent]);
 
-  const handleNodesChange = useCallback((newNodes: Node[]) => {
+  const handleNodesChange = useCallback((newNodes: FlowNode[]) => {
     if (!agent?.flow) {
       console.log('[AgentFlowPage] handleNodesChange: No agent flow data available');
       return;
@@ -257,7 +255,7 @@ export default function AgentFlowPage() {
       console.log('[AgentFlowPage] Nodes changed, nodes to save:', newNodes);
       
       // Deep clone to ensure no reference issues
-      const clonedNodes = JSON.parse(JSON.stringify(newNodes)) as FlowNode[];
+      const clonedNodes = JSON.parse(JSON.stringify(newNodes));
       
       // Get the current edges from the agent flow
       const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
@@ -286,7 +284,7 @@ export default function AgentFlowPage() {
       console.log('[AgentFlowPage] Edges changed, edges to save:', newEdges);
       
       // Deep clone to ensure no reference issues
-      const clonedEdges = JSON.parse(JSON.stringify(newEdges)) as FlowEdge[];
+      const clonedEdges = JSON.parse(JSON.stringify(newEdges));
       
       // Get the current nodes from the agent flow
       const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;

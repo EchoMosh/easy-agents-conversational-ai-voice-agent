@@ -20,43 +20,68 @@ const SAMPLE_VARIABLES: Variable[] = [
 
 interface VariableSelectorProps {
   text: string;
-  onTextChange: (text: string) => void;
-  textareaRef: React.RefObject<HTMLTextAreaElement>;
+  onTextChange?: (text: string) => void;
+  onSelectVariable?: (variableId: string) => void;
+  textareaRef?: React.RefObject<HTMLTextAreaElement> | null;
+  onClose?: () => void;
 }
 
-export function VariableSelector({ text, onTextChange, textareaRef }: VariableSelectorProps) {
-  const [showVariables, setShowVariables] = useState(false);
+export function VariableSelector({ 
+  text, 
+  onTextChange, 
+  onSelectVariable,
+  textareaRef,
+  onClose
+}: VariableSelectorProps) {
+  const [showVariables, setShowVariables] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const lastAtIndex = useRef(-1);
 
+  // Handle legacy textarea approach
   useEffect(() => {
-    const handleAt = () => {
-      const atIndex = text.lastIndexOf('@');
-      if (atIndex !== -1 && atIndex !== lastAtIndex.current) {
-        lastAtIndex.current = atIndex;
-        setShowVariables(true);
-        setSearchTerm("");
-      } else if (!text.includes('@')) {
-        setShowVariables(false);
-      }
-    };
+    if (textareaRef && textareaRef.current) {
+      const handleAt = () => {
+        const atIndex = text.lastIndexOf('@');
+        if (atIndex !== -1 && atIndex !== lastAtIndex.current) {
+          lastAtIndex.current = atIndex;
+          setShowVariables(true);
+          setSearchTerm("");
+        } else if (!text.includes('@')) {
+          setShowVariables(false);
+        }
+      };
 
-    handleAt();
-  }, [text]);
+      handleAt();
+    }
+  }, [text, textareaRef]);
 
   const insertVariable = (variable: Variable) => {
-    const atIndex = text.lastIndexOf('@');
-    if (atIndex !== -1) {
-      const newText = text.substring(0, atIndex) + 
-        `{{${variable.id}}}` + 
-        text.substring(atIndex + searchTerm.length + 1);
-      onTextChange(newText);
+    // Handle legacy textarea approach
+    if (textareaRef && textareaRef.current && onTextChange) {
+      const atIndex = text.lastIndexOf('@');
+      if (atIndex !== -1) {
+        const newText = text.substring(0, atIndex) + 
+          `{{${variable.id}}}` + 
+          text.substring(atIndex + searchTerm.length + 1);
+        onTextChange(newText);
+      }
+    } 
+    // Handle new Lexical editor approach
+    else if (onSelectVariable) {
+      onSelectVariable(variable.id);
     }
+    
     setShowVariables(false);
+    if (onClose) onClose();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setShowVariables(open);
+    if (!open && onClose) onClose();
   };
 
   return (
-    <Dialog open={showVariables} onOpenChange={setShowVariables}>
+    <Dialog open={showVariables} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px] p-0">
         <Command className="rounded-lg">
           <CommandInput 
