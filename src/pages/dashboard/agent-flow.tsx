@@ -4,7 +4,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -112,6 +112,9 @@ export default function AgentFlowPage() {
   const { toast } = useToast();
   const [mermaidChart, setMermaidChart] = useState<string>('');
   const [showMermaid, setShowMermaid] = useState<boolean>(true);
+  // Add refs for debouncing and tracking toast displays
+  const lastToastTimeRef = useRef<number>(0);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: agent, refetch, isError, isLoading } = useQuery({
     queryKey: ['agent', id],
@@ -139,6 +142,15 @@ export default function AgentFlowPage() {
     },
     enabled: !!id
   });
+
+  // Cleanup timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const saveFlowMutation = useMutation({
     mutationFn: async (flowData: FlowData) => {
@@ -174,12 +186,16 @@ export default function AgentFlowPage() {
         
         console.log("[AgentFlowPage] Supabase update response:", data);
         
-        // Show success toast
-        toast({
-          title: "Flow updated",
-          description: "Your changes have been saved",
-          variant: "default"
-        });
+        // Only show toast if it's been more than 5 seconds since the last one
+        const now = Date.now();
+        if (now - lastToastTimeRef.current > 5000) {
+          lastToastTimeRef.current = now;
+          toast({
+            title: "Flow updated",
+            description: "Your changes have been saved",
+            variant: "default"
+          });
+        }
         
         await refetch();
         return data;
@@ -207,6 +223,17 @@ export default function AgentFlowPage() {
     }
   }, [agent]);
 
+  // Debounced version of saveFlowMutation to reduce frequency of saves
+  const debouncedSaveFlow = useCallback((flowData: FlowData) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      saveFlowMutation.mutate(flowData);
+    }, 1000); // Debounce saves by 1 second
+  }, [saveFlowMutation]);
+
   const handleNodesChange = useCallback((newNodes: Node[]) => {
     if (!agent?.flow) {
       console.log('[AgentFlowPage] handleNodesChange: No agent flow data available');
@@ -228,9 +255,9 @@ export default function AgentFlowPage() {
         edges: currentEdges
       };
       
-      // Save the flow data
-      console.log('[AgentFlowPage] Saving updated flow data with new nodes');
-      saveFlowMutation.mutate(flowData);
+      // Save the flow data with debouncing
+      console.log('[AgentFlowPage] Debouncing save with updated nodes');
+      debouncedSaveFlow(flowData);
     } catch (error) {
       console.error('[AgentFlowPage] Error updating nodes:', error);
       toast({
@@ -239,7 +266,7 @@ export default function AgentFlowPage() {
         variant: 'destructive'
       });
     }
-  }, [agent, saveFlowMutation, toast]);
+  }, [agent, debouncedSaveFlow, toast]);
 
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
     if (!agent?.flow) {
@@ -262,9 +289,9 @@ export default function AgentFlowPage() {
         edges: clonedEdges
       };
       
-      // Save the flow data
-      console.log('[AgentFlowPage] Saving updated flow data with new edges');
-      saveFlowMutation.mutate(flowData);
+      // Save the flow data with debouncing
+      console.log('[AgentFlowPage] Debouncing save with updated edges');
+      debouncedSaveFlow(flowData);
     } catch (error) {
       console.error('[AgentFlowPage] Error updating edges:', error);
       toast({
@@ -273,7 +300,7 @@ export default function AgentFlowPage() {
         variant: 'destructive'
       });
     }
-  }, [agent, saveFlowMutation, toast]);
+  }, [agent, debouncedSaveFlow, toast]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => {
     if (!id) return;
