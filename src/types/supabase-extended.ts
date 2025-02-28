@@ -11,4 +11,5 @@ export interface KnowledgeDocument {
   file_size: number;
   created_at: string;
   updated_at: string;
+  source_type?: 'file' | 'url' | 'text'; // Adding as optional for backward compatibility
 }

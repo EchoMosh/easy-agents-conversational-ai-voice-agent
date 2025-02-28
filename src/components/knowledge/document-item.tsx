@@ -1,5 +1,4 @@
-
-import { FileText, Link, ExternalLink, File } from "lucide-react";
+import { FileText, Link, ExternalLink, File, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KnowledgeDocument } from "@/types/supabase-extended";
 
@@ -18,13 +17,27 @@ export function DocumentItem({ document, onDownload, onDelete }: DocumentItemPro
 
   // Determine which icon to display based on document type or extension
   const getDocumentIcon = () => {
-    // Check if it's a URL type
-    if (document.source_type === 'url') {
+    // If we have source_type defined, use it
+    if (document.source_type) {
+      if (document.source_type === 'url') {
+        return <ExternalLink className="h-6 w-6" />;
+      }
+      
+      if (document.source_type === 'text') {
+        return <FileText className="h-6 w-6" />;
+      }
+    }
+    
+    // Otherwise use file_type or file extension
+    const fileType = document.file_type?.toLowerCase();
+    
+    // Check for URL-like file types
+    if (fileType === 'url' || fileType === 'webpage' || fileType === 'html') {
       return <ExternalLink className="h-6 w-6" />;
     }
     
-    // If it's a text entry
-    if (document.source_type === 'text') {
+    // Check for text-like file types
+    if (fileType === 'text' || fileType === 'note') {
       return <FileText className="h-6 w-6" />;
     }
     
