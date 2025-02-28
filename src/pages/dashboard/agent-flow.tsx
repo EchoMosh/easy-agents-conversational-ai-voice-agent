@@ -71,21 +71,13 @@ export default function AgentFlowPage() {
     saveFlowMutation.mutate(flowData);
   }, [agent, saveFlowMutation]);
 
-  const handleUpdateSettings = async (settings: { voiceId?: string; language?: string; knowledgeBaseId?: string }) => {
+  const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
     if (!id) return;
-    
-    const updateData: any = {};
-    if (settings.voiceId !== undefined) updateData.voice_id = settings.voiceId;
-    if (settings.language !== undefined) updateData.language = settings.language;
-    if (settings.knowledgeBaseId !== undefined) updateData.knowledge_base_id = settings.knowledgeBaseId;
-    
     const { error } = await supabase
       .from('agents')
-      .update(updateData)
+      .update(settings)
       .eq('id', id);
-      
     if (error) throw error;
-    await refetch();
   };
 
   if (isLoading) {
