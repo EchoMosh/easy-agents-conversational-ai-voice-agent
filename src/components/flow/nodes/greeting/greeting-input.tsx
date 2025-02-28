@@ -2,7 +2,8 @@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { VariableSelector } from '../variable-mention/variable-selector';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface GreetingInputProps {
   value: string;
@@ -32,6 +33,17 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
     );
   };
 
+  // Use debounced version for the highlighted HTML to reduce processing on each keystroke
+  const debouncedValue = useDebounce(value, 50);
+  
+  // Memoize the highlighted HTML to prevent recalculation on every render
+  const highlightedHtml = useMemo(() => {
+    return highlightVariables(debouncedValue)
+      .split('\n')
+      .map(line => line || '&#8203;')
+      .join('<br/>');
+  }, [debouncedValue]);
+
   return (
     <div className="flex flex-col gap-2 relative">
       <div className="relative">
@@ -45,12 +57,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
         />
         <div 
           className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap break-words text-gray-900 dark:text-white/90"
-          dangerouslySetInnerHTML={{ 
-            __html: highlightVariables(value)
-              .split('\n')
-              .map(line => line || '&#8203;')
-              .join('<br/>') 
-          }}
+          dangerouslySetInnerHTML={{ __html: highlightedHtml }}
         />
       </div>
       <VariableSelector

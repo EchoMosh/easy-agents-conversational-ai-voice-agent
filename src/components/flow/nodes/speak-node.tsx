@@ -4,11 +4,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Pencil, MessageSquare } from 'lucide-react';
-import { useState, useRef, useEffect, useContext, memo } from 'react';
+import { useState, useRef, useEffect, useContext, memo, useMemo } from 'react';
 import { VariableSelector } from './variable-mention/variable-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
+import { useDebounce } from '@/hooks/use-debounce';
 
 type SpeakNodeData = {
   message?: string;
@@ -37,8 +38,16 @@ const MessageInput = memo(({
     onChange(e.target.value);
   };
 
-  // Variable selector content
-  const [showVariableSelector, setShowVariableSelector] = useState(false);
+  // Use debounced version for the highlighted HTML to reduce processing on each keystroke
+  const debouncedMessage = useDebounce(message, 50);
+  
+  // Memoize the highlighted HTML to prevent recalculation on every render
+  const highlightedHtml = useMemo(() => {
+    return highlightVariables(debouncedMessage)
+      .split('\n')
+      .map(line => line || '&#8203;')
+      .join('<br/>');
+  }, [debouncedMessage]);
 
   return (
     <div className="flex flex-col gap-2 relative">
@@ -53,12 +62,7 @@ const MessageInput = memo(({
         />
         <div 
           className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap break-words text-gray-900 dark:text-white/90"
-          dangerouslySetInnerHTML={{ 
-            __html: highlightVariables(message)
-              .split('\n')
-              .map(line => line || '&#8203;')
-              .join('<br/>') 
-          }}
+          dangerouslySetInnerHTML={{ __html: highlightedHtml }}
         />
       </div>
       
@@ -145,20 +149,25 @@ export const SpeakNode = memo(({ data, id }: { data: SpeakNodeData; id: string }
     }
   }, [data, message, outcomes]);
 
-  // Handle message change with immediate local update
+  // Handle message change with debounced update to parent
   const handleMessageChange = (newValue: string) => {
     // Update local state immediately for optimistic UI
     setMessage(newValue);
     
-    // Build updated data object
-    const updatedData = {
-      ...data,
-      message: newValue,
-      outcomes: outcomes
-    };
+    // Use a debounced update for the parent component
+    const timeoutId = setTimeout(() => {
+      // Build updated data object
+      const updatedData = {
+        ...data,
+        message: newValue,
+        outcomes: outcomes
+      };
+      
+      // Update parent component
+      updateNodeData(id, updatedData);
+    }, 100);
     
-    // Update parent component
-    updateNodeData(id, updatedData);
+    return () => clearTimeout(timeoutId);
   };
 
   const addOutcome = () => {
