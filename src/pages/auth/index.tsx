@@ -33,25 +33,8 @@ const AuthPage = () => {
 
     try {
       if (isSignUp) {
-        // First, check if the user exists
-        const { data: existingUser, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (!signInError) {
-          toast({
-            variant: "destructive",
-            title: "Account exists",
-            description: "This email is already registered. Please sign in instead.",
-          });
-          navigate('/auth?mode=login', { replace: true });
-          setIsLoading(false);
-          return;
-        }
-
-        // If we get here, the user doesn't exist, so proceed with signup
-        const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+        // Sign up flow
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -61,28 +44,29 @@ const AuthPage = () => {
           },
         });
 
-        if (signUpError) throw signUpError;
+        if (error) throw error;
 
-        if (user) {
-          navigate('/onboarding');
+        if (data.user) {
           toast({
             title: "Account created!",
             description: "Let's set up your workspace.",
           });
+          navigate('/onboarding');
         }
       } else {
-        const { data: { user }, error } = await supabase.auth.signInWithPassword({
+        // Sign in flow
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         
         if (error) throw error;
 
-        if (user) {
+        if (data.user) {
           const { data: profile } = await supabase
             .from('profiles')
             .select('onboarding_completed')
-            .eq('id', user.id)
+            .eq('id', data.user.id)
             .single();
 
           if (profile?.onboarding_completed) {
@@ -97,13 +81,8 @@ const AuthPage = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message === "User already registered" 
-          ? "This email is already registered. Please sign in instead."
-          : error.message,
+        description: error.message,
       });
-      if (error.message === "User already registered") {
-        navigate('/auth?mode=login', { replace: true });
-      }
     } finally {
       setIsLoading(false);
     }
