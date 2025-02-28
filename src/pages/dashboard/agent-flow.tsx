@@ -4,7 +4,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,6 +81,8 @@ export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [mermaidChart, setMermaidChart] = useState<string>('');
+  const [showMermaid, setShowMermaid] = useState<boolean>(true);
 
   const { data: agent, refetch, isError, isLoading } = useQuery({
     queryKey: ['agent', id],
@@ -106,14 +108,15 @@ export default function AgentFlowPage() {
       if (!id) throw new Error('No agent ID provided');
       
       // Generate mermaid chart and console log it
-      const mermaidChart = generateMermaidFromFlow(flowData);
-      console.log('Mermaid Chart:', mermaidChart);
+      const mermaidChartStr = generateMermaidFromFlow(flowData);
+      console.log('Mermaid Chart:', mermaidChartStr);
+      setMermaidChart(mermaidChartStr);
       
       const { error } = await supabase
         .from('agents')
         .update({ 
           flow: JSON.stringify(flowData), // Convert to string to satisfy Json type
-          mermaid_chart: mermaidChart // Save mermaid diagram to database
+          mermaid_chart: mermaidChartStr // Save mermaid diagram to database
         })
         .eq('id', id);
       
@@ -126,8 +129,9 @@ export default function AgentFlowPage() {
   useEffect(() => {
     if (agent?.flow) {
       const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-      const mermaidChart = generateMermaidFromFlow(flowData);
-      console.log('Initial Mermaid Chart:', mermaidChart);
+      const mermaidChartStr = generateMermaidFromFlow(flowData);
+      console.log('Initial Mermaid Chart:', mermaidChartStr);
+      setMermaidChart(mermaidChartStr);
     }
   }, [agent]);
 
@@ -192,6 +196,25 @@ export default function AgentFlowPage() {
               onEdgesChange={handleEdgesChange}
             />
           </ReactFlowProvider>
+          
+          {/* Mermaid chart display for testing */}
+          {showMermaid && (
+            <div 
+              className="absolute bottom-4 right-4 p-4 bg-white dark:bg-gray-800 border rounded-md shadow-md max-w-md max-h-96 overflow-auto z-50 text-xs"
+              style={{ opacity: 0.9 }}
+            >
+              <div className="flex justify-between mb-2">
+                <span className="font-bold">Mermaid Chart Preview</span>
+                <button 
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  onClick={() => setShowMermaid(false)}
+                >
+                  Close
+                </button>
+              </div>
+              <pre className="whitespace-pre-wrap break-all">{mermaidChart}</pre>
+            </div>
+          )}
         </div>
       </div>
     </DragProvider>
