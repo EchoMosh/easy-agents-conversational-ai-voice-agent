@@ -157,13 +157,30 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         setNodes(newNodes);
         setEdges(newEdges);
         
-        // Notify parent components of changes
+        // Notify parent components of changes - immediately call both functions without setTimeout
         console.log('[Flow] Notifying parent about deleted nodes and related edges');
         onNodesChange(newNodes);
         onEdgesChange(newEdges);
+        
+        // Prevent default behavior to avoid navigating back in the browser
+        event.preventDefault();
       }
     }
   }, [nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange]);
+
+  // Update nodes in parent component when initialNodes prop changes
+  useEffect(() => {
+    if (JSON.stringify(initialNodes) !== JSON.stringify(nodes)) {
+      setNodes(initialNodes);
+    }
+  }, [initialNodes, setNodes]);
+
+  // Update edges in parent component when initialEdges prop changes
+  useEffect(() => {
+    if (JSON.stringify(initialEdges) !== JSON.stringify(edges)) {
+      setEdges(initialEdges);
+    }
+  }, [initialEdges, setEdges]);
 
   useEffect(() => {
     // Focus the container when it's mounted to ensure keyboard events are captured
@@ -231,13 +248,14 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     console.log('[Flow] handleNodesChange called with changes:', changes);
     onNodesChangeInternal(changes);
     
-    // Use setTimeout to ensure we're getting the latest state
+    // Get the current nodes after changes
     setTimeout(() => {
-      console.log('[Flow] Notifying parent after node changes, current nodes:', nodes);
-      const updatedNodes = nodes.map(node => ({ ...node }));
-      onNodesChange(updatedNodes);
+      console.log('[Flow] Notifying parent after node changes, current nodes:', getNodes());
+      // Use getNodes() to get the latest nodes from React Flow
+      const currentNodes = getNodes();
+      onNodesChange(currentNodes);
     }, 0);
-  }, [nodes, onNodesChange, onNodesChangeInternal]);
+  }, [onNodesChange, onNodesChangeInternal, getNodes]);
 
   const handleEdgesChange = useCallback((changes: any) => {
     console.log('[Flow] handleEdgesChange called with changes:', changes);
