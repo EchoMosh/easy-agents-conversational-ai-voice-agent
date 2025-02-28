@@ -37,6 +37,9 @@ const MessageInput = memo(({
     onChange(e.target.value);
   };
 
+  // Variable selector content
+  const [showVariableSelector, setShowVariableSelector] = useState(false);
+
   return (
     <div className="flex flex-col gap-2 relative">
       <div className="relative">
@@ -58,6 +61,12 @@ const MessageInput = memo(({
           }}
         />
       </div>
+      
+      <VariableSelector
+        text={message}
+        onTextChange={onChange}
+        textareaRef={textareaRef}
+      />
     </div>
   );
 });
@@ -150,11 +159,6 @@ export const SpeakNode = memo(({ data, id }: { data: SpeakNodeData; id: string }
     
     // Update parent component
     updateNodeData(id, updatedData);
-  };
-
-  // Variable selector change handler
-  const handleVariableSelectorChange = (newText: string) => {
-    handleMessageChange(newText);
   };
 
   const addOutcome = () => {
@@ -252,7 +256,7 @@ export const SpeakNode = memo(({ data, id }: { data: SpeakNodeData; id: string }
           <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">Speak</span>
         </div>
 
-        {/* Message input - using the exact pattern from GreetingInput */}
+        {/* Message input - using MessageInput component */}
         <div className="space-y-2 mb-6">
           <Label className="text-xs font-medium text-indigo-600/75 dark:text-indigo-300/75">
             Message
@@ -260,11 +264,6 @@ export const SpeakNode = memo(({ data, id }: { data: SpeakNodeData; id: string }
           <MessageInput 
             message={message} 
             onChange={handleMessageChange}
-            textareaRef={textareaRef}
-          />
-          <VariableSelector
-            text={message}
-            onTextChange={handleVariableSelectorChange}
             textareaRef={textareaRef}
           />
         </div>
