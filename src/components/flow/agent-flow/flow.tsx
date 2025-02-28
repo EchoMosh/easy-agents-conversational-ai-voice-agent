@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
@@ -83,22 +84,34 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isValidConnection = (connection: Connection) => {
+    // Check if source and target nodes exist
     const sourceNode = nodes.find(node => node.id === connection.source);
     const targetNode = nodes.find(node => node.id === connection.target);
-
-    if (connection.source === connection.target) {
+    
+    if (!sourceNode || !targetNode) {
+      console.log('Connection invalid: Source or target node not found');
       return false;
     }
 
+    // Prevent self-connections
+    if (connection.source === connection.target) {
+      console.log('Connection invalid: Self-connection not allowed');
+      return false;
+    }
+
+    // Prevent duplicate connections
     const existingConnection = edges.find(edge => 
-      edge.target === connection.target && edge.source === connection.source
+      edge.target === connection.target && 
+      edge.source === connection.source &&
+      edge.sourceHandle === connection.sourceHandle
     );
     
     if (existingConnection) {
+      console.log('Connection invalid: Duplicate connection');
       return false;
     }
 
-    return !!(sourceNode && targetNode);
+    return true;
   };
 
   const defaultEdgeOptions = {
@@ -111,9 +124,13 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   };
 
   const onConnect = useCallback((params: Connection) => {
+    console.log('Connection attempt:', params);
+    
     if (isValidConnection(params)) {
+      console.log('Connection valid, creating edge');
+      
       const newEdge: Edge = {
-        id: `e${params.source}-${params.target}`,
+        id: `e${params.source}-${params.target}${params.sourceHandle ? `-${params.sourceHandle}` : ''}`,
         source: params.source,
         target: params.target,
         sourceHandle: params.sourceHandle,
@@ -127,10 +144,13 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       };
       
       const newEdges = addEdge(newEdge, edges);
+      console.log('New edges:', newEdges);
       setEdges(newEdges);
       onEdgesChange(newEdges);
+    } else {
+      console.log('Connection invalid');
     }
-  }, [edges, onEdgesChange, setEdges]);
+  }, [edges, onEdgesChange, setEdges, nodes]);
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
@@ -188,7 +208,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       }
 
       const newNode: Node = {
-        id: `${nodeType}-${Math.random()}`,
+        id: `${nodeType}-${Date.now().toString()}`,
         type: nodeType,
         position,
         data: newNodeData
