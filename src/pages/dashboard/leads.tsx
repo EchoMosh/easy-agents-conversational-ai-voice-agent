@@ -52,6 +52,7 @@ export default function LeadsPage() {
   const [editStatus, setEditStatus] = useState("");
   const [editPipelineId, setEditPipelineId] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   // Set up form when a lead is selected for editing
   useEffect(() => {
@@ -61,12 +62,25 @@ export default function LeadsPage() {
       setEditPhone(editingLead.phone || "");
       setEditStatus(editingLead.status);
       setEditPipelineId(editingLead.pipeline_id);
+      setEmailError("");
     }
   }, [editingLead]);
+
+  // Validate email
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   // Handle lead update
   const handleUpdateLead = async () => {
     if (!editingLead) return;
+    
+    // Validate email
+    if (!validateEmail(editEmail)) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
     
     setIsUpdating(true);
     try {
@@ -226,17 +240,29 @@ export default function LeadsPage() {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 placeholder="Lead name"
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
               <Input
                 id="email"
                 type="email" 
                 value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
+                onChange={(e) => {
+                  setEditEmail(e.target.value);
+                  if (emailError) {
+                    setEmailError(validateEmail(e.target.value) ? "" : "Please enter a valid email address");
+                  }
+                }}
+                onBlur={() => {
+                  setEmailError(validateEmail(editEmail) ? "" : "Please enter a valid email address");
+                }}
                 placeholder="Email address"
+                required
+                className={emailError ? "border-red-500" : ""}
               />
+              {emailError && <p className="text-sm text-red-500">{emailError}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
