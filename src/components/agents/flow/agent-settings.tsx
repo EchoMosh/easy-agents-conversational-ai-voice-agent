@@ -78,12 +78,43 @@ export function AgentSettings({
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
   
-  // Fetch knowledge documents
-  const { data: knowledgeDocuments, isLoading: isLoadingDocuments } = useQuery({
+  // Fetch knowledge documents with refetch capability
+  const { data: knowledgeDocuments, isLoading: isLoadingDocuments, refetch } = useQuery({
     queryKey: ['knowledgeDocuments'],
     queryFn: fetchDocuments,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always consider data stale to ensure fresh fetches
   });
+  
+  // Refetch documents when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      refetch();
+      
+      // Also fetch current agent data to get the currently selected knowledge base
+      const fetchAgentData = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('agents')
+            .select('knowledge_ids')
+            .eq('id', agentId)
+            .single();
+            
+          if (error) throw error;
+          
+          // If the agent has a knowledge base, set it in the state
+          if (data && data.knowledge_ids && data.knowledge_ids.length > 0) {
+            setKnowledgeBase(data.knowledge_ids[0]);
+          } else {
+            setKnowledgeBase("none");
+          }
+        } catch (error) {
+          console.error("Error fetching agent data:", error);
+        }
+      };
+      
+      fetchAgentData();
+    }
+  }, [open, agentId, refetch]);
   
   // Format knowledge documents for dropdown
   const knowledgeBases = React.useMemo(() => {
@@ -214,7 +245,7 @@ export function AgentSettings({
             </div>
             <div className="space-y-3">
               <Label htmlFor="knowledge">Knowledge Base</Label>
-              <Select onValueChange={setKnowledgeBase} defaultValue={knowledgeBase}>
+              <Select onValueChange={setKnowledgeBase} value={knowledgeBase}>
                 <SelectTrigger>
                   <SelectValue placeholder={isLoadingDocuments ? "Loading..." : "Select knowledge base"} />
                 </SelectTrigger>
