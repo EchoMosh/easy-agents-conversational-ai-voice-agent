@@ -71,6 +71,12 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   return mermaidString;
 }
 
+// Helper function to ensure no styling classes are in the mermaid chart
+function sanitizeMermaidChart(mermaidChart: string): string {
+  // Remove any classDef lines that might be left from previous versions
+  return mermaidChart.replace(/classDef .+/g, '');
+}
+
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -101,16 +107,18 @@ export default function AgentFlowPage() {
     mutationFn: async (flowData: FlowData) => {
       if (!id) throw new Error('No agent ID provided');
       
-      // Generate mermaid chart and console log it
-      const mermaidChartStr = generateMermaidFromFlow(flowData);
-      console.log('Mermaid Chart:', mermaidChartStr);
+      // Generate mermaid chart and ensure no styling classes are present
+      let mermaidChartStr = generateMermaidFromFlow(flowData);
+      mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
+      
+      console.log('Mermaid Chart to save:', mermaidChartStr);
       setMermaidChart(mermaidChartStr);
       
       const { error } = await supabase
         .from('agents')
         .update({ 
           flow: JSON.stringify(flowData), // Convert to string to satisfy Json type
-          mermaid_chart: mermaidChartStr // Save mermaid diagram to database
+          mermaid_chart: mermaidChartStr // Save sanitized mermaid diagram to database
         })
         .eq('id', id);
       
@@ -123,7 +131,8 @@ export default function AgentFlowPage() {
   useEffect(() => {
     if (agent?.flow) {
       const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-      const mermaidChartStr = generateMermaidFromFlow(flowData);
+      let mermaidChartStr = generateMermaidFromFlow(flowData);
+      mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       console.log('Initial Mermaid Chart:', mermaidChartStr);
       setMermaidChart(mermaidChartStr);
     }
