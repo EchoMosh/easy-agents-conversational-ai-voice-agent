@@ -173,17 +173,19 @@ export default function AgentFlowPage() {
 
   // Listen for node data updates (like message changes)
   useEffect(() => {
-    const handleNodeUpdate = (event: CustomEvent) => {
+    const handleNodeUpdate = (event: CustomEvent<{id: string; data: any}>) => {
       if (!agent?.flow) return;
       
       try {
+        console.log("Node update event received:", event.detail);
         const { id: nodeId, data: nodeData } = event.detail;
         const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
         
         // Find and update the specific node
         const updatedNodes = (currentFlow.nodes || []).map((node: FlowNode) => {
           if (node.id === nodeId) {
-            return { ...node, data: { ...node.data, ...nodeData } };
+            console.log(`Updating node ${nodeId} with new data:`, nodeData);
+            return { ...node, data: nodeData };
           }
           return node;
         });
@@ -193,7 +195,7 @@ export default function AgentFlowPage() {
           edges: currentFlow.edges || []
         };
         
-        console.log('Node data updated, saving:', flowData);
+        console.log('Node data updated, saving flow data:', flowData);
         saveFlowMutation.mutate(flowData);
       } catch (error) {
         console.error('Error handling node update:', error);

@@ -16,41 +16,50 @@ type SpeakNodeData = {
 
 export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Initialize with empty string if message is undefined
   const [message, setMessage] = useState(data.message || "");
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState(data.outcomes || []);
+  const [lastSavedMessage, setLastSavedMessage] = useState(data.message || "");
 
-  // Sync message with data when it changes from the parent
+  // Listen for changes from parent
   useEffect(() => {
-    if (data.message !== undefined && data.message !== message) {
+    if (data.message !== undefined && data.message !== message && data.message !== lastSavedMessage) {
+      console.log("Parent updated message to:", data.message);
       setMessage(data.message);
+      setLastSavedMessage(data.message);
     }
-  }, [data.message]);
+    
+    if (data.outcomes) {
+      setOutcomes(data.outcomes);
+    }
+  }, [data]);
 
-  // Sync outcomes with data when it changes from the parent
+  // Save changes when message changes
   useEffect(() => {
-    setOutcomes(data.outcomes || []);
-  }, [data.outcomes]);
-
-  // Send update event when message changes
-  useEffect(() => {
-    // Only trigger update if the message has actually changed from the initial data
-    if (message !== data.message && message !== undefined) {
-      console.log("Emitting node update for message change:", message);
-      const evt = new CustomEvent('nodeupdate', {
-        detail: {
-          id,
-          data: {
-            ...data,
-            message
+    // Debounce save to avoid too many updates
+    const timeoutId = setTimeout(() => {
+      if (message !== lastSavedMessage) {
+        console.log(`Saving message change from "${lastSavedMessage}" to "${message}"`);
+        
+        const evt = new CustomEvent('nodeupdate', {
+          detail: {
+            id,
+            data: {
+              message,
+              outcomes
+            }
           }
-        }
-      });
-      window.dispatchEvent(evt);
-    }
-  }, [message, id, data]);
+        });
+        window.dispatchEvent(evt);
+        setLastSavedMessage(message);
+      }
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timeoutId);
+  }, [message, id, outcomes, lastSavedMessage]);
 
   const addOutcome = () => {
     if (outcomes.length >= 5) return;
@@ -66,7 +75,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       detail: {
         id,
         data: {
-          ...data,
+          message,
           outcomes: newOutcomes
         }
       }
@@ -83,7 +92,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       detail: {
         id,
         data: {
-          ...data,
+          message,
           outcomes: newOutcomes
         }
       }
@@ -112,7 +121,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       detail: {
         id,
         data: {
-          ...data,
+          message,
           outcomes: updatedOutcomes
         }
       }
@@ -134,8 +143,13 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    console.log("SpeakNode handleMessageChange:", newValue);
+    console.log("SpeakNode textarea change:", newValue);
     setMessage(newValue);
+  };
+  
+  const handleVariableSelectorChange = (newText: string) => {
+    console.log("VariableSelector changed text to:", newText);
+    setMessage(newText);
   };
 
   const highlightVariables = (text: string) => {
@@ -189,10 +203,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
           </div>
           <VariableSelector
             text={message}
-            onTextChange={(text) => {
-              console.log("VariableSelector onTextChange:", text);
-              setMessage(text);
-            }}
+            onTextChange={handleVariableSelectorChange}
             textareaRef={textareaRef}
           />
         </div>
