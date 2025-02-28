@@ -29,16 +29,34 @@ export default function AgentFlowPage() {
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const { data: agent, isLoading } = useQuery({
+  console.log("Current agent ID:", agentId); // Add this for debugging
+
+  const { data: agent, isLoading, error } = useQuery({
     queryKey: ["agent", agentId],
     queryFn: async () => {
+      if (!agentId) {
+        throw new Error("Agent ID is missing");
+      }
+      
+      console.log("Fetching agent with ID:", agentId);
+      
       const { data, error } = await supabase
         .from("agents")
         .select("*")
-        .eq("id", agentId!)
+        .eq("id", agentId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+
+      if (!data) {
+        console.error("No data returned for agent ID:", agentId);
+        throw new Error("Agent not found");
+      }
+
+      console.log("Agent data retrieved:", data);
 
       let flowData;
       try {
@@ -61,6 +79,17 @@ export default function AgentFlowPage() {
     },
     enabled: !!agentId,
   });
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error in query:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load agent: " + (error instanceof Error ? error.message : "Unknown error"),
+      });
+    }
+  }, [error, toast]);
 
   const updateFlowMutation = useMutation({
     mutationFn: async (flow: FlowData) => {
@@ -202,6 +231,7 @@ export default function AgentFlowPage() {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <h2 className="text-xl font-semibold mb-2">Agent not found</h2>
+        <p className="text-muted-foreground mb-4">The agent you're looking for could not be found.</p>
         <Button variant="outline" onClick={() => navigate("/dashboard/agents")}>
           Back to Agents
         </Button>

@@ -33,7 +33,7 @@ function App() {
             <Route path="/login" element={<AuthPage />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route path="/dashboard/agents" element={<AgentsPage />} />
-              <Route path="/dashboard/agents/flow/:id" element={<AgentFlowPage />} />
+              <Route path="/dashboard/agent-flow/:agentId" element={<AgentFlowPage />} />
               <Route path="/dashboard/leads" element={<LeadsPage />} />
               <Route path="/dashboard/pipelines" element={<PipelinesPage />} />
               <Route path="/dashboard/settings" element={<SettingsPage />} />
