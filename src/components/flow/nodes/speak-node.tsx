@@ -16,37 +16,42 @@ type SpeakNodeData = {
 
 export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Initialize with empty string if message is undefined
   const [message, setMessage] = useState<string>(data.message || "");
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState<string[]>(data.outcomes || []);
 
+  // This useEffect syncs the component's state with data from the parent
+  useEffect(() => {
+    if (data.message !== undefined && data.message !== message) {
+      console.log("Syncing component state with parent data:", data.message);
+      setMessage(data.message);
+    }
+    
+    if (data.outcomes) {
+      setOutcomes(data.outcomes);
+    }
+  }, [data]);
+
   // Direct textarea change handler
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    console.log("Textarea direct change:", newValue);
+    console.log("Textarea change:", newValue);
     setMessage(newValue);
     
-    // Immediately dispatch the event to update the flow
-    dispatchUpdateEvent(newValue, outcomes);
-  };
-  
-  // Directly dispatch update event
-  const dispatchUpdateEvent = (messageText: string, outcomesList: string[]) => {
-    console.log(`Dispatching update event with message: "${messageText}"`);
-    
+    // Send the update event to React Flow
     const updateEvent = new CustomEvent('nodeupdate', {
       detail: {
         id,
         data: {
-          ...data, // preserve other data
-          message: messageText,
-          outcomes: outcomesList
+          ...data,
+          message: newValue,
+          outcomes
         }
       }
     });
-    
     window.dispatchEvent(updateEvent);
   };
 
@@ -54,7 +59,19 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const handleVariableSelectorChange = (newText: string) => {
     console.log("Variable selector change:", newText);
     setMessage(newText);
-    dispatchUpdateEvent(newText, outcomes);
+    
+    // Send update event for variable insertion
+    const updateEvent = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          message: newText,
+          outcomes
+        }
+      }
+    });
+    window.dispatchEvent(updateEvent);
   };
 
   const addOutcome = () => {
@@ -66,14 +83,36 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setNewOutcome('');
     setShowOutcomeDialog(false);
     
-    dispatchUpdateEvent(message, newOutcomes);
+    // Send update event
+    const updateEvent = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          message,
+          outcomes: newOutcomes
+        }
+      }
+    });
+    window.dispatchEvent(updateEvent);
   };
 
   const removeOutcome = (index: number) => {
     const newOutcomes = outcomes.filter((_, i) => i !== index);
     setOutcomes(newOutcomes);
     
-    dispatchUpdateEvent(message, newOutcomes);
+    // Send update event
+    const updateEvent = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          message,
+          outcomes: newOutcomes
+        }
+      }
+    });
+    window.dispatchEvent(updateEvent);
   };
 
   const startEditing = (index: number) => {
@@ -92,7 +131,18 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setNewOutcome('');
     setShowOutcomeDialog(false);
     
-    dispatchUpdateEvent(message, updatedOutcomes);
+    // Send update event
+    const updateEvent = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          message,
+          outcomes: updatedOutcomes
+        }
+      }
+    });
+    window.dispatchEvent(updateEvent);
   };
 
   const cancelEdit = () => {
