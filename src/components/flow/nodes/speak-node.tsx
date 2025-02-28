@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Pencil, MessageSquare } from 'lucide-react';
-import { useState, useRef, useEffect, useContext } from 'react';
+import { useState, useRef, useEffect, useContext, memo } from 'react';
 import { VariableSelector } from './variable-mention/variable-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,106 @@ type SpeakNodeData = {
   outcomes?: string[];
 };
 
-export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
+// Memoized message input component to reduce re-renders
+const MessageInput = memo(({ 
+  message, 
+  onChange, 
+  textareaRef 
+}: { 
+  message: string; 
+  onChange: (value: string) => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement>;
+}) => {
+  // Format message to highlight variables
+  const highlightVariables = (text: string) => {
+    return text.replace(
+      /{{([^}]+)}}/g,
+      '<span class="bg-indigo-100/40 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
+    );
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onChange(e.target.value);
+  };
+
+  return (
+    <div className="flex flex-col gap-2 relative">
+      <div className="relative">
+        <Textarea 
+          ref={textareaRef}
+          value={message}
+          onChange={handleTextareaChange}
+          className="nodrag text-sm resize-y min-h-[100px] bg-indigo-50/10 border-indigo-100/20 shadow-lg backdrop-blur-xl rounded-xl focus-visible:ring-indigo-300/30 focus-visible:border-indigo-300/30"
+          placeholder="Type @ to insert a variable..."
+          style={{ color: 'transparent', caretColor: '#6366f1' }}
+        />
+        <div 
+          className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap break-words text-gray-900 dark:text-white/90"
+          dangerouslySetInnerHTML={{ 
+            __html: highlightVariables(message)
+              .split('\n')
+              .map(line => line || '&#8203;')
+              .join('<br/>') 
+          }}
+        />
+      </div>
+    </div>
+  );
+});
+
+MessageInput.displayName = 'MessageInput';
+
+// Memoized outcome item to reduce re-renders
+const OutcomeItem = memo(({ 
+  outcome, 
+  index, 
+  onRemove, 
+  onEdit 
+}: { 
+  outcome: string; 
+  index: number; 
+  onRemove: (index: number) => void; 
+  onEdit: (index: number) => void; 
+}) => {
+  return (
+    <div className="group relative animate-fade-in">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 rounded-xl py-2.5 px-4 text-sm border border-indigo-100/50 dark:border-indigo-800/50 shadow-sm">
+          {outcome}
+        </div>
+        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg"
+            onClick={() => onEdit(index)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg"
+            onClick={() => onRemove(index)}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`outcome-${index}`}
+          className="!w-2 !h-4 !bg-indigo-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-indigo-500"
+        />
+      </div>
+    </div>
+  );
+});
+
+OutcomeItem.displayName = 'OutcomeItem';
+
+// Main component with memo to prevent unnecessary re-renders
+export const SpeakNode = memo(({ data, id }: { data: SpeakNodeData; id: string }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [message, setMessage] = useState<string>(data.message || "");
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
@@ -37,33 +136,25 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     }
   }, [data, message, outcomes]);
 
-  // Handle text change with immediate update
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
+  // Handle message change with immediate local update
+  const handleMessageChange = (newValue: string) => {
+    // Update local state immediately for optimistic UI
     setMessage(newValue);
     
-    // Immediately notify parent of change
+    // Build updated data object
     const updatedData = {
       ...data,
       message: newValue,
       outcomes: outcomes
     };
     
+    // Update parent component
     updateNodeData(id, updatedData);
   };
 
   // Variable selector change handler
   const handleVariableSelectorChange = (newText: string) => {
-    setMessage(newText);
-    
-    // Create a complete data object for the update
-    const updatedData = {
-      ...data,
-      message: newText,
-      outcomes: outcomes
-    };
-    
-    updateNodeData(id, updatedData);
+    handleMessageChange(newText);
   };
 
   const addOutcome = () => {
@@ -71,11 +162,13 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     if (!newOutcome.trim()) return;
     
     const newOutcomes = [...outcomes, newOutcome];
+    
+    // Optimistic UI update
     setOutcomes(newOutcomes);
     setNewOutcome('');
     setShowOutcomeDialog(false);
     
-    // Create a complete data object for the update
+    // Update parent
     const updatedData = {
       ...data,
       message: message,
@@ -87,9 +180,11 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
 
   const removeOutcome = (index: number) => {
     const newOutcomes = outcomes.filter((_, i) => i !== index);
+    
+    // Optimistic UI update
     setOutcomes(newOutcomes);
     
-    // Create a complete data object for the update
+    // Update parent
     const updatedData = {
       ...data,
       message: message,
@@ -110,12 +205,14 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     
     const updatedOutcomes = [...outcomes];
     updatedOutcomes[editingIndex] = newOutcome;
+    
+    // Optimistic UI update
     setOutcomes(updatedOutcomes);
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(false);
     
-    // Create a complete data object for the update
+    // Update parent
     const updatedData = {
       ...data,
       message: message,
@@ -135,14 +232,6 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(true);
-  };
-
-  // Format message to highlight variables - copied from GreetingInput pattern
-  const highlightVariables = (text: string) => {
-    return text.replace(
-      /{{([^}]+)}}/g,
-      '<span class="bg-indigo-100/40 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
-    );
   };
 
   return (
@@ -168,32 +257,16 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
           <Label className="text-xs font-medium text-indigo-600/75 dark:text-indigo-300/75">
             Message
           </Label>
-          <div className="flex flex-col gap-2 relative">
-            <div className="relative">
-              <Textarea 
-                ref={textareaRef}
-                value={message}
-                onChange={handleTextareaChange}
-                className="nodrag text-sm resize-y min-h-[100px] bg-indigo-50/10 border-indigo-100/20 shadow-lg backdrop-blur-xl rounded-xl focus-visible:ring-indigo-300/30 focus-visible:border-indigo-300/30"
-                placeholder="Type @ to insert a variable..."
-                style={{ color: 'transparent', caretColor: '#6366f1' }}
-              />
-              <div 
-                className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap break-words text-gray-900 dark:text-white/90"
-                dangerouslySetInnerHTML={{ 
-                  __html: highlightVariables(message)
-                    .split('\n')
-                    .map(line => line || '&#8203;')
-                    .join('<br/>') 
-                }}
-              />
-            </div>
-            <VariableSelector
-              text={message}
-              onTextChange={handleVariableSelectorChange}
-              textareaRef={textareaRef}
-            />
-          </div>
+          <MessageInput 
+            message={message} 
+            onChange={handleMessageChange}
+            textareaRef={textareaRef}
+          />
+          <VariableSelector
+            text={message}
+            onTextChange={handleVariableSelectorChange}
+            textareaRef={textareaRef}
+          />
         </div>
 
         {/* Outcomes section */}
@@ -217,37 +290,13 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
           {/* Outcomes list */}
           <div className="space-y-2">
             {outcomes.map((outcome, index) => (
-              <div key={index} className="group relative animate-fade-in">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 rounded-xl py-2.5 px-4 text-sm border border-indigo-100/50 dark:border-indigo-800/50 shadow-sm">
-                    {outcome}
-                  </div>
-                  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg"
-                      onClick={() => startEditing(index)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg"
-                      onClick={() => removeOutcome(index)}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  <Handle
-                    type="source"
-                    position={Position.Right}
-                    id={`outcome-${index}`}
-                    className="!w-2 !h-4 !bg-indigo-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-indigo-500"
-                  />
-                </div>
-              </div>
+              <OutcomeItem 
+                key={`${outcome}-${index}`}
+                outcome={outcome}
+                index={index}
+                onRemove={removeOutcome}
+                onEdit={startEditing}
+              />
             ))}
           </div>
         </div>
@@ -302,4 +351,6 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       </Dialog>
     </div>
   );
-}
+});
+
+SpeakNode.displayName = 'SpeakNode';
