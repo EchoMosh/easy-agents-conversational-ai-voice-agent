@@ -1,5 +1,5 @@
 
-import { FileText, Download, Trash2 } from "lucide-react";
+import { FileText, Link, ExternalLink, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KnowledgeDocument } from "@/types/supabase-extended";
 
@@ -16,11 +16,44 @@ export function DocumentItem({ document, onDownload, onDelete }: DocumentItemPro
     else return (bytes / 1048576).toFixed(1) + " MB";
   };
 
+  // Determine which icon to display based on document type or extension
+  const getDocumentIcon = () => {
+    // Check if it's a URL type
+    if (document.source_type === 'url') {
+      return <ExternalLink className="h-6 w-6" />;
+    }
+    
+    // If it's a text entry
+    if (document.source_type === 'text') {
+      return <FileText className="h-6 w-6" />;
+    }
+    
+    // For file uploads, check the extension if available
+    if (document.file_path) {
+      const extension = document.file_path.split('.').pop()?.toLowerCase();
+      
+      if (extension === 'pdf') {
+        return <File className="h-6 w-6" />;
+      }
+      
+      if (['doc', 'docx', 'txt', 'rtf'].includes(extension || '')) {
+        return <FileText className="h-6 w-6" />;
+      }
+      
+      if (['html', 'htm'].includes(extension || '')) {
+        return <Link className="h-6 w-6" />;
+      }
+    }
+    
+    // Default icon
+    return <FileText className="h-6 w-6" />;
+  };
+
   return (
     <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
       <div className="flex items-center space-x-4">
         <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-          <FileText className="h-6 w-6" />
+          {getDocumentIcon()}
         </div>
         <div className="space-y-1">
           <h3 className="font-medium">{document.title}</h3>
