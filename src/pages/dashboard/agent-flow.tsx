@@ -23,7 +23,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   // Map to store node ID mappings
   const nodeIdMap = new Map<string, string>();
   
-  // Create simple sequential IDs for the mermaid chart
+  // Create simple sequential IDs for the mermaid chart - using type with sequential counter
   flowData.nodes.forEach((node: FlowNode, index: number) => {
     // Extract base node type without any numeric part
     const baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
@@ -38,6 +38,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     let nodeLabel = 'Node';
     
     if (node.data) {
+      console.log(`Node ${node.id} data:`, node.data);
       if (node.type === 'speakNode' && node.data.message) {
         nodeLabel = node.data.message.toString();
       } else if (node.type === 'greetingNode' && node.data.greeting) {
@@ -135,31 +136,48 @@ export default function AgentFlowPage() {
     mutationFn: async (flowData: FlowData) => {
       if (!id) throw new Error('No agent ID provided');
       
-      // Deep clone to avoid reference issues
+      // Deep clone to avoid reference issues and ensure proper serialization
       const clonedData = JSON.parse(JSON.stringify(flowData));
+      
+      console.log("SAVING FLOW DATA TO SUPABASE:", clonedData);
       
       // Generate mermaid chart and ensure no styling classes are present
       let mermaidChartStr = generateMermaidFromFlow(clonedData);
       mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       
       console.log('Mermaid Chart to save:', mermaidChartStr);
-      console.log('Saving flow data:', JSON.stringify(clonedData));
       setMermaidChart(mermaidChartStr);
       
-      const { error } = await supabase
-        .from('agents')
-        .update({ 
-          flow: clonedData, // Store the cloned data
-          mermaid_chart: mermaidChartStr // Save sanitized mermaid diagram to database
-        })
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error saving flow data:', error);
+      try {
+        const { data, error } = await supabase
+          .from('agents')
+          .update({ 
+            flow: clonedData, // Store the cloned data
+            mermaid_chart: mermaidChartStr // Save sanitized mermaid diagram to database
+          })
+          .eq('id', id)
+          .select();
+        
+        if (error) {
+          console.error('Error saving flow data:', error);
+          throw error;
+        }
+        
+        console.log("Supabase update response:", data);
+        
+        // Show success toast
+        toast({
+          title: "Flow updated",
+          description: "Your changes have been saved",
+          variant: "default"
+        });
+        
+        await refetch();
+        return data;
+      } catch (error) {
+        console.error('Error in saveFlowMutation:', error);
         throw error;
       }
-      
-      await refetch();
     }
   });
 
@@ -191,8 +209,11 @@ export default function AgentFlowPage() {
         // Parse flow if it's a string
         const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
         
+        // Create a deep copy to avoid reference issues
+        const flowCopy = JSON.parse(JSON.stringify(currentFlow));
+        
         // Find and update the specific node
-        const updatedNodes = (currentFlow.nodes || []).map((node: FlowNode) => {
+        const updatedNodes = (flowCopy.nodes || []).map((node: FlowNode) => {
           if (node.id === nodeId) {
             console.log(`Updating node ${nodeId} with new data:`, nodeData);
             return { 
@@ -205,7 +226,7 @@ export default function AgentFlowPage() {
         
         const flowData = {
           nodes: updatedNodes,
-          edges: currentFlow.edges || []
+          edges: flowCopy.edges || []
         };
         
         console.log('Node data updated, saving flow data:', flowData);
@@ -233,10 +254,15 @@ export default function AgentFlowPage() {
     if (!agent?.flow) return;
     try {
       const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+      
+      // Create a deep copy to avoid reference issues
+      const newNodesClone = JSON.parse(JSON.stringify(newNodes));
+      
       const flowData: FlowData = {
-        nodes: newNodes as FlowNode[],
+        nodes: newNodesClone as FlowNode[],
         edges: currentFlow.edges || []
       };
+      
       console.log('Nodes changed, updating flow:', flowData);
       saveFlowMutation.mutate(flowData);
     } catch (error) {
@@ -253,10 +279,15 @@ export default function AgentFlowPage() {
     if (!agent?.flow) return;
     try {
       const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+      
+      // Create a deep copy to avoid reference issues
+      const newEdgesClone = JSON.parse(JSON.stringify(newEdges));
+      
       const flowData: FlowData = {
         nodes: currentFlow.nodes || [],
-        edges: newEdges as FlowEdge[]
+        edges: newEdgesClone as FlowEdge[]
       };
+      
       console.log('Edges changed, updating flow:', flowData);
       saveFlowMutation.mutate(flowData);
     } catch (error) {

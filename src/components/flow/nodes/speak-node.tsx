@@ -22,6 +22,11 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState<string[]>(data.outcomes || []);
+  
+  // Log whenever the data prop changes to debug flow
+  useEffect(() => {
+    console.log("SpeakNode received new data prop:", data);
+  }, [data]);
 
   // This useEffect syncs the component's state with data from the parent
   useEffect(() => {
@@ -33,7 +38,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     if (data.outcomes) {
       setOutcomes(data.outcomes);
     }
-  }, [data]);
+  }, [data, message]);
 
   // Direct textarea change handler
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -41,15 +46,20 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     console.log("Textarea change:", newValue);
     setMessage(newValue);
     
+    // Create a complete data object for the update
+    const updatedData = {
+      ...data,
+      message: newValue,
+      outcomes: outcomes
+    };
+    
+    console.log("Sending node update with data:", updatedData);
+    
     // Send the update event to React Flow
     const updateEvent = new CustomEvent('nodeupdate', {
       detail: {
         id,
-        data: {
-          ...data,
-          message: newValue,
-          outcomes
-        }
+        data: updatedData
       }
     });
     window.dispatchEvent(updateEvent);
@@ -60,15 +70,20 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     console.log("Variable selector change:", newText);
     setMessage(newText);
     
+    // Create a complete data object for the update
+    const updatedData = {
+      ...data,
+      message: newText,
+      outcomes: outcomes
+    };
+    
+    console.log("Sending node update with data:", updatedData);
+    
     // Send update event for variable insertion
     const updateEvent = new CustomEvent('nodeupdate', {
       detail: {
         id,
-        data: {
-          ...data,
-          message: newText,
-          outcomes
-        }
+        data: updatedData
       }
     });
     window.dispatchEvent(updateEvent);
@@ -83,15 +98,18 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setNewOutcome('');
     setShowOutcomeDialog(false);
     
+    // Create a complete data object for the update
+    const updatedData = {
+      ...data,
+      message: message,
+      outcomes: newOutcomes
+    };
+    
     // Send update event
     const updateEvent = new CustomEvent('nodeupdate', {
       detail: {
         id,
-        data: {
-          ...data,
-          message,
-          outcomes: newOutcomes
-        }
+        data: updatedData
       }
     });
     window.dispatchEvent(updateEvent);
@@ -101,15 +119,18 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     const newOutcomes = outcomes.filter((_, i) => i !== index);
     setOutcomes(newOutcomes);
     
+    // Create a complete data object for the update
+    const updatedData = {
+      ...data,
+      message: message,
+      outcomes: newOutcomes
+    };
+    
     // Send update event
     const updateEvent = new CustomEvent('nodeupdate', {
       detail: {
         id,
-        data: {
-          ...data,
-          message,
-          outcomes: newOutcomes
-        }
+        data: updatedData
       }
     });
     window.dispatchEvent(updateEvent);
@@ -131,15 +152,18 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setNewOutcome('');
     setShowOutcomeDialog(false);
     
+    // Create a complete data object for the update
+    const updatedData = {
+      ...data,
+      message: message,
+      outcomes: updatedOutcomes
+    };
+    
     // Send update event
     const updateEvent = new CustomEvent('nodeupdate', {
       detail: {
         id,
-        data: {
-          ...data,
-          message,
-          outcomes: updatedOutcomes
-        }
+        data: updatedData
       }
     });
     window.dispatchEvent(updateEvent);
