@@ -91,8 +91,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
-  
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Function to update node data - will be provided through context
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
@@ -188,6 +186,23 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       flowContainerRef.current.focus();
     }
   }, []);
+
+  // Handle clicks outside the widget panel to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showWidgets && 
+          widgetButtonRef.current && 
+          !widgetButtonRef.current.contains(event.target as Node) &&
+          !document.querySelector('.widget-panel')?.contains(event.target as Node)) {
+        setShowWidgets(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showWidgets]);
 
   const isValidConnection = (connection: Connection) => {
     // Check if source and target nodes exist
@@ -326,22 +341,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     }
   }, [screenToFlowPosition, setNodes, nodes, onNodesChange]);
 
-  const handleMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    hoverTimeoutRef.current = setTimeout(() => {
-      setShowWidgets(true);
-    }, 150);
-  };
-
-  const handleMouseLeave = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    hoverTimeoutRef.current = setTimeout(() => {
-      setShowWidgets(false);
-    }, 300);
+  const toggleWidgetPanel = () => {
+    setShowWidgets(prev => !prev);
   };
 
   return (
@@ -397,26 +398,17 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
               maskColor="rgba(0, 0, 0, 0.05)"
             />
             <Panel position="bottom-left" className="space-y-2">
-              <div 
-                className="relative"
-                onMouseLeave={handleMouseLeave}
-              >
+              <div className="relative">
                 <button
                   ref={widgetButtonRef}
-                  onClick={() => setShowWidgets(!showWidgets)}
-                  onMouseEnter={handleMouseEnter}
+                  onClick={toggleWidgetPanel}
                   className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl hover:bg-primary/90"
                 >
                   <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
                 </button>
                 {showWidgets && (
                   <div 
-                    className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
-                    onMouseEnter={() => {
-                      if (hoverTimeoutRef.current) {
-                        clearTimeout(hoverTimeoutRef.current);
-                      }
-                    }}
+                    className="widget-panel absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
                   >
                     <TooltipProvider>
                       {widgets.map((widget) => (
