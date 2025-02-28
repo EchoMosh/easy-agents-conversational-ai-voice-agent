@@ -18,6 +18,10 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     return 'graph TD\n  EmptyFlow[Empty Flow]';
   }
 
+  if (flowData.nodes.length === 0) {
+    return 'graph TD\n  EmptyFlow[Empty Flow]';
+  }
+
   let mermaidString = 'graph TD\n';
   
   // Map to store node ID mappings
@@ -63,6 +67,8 @@ function generateMermaidFromFlow(flowData: FlowData): string {
         }
       } else if (node.type === 'triggerNode' && node.data.platform) {
         nodeLabel = String(node.data.platform);
+      } else if (node.type === 'webhookNode') {
+        nodeLabel = node.data.url ? `Webhook: ${node.data.url}` : 'Webhook';
       } else if (node.type) {
         nodeLabel = node.type;
       }
@@ -268,7 +274,6 @@ export default function AgentFlowPage() {
       saveFlowMutation.mutate(flowData);
     } catch (error) {
       console.error('[AgentFlowPage] Error updating nodes:', error);
-      // Removed toast for errors too
     }
   }, [agent, saveFlowMutation]);
 
@@ -298,7 +303,6 @@ export default function AgentFlowPage() {
       saveFlowMutation.mutate(flowData);
     } catch (error) {
       console.error('[AgentFlowPage] Error updating edges:', error);
-      // Removed toast for errors too
     }
   }, [agent, saveFlowMutation]);
 
