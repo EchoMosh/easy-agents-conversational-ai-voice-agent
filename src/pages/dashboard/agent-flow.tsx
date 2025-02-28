@@ -25,8 +25,11 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   
   // Create simple sequential IDs for the mermaid chart
   flowData.nodes.forEach((node: FlowNode, index: number) => {
+    // Extract base node type without numeric part
+    const baseNodeType = node.type?.split('-')[0] || 'node';
+    
     // Create simple node ID like n1, n2, etc.
-    const simpleId = `n${index + 1}`;
+    const simpleId = `${baseNodeType}-${index + 1}`;
     nodeIdMap.set(node.id, simpleId);
   });
   
