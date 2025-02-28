@@ -167,7 +167,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
               }`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm relative group ${
+                className={`max-w-[50%] rounded-2xl px-4 py-2 shadow-sm relative group ${
                   message.role === "user"
                     ? "bg-blue-500 text-white rounded-br-none"
                     : message.feedback === "negative"
@@ -258,7 +258,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
           
           {isTyping && (
             <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-2xl px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-bl-none">
+              <div className="max-w-[50%] rounded-2xl px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-bl-none">
                 <div className="flex space-x-1 h-5 items-center justify-center">
                   <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
                   <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: "150ms" }}></div>
