@@ -20,8 +20,8 @@ export default function KnowledgePage() {
   };
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col space-y-6">
+    <div className="flex flex-col w-full">
+      <div className="flex flex-col space-y-6 w-full">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Knowledge Base</h1>
           <Button onClick={() => setIsDialogOpen(true)}>
@@ -30,7 +30,7 @@ export default function KnowledgePage() {
           </Button>
         </div>
         
-        <Card>
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-xl">Your Knowledge Base</CardTitle>
             <CardDescription>
