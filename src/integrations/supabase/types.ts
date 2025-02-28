@@ -9,10 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_knowledge: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          id: string
+          knowledge_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          knowledge_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          knowledge_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_knowledge_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_knowledge_knowledge_id_fkey"
+            columns: ["knowledge_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           created_at: string
           flow: Json | null
+          humor_level: number | null
           id: string
           interaction_type: string[]
           is_active: boolean | null
@@ -27,6 +64,7 @@ export type Database = {
         Insert: {
           created_at?: string
           flow?: Json | null
+          humor_level?: number | null
           id?: string
           interaction_type?: string[]
           is_active?: boolean | null
@@ -41,6 +79,7 @@ export type Database = {
         Update: {
           created_at?: string
           flow?: Json | null
+          humor_level?: number | null
           id?: string
           interaction_type?: string[]
           is_active?: boolean | null
