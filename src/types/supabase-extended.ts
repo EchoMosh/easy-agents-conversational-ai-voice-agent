@@ -12,15 +12,3 @@ export interface KnowledgeDocument {
   created_at: string;
   updated_at: string;
 }
-
-export interface ExtendedDatabase extends Database {
-  public: {
-    Tables: {
-      knowledge_documents: {
-        Row: KnowledgeDocument;
-        Insert: Omit<KnowledgeDocument, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<KnowledgeDocument, 'id' | 'created_at' | 'updated_at'>>;
-      };
-    } & Database['public']['Tables'];
-  };
-}
