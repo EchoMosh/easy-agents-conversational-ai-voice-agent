@@ -27,16 +27,27 @@ const MessageInput = memo(({
   textareaRef: React.RefObject<HTMLTextAreaElement>;
 }) => {
   // Format message to highlight variables
-  const highlightVariables = (text: string) => {
-    return text.replace(
-      /{{([^}]+)}}/g,
-      '<span class="bg-indigo-100/40 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
-    );
-  };
+  const highlightVariables = useMemo(() => {
+    return (text: string) => {
+      if (!text) return '';
+      
+      return text.replace(
+        /{{([^}]+)}}/g,
+        '<span class="bg-indigo-100/40 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
+      );
+    };
+  }, []);
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e.target.value);
   };
+
+  // Ensure textarea synchronizes with the value prop
+  useEffect(() => {
+    if (textareaRef.current && textareaRef.current.value !== message) {
+      textareaRef.current.value = message;
+    }
+  }, [message, textareaRef]);
 
   // Use debounced version for the highlighted HTML to reduce processing on each keystroke
   const debouncedMessage = useDebounce(message, 50);
@@ -47,7 +58,7 @@ const MessageInput = memo(({
       .split('\n')
       .map(line => line || '&#8203;')
       .join('<br/>');
-  }, [debouncedMessage]);
+  }, [debouncedMessage, highlightVariables]);
 
   return (
     <div className="flex flex-col gap-2 relative">
