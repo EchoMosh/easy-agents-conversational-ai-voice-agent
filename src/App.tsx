@@ -15,7 +15,7 @@ import PipelinesPage from "@/pages/dashboard/pipelines";
 import SettingsPage from "@/pages/dashboard/settings";
 import ProfilePage from "@/pages/dashboard/profile";
 import ChatsPage from "@/pages/dashboard/chats";
-import ChatPage from "@/pages/dashboard/chat";
+import { ChatPage } from "@/pages/dashboard/chat"; // Fixed import to use named export
 import KnowledgePage from "@/pages/dashboard/knowledge";
 
 function App() {

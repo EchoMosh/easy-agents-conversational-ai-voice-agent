@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import { KnowledgeDocument } from "@/types/supabase-extended";
 import { fetchDocuments, downloadDocument, deleteDocument } from "@/utils/knowledge-api";
 import { SearchBar } from "./search-bar";
@@ -65,7 +66,8 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
       const a = document.createElement("a");
       a.href = url;
       a.download = document.title;
-      document.body.appendChild(a);
+      // Use the global document object instead of the KnowledgeDocument
+      window.document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
       a.remove();
