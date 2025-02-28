@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Pencil, MessageSquare } from 'lucide-react';
-import { useState, useRef, useEffect, useContext, useMemo } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { VariableSelector } from './variable-mention/variable-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -49,13 +49,11 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: outcomes
     };
     
-    console.log(`[SpeakNode ${id}] Updating message:`, newValue);
     updateNodeData(id, updatedData);
   };
 
   // Variable selector change handler
   const handleVariableSelectorChange = (newText: string) => {
-    console.log(`[SpeakNode ${id}] Variable selector change:`, newText);
     setMessage(newText);
     
     // Create a complete data object for the update
@@ -139,13 +137,11 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setShowOutcomeDialog(true);
   };
 
-  // Format message to highlight variables
-  const getHighlightedMessage = (text: string) => {
-    if (!text) return '';
-    
+  // Format message to highlight variables - copied from GreetingInput pattern
+  const highlightVariables = (text: string) => {
     return text.replace(
-      /{{([^}]+)}}/g, 
-      '<span class="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md font-medium">{{$1}}</span>'
+      /{{([^}]+)}}/g,
+      '<span class="bg-indigo-100/40 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
     );
   };
 
@@ -167,25 +163,37 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
           <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">Speak</span>
         </div>
 
-        {/* Message input */}
+        {/* Message input - using the exact pattern from GreetingInput */}
         <div className="space-y-2 mb-6">
           <Label className="text-xs font-medium text-indigo-600/75 dark:text-indigo-300/75">
             Message
           </Label>
-          <div className="relative rounded-xl backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 border border-indigo-100/50 dark:border-indigo-800/50 shadow-[0_2px_4px_-2px_rgba(79,70,229,0.1)]">
-            <Textarea 
-              ref={textareaRef}
-              value={message}
-              onChange={handleTextareaChange}
-              className="nodrag text-sm resize-y min-h-[100px] bg-transparent border-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 text-gray-900 dark:text-white"
-              placeholder="Type @ to insert a variable..."
+          <div className="flex flex-col gap-2 relative">
+            <div className="relative">
+              <Textarea 
+                ref={textareaRef}
+                value={message}
+                onChange={handleTextareaChange}
+                className="nodrag text-sm resize-y min-h-[100px] bg-indigo-50/10 border-indigo-100/20 shadow-lg backdrop-blur-xl rounded-xl focus-visible:ring-indigo-300/30 focus-visible:border-indigo-300/30"
+                placeholder="Type @ to insert a variable..."
+                style={{ color: 'transparent', caretColor: '#6366f1' }}
+              />
+              <div 
+                className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap break-words text-gray-900 dark:text-white/90"
+                dangerouslySetInnerHTML={{ 
+                  __html: highlightVariables(message)
+                    .split('\n')
+                    .map(line => line || '&#8203;')
+                    .join('<br/>') 
+                }}
+              />
+            </div>
+            <VariableSelector
+              text={message}
+              onTextChange={handleVariableSelectorChange}
+              textareaRef={textareaRef}
             />
           </div>
-          <VariableSelector
-            text={message}
-            onTextChange={handleVariableSelectorChange}
-            textareaRef={textareaRef}
-          />
         </div>
 
         {/* Outcomes section */}
