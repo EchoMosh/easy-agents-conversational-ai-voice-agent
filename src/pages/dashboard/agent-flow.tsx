@@ -174,12 +174,7 @@ export default function AgentFlowPage() {
         
         console.log("[AgentFlowPage] Supabase update response:", data);
         
-        // Show success toast
-        toast({
-          title: "Flow updated",
-          description: "Your changes have been saved",
-          variant: "default"
-        });
+        // Removed toast notification
         
         await refetch();
         return data;
@@ -233,13 +228,9 @@ export default function AgentFlowPage() {
       saveFlowMutation.mutate(flowData);
     } catch (error) {
       console.error('[AgentFlowPage] Error updating nodes:', error);
-      toast({
-        title: 'Error updating flow',
-        description: 'Unable to update nodes in the flow',
-        variant: 'destructive'
-      });
+      // Removed toast for errors too
     }
-  }, [agent, saveFlowMutation, toast]);
+  }, [agent, saveFlowMutation]);
 
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
     if (!agent?.flow) {
@@ -267,13 +258,9 @@ export default function AgentFlowPage() {
       saveFlowMutation.mutate(flowData);
     } catch (error) {
       console.error('[AgentFlowPage] Error updating edges:', error);
-      toast({
-        title: 'Error updating flow',
-        description: 'Unable to update connections in the flow',
-        variant: 'destructive'
-      });
+      // Removed toast for errors too
     }
-  }, [agent, saveFlowMutation, toast]);
+  }, [agent, saveFlowMutation]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => {
     if (!id) return;
