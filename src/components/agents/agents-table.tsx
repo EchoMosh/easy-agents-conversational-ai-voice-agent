@@ -27,7 +27,7 @@ interface AgentsTableProps {
   onDelete: (id: string) => Promise<void>;
 }
 
-export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
+export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
@@ -70,6 +70,17 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
     }
   };
 
+  if (agents.length === 0) {
+    return (
+      <div className="text-center p-8 border rounded-lg bg-muted/20">
+        <h3 className="text-xl font-medium mb-2">No agents found</h3>
+        <p className="text-muted-foreground mb-4">
+          Create your first agent to get started
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full relative">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -84,13 +95,13 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                       alt={agent.name} 
                     />
                     <AvatarFallback>
-                      {agent.name.substring(0, 2).toUpperCase()}
+                      {agent.name ? agent.name.substring(0, 2).toUpperCase() : "AG"}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <CardTitle className="text-xl font-semibold">{agent.name}</CardTitle>
                     <CardDescription className="capitalize">
-                      {agent.role.replace('_', ' ')}
+                      {agent.role ? agent.role.replace('_', ' ') : "Assistant"}
                     </CardDescription>
                   </div>
                 </div>
@@ -157,7 +168,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
                 
                 <div className="flex items-center text-xs text-muted-foreground">
                   <Fingerprint className="w-3 h-3 mr-1" />
-                  <span className="font-mono">{agent.id.substring(0, 8)}</span>
+                  <span className="font-mono">{agent.id ? agent.id.substring(0, 8) : "N/A"}</span>
                 </div>
               </div>
               
@@ -172,7 +183,7 @@ export function AgentsTable({ agents, onDelete }: AgentsTableProps) {
             </CardContent>
             <CardFooter className="text-sm text-muted-foreground pt-0 border-t">
               <div className="flex w-full justify-between items-center">
-                <span>Created {new Date(agent.created_at).toLocaleDateString()}</span>
+                <span>Created {agent.created_at ? new Date(agent.created_at).toLocaleDateString() : "Recently"}</span>
                 <Button 
                   variant="outline" 
                   size="sm" 

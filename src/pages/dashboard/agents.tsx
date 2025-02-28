@@ -21,60 +21,74 @@ const AgentsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: agents, isLoading } = useQuery({
+  const { data: agents = [], isLoading } = useQuery({
     queryKey: ['agents'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) throw new Error('Not authenticated');
-      
-      const { data, error } = await supabase
-        .from('agents')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) throw new Error('Not authenticated');
+        
+        const { data, error } = await supabase
+          .from('agents')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load agents",
-        });
-        throw error;
-      }
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load agents",
+          });
+          throw error;
+        }
 
-      console.log('Raw agent data from database:', data);
+        console.log('Raw agent data from database:', data);
 
-      return (data || []).map(agent => {
-        let flowData;
-        try {
-          if (typeof agent.flow === 'string') {
-            flowData = JSON.parse(agent.flow);
-          } else if (agent.flow && typeof agent.flow === 'object') {
-            flowData = agent.flow;
-          }
+        return (data || []).map(agent => {
+          let flowData;
+          try {
+            if (typeof agent.flow === 'string') {
+              flowData = JSON.parse(agent.flow);
+            } else if (agent.flow && typeof agent.flow === 'object') {
+              flowData = agent.flow;
+            } else {
+              // Default empty flow if none exists
+              flowData = { nodes: [], edges: [] };
+            }
 
-          // Ensure we have a valid flow object with nodes and edges
-          if (flowData && (flowData.nodes || flowData.edges)) {
-            console.log(`Valid flow data found for agent ${agent.id}:`, flowData);
-            return {
-              ...agent,
-              flow: {
-                nodes: flowData.nodes || [],
-                edges: flowData.edges || []
-              }
-            };
-          } else if (flowData?.flow && (flowData.flow.nodes || flowData.flow.edges)) {
-            // Handle nested flow data
-            console.log(`Nested flow data found for agent ${agent.id}:`, flowData.flow);
-            return {
-              ...agent,
-              flow: {
-                nodes: flowData.flow.nodes || [],
-                edges: flowData.flow.edges || []
-              }
-            };
-          } else {
-            console.log(`No valid flow data found for agent ${agent.id}`);
+            // Ensure we have a valid flow object with nodes and edges
+            if (flowData && (flowData.nodes || flowData.edges)) {
+              console.log(`Valid flow data found for agent ${agent.id}:`, flowData);
+              return {
+                ...agent,
+                flow: {
+                  nodes: flowData.nodes || [],
+                  edges: flowData.edges || []
+                }
+              };
+            } else if (flowData?.flow && (flowData.flow.nodes || flowData.flow.edges)) {
+              // Handle nested flow data
+              console.log(`Nested flow data found for agent ${agent.id}:`, flowData.flow);
+              return {
+                ...agent,
+                flow: {
+                  nodes: flowData.flow.nodes || [],
+                  edges: flowData.flow.edges || []
+                }
+              };
+            } else {
+              console.log(`No valid flow data found for agent ${agent.id}`);
+              return {
+                ...agent,
+                flow: {
+                  nodes: [],
+                  edges: []
+                }
+              };
+            }
+          } catch (e) {
+            console.error(`Error parsing flow for agent ${agent.id}:`, e);
             return {
               ...agent,
               flow: {
@@ -83,17 +97,11 @@ const AgentsPage = () => {
               }
             };
           }
-        } catch (e) {
-          console.error(`Error parsing flow for agent ${agent.id}:`, e);
-          return {
-            ...agent,
-            flow: {
-              nodes: [],
-              edges: []
-            }
-          };
-        }
-      }) as Agent[];
+        }) as Agent[];
+      } catch (error) {
+        console.error("Error fetching agents:", error);
+        return [];
+      }
     },
   });
 
@@ -118,7 +126,7 @@ const AgentsPage = () => {
         title: "Error",
         description: "Failed to delete agent",
       });
-      throw error;
+      console.error("Error deleting agent:", error);
     }
   };
 
