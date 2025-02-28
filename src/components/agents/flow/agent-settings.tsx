@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -19,20 +19,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Settings, Volume2 } from "lucide-react";
+import { Settings, Volume2, Brain } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { KnowledgeDocument } from "@/types/supabase-extended";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
+import { fetchDocuments } from "@/utils/knowledge-api";
 
 type AgentSettingsProps = {
   agentId: string;
   currentVoice?: string;
   currentLanguage?: string;
+  currentKnowledgeIds?: string[];
   children?: React.ReactNode;
   onUpdateSettings: (settings: { 
     voiceId?: string; 
     language?: string; 
     humorLevel?: number;
     maxDurationSeconds?: number;
+    knowledgeIds?: string[];
   }) => Promise<void>;
 };
 
@@ -58,7 +65,14 @@ const voices = [
   { id: "shimmer", name: "Shimmer", description: "Clear and expressive" },
 ];
 
-export function AgentSettings({ agentId, currentVoice, currentLanguage, children, onUpdateSettings }: AgentSettingsProps) {
+export function AgentSettings({ 
+  agentId, 
+  currentVoice, 
+  currentLanguage, 
+  currentKnowledgeIds = [], 
+  children, 
+  onUpdateSettings 
+}: AgentSettingsProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(currentVoice || "alloy");
@@ -66,14 +80,31 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, children
   const [humorLevel, setHumorLevel] = useState(50);
   const [maxDurationSeconds, setMaxDurationSeconds] = useState(300); // Default 5 minutes
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<string[]>(currentKnowledgeIds || []);
+
+  // Fetch knowledge documents
+  const { data: documents = [], isLoading: loadingDocuments } = useQuery({
+    queryKey: ['knowledge-documents'],
+    queryFn: fetchDocuments,
+  });
+
+  useEffect(() => {
+    if (currentKnowledgeIds && currentKnowledgeIds.length > 0) {
+      setSelectedKnowledgeIds(currentKnowledgeIds);
+    }
+  }, [currentKnowledgeIds]);
 
   const handleVoiceChange = (voiceId: string) => {
     setSelectedVoice(voiceId);
-    onUpdateSettings({
-      voiceId,
-      language: selectedLanguage,
-      humorLevel: humorLevel,
-      maxDurationSeconds: maxDurationSeconds
+  };
+
+  const handleKnowledgeToggle = (documentId: string) => {
+    setSelectedKnowledgeIds(prev => {
+      if (prev.includes(documentId)) {
+        return prev.filter(id => id !== documentId);
+      } else {
+        return [...prev, documentId];
+      }
     });
   };
 
@@ -119,7 +150,8 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, children
       voiceId: selectedVoice,
       language: selectedLanguage,
       humorLevel: humorLevel,
-      maxDurationSeconds: maxDurationSeconds
+      maxDurationSeconds: maxDurationSeconds,
+      knowledgeIds: selectedKnowledgeIds
     });
     setIsOpen(false);
   };
@@ -249,6 +281,65 @@ export function AgentSettings({ agentId, currentVoice, currentLanguage, children
               </div>
               <p className="text-xs text-gray-500 mt-1">
                 The agent will automatically end conversations after this duration
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Knowledge Base</Label>
+                <div className="text-xs text-gray-500">
+                  {selectedKnowledgeIds.length} selected
+                </div>
+              </div>
+              
+              <div className="border rounded-md p-1 bg-gray-50 dark:bg-gray-900">
+                {loadingDocuments ? (
+                  <div className="flex justify-center items-center py-4">
+                    <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+                  </div>
+                ) : documents.length === 0 ? (
+                  <div className="text-center py-6 px-4">
+                    <Brain className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No knowledge documents found</p>
+                    <p className="text-xs text-gray-400 mt-1">Add documents in the Knowledge page</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-60 w-full pr-4">
+                    <div className="space-y-1 p-1">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="flex items-start space-x-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md">
+                          <Checkbox 
+                            id={`doc-${doc.id}`} 
+                            checked={selectedKnowledgeIds.includes(doc.id)}
+                            onCheckedChange={() => handleKnowledgeToggle(doc.id)}
+                            className="mt-0.5"
+                          />
+                          <div className="grid gap-0.5">
+                            <Label 
+                              htmlFor={`doc-${doc.id}`}
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              {doc.title}
+                            </Label>
+                            {doc.description && (
+                              <p className="text-xs text-gray-500 line-clamp-2">
+                                {doc.description}
+                              </p>
+                            )}
+                            <div className="flex items-center mt-1">
+                              <div className="text-xs px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                {doc.file_type.includes('url') ? 'URL' : doc.file_type.split('/')[1]?.toUpperCase() || doc.file_type}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Select knowledge documents to attach to this agent as "brains"
               </p>
             </div>
 

@@ -1,119 +1,256 @@
 
-import { useParams, useNavigate } from 'react-router-dom';
-import { ReactFlowProvider } from '@xyflow/react';
-import { DragProvider } from '@/components/flow/drag-context';
-import { Flow } from '@/components/flow/agent-flow/flow';
-import { Header } from '@/components/flow/agent-flow/header';
-import { useCallback } from 'react';
-import { Node, Edge } from '@xyflow/react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Agent } from '@/types/agent';
-import { useToast } from '@/hooks/use-toast';
-import { FlowData, FlowNode, FlowEdge } from '@/types/agent-types';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { FlowHeader } from "@/components/flow/agent-flow/header";
+import { Flow } from "@/components/flow/agent-flow/flow";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { AgentSettings } from "@/components/agents/flow/agent-settings";
+import { Button } from "@/components/ui/button";
+import { MoveLeft, Trash2, Satellite } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { FlowData } from "@/types/agent";
+import { createDefaultFlow } from "@/components/agents/utils/default-flow";
 
 export default function AgentFlowPage() {
-  const { id } = useParams<{ id: string }>();
+  const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const { data: agent, refetch, isError, isLoading } = useQuery({
-    queryKey: ['agent', id],
+  const { data: agent, isLoading } = useQuery({
+    queryKey: ["agent", agentId],
     queryFn: async () => {
-      if (!id) throw new Error('No agent ID provided');
-      
       const { data, error } = await supabase
-        .from('agents')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
+        .from("agents")
+        .select("*")
+        .eq("id", agentId!)
+        .single();
 
       if (error) throw error;
-      if (!data) throw new Error('Agent not found');
 
-      return data as Agent;
+      let flowData;
+      try {
+        if (typeof data.flow === "string") {
+          flowData = JSON.parse(data.flow);
+        } else if (data.flow && typeof data.flow === "object") {
+          flowData = data.flow;
+        } else {
+          flowData = createDefaultFlow();
+        }
+      } catch (e) {
+        console.error("Error parsing flow data:", e);
+        flowData = createDefaultFlow();
+      }
+
+      return {
+        ...data,
+        flow: flowData,
+      };
     },
-    enabled: !!id
+    enabled: !!agentId,
   });
 
-  const saveFlowMutation = useMutation({
-    mutationFn: async (flowData: FlowData) => {
-      if (!id) throw new Error('No agent ID provided');
+  const updateFlowMutation = useMutation({
+    mutationFn: async (flow: FlowData) => {
       const { error } = await supabase
-        .from('agents')
-        .update({ 
-          flow: JSON.stringify(flowData) // Convert to string to satisfy Json type
-        })
-        .eq('id', id);
-      
+        .from("agents")
+        .update({ flow })
+        .eq("id", agentId!);
+        
       if (error) throw error;
-      await refetch();
-    }
+      return flow;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
+    },
+    onError: (error) => {
+      console.error("Error updating flow:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save flow changes",
+      });
+    },
   });
 
-  const handleNodesChange = useCallback((newNodes: Node[]) => {
-    if (!agent?.flow) return;
-    const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-    const flowData: FlowData = {
-      nodes: newNodes as FlowNode[],
-      edges: currentFlow.edges || []
-    };
-    saveFlowMutation.mutate(flowData);
-  }, [agent, saveFlowMutation]);
+  const updateAgentSettingsMutation = useMutation({
+    mutationFn: async (settings: { 
+      voiceId?: string; 
+      language?: string; 
+      humorLevel?: number;
+      maxDurationSeconds?: number;
+      knowledgeIds?: string[];
+    }) => {
+      const { error } = await supabase
+        .from("agents")
+        .update({
+          voice_id: settings.voiceId,
+          language: settings.language,
+          ...(settings.knowledgeIds && { knowledge_ids: settings.knowledgeIds }),
+        })
+        .eq("id", agentId!);
+        
+      if (error) throw error;
+      return settings;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
+      toast({
+        title: "Success",
+        description: "Agent settings updated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error updating agent settings:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update agent settings",
+      });
+    },
+  });
 
-  const handleEdgesChange = useCallback((newEdges: Edge[]) => {
-    if (!agent?.flow) return;
-    const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-    const flowData: FlowData = {
-      nodes: currentFlow.nodes || [],
-      edges: newEdges as FlowEdge[]
-    };
-    saveFlowMutation.mutate(flowData);
-  }, [agent, saveFlowMutation]);
+  const deleteAgentMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("agents")
+        .delete()
+        .eq("id", agentId!);
+        
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agents"] });
+      navigate("/dashboard/agents");
+      toast({
+        title: "Success",
+        description: "Agent deleted successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting agent:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete agent",
+      });
+    },
+  });
 
-  const handleUpdateSettings = async (settings: { voiceId?: string; language?: string }) => {
-    if (!id) return;
-    const { error } = await supabase
-      .from('agents')
-      .update(settings)
-      .eq('id', id);
-    if (error) throw error;
+  const handleFlowChange = (flowData: FlowData) => {
+    updateFlowMutation.mutate(flowData);
+  };
+
+  const handleUpdateSettings = async (settings: { 
+    voiceId?: string; 
+    language?: string; 
+    humorLevel?: number;
+    maxDurationSeconds?: number;
+    knowledgeIds?: string[];
+  }) => {
+    await updateAgentSettingsMutation.mutateAsync(settings);
+  };
+
+  const handleDeleteAgent = () => {
+    deleteAgentMutation.mutate();
   };
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
-  if (isError || !agent) {
-    return null;
+  if (!agent) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h2 className="text-xl font-semibold mb-2">Agent not found</h2>
+        <Button variant="outline" onClick={() => navigate("/dashboard/agents")}>
+          Back to Agents
+        </Button>
+      </div>
+    );
   }
 
-  // Parse flow data once for the render
-  const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow || { nodes: [], edges: [] };
-
   return (
-    <DragProvider>
-      <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-        <Header 
-          agent={agent}
-          onBack={() => navigate('/dashboard/agents')}
-          onUpdateSettings={handleUpdateSettings}
-        />
-        <div className="flex-1 relative">
-          <ReactFlowProvider>
-            <Flow
-              initialNodes={flowData.nodes || []}
-              initialEdges={flowData.edges || []}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={handleEdgesChange}
-            />
-          </ReactFlowProvider>
+    <div className="h-screen flex flex-col">
+      <div className="px-4 py-2 border-b flex justify-between items-center bg-white dark:bg-gray-950">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard/agents")}
+            className="h-8 w-8"
+          >
+            <MoveLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-lg font-semibold">{agent.name}</h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <AgentSettings
+            agentId={agent.id}
+            currentVoice={agent.voice_id || undefined}
+            currentLanguage={agent.language}
+            currentKnowledgeIds={agent.knowledge_ids}
+            onUpdateSettings={handleUpdateSettings}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-    </DragProvider>
+
+      <div className="flex-1 overflow-hidden">
+        <Flow
+          initialNodes={agent.flow.nodes || []}
+          initialEdges={agent.flow.edges || []}
+          onFlowChange={handleFlowChange}
+        />
+      </div>
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              agent and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAgent}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
