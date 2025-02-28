@@ -16,6 +16,7 @@ export type Agent = {
   user_id: string;
   interaction_type: string[];
   objective?: 'live_transfer' | 'answer_calls';
+  knowledge_base_id?: string | null;
 };
 
 export type ContactData = {
