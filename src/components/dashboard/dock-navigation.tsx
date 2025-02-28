@@ -1,5 +1,5 @@
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Users, Target, GitMerge, MessageSquare, Book, Settings } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -38,9 +38,12 @@ const navItems = [
 ];
 
 export function DockNavigation() {
+  const location = useLocation();
+  const isAgentFlowPage = location.pathname.includes('/dashboard/agents/flow/');
+  
   return (
     <motion.div 
-      className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-2"
+      className={`fixed bottom-0 left-0 right-0 flex justify-center pb-2 ${isAgentFlowPage ? 'z-10' : 'z-50'}`}
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}

@@ -11,7 +11,7 @@ export default function DashboardLayout() {
       <main className={`w-full min-h-screen pb-20 ${isAgentFlowPage ? 'p-0' : 'p-6'}`}>
         <Outlet />
       </main>
-      <DockNavigation />
+      {!isAgentFlowPage && <DockNavigation />}
     </div>
   );
 }
