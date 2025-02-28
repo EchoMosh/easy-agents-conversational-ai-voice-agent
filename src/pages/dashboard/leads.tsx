@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { NewLeadForm } from "@/components/leads/new-lead-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -113,6 +113,7 @@ export default function LeadsPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Pipeline</TableHead>
                 <TableHead>Created At</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -135,6 +136,20 @@ export default function LeadsPage() {
                     </TableCell>
                     <TableCell>{pipelineName}</TableCell>
                     <TableCell>{createdAt}</TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => {
+                          // This would open the edit form dialog
+                          console.log("Edit lead:", lead.id);
+                        }}
+                      >
+                        <span className="sr-only">Edit</span>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 );
               })}
