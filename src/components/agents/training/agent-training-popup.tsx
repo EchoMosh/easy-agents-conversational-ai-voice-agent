@@ -143,7 +143,7 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] md:max-w-[600px] p-0 flex flex-col h-[650px] max-h-[80vh] overflow-hidden bg-background">
+      <DialogContent className="sm:max-w-[650px] md:max-w-[700px] p-0 flex flex-col h-[750px] max-h-[85vh] overflow-hidden bg-background">
         <DialogHeader className="p-4 border-b sticky top-0 bg-background z-10">
           <div className="flex items-center justify-between">
             <div>
