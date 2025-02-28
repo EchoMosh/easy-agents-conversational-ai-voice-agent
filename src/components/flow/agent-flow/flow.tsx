@@ -1,6 +1,19 @@
 
 import { useCallback, useRef, useState } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
+import { 
+  ReactFlow, 
+  MiniMap, 
+  Controls, 
+  Background, 
+  useNodesState, 
+  useEdgesState, 
+  addEdge, 
+  Connection, 
+  NodeTypes, 
+  Panel, 
+  ConnectionMode, 
+  ReactFlowProvider
+} from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData, FlowNode, FlowEdge, FlowData, NodeType } from '@/types/agent';
@@ -63,7 +76,8 @@ interface FlowProps {
   onFlowChange?: (flowData: FlowData) => void;
 }
 
-export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
+// Internal component that uses the React Flow hooks
+function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
   const [showWidgets, setShowWidgets] = useState(false);
@@ -289,5 +303,14 @@ export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
         </Panel>
       </ReactFlow>
     </div>
+  );
+}
+
+// The main export that wraps the content with ReactFlowProvider
+export function Flow(props: FlowProps) {
+  return (
+    <ReactFlowProvider>
+      <FlowContent {...props} />
+    </ReactFlowProvider>
   );
 }

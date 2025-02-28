@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FlowHeader } from "@/components/flow/agent-flow/header";
 import { Flow } from "@/components/flow/agent-flow/flow";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
