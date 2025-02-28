@@ -1,5 +1,5 @@
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
@@ -88,8 +88,9 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
   const [showWidgets, setShowWidgets] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNodes } = useReactFlow();
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
+  const flowContainerRef = useRef<HTMLDivElement>(null);
   
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -124,6 +125,52 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       onNodesChange(updatedNodes);
     }, 0);
   }, [nodes, setNodes, onNodesChange]);
+
+  // Handle keyboard events - specifically Delete key
+  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
+    // Check if the target is an input or textarea to avoid deleting nodes when editing text
+    const target = event.target as HTMLElement;
+    const isEditingText = target.tagName === 'INPUT' || 
+                          target.tagName === 'TEXTAREA' || 
+                          target.isContentEditable;
+    
+    // Only handle Delete or Backspace when not editing text
+    if ((event.key === 'Delete' || event.key === 'Backspace') && !isEditingText) {
+      console.log('[Flow] Delete/Backspace key pressed, checking for selected nodes');
+      
+      const selectedNodes = nodes.filter(node => node.selected);
+      if (selectedNodes.length > 0) {
+        console.log('[Flow] Selected nodes to delete:', selectedNodes);
+        
+        // First, remove edges connected to these nodes
+        const nodeIdsToDelete = new Set(selectedNodes.map(n => n.id));
+        
+        // Filter out edges connected to nodes that will be deleted
+        const newEdges = edges.filter(edge => 
+          !nodeIdsToDelete.has(edge.source) && !nodeIdsToDelete.has(edge.target)
+        );
+        
+        // Filter out the nodes to be deleted
+        const newNodes = nodes.filter(node => !nodeIdsToDelete.has(node.id));
+        
+        // Update the internal state
+        setNodes(newNodes);
+        setEdges(newEdges);
+        
+        // Notify parent components of changes
+        console.log('[Flow] Notifying parent about deleted nodes and related edges');
+        onNodesChange(newNodes);
+        onEdgesChange(newEdges);
+      }
+    }
+  }, [nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange]);
+
+  useEffect(() => {
+    // Focus the container when it's mounted to ensure keyboard events are captured
+    if (flowContainerRef.current) {
+      flowContainerRef.current.focus();
+    }
+  }, []);
 
   const isValidConnection = (connection: Connection) => {
     // Check if source and target nodes exist
@@ -281,104 +328,117 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
   return (
     <NodeUpdateContext.Provider value={{ updateNodeData }}>
-      <div ref={reactFlowWrapper} className="w-full h-full">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={handleNodesChange}
-          onEdgesChange={handleEdgesChange}
-          onConnect={onConnect}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          nodeTypes={nodeTypes}
-          fitView
-          defaultEdgeOptions={defaultEdgeOptions}
-          connectionMode={ConnectionMode.Loose}
-          className="bg-white dark:bg-gray-950"
-          snapToGrid={true}
-          snapGrid={[15, 15]}
+      <div 
+        ref={reactFlowWrapper} 
+        className="w-full h-full"
+      >
+        {/* We add tabIndex to make the div focusable for keyboard events */}
+        <div 
+          ref={flowContainerRef}
+          className="w-full h-full" 
+          tabIndex={0} 
+          onKeyDown={handleKeyDown}
+          style={{ outline: 'none' }} // Remove focus outline
         >
-          <Background className="opacity-40" />
-          <MiniMap
-            className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
-            nodeColor={node => {
-              switch (node.type) {
-                case 'speakNode':
-                  return '#c084fc';
-                case 'triggerNode':
-                  return '#fbbf24';
-                case 'endNode':
-                  return '#f87171';
-                case 'transferNode':
-                  return '#10b981';
-                case 'webhookNode':
-                  return '#d946ef';
-                default:
-                  return '#60a5fa';
-              }
-            }}
-            maskColor="rgba(0, 0, 0, 0.05)"
-          />
-          <Panel position="bottom-left" className="space-y-2">
-            <div 
-              className="relative"
-              onMouseLeave={handleMouseLeave}
-            >
-              <button
-                ref={widgetButtonRef}
-                onClick={() => setShowWidgets(!showWidgets)}
-                onMouseEnter={handleMouseEnter}
-                className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl hover:bg-primary/90"
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={handleNodesChange}
+            onEdgesChange={handleEdgesChange}
+            onConnect={onConnect}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            nodeTypes={nodeTypes}
+            fitView
+            defaultEdgeOptions={defaultEdgeOptions}
+            connectionMode={ConnectionMode.Loose}
+            className="bg-white dark:bg-gray-950"
+            snapToGrid={true}
+            snapGrid={[15, 15]}
+            deleteKeyCode={['Delete', 'Backspace']} // Enable built-in delete with Delete or Backspace keys
+          >
+            <Background className="opacity-40" />
+            <MiniMap
+              className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
+              nodeColor={node => {
+                switch (node.type) {
+                  case 'speakNode':
+                    return '#c084fc';
+                  case 'triggerNode':
+                    return '#fbbf24';
+                  case 'endNode':
+                    return '#f87171';
+                  case 'transferNode':
+                    return '#10b981';
+                  case 'webhookNode':
+                    return '#d946ef';
+                  default:
+                    return '#60a5fa';
+                }
+              }}
+              maskColor="rgba(0, 0, 0, 0.05)"
+            />
+            <Panel position="bottom-left" className="space-y-2">
+              <div 
+                className="relative"
+                onMouseLeave={handleMouseLeave}
               >
-                <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
-              </button>
-              {showWidgets && (
-                <div 
-                  className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
-                  onMouseEnter={() => {
-                    if (hoverTimeoutRef.current) {
-                      clearTimeout(hoverTimeoutRef.current);
-                    }
-                  }}
+                <button
+                  ref={widgetButtonRef}
+                  onClick={() => setShowWidgets(!showWidgets)}
+                  onMouseEnter={handleMouseEnter}
+                  className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl hover:bg-primary/90"
                 >
-                  <TooltipProvider>
-                    {widgets.map((widget) => (
-                      <Tooltip key={widget.type}>
-                        <TooltipTrigger asChild>
-                          <div
-                            className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-move transition-all duration-200"
-                            style={{
-                              background: `color-mix(in srgb, ${widget.color} 10%, transparent)`,
-                            }}
-                            onDragStart={(e) => onDragStart(e, widget.type)}
-                            draggable
-                          >
-                            <span 
-                              className="p-1.5 rounded-lg"
+                  <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
+                </button>
+                {showWidgets && (
+                  <div 
+                    className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
+                    onMouseEnter={() => {
+                      if (hoverTimeoutRef.current) {
+                        clearTimeout(hoverTimeoutRef.current);
+                      }
+                    }}
+                  >
+                    <TooltipProvider>
+                      {widgets.map((widget) => (
+                        <Tooltip key={widget.type}>
+                          <TooltipTrigger asChild>
+                            <div
+                              className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-move transition-all duration-200"
                               style={{
-                                background: `color-mix(in srgb, ${widget.color} 15%, transparent)`,
-                                color: widget.color
+                                background: `color-mix(in srgb, ${widget.color} 10%, transparent)`,
                               }}
+                              onDragStart={(e) => onDragStart(e, widget.type)}
+                              draggable
                             >
-                              <widget.icon className="h-4 w-4" />
-                            </span>
-                            <span className="font-medium text-sm text-foreground/80">{widget.label}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent 
-                          side="right"
-                          className="bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-none shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]"
-                        >
-                          {widget.description}
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
-                  </TooltipProvider>
-                </div>
-              )}
-            </div>
-          </Panel>
-        </ReactFlow>
+                              <span 
+                                className="p-1.5 rounded-lg"
+                                style={{
+                                  background: `color-mix(in srgb, ${widget.color} 15%, transparent)`,
+                                  color: widget.color
+                                }}
+                              >
+                                <widget.icon className="h-4 w-4" />
+                              </span>
+                              <span className="font-medium text-sm text-foreground/80">{widget.label}</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent 
+                            side="right"
+                            className="bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-none shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]"
+                          >
+                            {widget.description}
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </TooltipProvider>
+                  </div>
+                )}
+              </div>
+            </Panel>
+          </ReactFlow>
+        </div>
       </div>
     </NodeUpdateContext.Provider>
   );
