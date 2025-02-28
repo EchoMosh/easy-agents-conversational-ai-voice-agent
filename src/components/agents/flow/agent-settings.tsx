@@ -10,9 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -90,39 +88,50 @@ export function AgentSettings({
     if (open) {
       refetch();
       
-      // Also fetch current agent data to get the currently selected knowledge base
+      // Fetch current agent data
       const fetchAgentData = async () => {
         try {
-          const { data, error } = await supabase
+          // First, get the agent's basic settings
+          const { data: agentData, error: agentError } = await supabase
             .from('agents')
-            .select('knowledge_ids, voice_id, language, humor_level')
+            .select('voice_id, language, humor_level')
             .eq('id', agentId)
             .maybeSingle();
             
-          if (error) throw error;
+          if (agentError) throw agentError;
           
-          if (data) {
+          if (agentData) {
             // Set voice if exists
-            if (data.voice_id) {
-              setVoice(data.voice_id);
+            if (agentData.voice_id) {
+              setVoice(agentData.voice_id);
             }
             
             // Set language if exists
-            if (data.language) {
-              setLanguage(data.language);
+            if (agentData.language) {
+              setLanguage(agentData.language);
             }
             
             // Set humor level if exists
-            if (data.humor_level !== undefined && data.humor_level !== null) {
-              setHumorLevel(data.humor_level);
+            if (agentData.humor_level !== undefined && agentData.humor_level !== null) {
+              setHumorLevel(agentData.humor_level);
             }
+          }
+          
+          // Then get the knowledge base associations from the junction table
+          const { data: knowledgeData, error: knowledgeError } = await supabase
+            .from('agent_knowledge')
+            .select('knowledge_id')
+            .eq('agent_id', agentId)
+            .limit(1)  // For now, just get the first one since UI only supports one
+            .maybeSingle();
             
-            // If the agent has a knowledge base, set it in the state
-            if (data.knowledge_ids && data.knowledge_ids.length > 0) {
-              setKnowledgeBase(data.knowledge_ids[0]);
-            } else {
-              setKnowledgeBase("none");
-            }
+          if (knowledgeError) throw knowledgeError;
+          
+          // If the agent has a knowledge base, set it in the state
+          if (knowledgeData) {
+            setKnowledgeBase(knowledgeData.knowledge_id);
+          } else {
+            setKnowledgeBase("none");
           }
         } catch (error) {
           console.error("Error fetching agent data:", error);
@@ -158,28 +167,75 @@ export function AgentSettings({
         knowledgeBase
       });
       
-      // First update the agent in Supabase
-      const updateData = {
-        voice_id: voice || null,
-        language: language,
-        humor_level: humorLevel,
-        knowledge_ids: knowledgeBase && knowledgeBase !== "none" ? [knowledgeBase] : []
-      };
-      
-      console.log("Updating agent with data:", updateData);
-      
-      const { data, error } = await supabase
+      // Start a transaction to update both tables
+      // First update the agent settings
+      const { error: agentError } = await supabase
         .from('agents')
-        .update(updateData)
-        .eq('id', agentId)
-        .select();
+        .update({
+          voice_id: voice || null,
+          language: language,
+          humor_level: humorLevel,
+        })
+        .eq('id', agentId);
       
-      if (error) {
-        console.error("Supabase update error:", error);
-        throw new Error(`Database error: ${error.message}`);
+      if (agentError) {
+        console.error("Supabase agent update error:", agentError);
+        throw new Error(`Database error: ${agentError.message}`);
       }
       
-      console.log("Supabase update result:", data);
+      // Now handle the knowledge base relationship
+      if (knowledgeBase === "none") {
+        // If "none" is selected, remove any existing relationships
+        const { error: deleteError } = await supabase
+          .from('agent_knowledge')
+          .delete()
+          .eq('agent_id', agentId);
+          
+        if (deleteError) {
+          console.error("Supabase knowledge relationship delete error:", deleteError);
+          throw new Error(`Database error: ${deleteError.message}`);
+        }
+      } else {
+        // Check if a relationship already exists
+        const { data: existingRelation, error: checkError } = await supabase
+          .from('agent_knowledge')
+          .select('id, knowledge_id')
+          .eq('agent_id', agentId);
+          
+        if (checkError) {
+          console.error("Supabase check relationship error:", checkError);
+          throw new Error(`Database error: ${checkError.message}`);
+        }
+        
+        if (existingRelation && existingRelation.length > 0) {
+          // If relationship exists, update it if different
+          const existingRelationship = existingRelation[0];
+          if (existingRelationship.knowledge_id !== knowledgeBase) {
+            const { error: updateError } = await supabase
+              .from('agent_knowledge')
+              .update({ knowledge_id: knowledgeBase })
+              .eq('id', existingRelationship.id);
+              
+            if (updateError) {
+              console.error("Supabase update relationship error:", updateError);
+              throw new Error(`Database error: ${updateError.message}`);
+            }
+          }
+        } else {
+          // If no relationship exists, create one
+          const { error: insertError } = await supabase
+            .from('agent_knowledge')
+            .insert({
+              agent_id: agentId,
+              knowledge_id: knowledgeBase
+            });
+            
+          if (insertError) {
+            console.error("Supabase insert relationship error:", insertError);
+            throw new Error(`Database error: ${insertError.message}`);
+          }
+        }
+      }
       
       // Call the onUpdateSettings prop to maintain component API compatibility
       try {
