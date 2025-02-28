@@ -39,9 +39,12 @@ export type NodeData = {
     | 'ticket_created'     // Activix
     | 'payment_received';  // Activix
   contacts?: ContactData[];
+  url?: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  headers?: Record<string, string>;
 };
 
-export type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode';
+export type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode' | 'webhookNode';
 
 export type FlowNode = Node<NodeData, NodeType>;
 export type FlowEdge = Edge;

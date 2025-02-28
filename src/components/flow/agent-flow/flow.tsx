@@ -1,7 +1,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
-import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
+import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
@@ -9,6 +9,7 @@ import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
 import { TransferNode } from '@/components/flow/nodes/transfer-node';
+import { WebhookNode } from '@/components/flow/nodes/webhook-node';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const nodeTypes: NodeTypes = {
@@ -16,7 +17,8 @@ const nodeTypes: NodeTypes = {
   greetingNode: GreetingNode,
   endNode: EndNode,
   triggerNode: TriggerNode,
-  transferNode: TransferNode
+  transferNode: TransferNode,
+  webhookNode: WebhookNode
 };
 
 const widgets = [
@@ -54,6 +56,13 @@ const widgets = [
     icon: PhoneForwarded, 
     color: '#10b981',
     description: 'Transfer the conversation to a live agent'
+  },
+  { 
+    type: 'webhookNode', 
+    label: 'Webhook', 
+    icon: Webhook, 
+    color: '#6366f1',
+    description: 'Make HTTP requests to external services'
   }
 ];
 
@@ -175,6 +184,9 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         case 'transferNode':
           newNodeData = { message: 'Transfer to agent', outcomes: [] };
           break;
+        case 'webhookNode':
+          newNodeData = { url: '', method: 'GET' };
+          break;
       }
 
       const newNode: Node = {
@@ -241,6 +253,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
                 return '#f87171';
               case 'transferNode':
                 return '#10b981';
+              case 'webhookNode':
+                return '#6366f1';
               default:
                 return '#60a5fa';
             }
