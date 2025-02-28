@@ -23,7 +23,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   // Map to store node ID mappings
   const nodeIdMap = new Map<string, string>();
   
-  // Create simple sequential IDs for the mermaid chart - using type with sequential counter
+  // Create simple sequential IDs for the mermaid chart
   flowData.nodes.forEach((node: FlowNode, index: number) => {
     // Extract base node type without any numeric part
     const baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
@@ -34,14 +34,23 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   
   // Process nodes with simplified IDs
   flowData.nodes.forEach((node: FlowNode, index: number) => {
-    const nodeLabel = node.data?.message || 
-                      node.data?.greeting || 
-                      node.data?.platform || 
-                      node.type || 
-                      'Node';
+    // Get the appropriate label based on node type and data
+    let nodeLabel = 'Node';
+    
+    if (node.data) {
+      if (node.type === 'speakNode' && node.data.message) {
+        nodeLabel = node.data.message.toString();
+      } else if (node.type === 'greetingNode' && node.data.greeting) {
+        nodeLabel = node.data.greeting.toString();
+      } else if (node.type === 'triggerNode' && node.data.platform) {
+        nodeLabel = node.data.platform.toString();
+      } else if (node.type) {
+        nodeLabel = node.type;
+      }
+    }
     
     // Clean label by removing newlines and quotes
-    const cleanLabel = nodeLabel.toString()
+    const cleanLabel = nodeLabel
       .replace(/\n/g, ' ')
       .replace(/"/g, '')
       .substring(0, 30); // Limit length
@@ -126,22 +135,21 @@ export default function AgentFlowPage() {
     mutationFn: async (flowData: FlowData) => {
       if (!id) throw new Error('No agent ID provided');
       
+      // Deep clone to avoid reference issues
+      const clonedData = JSON.parse(JSON.stringify(flowData));
+      
       // Generate mermaid chart and ensure no styling classes are present
-      let mermaidChartStr = generateMermaidFromFlow(flowData);
+      let mermaidChartStr = generateMermaidFromFlow(clonedData);
       mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       
       console.log('Mermaid Chart to save:', mermaidChartStr);
-      console.log('Saving flow data:', JSON.stringify(flowData));
+      console.log('Saving flow data:', JSON.stringify(clonedData));
       setMermaidChart(mermaidChartStr);
-      
-      // First serialize the flow data to a plain object
-      // This handles complex types like CSSProperties that aren't JSON-serializable
-      const serializedFlow = JSON.parse(JSON.stringify(flowData));
       
       const { error } = await supabase
         .from('agents')
         .update({ 
-          flow: serializedFlow, // Store the serialized data
+          flow: clonedData, // Store the cloned data
           mermaid_chart: mermaidChartStr // Save sanitized mermaid diagram to database
         })
         .eq('id', id);
@@ -179,13 +187,18 @@ export default function AgentFlowPage() {
       try {
         console.log("Node update event received:", event.detail);
         const { id: nodeId, data: nodeData } = event.detail;
+        
+        // Parse flow if it's a string
         const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
         
         // Find and update the specific node
         const updatedNodes = (currentFlow.nodes || []).map((node: FlowNode) => {
           if (node.id === nodeId) {
             console.log(`Updating node ${nodeId} with new data:`, nodeData);
-            return { ...node, data: nodeData };
+            return { 
+              ...node, 
+              data: nodeData 
+            };
           }
           return node;
         });

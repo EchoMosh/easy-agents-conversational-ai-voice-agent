@@ -10,56 +10,52 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 
 type SpeakNodeData = {
-  message: string;
+  message?: string;
   outcomes?: string[];
 };
 
 export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // Initialize with empty string if message is undefined
-  const [message, setMessage] = useState(data.message || "");
+  const [message, setMessage] = useState<string>(data.message || "");
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [outcomes, setOutcomes] = useState(data.outcomes || []);
-  const [lastSavedMessage, setLastSavedMessage] = useState(data.message || "");
+  const [outcomes, setOutcomes] = useState<string[]>(data.outcomes || []);
 
-  // Listen for changes from parent
-  useEffect(() => {
-    if (data.message !== undefined && data.message !== message && data.message !== lastSavedMessage) {
-      console.log("Parent updated message to:", data.message);
-      setMessage(data.message);
-      setLastSavedMessage(data.message);
-    }
+  // Direct textarea change handler
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    console.log("Textarea direct change:", newValue);
+    setMessage(newValue);
     
-    if (data.outcomes) {
-      setOutcomes(data.outcomes);
-    }
-  }, [data]);
-
-  // Save changes when message changes
-  useEffect(() => {
-    // Debounce save to avoid too many updates
-    const timeoutId = setTimeout(() => {
-      if (message !== lastSavedMessage) {
-        console.log(`Saving message change from "${lastSavedMessage}" to "${message}"`);
-        
-        const evt = new CustomEvent('nodeupdate', {
-          detail: {
-            id,
-            data: {
-              message,
-              outcomes
-            }
-          }
-        });
-        window.dispatchEvent(evt);
-        setLastSavedMessage(message);
+    // Immediately dispatch the event to update the flow
+    dispatchUpdateEvent(newValue, outcomes);
+  };
+  
+  // Directly dispatch update event
+  const dispatchUpdateEvent = (messageText: string, outcomesList: string[]) => {
+    console.log(`Dispatching update event with message: "${messageText}"`);
+    
+    const updateEvent = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data, // preserve other data
+          message: messageText,
+          outcomes: outcomesList
+        }
       }
-    }, 500); // 500ms debounce
+    });
     
-    return () => clearTimeout(timeoutId);
-  }, [message, id, outcomes, lastSavedMessage]);
+    window.dispatchEvent(updateEvent);
+  };
+
+  // Variable selector change handler
+  const handleVariableSelectorChange = (newText: string) => {
+    console.log("Variable selector change:", newText);
+    setMessage(newText);
+    dispatchUpdateEvent(newText, outcomes);
+  };
 
   const addOutcome = () => {
     if (outcomes.length >= 5) return;
@@ -70,34 +66,14 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setNewOutcome('');
     setShowOutcomeDialog(false);
     
-    // Send update event with new outcomes
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          message,
-          outcomes: newOutcomes
-        }
-      }
-    });
-    window.dispatchEvent(evt);
+    dispatchUpdateEvent(message, newOutcomes);
   };
 
   const removeOutcome = (index: number) => {
     const newOutcomes = outcomes.filter((_, i) => i !== index);
     setOutcomes(newOutcomes);
     
-    // Send update event with remaining outcomes
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          message,
-          outcomes: newOutcomes
-        }
-      }
-    });
-    window.dispatchEvent(evt);
+    dispatchUpdateEvent(message, newOutcomes);
   };
 
   const startEditing = (index: number) => {
@@ -116,17 +92,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setNewOutcome('');
     setShowOutcomeDialog(false);
     
-    // Send update event with updated outcomes
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          message,
-          outcomes: updatedOutcomes
-        }
-      }
-    });
-    window.dispatchEvent(evt);
+    dispatchUpdateEvent(message, updatedOutcomes);
   };
 
   const cancelEdit = () => {
@@ -139,17 +105,6 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(true);
-  };
-
-  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    console.log("SpeakNode textarea change:", newValue);
-    setMessage(newValue);
-  };
-  
-  const handleVariableSelectorChange = (newText: string) => {
-    console.log("VariableSelector changed text to:", newText);
-    setMessage(newText);
   };
 
   const highlightVariables = (text: string) => {
@@ -187,7 +142,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
             <Textarea 
               ref={textareaRef}
               value={message}
-              onChange={handleMessageChange}
+              onChange={handleTextareaChange}
               className="nodrag text-sm resize-y min-h-[100px] bg-transparent border-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 text-transparent caret-indigo-500"
               placeholder="Type @ to insert a variable..."
             />
