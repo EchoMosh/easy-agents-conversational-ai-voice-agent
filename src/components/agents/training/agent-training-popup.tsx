@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Check, Volume2, Send, X, ThumbsUp, ThumbsDown, Edit } from "lucide-react";
+import { Check, Volume2, Send, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -111,41 +111,6 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
     console.log("Playing speech for:", text);
   };
 
-  const provideFeedback = (messageId: string, type: "positive" | "negative") => {
-    setMessages(prev => 
-      prev.map(message => 
-        message.id === messageId 
-          ? { ...message, feedback: type } 
-          : message
-      )
-    );
-
-    // If negative feedback, allow for correction
-    if (type === "negative") {
-      const message = messages.find(m => m.id === messageId);
-      if (message) {
-        setEditingMessageId(messageId);
-        setCorrectionInput(message.content);
-      }
-    } else {
-      // For positive feedback, log this for future training data
-      const message = messages.find(m => m.id === messageId);
-      if (message) {
-        console.log("Positive feedback provided for:", message.content);
-        // In a real implementation, you would send this to your backend
-        // to reinforce this as a good response
-      }
-    }
-  };
-
-  const handleStartEditing = (messageId: string) => {
-    const message = messages.find(m => m.id === messageId);
-    if (message) {
-      setEditingMessageId(messageId);
-      setCorrectionInput(message.content);
-    }
-  };
-
   const handleCancelEditing = () => {
     setEditingMessageId(null);
     setCorrectionInput("");
@@ -174,13 +139,11 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
     // Reset the editing state
     setEditingMessageId(null);
     setCorrectionInput("");
-
-    // Removed the confirmation message that was previously added here
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 flex flex-col h-[600px] max-h-[80vh] overflow-hidden bg-background">
+      <DialogContent className="sm:max-w-[700px] md:max-w-[800px] lg:max-w-[900px] p-0 flex flex-col h-[700px] max-h-[85vh] overflow-hidden bg-background">
         <DialogHeader className="p-4 border-b sticky top-0 bg-background z-10">
           <div className="flex items-center justify-between">
             <div>
@@ -215,52 +178,19 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                 }`}
               >
                 {message.role === "agent" && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`absolute top-1/2 -translate-y-1/2 -right-10 h-8 w-8 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${
-                        speakingMessageId === message.id 
-                          ? "text-blue-500 dark:text-blue-400 opacity-100" 
-                          : "text-gray-500 dark:text-gray-400"
-                      }`}
-                      onClick={() => playTextToSpeech(message.id, message.content)}
-                      title="Listen to AI response"
-                    >
-                      <Volume2 className="h-5 w-5" />
-                    </Button>
-                    
-                    {/* Feedback buttons that are now positioned at the bottom left with the same opacity as volume */}
-                    <div className="absolute -bottom-3 left-1 flex space-x-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-6 w-6 bg-white dark:bg-gray-700"
-                        onClick={() => provideFeedback(message.id, "positive")}
-                        title="This response is good"
-                      >
-                        <ThumbsUp className="h-3 w-3 text-green-600 dark:text-green-400" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-6 w-6 bg-white dark:bg-gray-700"
-                        onClick={() => provideFeedback(message.id, "negative")}
-                        title="This response needs correction"
-                      >
-                        <ThumbsDown className="h-3 w-3 text-red-600 dark:text-red-400" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-6 w-6 bg-white dark:bg-gray-700"
-                        onClick={() => handleStartEditing(message.id)}
-                        title="Edit this response"
-                      >
-                        <Edit className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                      </Button>
-                    </div>
-                  </>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`absolute top-1/2 -translate-y-1/2 -right-10 h-9 w-9 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${
+                      speakingMessageId === message.id 
+                        ? "text-blue-500 dark:text-blue-400 opacity-100" 
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}
+                    onClick={() => playTextToSpeech(message.id, message.content)}
+                    title="Listen to AI response"
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </Button>
                 )}
                 
                 {editingMessageId === message.id ? (
