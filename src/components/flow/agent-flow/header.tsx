@@ -74,7 +74,23 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3 relative">
-          {/* Theme Toggle moved to the leftmost position */}
+          {/* Settings button first */}
+          <AgentSettings
+            agentId={agent.id}
+            currentVoice={agent.voice_id || undefined}
+            currentLanguage={agent.language}
+            onUpdateSettings={onUpdateSettings}
+          >
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5"
+            >
+              <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            </Button>
+          </AgentSettings>
+          
+          {/* Theme Toggle second */}
           <ThemeToggle />
           
           <div className="flex items-center gap-2 ml-2">
@@ -85,22 +101,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
               <PhoneCall className="h-4 w-4 mr-2" />
               Call Me
             </Button>
-            
-            {/* Settings button moved next to Call Me button */}
-            <AgentSettings
-              agentId={agent.id}
-              currentVoice={agent.voice_id || undefined}
-              currentLanguage={agent.language}
-              onUpdateSettings={onUpdateSettings}
-            >
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5"
-              >
-                <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-              </Button>
-            </AgentSettings>
             
             <Button 
               className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
