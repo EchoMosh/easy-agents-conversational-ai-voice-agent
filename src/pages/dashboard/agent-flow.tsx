@@ -20,8 +20,18 @@ function generateMermaidFromFlow(flowData: FlowData): string {
 
   let mermaidString = 'graph TD\n';
   
-  // Process nodes
-  flowData.nodes.forEach((node: FlowNode) => {
+  // Map to store node ID mappings
+  const nodeIdMap = new Map<string, string>();
+  
+  // Create simple sequential IDs for the mermaid chart
+  flowData.nodes.forEach((node: FlowNode, index: number) => {
+    // Create simple node ID like n1, n2, etc.
+    const simpleId = `n${index + 1}`;
+    nodeIdMap.set(node.id, simpleId);
+  });
+  
+  // Process nodes with simplified IDs
+  flowData.nodes.forEach((node: FlowNode, index: number) => {
     const nodeLabel = node.data?.message || 
                       node.data?.greeting || 
                       node.data?.platform || 
@@ -34,7 +44,9 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       .replace(/"/g, '')
       .substring(0, 30); // Limit length
     
-    mermaidString += `  ${node.id}["${cleanLabel}"`;
+    const simpleId = nodeIdMap.get(node.id) || `n${index + 1}`;
+    
+    mermaidString += `  ${simpleId}["${cleanLabel}"`;
     
     // Add node type as a comment instead of styling
     switch (node.type) {
@@ -61,12 +73,12 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     mermaidString += ']\n';
   });
   
-  // Process edges
+  // Process edges with simplified IDs
   flowData.edges.forEach((edge: FlowEdge) => {
-    mermaidString += `  ${edge.source} --> ${edge.target}\n`;
+    const sourceId = nodeIdMap.get(edge.source) || edge.source;
+    const targetId = nodeIdMap.get(edge.target) || edge.target;
+    mermaidString += `  ${sourceId} --> ${targetId}\n`;
   });
-  
-  // No styling classes anymore
   
   return mermaidString;
 }
@@ -74,7 +86,10 @@ function generateMermaidFromFlow(flowData: FlowData): string {
 // Helper function to ensure no styling classes are in the mermaid chart
 function sanitizeMermaidChart(mermaidChart: string): string {
   // Remove any classDef lines that might be left from previous versions
-  return mermaidChart.replace(/classDef .+/g, '');
+  const cleanedChart = mermaidChart.replace(/classDef .+/g, '');
+  
+  // Remove any numeric IDs or random strings that might appear in the chart
+  return cleanedChart;
 }
 
 export default function AgentFlowPage() {
