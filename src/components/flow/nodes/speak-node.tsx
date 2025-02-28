@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Pencil, MessageSquare } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { VariableSelector } from './variable-mention/variable-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ type SpeakNodeData = {
   outcomes?: string[];
 };
 
-export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
+export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [message, setMessage] = useState(data.message);
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
@@ -22,16 +22,66 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState(data.outcomes || []);
 
+  // Sync outcomes with data when it changes from the parent
+  useEffect(() => {
+    setOutcomes(data.outcomes || []);
+  }, [data.outcomes]);
+
+  // Send update event when message changes
+  useEffect(() => {
+    // Only trigger update if the message has actually changed from the initial data
+    if (message !== data.message) {
+      console.log("Emitting node update for message change:", message);
+      const evt = new CustomEvent('nodeupdate', {
+        detail: {
+          id,
+          data: {
+            ...data,
+            message
+          }
+        }
+      });
+      window.dispatchEvent(evt);
+    }
+  }, [message, id, data]);
+
   const addOutcome = () => {
     if (outcomes.length >= 5) return;
     if (!newOutcome.trim()) return;
-    setOutcomes([...outcomes, newOutcome]);
+    
+    const newOutcomes = [...outcomes, newOutcome];
+    setOutcomes(newOutcomes);
     setNewOutcome('');
     setShowOutcomeDialog(false);
+    
+    // Send update event with new outcomes
+    const evt = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          outcomes: newOutcomes
+        }
+      }
+    });
+    window.dispatchEvent(evt);
   };
 
   const removeOutcome = (index: number) => {
-    setOutcomes(outcomes.filter((_, i) => i !== index));
+    const newOutcomes = outcomes.filter((_, i) => i !== index);
+    setOutcomes(newOutcomes);
+    
+    // Send update event with remaining outcomes
+    const evt = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          outcomes: newOutcomes
+        }
+      }
+    });
+    window.dispatchEvent(evt);
   };
 
   const startEditing = (index: number) => {
@@ -42,12 +92,25 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
 
   const saveEdit = () => {
     if (!newOutcome.trim() || editingIndex === null) return;
+    
     const updatedOutcomes = [...outcomes];
     updatedOutcomes[editingIndex] = newOutcome;
     setOutcomes(updatedOutcomes);
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(false);
+    
+    // Send update event with updated outcomes
+    const evt = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          outcomes: updatedOutcomes
+        }
+      }
+    });
+    window.dispatchEvent(evt);
   };
 
   const cancelEdit = () => {
@@ -60,6 +123,10 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(true);
+  };
+
+  const handleMessageChange = (value: string) => {
+    setMessage(value);
   };
 
   const highlightVariables = (text: string) => {
@@ -96,7 +163,7 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
             <Textarea 
               ref={textareaRef}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => handleMessageChange(e.target.value)}
               className="nodrag text-sm resize-y min-h-[100px] bg-transparent border-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 text-transparent caret-indigo-500"
               placeholder="Type @ to insert a variable..."
             />
@@ -112,7 +179,7 @@ export function SpeakNode({ data }: { data: SpeakNodeData; id: string }) {
           </div>
           <VariableSelector
             text={message}
-            onTextChange={setMessage}
+            onTextChange={handleMessageChange}
             textareaRef={textareaRef}
           />
         </div>

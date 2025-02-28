@@ -3,7 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Plus, MessageSquare, Pencil, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -26,16 +26,66 @@ export function GreetingNode({
   const [greeting, setGreeting] = useState(data.greeting);
   const [outcomes, setOutcomes] = useState(data.outcomes || []);
 
+  // Sync outcomes with data when it changes from the parent
+  useEffect(() => {
+    setOutcomes(data.outcomes || []);
+  }, [data.outcomes]);
+
+  // Send update event when greeting changes
+  useEffect(() => {
+    // Only trigger update if the greeting has actually changed from the initial data
+    if (greeting !== data.greeting) {
+      console.log("Emitting node update for greeting change:", greeting);
+      const evt = new CustomEvent('nodeupdate', {
+        detail: {
+          id,
+          data: {
+            ...data,
+            greeting
+          }
+        }
+      });
+      window.dispatchEvent(evt);
+    }
+  }, [greeting, id, data]);
+
   const addOutcome = () => {
     if (outcomes.length >= 5) return;
     if (!newOutcome.trim()) return;
-    setOutcomes([...outcomes, newOutcome]);
+    
+    const newOutcomes = [...outcomes, newOutcome];
+    setOutcomes(newOutcomes);
     setNewOutcome('');
     setShowOutcomeDialog(false);
+    
+    // Send update event with new outcomes
+    const evt = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          outcomes: newOutcomes
+        }
+      }
+    });
+    window.dispatchEvent(evt);
   };
 
   const removeOutcome = (index: number) => {
-    setOutcomes(outcomes.filter((_, i) => i !== index));
+    const newOutcomes = outcomes.filter((_, i) => i !== index);
+    setOutcomes(newOutcomes);
+    
+    // Send update event with remaining outcomes
+    const evt = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          outcomes: newOutcomes
+        }
+      }
+    });
+    window.dispatchEvent(evt);
   };
 
   const startEditing = (index: number) => {
@@ -46,12 +96,25 @@ export function GreetingNode({
 
   const saveEdit = () => {
     if (!newOutcome.trim() || editingIndex === null) return;
+    
     const updatedOutcomes = [...outcomes];
     updatedOutcomes[editingIndex] = newOutcome;
     setOutcomes(updatedOutcomes);
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(false);
+    
+    // Send update event with updated outcomes
+    const evt = new CustomEvent('nodeupdate', {
+      detail: {
+        id,
+        data: {
+          ...data,
+          outcomes: updatedOutcomes
+        }
+      }
+    });
+    window.dispatchEvent(evt);
   };
 
   const cancelEdit = () => {
@@ -64,6 +127,10 @@ export function GreetingNode({
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(true);
+  };
+
+  const handleGreetingChange = (value: string) => {
+    setGreeting(value);
   };
 
   return (
@@ -89,7 +156,7 @@ export function GreetingNode({
           <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
             Message
           </Label>
-          <GreetingInput value={greeting} onChange={setGreeting} />
+          <GreetingInput value={greeting} onChange={handleGreetingChange} />
         </div>
 
         {/* Outcomes section */}
