@@ -95,26 +95,48 @@ export function AgentSettings({
         try {
           const { data, error } = await supabase
             .from('agents')
-            .select('knowledge_ids')
+            .select('knowledge_ids, voice_id, language, humor_level')
             .eq('id', agentId)
-            .single();
+            .maybeSingle();
             
           if (error) throw error;
           
-          // If the agent has a knowledge base, set it in the state
-          if (data && data.knowledge_ids && data.knowledge_ids.length > 0) {
-            setKnowledgeBase(data.knowledge_ids[0]);
-          } else {
-            setKnowledgeBase("none");
+          if (data) {
+            // Set voice if exists
+            if (data.voice_id) {
+              setVoice(data.voice_id);
+            }
+            
+            // Set language if exists
+            if (data.language) {
+              setLanguage(data.language);
+            }
+            
+            // Set humor level if exists
+            if (data.humor_level !== undefined && data.humor_level !== null) {
+              setHumorLevel(data.humor_level);
+            }
+            
+            // If the agent has a knowledge base, set it in the state
+            if (data.knowledge_ids && data.knowledge_ids.length > 0) {
+              setKnowledgeBase(data.knowledge_ids[0]);
+            } else {
+              setKnowledgeBase("none");
+            }
           }
         } catch (error) {
           console.error("Error fetching agent data:", error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch agent data",
+            variant: "destructive",
+          });
         }
       };
       
       fetchAgentData();
     }
-  }, [open, agentId, refetch]);
+  }, [open, agentId, refetch, toast]);
   
   // Format knowledge documents for dropdown
   const knowledgeBases = React.useMemo(() => {
@@ -128,36 +150,49 @@ export function AgentSettings({
   const handleSave = async () => {
     setIsLoading(true);
     try {
+      console.log("Saving agent settings:", {
+        agentId,
+        voice,
+        language,
+        humorLevel,
+        knowledgeBase
+      });
+      
       // First update the agent in Supabase
-      const updateData: any = {
+      const updateData = {
         voice_id: voice || null,
         language: language,
         humor_level: humorLevel,
+        knowledge_ids: knowledgeBase && knowledgeBase !== "none" ? [knowledgeBase] : []
       };
       
-      // Handle knowledge base linking
-      if (knowledgeBase && knowledgeBase !== "none") {
-        // Save the knowledge ID in the agent's knowledge_ids array
-        updateData.knowledge_ids = [knowledgeBase];
-      } else {
-        // Clear the knowledge base association
-        updateData.knowledge_ids = [];
-      }
+      console.log("Updating agent with data:", updateData);
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('agents')
         .update(updateData)
-        .eq('id', agentId);
+        .eq('id', agentId)
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase update error:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+      
+      console.log("Supabase update result:", data);
       
       // Call the onUpdateSettings prop to maintain component API compatibility
-      await onUpdateSettings({
-        voiceId: voice,
-        language,
-        knowledgeBaseId: knowledgeBase === "none" ? null : knowledgeBase,
-        humorLevel: humorLevel,
-      });
+      try {
+        await onUpdateSettings({
+          voiceId: voice,
+          language,
+          knowledgeBaseId: knowledgeBase === "none" ? null : knowledgeBase,
+          humorLevel: humorLevel,
+        });
+      } catch (callbackError) {
+        console.error("onUpdateSettings callback error:", callbackError);
+        // We don't throw here because we already updated the database successfully
+      }
       
       toast({
         title: "Success",
@@ -168,7 +203,7 @@ export function AgentSettings({
       console.error("Error updating agent settings:", error);
       toast({
         title: "Error",
-        description: "Failed to update agent settings",
+        description: error instanceof Error ? error.message : "Failed to update agent settings",
         variant: "destructive",
       });
     } finally {
@@ -190,7 +225,7 @@ export function AgentSettings({
           <div className="grid gap-6">
             <div className="space-y-3">
               <Label htmlFor="voice">Voice</Label>
-              <Select onValueChange={setVoice} defaultValue={voice}>
+              <Select onValueChange={setVoice} value={voice}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select voice" />
                 </SelectTrigger>
@@ -208,7 +243,7 @@ export function AgentSettings({
             </div>
             <div className="space-y-3">
               <Label htmlFor="language">Language</Label>
-              <Select onValueChange={setLanguage} defaultValue={language}>
+              <Select onValueChange={setLanguage} value={language}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
@@ -231,7 +266,7 @@ export function AgentSettings({
                 min={0}
                 max={100}
                 step={10}
-                defaultValue={[humorLevel]}
+                value={[humorLevel]}
                 onValueChange={(values) => setHumorLevel(values[0])}
               />
               <div className="flex justify-between text-xs text-gray-500">
