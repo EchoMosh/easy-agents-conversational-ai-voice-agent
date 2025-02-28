@@ -131,17 +131,22 @@ export default function AgentFlowPage() {
       mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       
       console.log('Mermaid Chart to save:', mermaidChartStr);
+      console.log('Saving flow data:', JSON.stringify(flowData));
       setMermaidChart(mermaidChartStr);
       
       const { error } = await supabase
         .from('agents')
         .update({ 
-          flow: JSON.stringify(flowData), // Convert to string to satisfy Json type
+          flow: flowData, // Store as JSON directly
           mermaid_chart: mermaidChartStr // Save sanitized mermaid diagram to database
         })
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving flow data:', error);
+        throw error;
+      }
+      
       await refetch();
     }
   });
@@ -170,6 +175,7 @@ export default function AgentFlowPage() {
         nodes: newNodes as FlowNode[],
         edges: currentFlow.edges || []
       };
+      console.log('Nodes changed, updating flow:', flowData);
       saveFlowMutation.mutate(flowData);
     } catch (error) {
       console.error('Error updating nodes:', error);
@@ -189,6 +195,7 @@ export default function AgentFlowPage() {
         nodes: currentFlow.nodes || [],
         edges: newEdges as FlowEdge[]
       };
+      console.log('Edges changed, updating flow:', flowData);
       saveFlowMutation.mutate(flowData);
     } catch (error) {
       console.error('Error updating edges:', error);
