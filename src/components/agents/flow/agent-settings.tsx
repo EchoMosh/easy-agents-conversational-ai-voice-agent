@@ -20,7 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { fetchDocuments } from "@/utils/knowledge-api";
 
 // Voices data for the dropdown select
 const voices = [
@@ -44,23 +47,17 @@ const languages = [
   { id: "nl-NL", name: "Dutch" },
 ];
 
-// Knowledge base data for dropdown select
-const knowledgeBases = [
-  { id: "none", name: "None" },
-  { id: "kb-1", name: "Customer Support FAQ" },
-  { id: "kb-2", name: "Product Documentation" },
-  { id: "kb-3", name: "Company Policies" },
-];
-
 interface AgentSettingsProps {
   agentId: string;
   currentVoice?: string;
   currentLanguage?: string;
+  currentHumorLevel?: number;
   children: React.ReactNode;
   onUpdateSettings: (settings: {
     voiceId?: string;
     language?: string;
     knowledgeBaseId?: string;
+    humorLevel?: number;
   }) => Promise<void>;
 }
 
@@ -68,6 +65,7 @@ export function AgentSettings({
   agentId,
   currentVoice,
   currentLanguage,
+  currentHumorLevel = 50,
   children,
   onUpdateSettings,
 }: AgentSettingsProps) {
@@ -75,8 +73,25 @@ export function AgentSettings({
   const [voice, setVoice] = React.useState(currentVoice || "");
   const [language, setLanguage] = React.useState(currentLanguage || "en-US");
   const [knowledgeBase, setKnowledgeBase] = React.useState("none");
+  const [humorLevel, setHumorLevel] = React.useState(currentHumorLevel);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
+  
+  // Fetch knowledge documents
+  const { data: knowledgeDocuments, isLoading: isLoadingDocuments } = useQuery({
+    queryKey: ['knowledgeDocuments'],
+    queryFn: fetchDocuments,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  // Format knowledge documents for dropdown
+  const knowledgeBases = React.useMemo(() => {
+    const documents = knowledgeDocuments || [];
+    return [
+      { id: "none", name: "None" },
+      ...documents.map(doc => ({ id: doc.id, name: doc.title })),
+    ];
+  }, [knowledgeDocuments]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -85,6 +100,7 @@ export function AgentSettings({
         voiceId: voice,
         language,
         knowledgeBaseId: knowledgeBase === "none" ? null : knowledgeBase,
+        humorLevel: humorLevel,
       });
       toast({
         title: "Success",
@@ -151,10 +167,29 @@ export function AgentSettings({
               </p>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="humor">Humor Level: {humorLevel}%</Label>
+              <Slider
+                id="humor"
+                min={0}
+                max={100}
+                step={10}
+                defaultValue={[humorLevel]}
+                onValueChange={(values) => setHumorLevel(values[0])}
+              />
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Serious</span>
+                <span>Balanced</span>
+                <span>Humorous</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Set how humorous the agent should be in conversations
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="knowledge">Knowledge Base</Label>
               <Select onValueChange={setKnowledgeBase} defaultValue={knowledgeBase}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select knowledge base" />
+                  <SelectValue placeholder={isLoadingDocuments ? "Loading..." : "Select knowledge base"} />
                 </SelectTrigger>
                 <SelectContent>
                   {knowledgeBases.map((kb) => (
