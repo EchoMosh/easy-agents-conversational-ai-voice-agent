@@ -99,7 +99,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       return false;
     }
 
-    // Check for duplicate connections with more relaxed criteria - just source and target
+    // Simple duplicate check - just check source and target
     const existingConnection = edges.find(edge => 
       edge.target === connection.target && 
       edge.source === connection.source
@@ -128,25 +128,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     if (isValidConnection(params)) {
       console.log('Connection valid, creating edge');
       
-      // Create a simple, unique ID for the edge
-      const edgeId = `e-${Date.now()}`;
-      
-      const newEdge: Edge = {
-        id: edgeId,
-        source: params.source,
-        target: params.target,
-        sourceHandle: params.sourceHandle,
-        targetHandle: params.targetHandle,
-        type: 'default',
-        animated: true,
-        style: {
-          strokeWidth: 2,
-          stroke: '#94a3b8',
-        }
-      };
-      
-      // Directly add the edge to the edges array instead of using addEdge
-      const newEdges = [...edges, newEdge];
+      // Use React Flow's built-in addEdge function with the connection params
+      const newEdges = addEdge(params, edges);
       console.log('New edges:', newEdges);
       setEdges(newEdges);
       onEdgesChange(newEdges);
@@ -157,15 +140,13 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
-    // Use a deep copy to ensure we're not passing references
-    const updatedNodes = JSON.parse(JSON.stringify(nodes));
+    const updatedNodes = nodes.map(node => ({ ...node }));
     onNodesChange(updatedNodes);
   }, [nodes, onNodesChange, onNodesChangeInternal]);
 
   const handleEdgesChange = useCallback((changes: any) => {
     onEdgesChangeInternal(changes);
-    // Use a deep copy to ensure we're not passing references
-    const updatedEdges = JSON.parse(JSON.stringify(edges));
+    const updatedEdges = edges.map(edge => ({ ...edge }));
     onEdgesChange(updatedEdges);
   }, [edges, onEdgesChange, onEdgesChangeInternal]);
 
