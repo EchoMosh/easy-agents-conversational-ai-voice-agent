@@ -1,178 +1,138 @@
 
-import { ArrowLeft, Check, Settings } from "lucide-react";
-import { Agent } from "@/types/agent";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Label } from "@/components/ui/label";
-import { Agent as AgentType } from "@/types/agent";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-
-// Voice options
-const voices = [
-  { id: "alloy", name: "Alloy" },
-  { id: "echo", name: "Echo" },
-  { id: "fable", name: "Fable" },
-  { id: "onyx", name: "Onyx" },
-  { id: "nova", name: "Nova" },
-  { id: "shimmer", name: "Shimmer" }
-];
-
-// Language options
-const languages = [
-  { id: "en", name: "English" },
-  { id: "es", name: "Spanish" },
-  { id: "fr", name: "French" },
-  { id: "de", name: "German" },
-  { id: "it", name: "Italian" },
-  { id: "pt", name: "Portuguese" },
-  { id: "nl", name: "Dutch" },
-  { id: "ja", name: "Japanese" },
-  { id: "zh", name: "Chinese" },
-  { id: "ru", name: "Russian" }
-];
+import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
+import { AgentSettings } from "@/components/agents/flow/agent-settings";
+import { Agent } from "@/types/agent";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
 
 interface HeaderProps {
-  agent: AgentType;
+  agent: Agent;
   onBack: () => void;
-  onUpdateSettings: (settings: { voiceId?: string; language?: string }) => void;
-  mermaidChart?: string;
+  onUpdateSettings: (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => Promise<void>;
 }
 
-export function Header({ agent, onBack, onUpdateSettings, mermaidChart }: HeaderProps) {
-  const [voiceId, setVoiceId] = useState<string>(agent.voice_id || '');
-  const [language, setLanguage] = useState<string>(agent.language || 'en');
-  const { toast } = useToast();
-  const [showMermaid, setShowMermaid] = useState(false);
+export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
+  const [isConnected, setIsConnected] = useState(false);
+  const [showTrainingPopup, setShowTrainingPopup] = useState(false);
 
-  const handleSaveSettings = async () => {
-    try {
-      await onUpdateSettings({
-        voiceId,
-        language
+  useEffect(() => {
+    console.log('Setting up Supabase realtime connection...');
+    
+    // Subscribe to the real-time channel
+    const channel = supabase.channel('agent-flow')
+      .on('presence', { event: 'sync' }, () => {
+        console.log('Presence sync event received');
+        setIsConnected(true);
+      })
+      .subscribe((status) => {
+        console.log('Channel status changed:', status);
+        setIsConnected(status === 'SUBSCRIBED');
       });
-      
-      toast({
-        title: "Settings updated",
-        description: "Agent settings have been updated successfully.",
-      });
-    } catch (error) {
-      console.error("Error updating settings:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update agent settings. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+
+    console.log('Channel created:', channel);
+
+    // Log connection state changes
+    const subscription = supabase.getChannels().forEach(channel => {
+      console.log('Current channel state:', channel.state);
+    });
+
+    // Cleanup subscription
+    return () => {
+      console.log('Cleaning up Supabase channel...');
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Log whenever connection status changes
+  useEffect(() => {
+    console.log('Connection status changed:', isConnected);
+  }, [isConnected]);
 
   return (
-    <div className="border-b bg-white dark:bg-gray-950">
-      <div className="flex h-16 items-center px-4 gap-4">
-        <Button variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-lg font-medium">{agent.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {agent.role.replace(/_/g, ' ')}
-          </p>
+    <>
+      <div className="relative h-16 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl flex items-center justify-between px-8 z-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
+        <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/30 to-white/60 dark:from-gray-900/60 dark:via-gray-800/30 dark:to-gray-900/60 pointer-events-none" />
+        
+        <div className="flex items-center gap-6 relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onBack}
+            className="hover:bg-gray-900/5 dark:hover:bg-white/5 transition-all duration-300 rounded-full"
+          >
+            <ArrowLeft className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+          </Button>
+          <div className="flex flex-col">
+            <h1 className="font-medium text-gray-900 dark:text-white">{agent.name}</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{agent.role.replace('_', ' ')}</p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {mermaidChart && (
-            <Button
-              variant="outline"
-              onClick={() => setShowMermaid(!showMermaid)}
+        <div className="flex items-center gap-2 relative">
+          {/* Settings button with reduced spacing */}
+          <AgentSettings
+            agentId={agent.id}
+            currentVoice={agent.voice_id || undefined}
+            currentLanguage={agent.language}
+            onUpdateSettings={onUpdateSettings}
+          >
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5 mr-1"
             >
-              {showMermaid ? "Hide Diagram" : "Show Diagram"}
+              <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </Button>
-          )}
+          </AgentSettings>
           
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Settings className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Agent Settings</SheetTitle>
-                <SheetDescription>
-                  Configure voice and language settings for your agent.
-                </SheetDescription>
-              </SheetHeader>
-
-              <div className="space-y-6 py-6">
-                <div className="space-y-2">
-                  <Label htmlFor="voice">Voice</Label>
-                  <Select value={voiceId} onValueChange={setVoiceId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a voice" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Voices</SelectLabel>
-                        {voices.map((voice) => (
-                          <SelectItem key={voice.id} value={voice.id}>
-                            {voice.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="language">Language</Label>
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Languages</SelectLabel>
-                        {languages.map((lang) => (
-                          <SelectItem key={lang.id} value={lang.id}>
-                            {lang.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button className="w-full" onClick={handleSaveSettings}>
-                  <Check className="mr-2 h-4 w-4" />
-                  Save Settings
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="secondary"
+              className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 font-medium"
+            >
+              <PhoneCall className="h-4 w-4 mr-2" />
+              Call Me
+            </Button>
+            
+            <Button 
+              className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
+              onClick={() => setShowTrainingPopup(true)}
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Train {agent.name}
+            </Button>
+          </div>
         </div>
       </div>
       
-      {showMermaid && mermaidChart && (
-        <div className="p-4 border-t bg-gray-50 dark:bg-gray-900 overflow-auto max-h-96">
-          <pre className="text-xs overflow-x-auto">{mermaidChart}</pre>
-        </div>
-      )}
-    </div>
+      {/* Connection status indicator positioned below header */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="absolute top-16 right-8 z-50 p-3">
+              <div 
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 shadow-lg ${
+                  isConnected ? 'bg-green-500' : 'bg-red-500'
+                }`}
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{isConnected ? 'Connected' : 'Disconnected'}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {/* Agent Training Popup */}
+      <AgentTrainingPopup 
+        agent={agent} 
+        open={showTrainingPopup} 
+        onOpenChange={setShowTrainingPopup} 
+      />
+    </>
   );
 }

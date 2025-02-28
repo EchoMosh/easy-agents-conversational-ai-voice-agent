@@ -55,7 +55,6 @@ export type Database = {
           is_active: boolean | null
           knowledge_ids: string[] | null
           language: string | null
-          mermaid_chart: string | null
           name: string
           objective: string
           role: Database["public"]["Enums"]["agent_role"]
@@ -71,7 +70,6 @@ export type Database = {
           is_active?: boolean | null
           knowledge_ids?: string[] | null
           language?: string | null
-          mermaid_chart?: string | null
           name: string
           objective: string
           role: Database["public"]["Enums"]["agent_role"]
@@ -87,7 +85,6 @@ export type Database = {
           is_active?: boolean | null
           knowledge_ids?: string[] | null
           language?: string | null
-          mermaid_chart?: string | null
           name?: string
           objective?: string
           role?: Database["public"]["Enums"]["agent_role"]
