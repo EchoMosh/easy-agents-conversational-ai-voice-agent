@@ -8,6 +8,12 @@ import { Separator } from "@/components/ui/separator";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface LeadVariable {
   id: string;
@@ -34,9 +40,60 @@ export interface Lead {
 
 export default function LeadsPage() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const { pipelines, leads, invalidateAndRefetch } = usePipelineQueries(selectedPipelineId);
+
+  // For editing a lead
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editStatus, setEditStatus] = useState("");
+  const [editPipelineId, setEditPipelineId] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Set up form when a lead is selected for editing
+  useEffect(() => {
+    if (editingLead) {
+      setEditName(editingLead.name);
+      setEditEmail(editingLead.email || "");
+      setEditPhone(editingLead.phone || "");
+      setEditStatus(editingLead.status);
+      setEditPipelineId(editingLead.pipeline_id);
+    }
+  }, [editingLead]);
+
+  // Handle lead update
+  const handleUpdateLead = async () => {
+    if (!editingLead) return;
+    
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update({
+          name: editName,
+          email: editEmail || null,
+          phone: editPhone || null,
+          status: editStatus,
+          pipeline_id: editPipelineId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", editingLead.id);
+
+      if (error) throw error;
+      
+      toast.success("Lead updated successfully");
+      invalidateAndRefetch();
+      setEditingLead(null);
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      toast.error("Failed to update lead");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   // Filter leads based on search query
   const filteredLeads = leads.filter(lead => {
@@ -141,10 +198,7 @@ export default function LeadsPage() {
                         variant="ghost" 
                         size="sm" 
                         className="h-8 w-8 p-0"
-                        onClick={() => {
-                          // This would open the edit form dialog
-                          console.log("Edit lead:", lead.id);
-                        }}
+                        onClick={() => setEditingLead(lead)}
                       >
                         <span className="sr-only">Edit</span>
                         <Pencil className="h-4 w-4" />
@@ -157,6 +211,86 @@ export default function LeadsPage() {
           </Table>
         </div>
       )}
+
+      {/* Edit Lead Slide-in Panel */}
+      <Sheet open={!!editingLead} onOpenChange={(open) => !open && setEditingLead(null)}>
+        <SheetContent className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Edit Lead</SheetTitle>
+          </SheetHeader>
+          <div className="py-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Lead name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email" 
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="Email address"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                placeholder="Phone number"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={editStatus} onValueChange={setEditStatus}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">New</SelectItem>
+                  <SelectItem value="Contacted">Contacted</SelectItem>
+                  <SelectItem value="Qualified">Qualified</SelectItem>
+                  <SelectItem value="Proposal">Proposal</SelectItem>
+                  <SelectItem value="Negotiation">Negotiation</SelectItem>
+                  <SelectItem value="Won">Won</SelectItem>
+                  <SelectItem value="Lost">Lost</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pipeline">Pipeline</Label>
+              <Select value={editPipelineId} onValueChange={setEditPipelineId}>
+                <SelectTrigger id="pipeline">
+                  <SelectValue placeholder="Select a pipeline" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pipelines.map((pipeline) => (
+                    <SelectItem key={pipeline.id} value={pipeline.id}>
+                      {pipeline.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="pt-4">
+              <Button 
+                className="w-full"
+                onClick={handleUpdateLead}
+                disabled={isUpdating}
+              >
+                {isUpdating ? "Updating..." : "Update Lead"}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
