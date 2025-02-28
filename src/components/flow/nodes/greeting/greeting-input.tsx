@@ -2,7 +2,7 @@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { VariableSelector } from '../variable-mention/variable-selector';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 
 interface GreetingInputProps {
   value: string;
@@ -11,6 +11,19 @@ interface GreetingInputProps {
 
 export function GreetingInput({ value, onChange }: GreetingInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ensure textarea synchronizes with the value prop
+  useEffect(() => {
+    if (textareaRef.current && textareaRef.current.value !== value) {
+      textareaRef.current.value = value;
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    console.log("GreetingInput change:", newValue);
+    onChange(newValue);
+  };
 
   const highlightVariables = (text: string) => {
     return text.replace(
@@ -25,7 +38,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
         <Textarea 
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={handleChange}
           className="nodrag text-sm resize-y min-h-[100px] bg-white/10 border-white/20 shadow-lg backdrop-blur-xl rounded-xl focus-visible:ring-white/30 focus-visible:border-white/30"
           placeholder="Type @ to insert a variable..."
           style={{ color: 'transparent', caretColor: '#6366f1' }}
