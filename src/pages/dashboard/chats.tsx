@@ -62,8 +62,8 @@ export default function ChatsPage() {
       />
 
       {selectedLead && (
-        <div className="w-80 border-l flex flex-col bg-background">
-          <Tabs defaultValue="timeline" value={currentTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
+        <div className="w-80 border-l flex flex-col bg-background h-screen overflow-hidden">
+          <Tabs defaultValue="timeline" value={currentTab} onValueChange={handleTabChange} className="flex-1 flex flex-col h-full">
             <div className="px-2 py-1 border-b">
               <TabsList className="w-full grid grid-cols-3 bg-transparent p-0 h-14">
                 <TabsTrigger 
@@ -87,15 +87,15 @@ export default function ChatsPage() {
               </TabsList>
             </div>
 
-            <TabsContent value="timeline" className="flex-1 m-0">
+            <TabsContent value="timeline" className="flex-1 m-0 overflow-hidden">
               <TimelineTab leadId={selectedLead.id} />
             </TabsContent>
 
-            <TabsContent value="details" className="m-0 p-4">
+            <TabsContent value="details" className="m-0 p-4 overflow-auto">
               <InfoTab lead={selectedLead} />
             </TabsContent>
 
-            <TabsContent value="files" className="m-0 p-4">
+            <TabsContent value="files" className="m-0 p-4 overflow-auto">
               <div className="space-y-4">
                 <Button className="w-full bg-white hover:bg-gray-50 text-black border shadow-sm dark:bg-background dark:hover:bg-muted dark:text-foreground">
                   <PlusCircle className="w-4 h-4 mr-2" />
