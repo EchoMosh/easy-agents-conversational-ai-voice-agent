@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 export interface LeadVariable {
   id: string;
@@ -266,11 +267,10 @@ export default function LeadsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input
+              <PhoneInput
                 id="phone"
                 value={editPhone}
-                onChange={(e) => setEditPhone(e.target.value)}
-                placeholder="Phone number"
+                onChange={setEditPhone}
               />
             </div>
             <div className="space-y-2">
