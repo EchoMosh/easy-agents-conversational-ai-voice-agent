@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
@@ -61,7 +60,7 @@ const widgets = [
     type: 'webhookNode', 
     label: 'Webhook', 
     icon: Webhook, 
-    color: '#6366f1',
+    color: '#d946ef',
     description: 'Make HTTP requests to external services'
   }
 ];
@@ -81,7 +80,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const { screenToFlowPosition } = useReactFlow();
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
   
-  // Create a timeout ref to handle hover delay
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isValidConnection = (connection: Connection) => {
@@ -200,25 +198,19 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     }
   }, [screenToFlowPosition, setNodes]);
 
-  // Handle mouse enter for the button
   const handleMouseEnter = () => {
-    // Clear any existing timeout
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
     }
-    // Set a small delay before showing the widgets to prevent accidental triggers
     hoverTimeoutRef.current = setTimeout(() => {
       setShowWidgets(true);
     }, 150);
   };
 
-  // Handle mouse leave for the panel area
   const handleMouseLeave = () => {
-    // Clear any existing timeout
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
     }
-    // Set a delay before hiding to allow user to move to the panel
     hoverTimeoutRef.current = setTimeout(() => {
       setShowWidgets(false);
     }, 300);
@@ -254,7 +246,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
               case 'transferNode':
                 return '#10b981';
               case 'webhookNode':
-                return '#6366f1';
+                return '#d946ef';
               default:
                 return '#60a5fa';
             }
@@ -278,7 +270,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
               <div 
                 className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
                 onMouseEnter={() => {
-                  // Clear any hide timeout when mouse enters the panel
                   if (hoverTimeoutRef.current) {
                     clearTimeout(hoverTimeoutRef.current);
                   }
