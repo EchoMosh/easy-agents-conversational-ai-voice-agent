@@ -22,20 +22,16 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
+    console.log("GreetingInput change:", newValue);
     onChange(newValue);
   };
 
-  // Highlight variables function - moved outside component for reference stability
-  const highlightVariables = useMemo(() => {
-    return (text: string) => {
-      if (!text) return '';
-      
-      return text.replace(
-        /{{([^}]+)}}/g,
-        '<span class="bg-white/40 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
-      );
-    };
-  }, []);
+  const highlightVariables = (text: string) => {
+    return text.replace(
+      /{{([^}]+)}}/g,
+      '<span class="bg-white/40 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm font-medium">{{$1}}</span>'
+    );
+  };
 
   // Use debounced version for the highlighted HTML to reduce processing on each keystroke
   const debouncedValue = useDebounce(value, 50);
@@ -46,7 +42,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
       .split('\n')
       .map(line => line || '&#8203;')
       .join('<br/>');
-  }, [debouncedValue, highlightVariables]);
+  }, [debouncedValue]);
 
   return (
     <div className="flex flex-col gap-2 relative">

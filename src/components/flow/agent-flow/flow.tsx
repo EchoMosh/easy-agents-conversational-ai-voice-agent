@@ -1,6 +1,6 @@
 
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
@@ -192,8 +192,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     const handleClickOutside = (event: MouseEvent) => {
       if (showWidgets && 
           widgetButtonRef.current && 
-          !widgetButtonRef.current.contains(event.target as Element) &&
-          !document.querySelector('.widget-panel')?.contains(event.target as Element)) {
+          !widgetButtonRef.current.contains(event.target as Node) &&
+          !document.querySelector('.widget-panel')?.contains(event.target as Node)) {
         setShowWidgets(false);
       }
     };
