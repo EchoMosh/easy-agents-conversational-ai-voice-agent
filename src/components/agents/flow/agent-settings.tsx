@@ -24,6 +24,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDocuments } from "@/utils/knowledge-api";
+import { supabase } from "@/integrations/supabase/client";
 
 // Voices data for the dropdown select
 const voices = [
@@ -96,18 +97,44 @@ export function AgentSettings({
   const handleSave = async () => {
     setIsLoading(true);
     try {
+      // First update the agent in Supabase
+      const updateData: any = {
+        voice_id: voice || null,
+        language: language,
+        humor_level: humorLevel,
+      };
+      
+      // Handle knowledge base linking
+      if (knowledgeBase && knowledgeBase !== "none") {
+        // Save the knowledge ID in the agent's knowledge_ids array
+        updateData.knowledge_ids = [knowledgeBase];
+      } else {
+        // Clear the knowledge base association
+        updateData.knowledge_ids = [];
+      }
+      
+      const { error } = await supabase
+        .from('agents')
+        .update(updateData)
+        .eq('id', agentId);
+      
+      if (error) throw error;
+      
+      // Call the onUpdateSettings prop to maintain component API compatibility
       await onUpdateSettings({
         voiceId: voice,
         language,
         knowledgeBaseId: knowledgeBase === "none" ? null : knowledgeBase,
         humorLevel: humorLevel,
       });
+      
       toast({
         title: "Success",
         description: "Agent settings updated",
       });
       setOpen(false);
     } catch (error) {
+      console.error("Error updating agent settings:", error);
       toast({
         title: "Error",
         description: "Failed to update agent settings",
