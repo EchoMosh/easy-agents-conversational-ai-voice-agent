@@ -1,8 +1,10 @@
-import { useState } from 'react';
+
+import { useState, useContext } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Network } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
 
 type TriggerPlatform = 'facebook' | 'hubspot' | 'gohighlevel' | 'activix';
 type TriggerAction = 'new_lead' | 'message_received' | 'new_contact' | 'deal_stage_changed' | 'contact_created' | 'opportunity_won' | 'ticket_created' | 'payment_received';
@@ -77,34 +79,29 @@ export function TriggerNode({
 }) {
   const [platform, setPlatform] = useState<TriggerPlatform | undefined>(data.platform);
   const [action, setAction] = useState<TriggerAction | undefined>(data.action);
+  
+  // Get the updateNodeData function from context
+  const { updateNodeData } = useContext(NodeUpdateContext);
 
   const handlePlatformChange = (value: TriggerPlatform) => {
     setPlatform(value);
     setAction(undefined);
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          platform: value,
-          action: undefined
-        }
-      }
+    
+    // Update node data
+    updateNodeData(id, {
+      platform: value,
+      action: undefined
     });
-    window.dispatchEvent(evt);
   };
 
   const handleActionChange = (value: TriggerAction) => {
     setAction(value);
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          platform,
-          action: value
-        }
-      }
+    
+    // Update node data
+    updateNodeData(id, {
+      platform,
+      action: value
     });
-    window.dispatchEvent(evt);
   };
 
   return (

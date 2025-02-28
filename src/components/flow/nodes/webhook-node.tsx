@@ -1,10 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Webhook } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
 
 type WebhookMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -23,33 +24,28 @@ export function WebhookNode({
 }) {
   const [url, setUrl] = useState<string>(data.url || '');
   const [method, setMethod] = useState<WebhookMethod>(data.method || 'GET');
+  
+  // Get the updateNodeData function from context
+  const { updateNodeData } = useContext(NodeUpdateContext);
 
   const handleUrlChange = (value: string) => {
     setUrl(value);
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          ...data,
-          url: value
-        }
-      }
+    
+    // Update node data
+    updateNodeData(id, {
+      ...data,
+      url: value
     });
-    window.dispatchEvent(evt);
   };
 
   const handleMethodChange = (value: WebhookMethod) => {
     setMethod(value);
-    const evt = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: {
-          ...data,
-          method: value
-        }
-      }
+    
+    // Update node data
+    updateNodeData(id, {
+      ...data,
+      method: value
     });
-    window.dispatchEvent(evt);
   };
 
   return (

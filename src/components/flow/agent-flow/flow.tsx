@@ -12,6 +12,16 @@ import { TransferNode } from '@/components/flow/nodes/transfer-node';
 import { WebhookNode } from '@/components/flow/nodes/webhook-node';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+// Create a context to provide the updateNodeData function to all nodes
+import React from 'react';
+
+// Create a context for the node update function
+export const NodeUpdateContext = React.createContext<{
+  updateNodeData: (nodeId: string, data: any) => void;
+}>({
+  updateNodeData: () => {},
+});
+
 const nodeTypes: NodeTypes = {
   speakNode: SpeakNode,
   greetingNode: GreetingNode,
@@ -82,6 +92,33 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
   
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Function to update node data - will be provided through context
+  const updateNodeData = useCallback((nodeId: string, newData: any) => {
+    console.log(`Updating node ${nodeId} with data:`, newData);
+    
+    setNodes((nds) => 
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          const updatedNode = {
+            ...node,
+            data: { ...newData }
+          };
+          return updatedNode;
+        }
+        return node;
+      })
+    );
+    
+    // After updating the local state, notify the parent component
+    const updatedNodes = nodes.map(node => 
+      node.id === nodeId 
+        ? { ...node, data: { ...newData } } 
+        : node
+    );
+    
+    onNodesChange(updatedNodes);
+  }, [nodes, setNodes, onNodesChange]);
 
   const isValidConnection = (connection: Connection) => {
     // Check if source and target nodes exist
@@ -225,104 +262,106 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   };
 
   return (
-    <div ref={reactFlowWrapper} className="w-full h-full">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={handleEdgesChange}
-        onConnect={onConnect}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-        nodeTypes={nodeTypes}
-        fitView
-        defaultEdgeOptions={defaultEdgeOptions}
-        connectionMode={ConnectionMode.Loose}
-        className="bg-white dark:bg-gray-950"
-        snapToGrid={true}
-        snapGrid={[15, 15]}
-      >
-        <Background className="opacity-40" />
-        <MiniMap
-          className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
-          nodeColor={node => {
-            switch (node.type) {
-              case 'speakNode':
-                return '#c084fc';
-              case 'triggerNode':
-                return '#fbbf24';
-              case 'endNode':
-                return '#f87171';
-              case 'transferNode':
-                return '#10b981';
-              case 'webhookNode':
-                return '#d946ef';
-              default:
-                return '#60a5fa';
-            }
-          }}
-          maskColor="rgba(0, 0, 0, 0.05)"
-        />
-        <Panel position="bottom-left" className="space-y-2">
-          <div 
-            className="relative"
-            onMouseLeave={handleMouseLeave}
-          >
-            <button
-              ref={widgetButtonRef}
-              onClick={() => setShowWidgets(!showWidgets)}
-              onMouseEnter={handleMouseEnter}
-              className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl hover:bg-primary/90"
+    <NodeUpdateContext.Provider value={{ updateNodeData }}>
+      <div ref={reactFlowWrapper} className="w-full h-full">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={handleEdgesChange}
+          onConnect={onConnect}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          nodeTypes={nodeTypes}
+          fitView
+          defaultEdgeOptions={defaultEdgeOptions}
+          connectionMode={ConnectionMode.Loose}
+          className="bg-white dark:bg-gray-950"
+          snapToGrid={true}
+          snapGrid={[15, 15]}
+        >
+          <Background className="opacity-40" />
+          <MiniMap
+            className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
+            nodeColor={node => {
+              switch (node.type) {
+                case 'speakNode':
+                  return '#c084fc';
+                case 'triggerNode':
+                  return '#fbbf24';
+                case 'endNode':
+                  return '#f87171';
+                case 'transferNode':
+                  return '#10b981';
+                case 'webhookNode':
+                  return '#d946ef';
+                default:
+                  return '#60a5fa';
+              }
+            }}
+            maskColor="rgba(0, 0, 0, 0.05)"
+          />
+          <Panel position="bottom-left" className="space-y-2">
+            <div 
+              className="relative"
+              onMouseLeave={handleMouseLeave}
             >
-              <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
-            </button>
-            {showWidgets && (
-              <div 
-                className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
-                onMouseEnter={() => {
-                  if (hoverTimeoutRef.current) {
-                    clearTimeout(hoverTimeoutRef.current);
-                  }
-                }}
+              <button
+                ref={widgetButtonRef}
+                onClick={() => setShowWidgets(!showWidgets)}
+                onMouseEnter={handleMouseEnter}
+                className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl hover:bg-primary/90"
               >
-                <TooltipProvider>
-                  {widgets.map((widget) => (
-                    <Tooltip key={widget.type}>
-                      <TooltipTrigger asChild>
-                        <div
-                          className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-move transition-all duration-200"
-                          style={{
-                            background: `color-mix(in srgb, ${widget.color} 10%, transparent)`,
-                          }}
-                          onDragStart={(e) => onDragStart(e, widget.type)}
-                          draggable
-                        >
-                          <span 
-                            className="p-1.5 rounded-lg"
+                <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
+              </button>
+              {showWidgets && (
+                <div 
+                  className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
+                  onMouseEnter={() => {
+                    if (hoverTimeoutRef.current) {
+                      clearTimeout(hoverTimeoutRef.current);
+                    }
+                  }}
+                >
+                  <TooltipProvider>
+                    {widgets.map((widget) => (
+                      <Tooltip key={widget.type}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-move transition-all duration-200"
                             style={{
-                              background: `color-mix(in srgb, ${widget.color} 15%, transparent)`,
-                              color: widget.color
+                              background: `color-mix(in srgb, ${widget.color} 10%, transparent)`,
                             }}
+                            onDragStart={(e) => onDragStart(e, widget.type)}
+                            draggable
                           >
-                            <widget.icon className="h-4 w-4" />
-                          </span>
-                          <span className="font-medium text-sm text-foreground/80">{widget.label}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent 
-                        side="right"
-                        className="bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-none shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]"
-                      >
-                        {widget.description}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </TooltipProvider>
-              </div>
-            )}
-          </div>
-        </Panel>
-      </ReactFlow>
-    </div>
+                            <span 
+                              className="p-1.5 rounded-lg"
+                              style={{
+                                background: `color-mix(in srgb, ${widget.color} 15%, transparent)`,
+                                color: widget.color
+                              }}
+                            >
+                              <widget.icon className="h-4 w-4" />
+                            </span>
+                            <span className="font-medium text-sm text-foreground/80">{widget.label}</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          side="right"
+                          className="bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-none shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]"
+                        >
+                          {widget.description}
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </TooltipProvider>
+                </div>
+              )}
+            </div>
+          </Panel>
+        </ReactFlow>
+      </div>
+    </NodeUpdateContext.Provider>
   );
 }

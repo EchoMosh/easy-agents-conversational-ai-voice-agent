@@ -197,73 +197,25 @@ export default function AgentFlowPage() {
     }
   }, [agent]);
 
-  // Listen for node data updates (like message changes)
-  useEffect(() => {
-    const handleNodeUpdate = (event: CustomEvent<{id: string; data: any}>) => {
-      if (!agent?.flow) return;
-      
-      try {
-        console.log("Node update event received:", event.detail);
-        const { id: nodeId, data: nodeData } = event.detail;
-        
-        // Parse flow if it's a string
-        const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-        
-        // Create a deep copy to avoid reference issues
-        const flowCopy = JSON.parse(JSON.stringify(currentFlow));
-        
-        // Find and update the specific node
-        const updatedNodes = (flowCopy.nodes || []).map((node: FlowNode) => {
-          if (node.id === nodeId) {
-            console.log(`Updating node ${nodeId} with new data:`, nodeData);
-            return { 
-              ...node, 
-              data: nodeData 
-            };
-          }
-          return node;
-        });
-        
-        const flowData = {
-          nodes: updatedNodes,
-          edges: flowCopy.edges || []
-        };
-        
-        console.log('Node data updated, saving flow data:', flowData);
-        saveFlowMutation.mutate(flowData);
-      } catch (error) {
-        console.error('Error handling node update:', error);
-        toast({
-          title: 'Error updating node',
-          description: 'Unable to save node data',
-          variant: 'destructive'
-        });
-      }
-    };
-    
-    // Add event listener for node updates
-    window.addEventListener('nodeupdate', handleNodeUpdate as EventListener);
-    
-    // Clean up
-    return () => {
-      window.removeEventListener('nodeupdate', handleNodeUpdate as EventListener);
-    };
-  }, [agent, saveFlowMutation, toast]);
-
   const handleNodesChange = useCallback((newNodes: Node[]) => {
     if (!agent?.flow) return;
     try {
+      console.log('Nodes changed, nodes to save:', newNodes);
+      
+      // Deep clone to ensure no reference issues
+      const clonedNodes = JSON.parse(JSON.stringify(newNodes)) as FlowNode[];
+      
+      // Get the current edges from the agent flow
       const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+      const currentEdges = currentFlow.edges || [];
       
-      // Create a deep copy to avoid reference issues
-      const newNodesClone = JSON.parse(JSON.stringify(newNodes));
-      
+      // Create a complete flow data object
       const flowData: FlowData = {
-        nodes: newNodesClone as FlowNode[],
-        edges: currentFlow.edges || []
+        nodes: clonedNodes,
+        edges: currentEdges
       };
       
-      console.log('Nodes changed, updating flow:', flowData);
+      // Save the flow data
       saveFlowMutation.mutate(flowData);
     } catch (error) {
       console.error('Error updating nodes:', error);
@@ -278,17 +230,22 @@ export default function AgentFlowPage() {
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
     if (!agent?.flow) return;
     try {
+      console.log('Edges changed, edges to save:', newEdges);
+      
+      // Deep clone to ensure no reference issues
+      const clonedEdges = JSON.parse(JSON.stringify(newEdges)) as FlowEdge[];
+      
+      // Get the current nodes from the agent flow
       const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+      const currentNodes = currentFlow.nodes || [];
       
-      // Create a deep copy to avoid reference issues
-      const newEdgesClone = JSON.parse(JSON.stringify(newEdges));
-      
+      // Create a complete flow data object
       const flowData: FlowData = {
-        nodes: currentFlow.nodes || [],
-        edges: newEdgesClone as FlowEdge[]
+        nodes: currentNodes,
+        edges: clonedEdges
       };
       
-      console.log('Edges changed, updating flow:', flowData);
+      // Save the flow data
       saveFlowMutation.mutate(flowData);
     } catch (error) {
       console.error('Error updating edges:', error);

@@ -4,10 +4,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Pencil, MessageSquare } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { VariableSelector } from './variable-mention/variable-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
 
 type SpeakNodeData = {
   message?: string;
@@ -22,6 +23,9 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState<string[]>(data.outcomes || []);
+  
+  // Get the updateNodeData function from context
+  const { updateNodeData } = useContext(NodeUpdateContext);
   
   // Log whenever the data prop changes to debug flow
   useEffect(() => {
@@ -38,9 +42,9 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     if (data.outcomes) {
       setOutcomes(data.outcomes);
     }
-  }, [data, message]);
+  }, [data]);
 
-  // Direct textarea change handler
+  // Direct textarea change handler using the context function
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     console.log("Textarea change:", newValue);
@@ -53,19 +57,11 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: outcomes
     };
     
-    console.log("Sending node update with data:", updatedData);
-    
-    // Send the update event to React Flow
-    const updateEvent = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: updatedData
-      }
-    });
-    window.dispatchEvent(updateEvent);
+    console.log("Updating node data:", updatedData);
+    updateNodeData(id, updatedData);
   };
 
-  // Variable selector change handler
+  // Variable selector change handler using the context function
   const handleVariableSelectorChange = (newText: string) => {
     console.log("Variable selector change:", newText);
     setMessage(newText);
@@ -77,16 +73,8 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: outcomes
     };
     
-    console.log("Sending node update with data:", updatedData);
-    
-    // Send update event for variable insertion
-    const updateEvent = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: updatedData
-      }
-    });
-    window.dispatchEvent(updateEvent);
+    console.log("Updating node data:", updatedData);
+    updateNodeData(id, updatedData);
   };
 
   const addOutcome = () => {
@@ -105,14 +93,8 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: newOutcomes
     };
     
-    // Send update event
-    const updateEvent = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: updatedData
-      }
-    });
-    window.dispatchEvent(updateEvent);
+    // Update the node data
+    updateNodeData(id, updatedData);
   };
 
   const removeOutcome = (index: number) => {
@@ -126,14 +108,8 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: newOutcomes
     };
     
-    // Send update event
-    const updateEvent = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: updatedData
-      }
-    });
-    window.dispatchEvent(updateEvent);
+    // Update the node data
+    updateNodeData(id, updatedData);
   };
 
   const startEditing = (index: number) => {
@@ -159,14 +135,8 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: updatedOutcomes
     };
     
-    // Send update event
-    const updateEvent = new CustomEvent('nodeupdate', {
-      detail: {
-        id,
-        data: updatedData
-      }
-    });
-    window.dispatchEvent(updateEvent);
+    // Update the node data
+    updateNodeData(id, updatedData);
   };
 
   const cancelEdit = () => {
