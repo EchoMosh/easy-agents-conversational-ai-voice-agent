@@ -171,6 +171,49 @@ export default function AgentFlowPage() {
     }
   }, [agent]);
 
+  // Listen for node data updates (like message changes)
+  useEffect(() => {
+    const handleNodeUpdate = (event: CustomEvent) => {
+      if (!agent?.flow) return;
+      
+      try {
+        const { id: nodeId, data: nodeData } = event.detail;
+        const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+        
+        // Find and update the specific node
+        const updatedNodes = (currentFlow.nodes || []).map((node: FlowNode) => {
+          if (node.id === nodeId) {
+            return { ...node, data: { ...node.data, ...nodeData } };
+          }
+          return node;
+        });
+        
+        const flowData = {
+          nodes: updatedNodes,
+          edges: currentFlow.edges || []
+        };
+        
+        console.log('Node data updated, saving:', flowData);
+        saveFlowMutation.mutate(flowData);
+      } catch (error) {
+        console.error('Error handling node update:', error);
+        toast({
+          title: 'Error updating node',
+          description: 'Unable to save node data',
+          variant: 'destructive'
+        });
+      }
+    };
+    
+    // Add event listener for node updates
+    window.addEventListener('nodeupdate', handleNodeUpdate as EventListener);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('nodeupdate', handleNodeUpdate as EventListener);
+    };
+  }, [agent, saveFlowMutation, toast]);
+
   const handleNodesChange = useCallback((newNodes: Node[]) => {
     if (!agent?.flow) return;
     try {
