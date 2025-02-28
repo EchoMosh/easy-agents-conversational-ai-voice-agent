@@ -90,8 +90,8 @@ export function MessageComposer({ messageType, onMessageTypeChange, leadId }: Me
             : "Add a note..."}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          rows={messageType === 'email' ? 5 : 3}
-          className="resize-none"
+          rows={5}
+          className="resize-none min-h-[120px]"
         />
       </form>
     </div>
