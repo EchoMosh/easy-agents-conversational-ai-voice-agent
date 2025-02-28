@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+  AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 
 const SettingsPage = () => {
@@ -24,19 +25,38 @@ const SettingsPage = () => {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
+      // Get current session before signOut to ensure we have a valid session
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        // Session already doesn't exist, just redirect
+        navigate('/auth');
+        toast({
+          title: "Success",
+          description: "Signed out successfully",
+        });
+        return;
+      }
+      
+      // Clear the session
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Clear any local storage items related to auth if needed
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Navigate to auth page
       navigate('/auth');
       toast({
         title: "Success",
         description: "Signed out successfully",
       });
     } catch (error: any) {
+      console.error("Logout error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to sign out",
+        description: error?.message || "Failed to sign out",
       });
     } finally {
       setIsLoggingOut(false);
@@ -76,7 +96,7 @@ const SettingsPage = () => {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button variant="outline" onClick={() => {}}>Cancel</Button>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <Button 
                   variant="destructive" 
                   onClick={handleLogout}
