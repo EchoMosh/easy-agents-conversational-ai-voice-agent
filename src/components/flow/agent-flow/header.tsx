@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Settings } from 'lucide-react';
+import { ArrowLeft, Settings, BookOpen } from 'lucide-react';
 import { Agent } from '@/types/agent';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -90,6 +90,14 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     }
   };
 
+  const handleTrainAgent = () => {
+    toast({
+      title: 'Training started',
+      description: 'Agent training has been initiated. This may take a few minutes.',
+    });
+    // Implementation for training would go here
+  };
+
   return (
     <div className="bg-background/60 backdrop-blur-lg border-b p-4">
       <div className="flex items-center justify-between">
@@ -107,101 +115,107 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             <p className="text-sm text-muted-foreground">Flow Editor</p>
           </div>
         </div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Agent Settings</SheetTitle>
-              <SheetDescription>
-                Configure voice, language, and knowledge base for your agent.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="voice">Voice</Label>
-                  <Select
-                    value={selectedVoice}
-                    onValueChange={setSelectedVoice}
-                  >
-                    <SelectTrigger id="voice">
-                      <SelectValue placeholder="Select a voice" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {voices.map((voice) => (
-                        <SelectItem key={voice.id} value={voice.id}>
-                          {voice.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Choose a voice for your agent to use during conversations.
-                  </p>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Label htmlFor="language">Language</Label>
-                  <Select
-                    value={selectedLanguage}
-                    onValueChange={setSelectedLanguage}
-                  >
-                    <SelectTrigger id="language">
-                      <SelectValue placeholder="Select a language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {languages.map((language) => (
-                        <SelectItem key={language.id} value={language.id}>
-                          {language.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Choose the language for your agent to use.
-                  </p>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Label htmlFor="knowledge">Knowledge Base</Label>
-                  <Select
-                    value={selectedKnowledgeBase}
-                    onValueChange={setSelectedKnowledgeBase}
-                  >
-                    <SelectTrigger id="knowledge">
-                      <SelectValue placeholder="Select a knowledge base" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {knowledgeBases.map((kb) => (
-                        <SelectItem key={kb.id} value={kb.id}>
-                          {kb.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Connect a knowledge base to your agent for more informed responses.
-                  </p>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleTrainAgent}>
+            <BookOpen className="h-4 w-4 mr-2" />
+            Train Agent
+          </Button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Agent Settings</SheetTitle>
+                <SheetDescription>
+                  Configure voice, language, and knowledge base for your agent.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="voice">Voice</Label>
+                    <Select
+                      value={selectedVoice}
+                      onValueChange={setSelectedVoice}
+                    >
+                      <SelectTrigger id="voice">
+                        <SelectValue placeholder="Select a voice" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {voices.map((voice) => (
+                          <SelectItem key={voice.id} value={voice.id}>
+                            {voice.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Choose a voice for your agent to use during conversations.
+                    </p>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label htmlFor="language">Language</Label>
+                    <Select
+                      value={selectedLanguage}
+                      onValueChange={setSelectedLanguage}
+                    >
+                      <SelectTrigger id="language">
+                        <SelectValue placeholder="Select a language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languages.map((language) => (
+                          <SelectItem key={language.id} value={language.id}>
+                            {language.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Choose the language for your agent to use.
+                    </p>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label htmlFor="knowledge">Knowledge Base</Label>
+                    <Select
+                      value={selectedKnowledgeBase}
+                      onValueChange={setSelectedKnowledgeBase}
+                    >
+                      <SelectTrigger id="knowledge">
+                        <SelectValue placeholder="Select a knowledge base" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {knowledgeBases.map((kb) => (
+                          <SelectItem key={kb.id} value={kb.id}>
+                            {kb.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Connect a knowledge base to your agent for more informed responses.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <SheetFooter>
-              <SheetClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </SheetClose>
-              <Button 
-                onClick={handleSaveSettings}
-                disabled={isUpdating}
-              >
-                {isUpdating ? 'Saving...' : 'Save changes'}
-              </Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+              <SheetFooter>
+                <SheetClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </SheetClose>
+                <Button 
+                  onClick={handleSaveSettings}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? 'Saving...' : 'Save changes'}
+                </Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </div>
   );
