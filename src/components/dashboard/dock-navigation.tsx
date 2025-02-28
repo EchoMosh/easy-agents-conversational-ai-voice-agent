@@ -48,7 +48,7 @@ export function DockNavigation() {
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
-      <div className="bg-black/20 backdrop-blur-xl px-4 py-2 rounded-full flex items-center gap-1 shadow-lg">
+      <div className="bg-black/30 backdrop-blur-xl px-4 py-3 rounded-2xl flex items-center gap-2 shadow-lg border border-white/10">
         <TooltipProvider delayDuration={200}>
           {navItems.map((item) => (
             <Tooltip key={item.title}>
@@ -56,19 +56,31 @@ export function DockNavigation() {
                 <NavLink
                   to={item.url}
                   className={({ isActive }) => `
-                    relative p-2 rounded-full transition-all duration-200 group
-                    ${isActive ? "bg-white/20" : "hover:bg-white/10"}
+                    relative p-2 rounded-xl transition-all duration-200 group
+                    ${isActive 
+                      ? "bg-gradient-to-b from-white/20 to-white/5" 
+                      : "hover:bg-white/10 hover:scale-110"}
                   `}
                 >
                   {({ isActive }) => (
                     <>
-                      <item.icon 
-                        className={`h-6 w-6 transition-all duration-200 
-                          ${isActive ? "text-white" : "text-white/70 group-hover:text-white"}
-                        `} 
-                      />
+                      <motion.div 
+                        className={`p-2 rounded-lg bg-gradient-to-b ${
+                          isActive 
+                            ? "from-blue-500/80 to-blue-600/80 shadow-lg" 
+                            : "from-gray-800/90 to-gray-900/90"
+                        } flex items-center justify-center`}
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                      >
+                        <item.icon 
+                          className={`h-5 w-5 transition-all duration-200 
+                            ${isActive ? "text-white" : "text-white/90 group-hover:text-white"}
+                          `} 
+                        />
+                      </motion.div>
                       <motion.div
-                        className={`absolute bottom-0 left-1/2 w-1 h-1 bg-white rounded-full -translate-x-1/2 transition-opacity duration-200
+                        className={`absolute -bottom-1 left-1/2 w-1 h-1 bg-white rounded-full -translate-x-1/2 transition-opacity duration-200
                           ${isActive ? "opacity-100" : "opacity-0"}
                         `}
                         layoutId="indicator"
