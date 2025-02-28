@@ -24,27 +24,45 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   const nodeIdMap = new Map<string, string>();
   
   // Create simple sequential IDs for the mermaid chart - using type with sequential counter
-  flowData.nodes.forEach((node: FlowNode, index: number) => {
+  const nodeTypeCounter: Record<string, number> = {};
+  
+  flowData.nodes.forEach((node: FlowNode) => {
     // Extract base node type without any numeric part
     const baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
+    
+    // Initialize counter for this node type if not exists
+    if (!nodeTypeCounter[baseNodeType]) {
+      nodeTypeCounter[baseNodeType] = 1;
+    } else {
+      nodeTypeCounter[baseNodeType]++;
+    }
+    
     // Create simple node ID like speakNode-1, triggerNode-2, etc.
-    const simpleId = `${baseNodeType}-${index + 1}`;
+    const simpleId = `${baseNodeType}-${nodeTypeCounter[baseNodeType]}`;
     nodeIdMap.set(node.id, simpleId);
   });
   
   // Process nodes with simplified IDs
-  flowData.nodes.forEach((node: FlowNode, index: number) => {
+  flowData.nodes.forEach((node: FlowNode) => {
     // Get the appropriate label based on node type and data
     let nodeLabel = 'Node';
+    let outcomeLabels: string[] = [];
     
     if (node.data) {
-      console.log(`Node ${node.id} data:`, node.data);
       if (node.type === 'speakNode' && node.data.message) {
-        nodeLabel = node.data.message.toString();
+        nodeLabel = String(node.data.message);
+        // Store outcome labels for speakNode
+        if (node.data.outcomes && Array.isArray(node.data.outcomes)) {
+          outcomeLabels = node.data.outcomes;
+        }
       } else if (node.type === 'greetingNode' && node.data.greeting) {
-        nodeLabel = node.data.greeting.toString();
+        nodeLabel = String(node.data.greeting);
+        // Store outcome labels for greetingNode
+        if (node.data.outcomes && Array.isArray(node.data.outcomes)) {
+          outcomeLabels = node.data.outcomes;
+        }
       } else if (node.type === 'triggerNode' && node.data.platform) {
-        nodeLabel = node.data.platform.toString();
+        nodeLabel = String(node.data.platform);
       } else if (node.type) {
         nodeLabel = node.type;
       }
@@ -56,9 +74,9 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       .replace(/"/g, '')
       .substring(0, 30); // Limit length
     
-    const simpleId = nodeIdMap.get(node.id) || `node-${index + 1}`;
+    const simpleId = nodeIdMap.get(node.id) || `unknown-${node.id}`;
     
-    mermaidString += `  ${simpleId}["${cleanLabel}"`;
+    mermaidString += `  ${simpleId}["${cleanLabel}`;
     
     // Add node type as a comment instead of styling
     switch (node.type) {
@@ -82,14 +100,36 @@ function generateMermaidFromFlow(flowData: FlowData): string {
         break;
     }
     
-    mermaidString += ']\n';
+    mermaidString += '"]\n';
+    
+    // Add outcome information in comments
+    if (outcomeLabels.length > 0) {
+      mermaidString += `  %% Node ${simpleId} has outcomes: ${outcomeLabels.join(', ')}\n`;
+    }
   });
   
-  // Process edges with simplified IDs
+  // Process edges with simplified IDs and add outcome labels
   flowData.edges.forEach((edge: FlowEdge) => {
     const sourceId = nodeIdMap.get(edge.source) || edge.source;
     const targetId = nodeIdMap.get(edge.target) || edge.target;
-    mermaidString += `  ${sourceId} --> ${targetId}\n`;
+    
+    // Find the source node to get outcome information
+    const sourceNode = flowData.nodes.find(node => node.id === edge.source);
+    let edgeLabel = '';
+    
+    if (sourceNode && sourceNode.data && (sourceNode.type === 'speakNode' || sourceNode.type === 'greetingNode')) {
+      const outcomes = sourceNode.data.outcomes || [];
+      
+      // If this edge is from a specific handle (which represents an outcome)
+      if (edge.sourceHandle && edge.sourceHandle.startsWith('outcome-')) {
+        const outcomeIndex = parseInt(edge.sourceHandle.replace('outcome-', ''), 10);
+        if (!isNaN(outcomeIndex) && outcomeIndex < outcomes.length) {
+          edgeLabel = `|"${outcomes[outcomeIndex]}"|`;
+        }
+      }
+    }
+    
+    mermaidString += `  ${sourceId} --> ${edgeLabel} ${targetId}\n`;
   });
   
   return mermaidString;
