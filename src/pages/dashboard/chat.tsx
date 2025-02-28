@@ -7,29 +7,35 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Lead } from "./leads";
 import { Send } from "lucide-react";
 import { useState } from "react";
+import { useParams } from "react-router-dom";
 
 interface ChatPageProps {
-  leadId: string;
+  leadId?: string;
 }
 
 export function ChatPage({ leadId }: ChatPageProps) {
   const [message, setMessage] = useState("");
+  const params = useParams();
+  const id = leadId || params.id;
 
   const { data: lead } = useQuery({
-    queryKey: ['leads', leadId],
+    queryKey: ['leads', id],
     queryFn: async () => {
+      if (!id) return null;
+      
       const { data, error } = await supabase
         .from('leads')
         .select('*')
-        .eq('id', leadId)
+        .eq('id', id)
         .single();
       
       if (error) throw error;
       return data as Lead;
-    }
+    },
+    enabled: !!id
   });
 
-  if (!lead) return null;
+  if (!lead) return <div className="p-4">No lead selected or lead not found.</div>;
 
   return (
     <div className="flex flex-col h-full">

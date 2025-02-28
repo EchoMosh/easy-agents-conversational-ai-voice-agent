@@ -63,10 +63,9 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
       
       // Create a download link and trigger it
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = window.document.createElement("a");
       a.href = url;
       a.download = document.title;
-      // Use the global document object instead of the KnowledgeDocument
       window.document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
