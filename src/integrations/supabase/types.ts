@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           created_at: string
           flow: Json | null
+          humor_level: number | null
           id: string
           interaction_type: string[]
           is_active: boolean | null
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           created_at?: string
           flow?: Json | null
+          humor_level?: number | null
           id?: string
           interaction_type?: string[]
           is_active?: boolean | null
@@ -41,6 +43,7 @@ export type Database = {
         Update: {
           created_at?: string
           flow?: Json | null
+          humor_level?: number | null
           id?: string
           interaction_type?: string[]
           is_active?: boolean | null
