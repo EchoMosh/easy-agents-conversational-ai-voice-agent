@@ -121,16 +121,16 @@ export function AgentSettings({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Agent Settings</DialogTitle>
           <DialogDescription>
             Configure the agent's voice and language settings
           </DialogDescription>
         </DialogHeader>
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
+        <div className="p-8 space-y-8 max-h-[75vh] overflow-y-auto bg-background/50">
+          <div className="grid gap-6">
+            <div className="space-y-3">
               <Label htmlFor="voice">Voice</Label>
               <Select onValueChange={setVoice} defaultValue={voice}>
                 <SelectTrigger>
@@ -148,7 +148,7 @@ export function AgentSettings({
                 Choose the voice for your agent
               </p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="language">Language</Label>
               <Select onValueChange={setLanguage} defaultValue={language}>
                 <SelectTrigger>
@@ -166,7 +166,7 @@ export function AgentSettings({
                 Choose the language for your agent
               </p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="humor">Humor Level: {humorLevel}%</Label>
               <Slider
                 id="humor"
@@ -185,7 +185,7 @@ export function AgentSettings({
                 Set how humorous the agent should be in conversations
               </p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="knowledge">Knowledge Base</Label>
               <Select onValueChange={setKnowledgeBase} defaultValue={knowledgeBase}>
                 <SelectTrigger>
@@ -205,7 +205,7 @@ export function AgentSettings({
             </div>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4">
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
