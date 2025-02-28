@@ -226,11 +226,11 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                     ? "bg-red-100 dark:bg-red-900 rounded-bl-none"
                     : message.feedback === "positive"
                     ? "bg-green-100 dark:bg-green-900 rounded-bl-none"
-                    : "bg-gray-200 dark:bg-gray-800 rounded-bl-none"
+                    : "bg-blue-50 dark:bg-blue-900/30 rounded-bl-none"
                 }`}
               >
                 {message.role === "agent" && (
-                  <div className="absolute top-1/2 -translate-y-1/2 -right-20 flex space-x-2">
+                  <div className="absolute top-1/2 -translate-y-1/2 -right-28 flex space-x-2">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -326,11 +326,11 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
           
           {isTyping && (
             <div className="flex justify-start">
-              <div className="max-w-[50%] rounded-2xl px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-bl-none">
+              <div className="max-w-[50%] rounded-2xl px-4 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-bl-none">
                 <div className="flex space-x-1 h-5 items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: "150ms" }}></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: "300ms" }}></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "150ms" }}></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "300ms" }}></div>
                 </div>
               </div>
             </div>
