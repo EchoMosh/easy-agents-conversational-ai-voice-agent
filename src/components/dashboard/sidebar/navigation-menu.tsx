@@ -1,5 +1,5 @@
 
-import { Users, Target, Settings, GitMerge, MessageSquare } from "lucide-react";
+import { Users, Target, Settings, GitMerge, MessageSquare, Book } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   SidebarContent,
@@ -31,6 +31,11 @@ const mainMenuItems = [
     title: "Chats",
     icon: MessageSquare,
     url: "/dashboard/chats",
+  },
+  {
+    title: "Knowledge",
+    icon: Book,
+    url: "/dashboard/knowledge",
   },
 ];
 
