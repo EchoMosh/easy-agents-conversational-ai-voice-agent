@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { KnowledgeDocument } from "@/types/supabase-extended";
-import { fetchDocuments, downloadDocument, deleteDocument } from "@/utils/knowledge-api";
+import { fetchDocuments, deleteDocument } from "@/utils/knowledge-api";
 import { SearchBar } from "./search-bar";
 import { EmptyState } from "./empty-state";
 import { DocumentItem } from "./document-item";
@@ -59,17 +59,21 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
 
   const handleDownload = async (document: KnowledgeDocument) => {
     try {
-      const blob = await downloadDocument(document.file_path);
-      
-      // Create a download link and trigger it
-      const url = URL.createObjectURL(blob);
-      const a = window.document.createElement("a");
-      a.href = url;
-      a.download = document.title;
-      window.document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(url);
-      a.remove();
+      // For now, let's add a placeholder until download is implemented
+      toast({
+        title: "Download not available",
+        description: "The download functionality is not yet implemented",
+      });
+      // When implemented, it would look like:
+      // const blob = await downloadDocument(document.id);
+      // const url = URL.createObjectURL(blob);
+      // const a = document.createElement('a');
+      // a.href = url;
+      // a.download = document.title;
+      // document.body.appendChild(a);
+      // a.click();
+      // URL.revokeObjectURL(url);
+      // a.remove();
     } catch (error) {
       console.error("Error downloading document:", error);
       toast({
@@ -84,7 +88,7 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
     if (!documentToDelete) return;
 
     try {
-      await deleteDocument(documentToDelete.id, documentToDelete.file_path);
+      await deleteDocument(documentToDelete.id);
       setDocuments(documents.filter(doc => doc.id !== documentToDelete.id));
       
       toast({

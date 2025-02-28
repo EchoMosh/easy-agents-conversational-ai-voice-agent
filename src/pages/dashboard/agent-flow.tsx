@@ -72,7 +72,7 @@ export default function AgentFlowPage() {
           position: node.position,
           data: node.data,
           // Remove complex properties
-          style: node.style ? undefined : undefined,
+          style: undefined
         })),
         edges: flow.edges.map(edge => ({
           id: edge.id,
@@ -83,7 +83,7 @@ export default function AgentFlowPage() {
           // Remove complex properties
           type: edge.type,
           animated: edge.animated,
-          style: edge.style,
+          style: undefined
         }))
       };
       

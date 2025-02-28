@@ -2,6 +2,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { KnowledgeDocument } from "@/types/supabase-extended";
 
+export interface DocumentUploadOptions {
+  title: string;
+  description?: string;
+}
+
 export const fetchDocuments = async (): Promise<KnowledgeDocument[]> => {
   const { data, error } = await supabase
     .from("knowledge_documents")
@@ -16,45 +21,33 @@ export const fetchDocuments = async (): Promise<KnowledgeDocument[]> => {
 };
 
 export const uploadDocument = async (
-  title: string,
-  file: File | string,
-  description?: string
+  file: File,
+  options: DocumentUploadOptions
 ): Promise<KnowledgeDocument> => {
   // This is a placeholder implementation that will be properly implemented later
-  // It handles multiple types of uploads (file, text, URL)
-  
-  if (typeof file === 'string') {
-    // Handle text or URL uploads
-    // Implementation will be added later
-    throw new Error("Text and URL uploads not yet implemented");
-  } else {
-    // Handle file upload
-    // Implementation will be added later
-    throw new Error("File upload not yet implemented");
-  }
+  // It handles file uploads
+  throw new Error("File upload not yet implemented");
 };
 
 export const uploadTextDocument = async (
-  title: string,
   content: string,
-  description?: string
+  options: DocumentUploadOptions
 ): Promise<KnowledgeDocument> => {
   // This will be implemented properly later
-  return uploadDocument(title, content, description);
+  throw new Error("Text upload not yet implemented");
 };
 
 export const uploadUrlDocument = async (
-  title: string,
   url: string,
-  description?: string
+  options: DocumentUploadOptions
 ): Promise<KnowledgeDocument> => {
   // This will be implemented properly later
-  return uploadDocument(title, url, description);
+  throw new Error("URL import not yet implemented");
 };
 
 export const downloadDocument = async (
   documentId: string
-): Promise<string> => {
+): Promise<Blob> => {
   // This is a placeholder implementation
   throw new Error("Download not yet implemented");
 };
