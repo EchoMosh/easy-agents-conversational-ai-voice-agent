@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
@@ -12,10 +11,8 @@ import { TransferNode } from '@/components/flow/nodes/transfer-node';
 import { WebhookNode } from '@/components/flow/nodes/webhook-node';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-// Create a context to provide the updateNodeData function to all nodes
 import React from 'react';
 
-// Create a context for the node update function
 export const NodeUpdateContext = React.createContext<{
   updateNodeData: (nodeId: string, data: any) => void;
 }>({
@@ -92,7 +89,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
 
-  // Function to update node data - will be provided through context
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     console.log(`[Flow] updateNodeData called for node ${nodeId} with data:`, newData);
     
@@ -111,7 +107,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       return updatedNodes;
     });
     
-    // After updating the local state, notify the parent component
     setTimeout(() => {
       console.log(`[Flow] Notifying parent component about node ${nodeId} update`);
       const updatedNodes = nodes.map(node => 
@@ -124,15 +119,12 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     }, 0);
   }, [nodes, setNodes, onNodesChange]);
 
-  // Handle keyboard events - specifically Delete key
   const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
-    // Check if the target is an input or textarea to avoid deleting nodes when editing text
     const target = event.target as HTMLElement;
     const isEditingText = target.tagName === 'INPUT' || 
                           target.tagName === 'TEXTAREA' || 
                           target.isContentEditable;
     
-    // Only handle Delete or Backspace when not editing text
     if ((event.key === 'Delete' || event.key === 'Backspace') && !isEditingText) {
       console.log('[Flow] Delete/Backspace key pressed, checking for selected nodes');
       
@@ -140,40 +132,32 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       if (selectedNodes.length > 0) {
         console.log('[Flow] Selected nodes to delete:', selectedNodes);
         
-        // First, remove edges connected to these nodes
         const nodeIdsToDelete = new Set(selectedNodes.map(n => n.id));
         
-        // Filter out edges connected to nodes that will be deleted
         const newEdges = edges.filter(edge => 
           !nodeIdsToDelete.has(edge.source) && !nodeIdsToDelete.has(edge.target)
         );
         
-        // Filter out the nodes to be deleted
         const newNodes = nodes.filter(node => !nodeIdsToDelete.has(node.id));
         
-        // Update the internal state
         setNodes(newNodes);
         setEdges(newEdges);
         
-        // Notify parent components of changes - immediately call both functions without setTimeout
         console.log('[Flow] Notifying parent about deleted nodes and related edges');
         onNodesChange(newNodes);
         onEdgesChange(newEdges);
         
-        // Prevent default behavior to avoid navigating back in the browser
         event.preventDefault();
       }
     }
   }, [nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange]);
 
-  // Update nodes in parent component when initialNodes prop changes
   useEffect(() => {
     if (JSON.stringify(initialNodes) !== JSON.stringify(nodes)) {
       setNodes(initialNodes);
     }
   }, [initialNodes, setNodes]);
 
-  // Update edges in parent component when initialEdges prop changes
   useEffect(() => {
     if (JSON.stringify(initialEdges) !== JSON.stringify(edges)) {
       setEdges(initialEdges);
@@ -181,19 +165,17 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   }, [initialEdges, setEdges]);
 
   useEffect(() => {
-    // Focus the container when it's mounted to ensure keyboard events are captured
     if (flowContainerRef.current) {
       flowContainerRef.current.focus();
     }
   }, []);
 
-  // Handle clicks outside the widget panel to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showWidgets && 
           widgetButtonRef.current && 
-          !widgetButtonRef.current.contains(event.target as Node) &&
-          !document.querySelector('.widget-panel')?.contains(event.target as Node)) {
+          !widgetButtonRef.current.contains(event.target as Element) &&
+          !document.querySelector('.widget-panel')?.contains(event.target as Element)) {
         setShowWidgets(false);
       }
     };
@@ -205,7 +187,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   }, [showWidgets]);
 
   const isValidConnection = (connection: Connection) => {
-    // Check if source and target nodes exist
     const sourceNode = nodes.find(node => node.id === connection.source);
     const targetNode = nodes.find(node => node.id === connection.target);
     
@@ -214,13 +195,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       return false;
     }
 
-    // Prevent self-connections
     if (connection.source === connection.target) {
       console.log('Connection invalid: Self-connection not allowed');
       return false;
     }
 
-    // Simple duplicate check - just check source and target
     const existingConnection = edges.find(edge => 
       edge.target === connection.target && 
       edge.source === connection.source
@@ -249,7 +228,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     if (isValidConnection(params)) {
       console.log('Connection valid, creating edge');
       
-      // Use React Flow's built-in addEdge function with the connection params
       const newEdges = addEdge(params, edges);
       console.log('New edges:', newEdges);
       setEdges(newEdges);
@@ -263,10 +241,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     console.log('[Flow] handleNodesChange called with changes:', changes);
     onNodesChangeInternal(changes);
     
-    // Get the current nodes after changes
     setTimeout(() => {
       console.log('[Flow] Notifying parent after node changes, current nodes:', getNodes());
-      // Use getNodes() to get the latest nodes from React Flow
       const currentNodes = getNodes();
       onNodesChange(currentNodes);
     }, 0);
@@ -276,7 +252,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     console.log('[Flow] handleEdgesChange called with changes:', changes);
     onEdgesChangeInternal(changes);
     
-    // Use setTimeout to ensure we're getting the latest state
     setTimeout(() => {
       console.log('[Flow] Notifying parent after edge changes, current edges:', edges);
       const updatedEdges = edges.map(edge => ({ ...edge }));
@@ -351,13 +326,12 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         ref={reactFlowWrapper} 
         className="w-full h-full"
       >
-        {/* We add tabIndex to make the div focusable for keyboard events */}
         <div 
           ref={flowContainerRef}
           className="w-full h-full" 
           tabIndex={0} 
           onKeyDown={handleKeyDown}
-          style={{ outline: 'none' }} // Remove focus outline
+          style={{ outline: 'none' }}
         >
           <ReactFlow
             nodes={nodes}
@@ -374,7 +348,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
             className="bg-white dark:bg-gray-950"
             snapToGrid={true}
             snapGrid={[15, 15]}
-            deleteKeyCode={['Delete', 'Backspace']} // Enable built-in delete with Delete or Backspace keys
+            deleteKeyCode={['Delete', 'Backspace']}
           >
             <Background className="opacity-40" />
             <MiniMap

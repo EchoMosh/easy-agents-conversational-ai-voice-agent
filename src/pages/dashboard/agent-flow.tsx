@@ -16,7 +16,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     return 'graph TD\n  EmptyFlow[Empty Flow]';
   }
 
-  if (flowData.nodes.length === 0) {
+  if (Array.isArray(flowData.nodes) && flowData.nodes.length === 0) {
     return 'graph TD\n  EmptyFlow[Empty Flow]';
   }
 

@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from 'react';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { LexicalComposer } from '@lexical/react/LexicalComposerContext';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
@@ -103,6 +103,7 @@ export function LexicalEditor({
         <RichTextPlugin
           contentEditable={<ContentEditable className="editor-input" />}
           placeholder={<div className="editor-placeholder">{placeholder}</div>}
+          ErrorBoundary={({ children }) => <div>{children}</div>}
         />
         <OnChangePlugin onChange={handleEditorChange} />
         <HistoryPlugin />

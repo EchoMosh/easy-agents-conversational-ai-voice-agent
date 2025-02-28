@@ -1,11 +1,14 @@
 
-import type { Agent, FlowData } from './agent-types';
+import type { FlowData } from './agent-types';
+
+// Define the type inline to avoid circular dependencies
+type AgentRole = 'virtual_assistant' | 'customer_support' | 'sales_agent' | 'appointment_scheduler';
 
 type AgentTemplate = {
   id: string;
   name: string;
   description: string;
-  role: Agent['role'];
+  role: AgentRole;
   flow: FlowData;
 };
 

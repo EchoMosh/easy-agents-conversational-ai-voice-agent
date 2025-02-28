@@ -1,70 +1,47 @@
 
 import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { TextNode } from 'lexical';
-import { $getRoot } from 'lexical';
+import { $isVariableNode } from './VariableNode';
+import { LexicalNode, NodeMutation, $getRoot } from 'lexical';
 
+// This plugin highlights variable nodes and provides proper styling
 export function VariableHighlightPlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
+    // Function to scan all nodes and detect variables
+    const scanForVariables = () => {
+      editor.update(() => {
         const root = $getRoot();
-        const textNodes: TextNode[] = [];
-
-        // Collect all text nodes
-        root.getChildren().forEach(paragraph => {
-          paragraph.getChildren().forEach(node => {
-            if (node instanceof TextNode) {
-              textNodes.push(node);
+        const children = root.getChildren();
+        
+        for (const child of children) {
+          const textNodes = child.getChildren();
+          for (const textNode of textNodes) {
+            if ($isVariableNode(textNode)) {
+              // Apply styling if needed here
+              // This is usually handled by the VariableNode's createDOM method
             }
-          });
-        });
-
-        // Process each text node for variable patterns
-        textNodes.forEach(textNode => {
-          const text = textNode.getTextContent();
-          const variableRegex = /{{([^}]+)}}/g;
-          let match;
-          let lastIndex = 0;
-          const segments = [];
-
-          // Find all variable matches
-          while ((match = variableRegex.exec(text)) !== null) {
-            // Add text before the variable if there is any
-            if (match.index > lastIndex) {
-              segments.push({
-                text: text.substring(lastIndex, match.index),
-                isVariable: false
-              });
-            }
-
-            // Add the variable
-            segments.push({
-              text: match[0], // The full match {{variable}}
-              isVariable: true
-            });
-
-            lastIndex = match.index + match[0].length;
           }
-
-          // Add any remaining text after the last variable
-          if (lastIndex < text.length) {
-            segments.push({
-              text: text.substring(lastIndex),
-              isVariable: false
-            });
-          }
-
-          // If we found variables, replace the node content
-          if (segments.length > 1) {
-            // This is where we would replace the content with styled variable nodes
-            // For now, we're just using CSS to style the variables
-          }
-        });
+        }
       });
+    };
+
+    // Listen for node mutations
+    const removeListener = editor.registerMutationListener((mutationList) => {
+      for (const [node, mutation] of Object.entries(mutationList)) {
+        if (mutation === NodeMutation.CREATED) {
+          scanForVariables();
+        }
+      }
     });
+
+    // Initial scan
+    scanForVariables();
+
+    return () => {
+      removeListener();
+    };
   }, [editor]);
 
   return null;

@@ -1,76 +1,68 @@
 
+import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { useEffect, useState } from 'react';
-import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_EDITOR, TextNode, LexicalCommand, createCommand } from 'lexical';
+import {
+  $createTextNode,
+  $getSelection,
+  $isRangeSelection,
+  COMMAND_PRIORITY_EDITOR,
+  createCommand,
+  LexicalCommand,
+  TextNode
+} from 'lexical';
 import { $createVariableNode } from './VariableNode';
-import { Variable } from '../flow/nodes/variable-mention/variable-selector';
 
-interface VariablePluginProps {
-  onAtMention?: () => void;
-  variables?: Variable[];
+export const INSERT_VARIABLE_COMMAND: LexicalCommand<string> = createCommand();
+
+export interface Variable {
+  id: string;
+  name: string;
 }
-
-export const INSERT_VARIABLE_COMMAND: LexicalCommand<string> = createCommand('INSERT_VARIABLE');
 
 export function VariablePlugin({ 
   onAtMention,
   variables = []
-}: VariablePluginProps) {
+}: { 
+  onAtMention?: () => void;
+  variables?: Variable[];
+}) {
   const [editor] = useLexicalComposerContext();
-  const [prevText, setPrevText] = useState('');
 
   useEffect(() => {
-    // Create a custom command for inserting variables
-    const removeInsertVariableListener = editor.registerCommand(
+    // Handle @ key press for at-mentions
+    const removeKeyDownListener = editor.registerTextContentListener(
+      (text) => {
+        const lastChar = text[text.length - 1];
+        if (lastChar === '@' && onAtMention) {
+          onAtMention();
+        }
+      }
+    );
+
+    // Register command for inserting variables
+    const removeCommandListener = editor.registerCommand(
       INSERT_VARIABLE_COMMAND,
-      (varId) => {
-        editor.update(() => {
-          const selection = $getSelection();
-          if ($isRangeSelection(selection)) {
-            // Remove the @ character if it exists
-            const anchorNode = selection.anchor.getNode();
-            if (anchorNode instanceof TextNode) {
-              const textContent = anchorNode.getTextContent();
-              const atCharIndex = textContent.lastIndexOf('@');
-              
-              if (atCharIndex >= 0) {
-                // Delete the @ character
-                anchorNode.spliceText(atCharIndex, 1, '');
-                
-                // Insert the variable format
-                const variableText = `{{${varId}}}`;
-                selection.insertText(variableText);
-              } else {
-                // Just insert the variable if no @ was found
-                const variableText = `{{${varId}}}`;
-                selection.insertText(variableText);
-              }
-            }
-          }
-        });
-        return true;
+      (variableId) => {
+        const selection = $getSelection();
+        
+        if ($isRangeSelection(selection)) {
+          // Find the variable name from its ID
+          const variable = variables.find(v => v.id === variableId) || { name: variableId };
+          const variableNode = $createVariableNode(variable.name);
+          selection.insertNodes([variableNode]);
+          return true;
+        }
+        
+        return false;
       },
       COMMAND_PRIORITY_EDITOR
     );
 
-    // Handle @ input for variable selector trigger
-    const removeTextContentListener = editor.registerTextContentListener((text) => {
-      if (text.includes('@') && text !== prevText) {
-        // Only trigger if @ is a new character
-        if (!prevText.includes('@') || text.split('@').length > prevText.split('@').length) {
-          if (onAtMention) {
-            onAtMention();
-          }
-        }
-        setPrevText(text);
-      }
-    });
-
     return () => {
-      removeInsertVariableListener();
-      removeTextContentListener();
+      removeKeyDownListener();
+      removeCommandListener();
     };
-  }, [editor, onAtMention, prevText]);
+  }, [editor, onAtMention, variables]);
 
   return null;
 }
