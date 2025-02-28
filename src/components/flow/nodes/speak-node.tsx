@@ -17,61 +17,40 @@ type SpeakNodeData = {
 
 export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // Initialize with empty string if message is undefined
   const [message, setMessage] = useState<string>(data.message || "");
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState<string[]>(data.outcomes || []);
-  const [isTyping, setIsTyping] = useState(false);
-  const [pendingUpdate, setPendingUpdate] = useState(false);
   
   // Get the updateNodeData function from context
   const { updateNodeData } = useContext(NodeUpdateContext);
   
-  // This useEffect syncs the component's state with data from the parent
+  // Sync local state with props
   useEffect(() => {
-    // Only update the state from props if we're not actively typing
-    // and if there's a difference between props and state
-    if (data.message !== undefined && data.message !== message && !isTyping) {
-      console.log(`[SpeakNode ${id}] Syncing message state with parent data:`, data.message);
+    if (data.message !== undefined && data.message !== message) {
       setMessage(data.message);
     }
     
     if (data.outcomes && JSON.stringify(data.outcomes) !== JSON.stringify(outcomes)) {
-      console.log(`[SpeakNode ${id}] Syncing outcomes state with parent data:`, data.outcomes);
       setOutcomes(data.outcomes);
     }
-  }, [data, id, message, outcomes, isTyping]);
+  }, [data, message, outcomes]);
 
-  // Debounce function to update parent component
-  useEffect(() => {
-    // Only set up the timer if we have pending updates to process
-    if (pendingUpdate) {
-      const timer = setTimeout(() => {
-        // Create a complete data object for the update
-        const updatedData = {
-          ...data,
-          message: message,
-          outcomes: outcomes
-        };
-        
-        console.log(`[SpeakNode ${id}] Debounce update with:`, updatedData);
-        updateNodeData(id, updatedData);
-        setIsTyping(false);
-        setPendingUpdate(false);
-      }, 500); // Increased debounce time for better performance
-
-      return () => clearTimeout(timer);
-    }
-  }, [message, pendingUpdate, id, data, outcomes, updateNodeData]);
-
-  // Direct textarea change handler - optimized for fast typing
+  // Handle text change with immediate update
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setMessage(newValue);
-    setIsTyping(true);
-    setPendingUpdate(true);
+    
+    // Immediately notify parent of change
+    const updatedData = {
+      ...data,
+      message: newValue,
+      outcomes: outcomes
+    };
+    
+    console.log(`[SpeakNode ${id}] Updating message:`, newValue);
+    updateNodeData(id, updatedData);
   };
 
   // Variable selector change handler
@@ -86,7 +65,6 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: outcomes
     };
     
-    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
     updateNodeData(id, updatedData);
   };
 
@@ -95,7 +73,6 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     if (!newOutcome.trim()) return;
     
     const newOutcomes = [...outcomes, newOutcome];
-    console.log(`[SpeakNode ${id}] Adding outcome:`, newOutcome);
     setOutcomes(newOutcomes);
     setNewOutcome('');
     setShowOutcomeDialog(false);
@@ -107,13 +84,10 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: newOutcomes
     };
     
-    // Update the node data
-    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
     updateNodeData(id, updatedData);
   };
 
   const removeOutcome = (index: number) => {
-    console.log(`[SpeakNode ${id}] Removing outcome at index:`, index);
     const newOutcomes = outcomes.filter((_, i) => i !== index);
     setOutcomes(newOutcomes);
     
@@ -124,8 +98,6 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: newOutcomes
     };
     
-    // Update the node data
-    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
     updateNodeData(id, updatedData);
   };
 
@@ -138,7 +110,6 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const saveEdit = () => {
     if (!newOutcome.trim() || editingIndex === null) return;
     
-    console.log(`[SpeakNode ${id}] Saving edited outcome at index ${editingIndex}:`, newOutcome);
     const updatedOutcomes = [...outcomes];
     updatedOutcomes[editingIndex] = newOutcome;
     setOutcomes(updatedOutcomes);
@@ -153,8 +124,6 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: updatedOutcomes
     };
     
-    // Update the node data
-    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
     updateNodeData(id, updatedData);
   };
 
@@ -170,18 +139,15 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setShowOutcomeDialog(true);
   };
 
-  // Memoize the variable highlighting to avoid recalculation on every render
-  const highlightedContent = useMemo(() => {
-    if (!message) return '';
-    return message
-      .replace(
-        /{{([^}]+)}}/g,
-        '<span class="bg-indigo-100/80 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md font-medium">{{$1}}</span>'
-      )
-      .split('\n')
-      .map(line => line || '&#8203;')
-      .join('<br/>');
-  }, [message]);
+  // Format message to highlight variables
+  const getHighlightedMessage = (text: string) => {
+    if (!text) return '';
+    
+    return text.replace(
+      /{{([^}]+)}}/g, 
+      '<span class="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md font-medium">{{$1}}</span>'
+    );
+  };
 
   return (
     <div className="group relative">
@@ -206,17 +172,13 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
           <Label className="text-xs font-medium text-indigo-600/75 dark:text-indigo-300/75">
             Message
           </Label>
-          <div className="relative rounded-xl overflow-hidden backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 border border-indigo-100/50 dark:border-indigo-800/50 shadow-[0_2px_4px_-2px_rgba(79,70,229,0.1)]">
+          <div className="relative rounded-xl backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 border border-indigo-100/50 dark:border-indigo-800/50 shadow-[0_2px_4px_-2px_rgba(79,70,229,0.1)]">
             <Textarea 
               ref={textareaRef}
               value={message}
               onChange={handleTextareaChange}
               className="nodrag text-sm resize-y min-h-[100px] bg-transparent border-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 text-gray-900 dark:text-white"
               placeholder="Type @ to insert a variable..."
-            />
-            <div 
-              className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap text-gray-900 dark:text-white opacity-0"
-              dangerouslySetInnerHTML={{ __html: highlightedContent }}
             />
           </div>
           <VariableSelector
