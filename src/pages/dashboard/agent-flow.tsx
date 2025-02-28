@@ -64,17 +64,27 @@ export default function AgentFlowPage() {
 
   const updateFlowMutation = useMutation({
     mutationFn: async (flow: FlowData) => {
-      // Convert the flow to a simpler structure to work with Supabase JSON
+      // Convert the flow to a simple JSON-serializable structure
       const simplifiedFlow = {
         nodes: flow.nodes.map(node => ({
           id: node.id,
           type: node.type,
           position: node.position,
           data: node.data,
-          // Remove complex properties that can't be serialized as JSON
-          ...(node.style ? { style: null } : {}),
+          // Remove complex properties
+          style: node.style ? undefined : undefined,
         })),
-        edges: flow.edges
+        edges: flow.edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          sourceHandle: edge.sourceHandle,
+          targetHandle: edge.targetHandle,
+          // Remove complex properties
+          type: edge.type,
+          animated: edge.animated,
+          style: edge.style,
+        }))
       };
       
       const { error } = await supabase

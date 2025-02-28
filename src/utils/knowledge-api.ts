@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { KnowledgeDocument } from "@/types/supabase-extended";
 
@@ -16,13 +17,46 @@ export const fetchDocuments = async (): Promise<KnowledgeDocument[]> => {
 
 export const uploadDocument = async (
   title: string,
-  file: File,
+  file: File | string,
   description?: string
 ): Promise<KnowledgeDocument> => {
-  // Implementation for file upload
-  // ...
+  // This is a placeholder implementation that will be properly implemented later
+  // It handles multiple types of uploads (file, text, URL)
+  
+  if (typeof file === 'string') {
+    // Handle text or URL uploads
+    // Implementation will be added later
+    throw new Error("Text and URL uploads not yet implemented");
+  } else {
+    // Handle file upload
+    // Implementation will be added later
+    throw new Error("File upload not yet implemented");
+  }
+};
 
-  throw new Error("Not implemented");
+export const uploadTextDocument = async (
+  title: string,
+  content: string,
+  description?: string
+): Promise<KnowledgeDocument> => {
+  // This will be implemented properly later
+  return uploadDocument(title, content, description);
+};
+
+export const uploadUrlDocument = async (
+  title: string,
+  url: string,
+  description?: string
+): Promise<KnowledgeDocument> => {
+  // This will be implemented properly later
+  return uploadDocument(title, url, description);
+};
+
+export const downloadDocument = async (
+  documentId: string
+): Promise<string> => {
+  // This is a placeholder implementation
+  throw new Error("Download not yet implemented");
 };
 
 export const deleteDocument = async (

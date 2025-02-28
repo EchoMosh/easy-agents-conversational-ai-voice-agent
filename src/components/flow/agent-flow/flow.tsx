@@ -1,9 +1,9 @@
 
 import { useCallback, useRef, useState } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
-import { NodeData, FlowData } from '@/types/agent';
+import { NodeData, FlowNode, FlowEdge, FlowData, NodeType } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
@@ -21,35 +21,35 @@ const nodeTypes: NodeTypes = {
 
 const widgets = [
   { 
-    type: 'speakNode', 
+    type: 'speakNode' as NodeType, 
     label: 'Speak', 
     icon: MessageCircle, 
     color: '#c084fc',
     description: 'Add a message response with multiple outcome paths'
   },
   { 
-    type: 'greetingNode', 
+    type: 'greetingNode' as NodeType, 
     label: 'Greeting', 
     icon: Smile, 
     color: '#60a5fa',
     description: 'Start a conversation with customizable responses'
   },
   { 
-    type: 'endNode', 
+    type: 'endNode' as NodeType, 
     label: 'End', 
     icon: XCircle, 
     color: '#f87171',
     description: 'End the conversation flow'
   },
   { 
-    type: 'triggerNode', 
+    type: 'triggerNode' as NodeType, 
     label: 'Trigger', 
     icon: Zap, 
     color: '#fbbf24',
     description: 'Define when this flow should start'
   },
   { 
-    type: 'transferNode', 
+    type: 'transferNode' as NodeType, 
     label: 'Transfer', 
     icon: PhoneForwarded, 
     color: '#10b981',
@@ -58,8 +58,8 @@ const widgets = [
 ];
 
 interface FlowProps {
-  initialNodes: Node[];
-  initialEdges: Edge[];
+  initialNodes: FlowNode[];
+  initialEdges: FlowEdge[];
   onFlowChange?: (flowData: FlowData) => void;
 }
 
@@ -100,10 +100,10 @@ export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
 
   const onConnect = useCallback((params: Connection) => {
     if (isValidConnection(params)) {
-      const newEdge: Edge = {
+      const newEdge: FlowEdge = {
         id: `e${params.source}-${params.target}`,
-        source: params.source,
-        target: params.target,
+        source: params.source || '',
+        target: params.target || '',
         sourceHandle: params.sourceHandle,
         targetHandle: params.targetHandle,
         type: 'default',
@@ -114,12 +114,12 @@ export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
         }
       };
       
-      const newEdges = addEdge(newEdge, edges);
+      const newEdges = addEdge(newEdge, edges as any) as FlowEdge[];
       setEdges(newEdges);
       
       if (onFlowChange) {
         onFlowChange({
-          nodes: [...nodes],
+          nodes: nodes as FlowNode[],
           edges: newEdges,
         });
       }
@@ -131,8 +131,8 @@ export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
     
     if (onFlowChange) {
       onFlowChange({
-        nodes: [...nodes],
-        edges: [...edges],
+        nodes: nodes as FlowNode[],
+        edges: edges as FlowEdge[],
       });
     }
   }, [nodes, edges, onFlowChange, onNodesChangeInternal]);
@@ -142,8 +142,8 @@ export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
     
     if (onFlowChange) {
       onFlowChange({
-        nodes: [...nodes],
-        edges: [...edges],
+        nodes: nodes as FlowNode[],
+        edges: edges as FlowEdge[],
       });
     }
   }, [nodes, edges, onFlowChange, onEdgesChangeInternal]);
@@ -153,7 +153,7 @@ export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const onDragStart = (event: React.DragEvent, nodeType: string) => {
+  const onDragStart = (event: React.DragEvent, nodeType: NodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
@@ -168,7 +168,7 @@ export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
         y: event.clientY - bounds.top,
       });
 
-      const nodeType = event.dataTransfer.getData('application/reactflow');
+      const nodeType = event.dataTransfer.getData('application/reactflow') as NodeType;
       if (!nodeType) return;
 
       let newNodeData: NodeData = {};
@@ -188,20 +188,20 @@ export function Flow({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
           break;
       }
 
-      const newNode: Node = {
+      const newNode: FlowNode = {
         id: `${nodeType}-${Math.random()}`,
         type: nodeType,
         position,
         data: newNodeData
       };
 
-      const updatedNodes = [...nodes, newNode];
+      const updatedNodes = [...nodes, newNode] as FlowNode[];
       setNodes(updatedNodes);
       
       if (onFlowChange) {
         onFlowChange({
           nodes: updatedNodes,
-          edges: [...edges],
+          edges: edges as FlowEdge[],
         });
       }
     }
