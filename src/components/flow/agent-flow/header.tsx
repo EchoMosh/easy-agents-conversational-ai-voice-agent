@@ -74,7 +74,10 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3 relative">
-          {/* Settings button first */}
+          {/* Theme Toggle first (switched position) */}
+          <ThemeToggle />
+          
+          {/* Settings button second (switched position) */}
           <AgentSettings
             agentId={agent.id}
             currentVoice={agent.voice_id || undefined}
@@ -89,9 +92,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
               <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </Button>
           </AgentSettings>
-          
-          {/* Theme Toggle second */}
-          <ThemeToggle />
           
           <div className="flex items-center gap-2 ml-2">
             <Button 
