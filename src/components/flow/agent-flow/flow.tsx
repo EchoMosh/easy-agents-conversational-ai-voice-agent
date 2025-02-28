@@ -12,7 +12,8 @@ import {
   NodeTypes, 
   Panel, 
   ConnectionMode, 
-  ReactFlowProvider
+  ReactFlowProvider,
+  useReactFlow
 } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
@@ -82,7 +83,7 @@ function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
   const [showWidgets, setShowWidgets] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const reactFlowInstance = useReactFlow();
 
   const isValidConnection = (connection: Connection) => {
     const sourceNode = nodes.find(node => node.id === connection.source);
@@ -177,7 +178,7 @@ function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
 
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = screenToFlowPosition({
+      const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       });
@@ -219,7 +220,7 @@ function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
         });
       }
     }
-  }, [screenToFlowPosition, setNodes, nodes, edges, onFlowChange]);
+  }, [reactFlowInstance, setNodes, nodes, edges, onFlowChange]);
 
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
