@@ -52,6 +52,16 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
     scrollToBottom();
   }, [messages, isTyping, editingMessageId, showCorrectionSlider]);
 
+  // Reset correction slider state when dialog opens/closes
+  useEffect(() => {
+    if (!open) {
+      // Reset state when dialog closes
+      setShowCorrectionSlider(false);
+      setCorrectionTargetId(null);
+      setCorrectionInput("");
+    }
+  }, [open]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -331,48 +341,46 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
         </div>
 
         {/* Slide-up correction panel */}
-        <div 
-          className={`absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-4 transition-transform duration-300 transform ${
-            showCorrectionSlider ? 'translate-y-0' : 'translate-y-full'
-          } z-20`}
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-medium">How should the AI have responded?</h3>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7" 
-              onClick={handleCancelCorrectionSlider}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        {showCorrectionSlider && (
+          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-4 transition-transform duration-300 transform translate-y-0 z-20">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-medium">How should the AI have responded?</h3>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7" 
+                onClick={handleCancelCorrectionSlider}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <Textarea
+              value={correctionInput}
+              onChange={(e) => setCorrectionInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="min-h-[100px] text-sm border border-gray-300 dark:border-gray-700 mb-3"
+              placeholder="Enter the correct response the AI should have given..."
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleCancelCorrectionSlider}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={handleSubmitCorrectionFromSlider}
+                disabled={!correctionInput.trim()}
+              >
+                Submit Correction
+              </Button>
+            </div>
           </div>
-          <Textarea
-            value={correctionInput}
-            onChange={(e) => setCorrectionInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="min-h-[100px] text-sm border border-gray-300 dark:border-gray-700 mb-3"
-            placeholder="Enter the correct response the AI should have given..."
-            autoFocus
-          />
-          <div className="flex justify-end space-x-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleCancelCorrectionSlider}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="default" 
-              size="sm"
-              onClick={handleSubmitCorrectionFromSlider}
-              disabled={!correctionInput.trim()}
-            >
-              Submit Correction
-            </Button>
-          </div>
-        </div>
+        )}
 
         <div className={`p-4 border-t bg-white dark:bg-gray-950 ${showCorrectionSlider ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-200`}>
           {!editingMessageId && (
