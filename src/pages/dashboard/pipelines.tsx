@@ -7,6 +7,7 @@ import { PipelineStages } from "@/components/pipelines/pipeline-stages";
 import { LeadDetailsDialog } from "@/components/pipelines/lead-details-dialog";
 import { NewPipelineDialog } from "@/components/pipelines/new-pipeline-dialog";
 import { DeletePipelineDialog } from "@/components/pipelines/delete-pipeline-dialog";
+import { RefreshButton } from "@/components/pipelines/refresh-button";
 import { usePipeline } from "@/hooks/use-pipeline";
 import { useDeletePipeline } from "@/hooks/pipeline/use-delete-pipeline";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
@@ -69,6 +70,10 @@ export default function PipelinesPage() {
   return (
     <div className="relative">
       <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
+        <div className="flex justify-between items-center mb-6">
+          <RefreshButton isRefreshing={isRefreshing} onRefresh={handleRefresh} />
+        </div>
+        
         <PipelineHeader 
           pipelines={pipelines || []}
           selectedPipeline={selectedPipeline}

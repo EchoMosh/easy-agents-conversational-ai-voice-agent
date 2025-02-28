@@ -1,17 +1,20 @@
 
 import { Outlet, useLocation } from "react-router-dom";
-import { DockNavigation } from "@/components/dashboard/dock-navigation";
+import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function DashboardLayout() {
   const location = useLocation();
   const isAgentFlowPage = location.pathname.includes('/dashboard/agents/flow/');
 
   return (
-    <div className="min-h-screen w-full bg-background">
-      <main className={`w-full min-h-screen pb-20 ${isAgentFlowPage ? 'p-0' : 'p-6'}`}>
-        <Outlet />
-      </main>
-      {!isAgentFlowPage && <DockNavigation />}
-    </div>
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <main className={`flex-1 p-6 overflow-auto w-full ${isAgentFlowPage ? 'pl-0 pr-0 pt-0 pb-0' : ''}`}>
+          <Outlet />
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }
