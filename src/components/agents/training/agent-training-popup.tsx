@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Check, Volume2, Send, X } from "lucide-react";
+import { Check, Volume2, Send, X, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -43,12 +43,14 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [correctionInput, setCorrectionInput] = useState("");
+  const [showCorrectionSlider, setShowCorrectionSlider] = useState(false);
+  const [correctionTargetId, setCorrectionTargetId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to the bottom when messages change
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping, editingMessageId]);
+  }, [messages, isTyping, editingMessageId, showCorrectionSlider]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -88,6 +90,8 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
       e.preventDefault();
       if (editingMessageId) {
         handleSubmitCorrection();
+      } else if (showCorrectionSlider) {
+        handleSubmitCorrectionFromSlider();
       } else {
         handleSendMessage();
       }
@@ -113,6 +117,44 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
 
   const handleCancelEditing = () => {
     setEditingMessageId(null);
+    setCorrectionInput("");
+  };
+
+  const handleOpenCorrection = (messageId: string) => {
+    setCorrectionTargetId(messageId);
+    setShowCorrectionSlider(true);
+    setCorrectionInput("");
+  };
+
+  const handleCancelCorrectionSlider = () => {
+    setShowCorrectionSlider(false);
+    setCorrectionTargetId(null);
+    setCorrectionInput("");
+  };
+
+  const handleSubmitCorrectionFromSlider = () => {
+    if (!correctionInput.trim() || !correctionTargetId) return;
+
+    // Store the correction
+    setMessages(prev => 
+      prev.map(message => 
+        message.id === correctionTargetId 
+          ? { 
+              ...message, 
+              correction: correctionInput,
+              feedback: "negative" // Ensure feedback is set to negative
+            } 
+          : message
+      )
+    );
+
+    // In a real implementation, you would send this correction to your backend
+    // to use for retraining the model
+    console.log("Correction submitted for message:", correctionTargetId, "Correction:", correctionInput);
+
+    // Reset the correction slider state
+    setShowCorrectionSlider(false);
+    setCorrectionTargetId(null);
     setCorrectionInput("");
   };
 
@@ -178,19 +220,35 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
                 }`}
               >
                 {message.role === "agent" && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`absolute top-1/2 -translate-y-1/2 -right-10 h-9 w-9 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${
-                      speakingMessageId === message.id 
-                        ? "text-blue-500 dark:text-blue-400 opacity-100" 
-                        : "text-gray-500 dark:text-gray-400"
-                    }`}
-                    onClick={() => playTextToSpeech(message.id, message.content)}
-                    title="Listen to AI response"
-                  >
-                    <Volume2 className="h-5 w-5" />
-                  </Button>
+                  <div className="absolute top-1/2 -translate-y-1/2 -right-20 flex space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-9 w-9 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${
+                        speakingMessageId === message.id 
+                          ? "text-blue-500 dark:text-blue-400 opacity-100" 
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}
+                      onClick={() => playTextToSpeech(message.id, message.content)}
+                      title="Listen to AI response"
+                    >
+                      <Volume2 className="h-5 w-5" />
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-9 w-9 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${
+                        message.feedback === "negative" 
+                          ? "text-red-500 dark:text-red-400 opacity-100" 
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}
+                      onClick={() => handleOpenCorrection(message.id)}
+                      title="Correct this response"
+                    >
+                      <AlertCircle className="h-5 w-5" />
+                    </Button>
+                  </div>
                 )}
                 
                 {editingMessageId === message.id ? (
@@ -272,7 +330,51 @@ export function AgentTrainingPopup({ agent, open, onOpenChange }: AgentTrainingP
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t bg-white dark:bg-gray-950">
+        {/* Slide-up correction panel */}
+        <div 
+          className={`absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-4 transition-transform duration-300 transform ${
+            showCorrectionSlider ? 'translate-y-0' : 'translate-y-full'
+          } z-20`}
+        >
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-medium">How should the AI have responded?</h3>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7" 
+              onClick={handleCancelCorrectionSlider}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <Textarea
+            value={correctionInput}
+            onChange={(e) => setCorrectionInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="min-h-[100px] text-sm border border-gray-300 dark:border-gray-700 mb-3"
+            placeholder="Enter the correct response the AI should have given..."
+            autoFocus
+          />
+          <div className="flex justify-end space-x-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleCancelCorrectionSlider}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={handleSubmitCorrectionFromSlider}
+              disabled={!correctionInput.trim()}
+            >
+              Submit Correction
+            </Button>
+          </div>
+        </div>
+
+        <div className={`p-4 border-t bg-white dark:bg-gray-950 ${showCorrectionSlider ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-200`}>
           {!editingMessageId && (
             <div className="relative flex items-center">
               <Textarea
