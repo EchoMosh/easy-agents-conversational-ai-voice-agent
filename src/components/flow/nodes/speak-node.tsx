@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Pencil, MessageSquare } from 'lucide-react';
-import { useState, useRef, useEffect, useContext } from 'react';
+import { useState, useRef, useEffect, useContext, useMemo } from 'react';
 import { VariableSelector } from './variable-mention/variable-selector';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -24,32 +24,31 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState<string[]>(data.outcomes || []);
   const [isTyping, setIsTyping] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState(false);
   
   // Get the updateNodeData function from context
   const { updateNodeData } = useContext(NodeUpdateContext);
   
-  // Log whenever the data prop changes to debug flow
-  useEffect(() => {
-    console.log(`[SpeakNode ${id}] Received new data prop:`, data);
-  }, [data, id]);
-
   // This useEffect syncs the component's state with data from the parent
   useEffect(() => {
+    // Only update the state from props if we're not actively typing
+    // and if there's a difference between props and state
     if (data.message !== undefined && data.message !== message && !isTyping) {
       console.log(`[SpeakNode ${id}] Syncing message state with parent data:`, data.message);
       setMessage(data.message);
     }
     
-    if (data.outcomes) {
+    if (data.outcomes && JSON.stringify(data.outcomes) !== JSON.stringify(outcomes)) {
       console.log(`[SpeakNode ${id}] Syncing outcomes state with parent data:`, data.outcomes);
       setOutcomes(data.outcomes);
     }
-  }, [data, id, message, isTyping]);
+  }, [data, id, message, outcomes, isTyping]);
 
   // Debounce function to update parent component
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isTyping) {
+    // Only set up the timer if we have pending updates to process
+    if (pendingUpdate) {
+      const timer = setTimeout(() => {
         // Create a complete data object for the update
         const updatedData = {
           ...data,
@@ -60,17 +59,19 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
         console.log(`[SpeakNode ${id}] Debounce update with:`, updatedData);
         updateNodeData(id, updatedData);
         setIsTyping(false);
-      }
-    }, 400); // 400ms debounce
+        setPendingUpdate(false);
+      }, 500); // Increased debounce time for better performance
 
-    return () => clearTimeout(timer);
-  }, [message, isTyping, id, data, outcomes, updateNodeData]);
+      return () => clearTimeout(timer);
+    }
+  }, [message, pendingUpdate, id, data, outcomes, updateNodeData]);
 
-  // Direct textarea change handler
+  // Direct textarea change handler - optimized for fast typing
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setMessage(newValue);
     setIsTyping(true);
+    setPendingUpdate(true);
   };
 
   // Variable selector change handler
@@ -169,13 +170,18 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     setShowOutcomeDialog(true);
   };
 
-  const highlightVariables = (text: string) => {
-    if (!text) return '';
-    return text.replace(
-      /{{([^}]+)}}/g,
-      '<span class="bg-indigo-100/80 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md font-medium">{{$1}}</span>'
-    );
-  };
+  // Memoize the variable highlighting to avoid recalculation on every render
+  const highlightedContent = useMemo(() => {
+    if (!message) return '';
+    return message
+      .replace(
+        /{{([^}]+)}}/g,
+        '<span class="bg-indigo-100/80 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-md font-medium">{{$1}}</span>'
+      )
+      .split('\n')
+      .map(line => line || '&#8203;')
+      .join('<br/>');
+  }, [message]);
 
   return (
     <div className="group relative">
@@ -210,12 +216,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
             />
             <div 
               className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap text-gray-900 dark:text-white opacity-0"
-              dangerouslySetInnerHTML={{ 
-                __html: highlightVariables(message)
-                  .split('\n')
-                  .map(line => line || '&#8203;')
-                  .join('<br/>') 
-              }}
+              dangerouslySetInnerHTML={{ __html: highlightedContent }}
             />
           </div>
           <VariableSelector
