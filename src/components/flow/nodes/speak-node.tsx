@@ -23,6 +23,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState<string[]>(data.outcomes || []);
+  const [isTyping, setIsTyping] = useState(false);
   
   // Get the updateNodeData function from context
   const { updateNodeData } = useContext(NodeUpdateContext);
@@ -34,7 +35,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
 
   // This useEffect syncs the component's state with data from the parent
   useEffect(() => {
-    if (data.message !== undefined && data.message !== message) {
+    if (data.message !== undefined && data.message !== message && !isTyping) {
       console.log(`[SpeakNode ${id}] Syncing message state with parent data:`, data.message);
       setMessage(data.message);
     }
@@ -43,26 +44,36 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       console.log(`[SpeakNode ${id}] Syncing outcomes state with parent data:`, data.outcomes);
       setOutcomes(data.outcomes);
     }
-  }, [data, id, message]);
+  }, [data, id, message, isTyping]);
 
-  // Direct textarea change handler using the context function
+  // Debounce function to update parent component
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isTyping) {
+        // Create a complete data object for the update
+        const updatedData = {
+          ...data,
+          message: message,
+          outcomes: outcomes
+        };
+        
+        console.log(`[SpeakNode ${id}] Debounce update with:`, updatedData);
+        updateNodeData(id, updatedData);
+        setIsTyping(false);
+      }
+    }, 400); // 400ms debounce
+
+    return () => clearTimeout(timer);
+  }, [message, isTyping, id, data, outcomes, updateNodeData]);
+
+  // Direct textarea change handler
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    console.log(`[SpeakNode ${id}] Textarea change detected:`, newValue);
     setMessage(newValue);
-    
-    // Create a complete data object for the update
-    const updatedData = {
-      ...data,
-      message: newValue,
-      outcomes: outcomes
-    };
-    
-    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
-    updateNodeData(id, updatedData);
+    setIsTyping(true);
   };
 
-  // Variable selector change handler using the context function
+  // Variable selector change handler
   const handleVariableSelectorChange = (newText: string) => {
     console.log(`[SpeakNode ${id}] Variable selector change:`, newText);
     setMessage(newText);
@@ -194,11 +205,11 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
               ref={textareaRef}
               value={message}
               onChange={handleTextareaChange}
-              className="nodrag text-sm resize-y min-h-[100px] bg-transparent border-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 text-transparent caret-indigo-500"
+              className="nodrag text-sm resize-y min-h-[100px] bg-transparent border-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 text-gray-900 dark:text-white"
               placeholder="Type @ to insert a variable..."
             />
             <div 
-              className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap text-gray-900 dark:text-white"
+              className="absolute inset-0 pointer-events-none p-[9px] text-sm whitespace-pre-wrap text-gray-900 dark:text-white opacity-0"
               dangerouslySetInnerHTML={{ 
                 __html: highlightVariables(message)
                   .split('\n')
