@@ -9,9 +9,9 @@ export default function DashboardLayout() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full">
+      <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar />
-        <main className={`flex-1 p-6 overflow-auto w-full ${isAgentFlowPage ? 'pl-0 pr-0 pt-0 pb-0' : ''}`}>
+        <main className={`flex-1 overflow-hidden w-full ${isAgentFlowPage ? 'pl-0 pr-0 pt-0 pb-0' : 'p-6'}`}>
           <Outlet />
         </main>
       </div>

@@ -48,7 +48,7 @@ export default function ChatsPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-full bg-background overflow-hidden">
       <LeadSidebar
         leads={leads}
         selectedLeadId={selectedLeadId}
@@ -62,7 +62,7 @@ export default function ChatsPage() {
       />
 
       {selectedLead && (
-        <div className="w-80 border-l flex flex-col bg-background h-screen overflow-hidden">
+        <div className="w-80 border-l flex flex-col bg-background h-full overflow-hidden">
           <Tabs defaultValue="timeline" value={currentTab} onValueChange={handleTabChange} className="flex-1 flex flex-col h-full">
             <div className="px-2 py-1 border-b">
               <TabsList className="w-full grid grid-cols-3 bg-transparent p-0 h-14">
