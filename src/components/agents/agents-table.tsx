@@ -44,8 +44,7 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
   };
 
   const handleEditFlow = (agentId: string) => {
-    // Update this to use the correct route
-    navigate(`/dashboard/agent-flow/${agentId}`);
+    navigate(`/dashboard/agents/flow/${agentId}`);
   };
 
   const handleDeleteConfirm = async () => {

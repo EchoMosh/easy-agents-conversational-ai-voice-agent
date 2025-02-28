@@ -1,7 +1,6 @@
 
 import { Json } from '@/integrations/supabase/types';
 import { Node, Edge } from '@xyflow/react';
-import { KnowledgeDocument } from './supabase-extended';
 
 export type Agent = {
   id: string;
@@ -17,7 +16,6 @@ export type Agent = {
   user_id: string;
   interaction_type: string[];
   objective?: 'live_transfer' | 'answer_calls';
-  knowledge_ids?: string[]; // IDs of attached knowledge documents
 };
 
 export type ContactData = {

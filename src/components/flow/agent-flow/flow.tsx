@@ -1,23 +1,9 @@
 
 import { useCallback, useRef, useState } from 'react';
-import { 
-  ReactFlow, 
-  MiniMap, 
-  Controls, 
-  Background, 
-  useNodesState, 
-  useEdgesState, 
-  addEdge, 
-  Connection, 
-  NodeTypes, 
-  Panel, 
-  ConnectionMode, 
-  ReactFlowProvider,
-  useReactFlow
-} from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
-import { NodeData, FlowNode, FlowEdge, FlowData, NodeType } from '@/types/agent';
+import { NodeData } from '@/types/agent';
 import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
@@ -35,35 +21,35 @@ const nodeTypes: NodeTypes = {
 
 const widgets = [
   { 
-    type: 'speakNode' as NodeType, 
+    type: 'speakNode', 
     label: 'Speak', 
     icon: MessageCircle, 
     color: '#c084fc',
     description: 'Add a message response with multiple outcome paths'
   },
   { 
-    type: 'greetingNode' as NodeType, 
+    type: 'greetingNode', 
     label: 'Greeting', 
     icon: Smile, 
     color: '#60a5fa',
     description: 'Start a conversation with customizable responses'
   },
   { 
-    type: 'endNode' as NodeType, 
+    type: 'endNode', 
     label: 'End', 
     icon: XCircle, 
     color: '#f87171',
     description: 'End the conversation flow'
   },
   { 
-    type: 'triggerNode' as NodeType, 
+    type: 'triggerNode', 
     label: 'Trigger', 
     icon: Zap, 
     color: '#fbbf24',
     description: 'Define when this flow should start'
   },
   { 
-    type: 'transferNode' as NodeType, 
+    type: 'transferNode', 
     label: 'Transfer', 
     icon: PhoneForwarded, 
     color: '#10b981',
@@ -72,18 +58,18 @@ const widgets = [
 ];
 
 interface FlowProps {
-  initialNodes: FlowNode[];
-  initialEdges: FlowEdge[];
-  onFlowChange?: (flowData: FlowData) => void;
+  initialNodes: Node[];
+  initialEdges: Edge[];
+  onNodesChange: (nodes: Node[]) => void;
+  onEdgesChange: (edges: Edge[]) => void;
 }
 
-// Internal component that uses the React Flow hooks
-function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
+export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange }: FlowProps) {
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
   const [showWidgets, setShowWidgets] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const reactFlowInstance = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
 
   const isValidConnection = (connection: Connection) => {
     const sourceNode = nodes.find(node => node.id === connection.source);
@@ -115,10 +101,10 @@ function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
 
   const onConnect = useCallback((params: Connection) => {
     if (isValidConnection(params)) {
-      const newEdge: FlowEdge = {
+      const newEdge: Edge = {
         id: `e${params.source}-${params.target}`,
-        source: params.source || '',
-        target: params.target || '',
+        source: params.source,
+        target: params.target,
         sourceHandle: params.sourceHandle,
         targetHandle: params.targetHandle,
         type: 'default',
@@ -129,46 +115,30 @@ function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
         }
       };
       
-      const newEdges = addEdge(newEdge, edges as any) as FlowEdge[];
+      const newEdges = addEdge(newEdge, edges);
       setEdges(newEdges);
-      
-      if (onFlowChange) {
-        onFlowChange({
-          nodes: nodes as FlowNode[],
-          edges: newEdges,
-        });
-      }
+      onEdgesChange(newEdges);
     }
-  }, [edges, nodes, onFlowChange, setEdges]);
+  }, [edges, onEdgesChange, setEdges]);
 
   const handleNodesChange = useCallback((changes: any) => {
     onNodesChangeInternal(changes);
-    
-    if (onFlowChange) {
-      onFlowChange({
-        nodes: nodes as FlowNode[],
-        edges: edges as FlowEdge[],
-      });
-    }
-  }, [nodes, edges, onFlowChange, onNodesChangeInternal]);
+    const updatedNodes = nodes.map(node => ({ ...node }));
+    onNodesChange(updatedNodes);
+  }, [nodes, onNodesChange, onNodesChangeInternal]);
 
   const handleEdgesChange = useCallback((changes: any) => {
     onEdgesChangeInternal(changes);
-    
-    if (onFlowChange) {
-      onFlowChange({
-        nodes: nodes as FlowNode[],
-        edges: edges as FlowEdge[],
-      });
-    }
-  }, [nodes, edges, onFlowChange, onEdgesChangeInternal]);
+    const updatedEdges = edges.map(edge => ({ ...edge }));
+    onEdgesChange(updatedEdges);
+  }, [edges, onEdgesChange, onEdgesChangeInternal]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const onDragStart = (event: React.DragEvent, nodeType: NodeType) => {
+  const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
@@ -178,12 +148,12 @@ function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
 
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = reactFlowInstance.screenToFlowPosition({
+      const position = screenToFlowPosition({
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       });
 
-      const nodeType = event.dataTransfer.getData('application/reactflow') as NodeType;
+      const nodeType = event.dataTransfer.getData('application/reactflow');
       if (!nodeType) return;
 
       let newNodeData: NodeData = {};
@@ -203,24 +173,16 @@ function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
           break;
       }
 
-      const newNode: FlowNode = {
+      const newNode: Node = {
         id: `${nodeType}-${Math.random()}`,
         type: nodeType,
         position,
         data: newNodeData
       };
 
-      const updatedNodes = [...nodes, newNode] as FlowNode[];
-      setNodes(updatedNodes);
-      
-      if (onFlowChange) {
-        onFlowChange({
-          nodes: updatedNodes,
-          edges: edges as FlowEdge[],
-        });
-      }
+      setNodes(nds => [...nds, newNode]);
     }
-  }, [reactFlowInstance, setNodes, nodes, edges, onFlowChange]);
+  }, [screenToFlowPosition, setNodes]);
 
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
@@ -304,14 +266,5 @@ function FlowContent({ initialNodes, initialEdges, onFlowChange }: FlowProps) {
         </Panel>
       </ReactFlow>
     </div>
-  );
-}
-
-// The main export that wraps the content with ReactFlowProvider
-export function Flow(props: FlowProps) {
-  return (
-    <ReactFlowProvider>
-      <FlowContent {...props} />
-    </ReactFlowProvider>
   );
 }
