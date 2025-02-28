@@ -70,6 +70,10 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   const [showWidgets, setShowWidgets] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
+  const widgetButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Create a timeout ref to handle hover delay
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isValidConnection = (connection: Connection) => {
     const sourceNode = nodes.find(node => node.id === connection.source);
@@ -184,6 +188,30 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     }
   }, [screenToFlowPosition, setNodes]);
 
+  // Handle mouse enter for the button
+  const handleMouseEnter = () => {
+    // Clear any existing timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    // Set a small delay before showing the widgets to prevent accidental triggers
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowWidgets(true);
+    }, 150);
+  };
+
+  // Handle mouse leave for the panel area
+  const handleMouseLeave = () => {
+    // Clear any existing timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    // Set a delay before hiding to allow user to move to the panel
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowWidgets(false);
+    }, 300);
+  };
+
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
       <ReactFlow
@@ -220,49 +248,64 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
           maskColor="rgba(0, 0, 0, 0.05)"
         />
         <Panel position="bottom-left" className="space-y-2">
-          <button
-            onClick={() => setShowWidgets(!showWidgets)}
-            className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl"
+          <div 
+            className="relative"
+            onMouseLeave={handleMouseLeave}
           >
-            <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
-          </button>
-          {showWidgets && (
-            <div className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20">
-              <TooltipProvider>
-                {widgets.map((widget) => (
-                  <Tooltip key={widget.type}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-move transition-all duration-200"
-                        style={{
-                          background: `color-mix(in srgb, ${widget.color} 10%, transparent)`,
-                        }}
-                        onDragStart={(e) => onDragStart(e, widget.type)}
-                        draggable
-                      >
-                        <span 
-                          className="p-1.5 rounded-lg"
+            <button
+              ref={widgetButtonRef}
+              onClick={() => setShowWidgets(!showWidgets)}
+              onMouseEnter={handleMouseEnter}
+              className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl hover:bg-primary/90"
+            >
+              <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
+            </button>
+            {showWidgets && (
+              <div 
+                className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
+                onMouseEnter={() => {
+                  // Clear any hide timeout when mouse enters the panel
+                  if (hoverTimeoutRef.current) {
+                    clearTimeout(hoverTimeoutRef.current);
+                  }
+                }}
+              >
+                <TooltipProvider>
+                  {widgets.map((widget) => (
+                    <Tooltip key={widget.type}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-move transition-all duration-200"
                           style={{
-                            background: `color-mix(in srgb, ${widget.color} 15%, transparent)`,
-                            color: widget.color
+                            background: `color-mix(in srgb, ${widget.color} 10%, transparent)`,
                           }}
+                          onDragStart={(e) => onDragStart(e, widget.type)}
+                          draggable
                         >
-                          <widget.icon className="h-4 w-4" />
-                        </span>
-                        <span className="font-medium text-sm text-foreground/80">{widget.label}</span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent 
-                      side="right"
-                      className="bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-none shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]"
-                    >
-                      {widget.description}
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
-              </TooltipProvider>
-            </div>
-          )}
+                          <span 
+                            className="p-1.5 rounded-lg"
+                            style={{
+                              background: `color-mix(in srgb, ${widget.color} 15%, transparent)`,
+                              color: widget.color
+                            }}
+                          >
+                            <widget.icon className="h-4 w-4" />
+                          </span>
+                          <span className="font-medium text-sm text-foreground/80">{widget.label}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent 
+                        side="right"
+                        className="bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-none shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]"
+                      >
+                        {widget.description}
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </TooltipProvider>
+              </div>
+            )}
+          </div>
         </Panel>
       </ReactFlow>
     </div>

@@ -16,6 +16,7 @@ export type Database = {
           id: string
           interaction_type: string[]
           is_active: boolean | null
+          knowledge_ids: string[] | null
           language: string | null
           name: string
           objective: string
@@ -29,6 +30,7 @@ export type Database = {
           id?: string
           interaction_type?: string[]
           is_active?: boolean | null
+          knowledge_ids?: string[] | null
           language?: string | null
           name: string
           objective: string
@@ -42,6 +44,7 @@ export type Database = {
           id?: string
           interaction_type?: string[]
           is_active?: boolean | null
+          knowledge_ids?: string[] | null
           language?: string | null
           name?: string
           objective?: string
