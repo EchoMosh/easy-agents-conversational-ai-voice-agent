@@ -95,29 +95,34 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
 
   // Function to update node data - will be provided through context
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
-    console.log(`Updating node ${nodeId} with data:`, newData);
+    console.log(`[Flow] updateNodeData called for node ${nodeId} with data:`, newData);
     
-    setNodes((nds) => 
-      nds.map((node) => {
+    setNodes((nds) => {
+      const updatedNodes = nds.map((node) => {
         if (node.id === nodeId) {
           const updatedNode = {
             ...node,
             data: { ...newData }
           };
+          console.log(`[Flow] Updated node ${nodeId} from:`, node.data, 'to:', updatedNode.data);
           return updatedNode;
         }
         return node;
-      })
-    );
+      });
+      return updatedNodes;
+    });
     
     // After updating the local state, notify the parent component
-    const updatedNodes = nodes.map(node => 
-      node.id === nodeId 
-        ? { ...node, data: { ...newData } } 
-        : node
-    );
-    
-    onNodesChange(updatedNodes);
+    setTimeout(() => {
+      console.log(`[Flow] Notifying parent component about node ${nodeId} update`);
+      const updatedNodes = nodes.map(node => 
+        node.id === nodeId 
+          ? { ...node, data: { ...newData } } 
+          : node
+      );
+      
+      onNodesChange(updatedNodes);
+    }, 0);
   }, [nodes, setNodes, onNodesChange]);
 
   const isValidConnection = (connection: Connection) => {
@@ -176,15 +181,27 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
   }, [edges, onEdgesChange, setEdges, nodes]);
 
   const handleNodesChange = useCallback((changes: any) => {
+    console.log('[Flow] handleNodesChange called with changes:', changes);
     onNodesChangeInternal(changes);
-    const updatedNodes = nodes.map(node => ({ ...node }));
-    onNodesChange(updatedNodes);
+    
+    // Use setTimeout to ensure we're getting the latest state
+    setTimeout(() => {
+      console.log('[Flow] Notifying parent after node changes, current nodes:', nodes);
+      const updatedNodes = nodes.map(node => ({ ...node }));
+      onNodesChange(updatedNodes);
+    }, 0);
   }, [nodes, onNodesChange, onNodesChangeInternal]);
 
   const handleEdgesChange = useCallback((changes: any) => {
+    console.log('[Flow] handleEdgesChange called with changes:', changes);
     onEdgesChangeInternal(changes);
-    const updatedEdges = edges.map(edge => ({ ...edge }));
-    onEdgesChange(updatedEdges);
+    
+    // Use setTimeout to ensure we're getting the latest state
+    setTimeout(() => {
+      console.log('[Flow] Notifying parent after edge changes, current edges:', edges);
+      const updatedEdges = edges.map(edge => ({ ...edge }));
+      onEdgesChange(updatedEdges);
+    }, 0);
   }, [edges, onEdgesChange, onEdgesChangeInternal]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -237,6 +254,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         data: newNodeData
       };
 
+      console.log('[Flow] Adding new node:', newNode);
       const updatedNodes = [...nodes, newNode];
       setNodes(updatedNodes);
       onNodesChange(updatedNodes);

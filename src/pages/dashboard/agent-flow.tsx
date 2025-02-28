@@ -118,15 +118,23 @@ export default function AgentFlowPage() {
     queryFn: async () => {
       if (!id) throw new Error('No agent ID provided');
       
+      console.log('[AgentFlowPage] Fetching agent data for ID:', id);
       const { data, error } = await supabase
         .from('agents')
         .select('*')
         .eq('id', id)
         .maybeSingle();
 
-      if (error) throw error;
-      if (!data) throw new Error('Agent not found');
+      if (error) {
+        console.error('[AgentFlowPage] Error fetching agent:', error);
+        throw error;
+      }
+      if (!data) {
+        console.error('[AgentFlowPage] Agent not found');
+        throw new Error('Agent not found');
+      }
 
+      console.log('[AgentFlowPage] Agent data retrieved:', data);
       return data as Agent;
     },
     enabled: !!id
@@ -139,16 +147,17 @@ export default function AgentFlowPage() {
       // Deep clone to avoid reference issues and ensure proper serialization
       const clonedData = JSON.parse(JSON.stringify(flowData));
       
-      console.log("SAVING FLOW DATA TO SUPABASE:", clonedData);
+      console.log("[AgentFlowPage] SAVING FLOW DATA TO SUPABASE:", clonedData);
       
       // Generate mermaid chart and ensure no styling classes are present
       let mermaidChartStr = generateMermaidFromFlow(clonedData);
       mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       
-      console.log('Mermaid Chart to save:', mermaidChartStr);
+      console.log('[AgentFlowPage] Mermaid Chart to save:', mermaidChartStr);
       setMermaidChart(mermaidChartStr);
       
       try {
+        console.log(`[AgentFlowPage] Updating agent ${id} in Supabase`);
         const { data, error } = await supabase
           .from('agents')
           .update({ 
@@ -159,11 +168,11 @@ export default function AgentFlowPage() {
           .select();
         
         if (error) {
-          console.error('Error saving flow data:', error);
+          console.error('[AgentFlowPage] Error saving flow data:', error);
           throw error;
         }
         
-        console.log("Supabase update response:", data);
+        console.log("[AgentFlowPage] Supabase update response:", data);
         
         // Show success toast
         toast({
@@ -175,7 +184,7 @@ export default function AgentFlowPage() {
         await refetch();
         return data;
       } catch (error) {
-        console.error('Error in saveFlowMutation:', error);
+        console.error('[AgentFlowPage] Error in saveFlowMutation:', error);
         throw error;
       }
     }
@@ -185,22 +194,26 @@ export default function AgentFlowPage() {
   useEffect(() => {
     if (agent?.flow) {
       try {
+        console.log('[AgentFlowPage] Processing initial flow data:', agent.flow);
         const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
         let mermaidChartStr = generateMermaidFromFlow(flowData);
         mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
-        console.log('Initial Mermaid Chart:', mermaidChartStr);
+        console.log('[AgentFlowPage] Initial Mermaid Chart:', mermaidChartStr);
         setMermaidChart(mermaidChartStr);
       } catch (error) {
-        console.error('Error generating mermaid chart:', error);
+        console.error('[AgentFlowPage] Error generating mermaid chart:', error);
         setMermaidChart('graph TD\n  Error[Error generating chart]');
       }
     }
   }, [agent]);
 
   const handleNodesChange = useCallback((newNodes: Node[]) => {
-    if (!agent?.flow) return;
+    if (!agent?.flow) {
+      console.log('[AgentFlowPage] handleNodesChange: No agent flow data available');
+      return;
+    }
     try {
-      console.log('Nodes changed, nodes to save:', newNodes);
+      console.log('[AgentFlowPage] Nodes changed, nodes to save:', newNodes);
       
       // Deep clone to ensure no reference issues
       const clonedNodes = JSON.parse(JSON.stringify(newNodes)) as FlowNode[];
@@ -216,9 +229,10 @@ export default function AgentFlowPage() {
       };
       
       // Save the flow data
+      console.log('[AgentFlowPage] Saving updated flow data with new nodes');
       saveFlowMutation.mutate(flowData);
     } catch (error) {
-      console.error('Error updating nodes:', error);
+      console.error('[AgentFlowPage] Error updating nodes:', error);
       toast({
         title: 'Error updating flow',
         description: 'Unable to update nodes in the flow',
@@ -228,9 +242,12 @@ export default function AgentFlowPage() {
   }, [agent, saveFlowMutation, toast]);
 
   const handleEdgesChange = useCallback((newEdges: Edge[]) => {
-    if (!agent?.flow) return;
+    if (!agent?.flow) {
+      console.log('[AgentFlowPage] handleEdgesChange: No agent flow data available');
+      return;
+    }
     try {
-      console.log('Edges changed, edges to save:', newEdges);
+      console.log('[AgentFlowPage] Edges changed, edges to save:', newEdges);
       
       // Deep clone to ensure no reference issues
       const clonedEdges = JSON.parse(JSON.stringify(newEdges)) as FlowEdge[];
@@ -246,9 +263,10 @@ export default function AgentFlowPage() {
       };
       
       // Save the flow data
+      console.log('[AgentFlowPage] Saving updated flow data with new edges');
       saveFlowMutation.mutate(flowData);
     } catch (error) {
-      console.error('Error updating edges:', error);
+      console.error('[AgentFlowPage] Error updating edges:', error);
       toast({
         title: 'Error updating flow',
         description: 'Unable to update connections in the flow',
@@ -259,11 +277,17 @@ export default function AgentFlowPage() {
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => {
     if (!id) return;
+    console.log('[AgentFlowPage] Updating agent settings:', settings);
     const { error } = await supabase
       .from('agents')
       .update(settings)
       .eq('id', id);
-    if (error) throw error;
+    
+    if (error) {
+      console.error('[AgentFlowPage] Error updating agent settings:', error);
+      throw error;
+    }
+    console.log('[AgentFlowPage] Agent settings updated successfully');
   };
 
   if (isLoading) {

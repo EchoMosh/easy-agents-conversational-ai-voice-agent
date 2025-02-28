@@ -29,25 +29,26 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   
   // Log whenever the data prop changes to debug flow
   useEffect(() => {
-    console.log("SpeakNode received new data prop:", data);
-  }, [data]);
+    console.log(`[SpeakNode ${id}] Received new data prop:`, data);
+  }, [data, id]);
 
   // This useEffect syncs the component's state with data from the parent
   useEffect(() => {
     if (data.message !== undefined && data.message !== message) {
-      console.log("Syncing component state with parent data:", data.message);
+      console.log(`[SpeakNode ${id}] Syncing message state with parent data:`, data.message);
       setMessage(data.message);
     }
     
     if (data.outcomes) {
+      console.log(`[SpeakNode ${id}] Syncing outcomes state with parent data:`, data.outcomes);
       setOutcomes(data.outcomes);
     }
-  }, [data]);
+  }, [data, id, message]);
 
   // Direct textarea change handler using the context function
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    console.log("Textarea change:", newValue);
+    console.log(`[SpeakNode ${id}] Textarea change detected:`, newValue);
     setMessage(newValue);
     
     // Create a complete data object for the update
@@ -57,13 +58,13 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: outcomes
     };
     
-    console.log("Updating node data:", updatedData);
+    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
     updateNodeData(id, updatedData);
   };
 
   // Variable selector change handler using the context function
   const handleVariableSelectorChange = (newText: string) => {
-    console.log("Variable selector change:", newText);
+    console.log(`[SpeakNode ${id}] Variable selector change:`, newText);
     setMessage(newText);
     
     // Create a complete data object for the update
@@ -73,7 +74,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
       outcomes: outcomes
     };
     
-    console.log("Updating node data:", updatedData);
+    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
     updateNodeData(id, updatedData);
   };
 
@@ -82,6 +83,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     if (!newOutcome.trim()) return;
     
     const newOutcomes = [...outcomes, newOutcome];
+    console.log(`[SpeakNode ${id}] Adding outcome:`, newOutcome);
     setOutcomes(newOutcomes);
     setNewOutcome('');
     setShowOutcomeDialog(false);
@@ -94,10 +96,12 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     };
     
     // Update the node data
+    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
     updateNodeData(id, updatedData);
   };
 
   const removeOutcome = (index: number) => {
+    console.log(`[SpeakNode ${id}] Removing outcome at index:`, index);
     const newOutcomes = outcomes.filter((_, i) => i !== index);
     setOutcomes(newOutcomes);
     
@@ -109,6 +113,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     };
     
     // Update the node data
+    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
     updateNodeData(id, updatedData);
   };
 
@@ -121,6 +126,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
   const saveEdit = () => {
     if (!newOutcome.trim() || editingIndex === null) return;
     
+    console.log(`[SpeakNode ${id}] Saving edited outcome at index ${editingIndex}:`, newOutcome);
     const updatedOutcomes = [...outcomes];
     updatedOutcomes[editingIndex] = newOutcome;
     setOutcomes(updatedOutcomes);
@@ -136,6 +142,7 @@ export function SpeakNode({ data, id }: { data: SpeakNodeData; id: string }) {
     };
     
     // Update the node data
+    console.log(`[SpeakNode ${id}] Calling updateNodeData with:`, updatedData);
     updateNodeData(id, updatedData);
   };
 
