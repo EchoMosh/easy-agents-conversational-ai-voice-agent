@@ -75,7 +75,7 @@ export default function PipelinesPage() {
         </div>
         
         <PipelineHeader 
-          pipelines={pipelines}
+          pipelines={pipelines || []}
           selectedPipeline={selectedPipeline}
           onCreatePipeline={() => setShowNewPipelineDialog(true)}
           onSelectPipeline={setSelectedPipeline}
@@ -84,7 +84,7 @@ export default function PipelinesPage() {
         {selectedPipeline && (
           <PipelineStages
             selectedPipeline={selectedPipeline}
-            leads={leads}
+            leads={leads || []}
             onDragEnd={handleDragEnd}
             onEditColumnTitle={handleEditColumnTitle}
             onLeadClick={setSelectedLead}
