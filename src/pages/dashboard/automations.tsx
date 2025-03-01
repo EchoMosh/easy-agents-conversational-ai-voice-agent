@@ -123,7 +123,11 @@ export default function AutomationsPage() {
           className="h-full bg-primary rounded-full"
           initial={{ width: "0%" }}
           animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
-          transition={{ duration: 0.3 }}
+          transition={{ 
+            duration: 0.5, 
+            ease: "easeInOut",
+            type: "tween"
+          }}
         />
       </div>
     </div>
