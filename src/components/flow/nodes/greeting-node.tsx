@@ -252,7 +252,7 @@ export function GreetingNode({
 
         {/* Actions content - only shown when actionsOpen is true */}
         <Collapsible open={actionsOpen} onOpenChange={setActionsOpen}>
-          <CollapsibleContent className="bg-white/50 dark:bg-gray-900/50 space-y-3 border border-blue-100/50 dark:border-blue-800/30 rounded-xl p-4 mb-4">
+          <CollapsibleContent className="space-y-3 mb-4">
             {actions.length === 0 ? <p className="text-xs text-gray-500 dark:text-gray-400 italic">No actions configured</p> : <div className="space-y-2">
                 {actions.map(action => <div key={action.id} className="group/action relative flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-blue-100/30 dark:border-blue-800/30">
                     <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
