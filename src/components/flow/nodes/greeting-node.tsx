@@ -177,7 +177,7 @@ export function GreetingNode({
       actions: updatedActions
     });
     
-    // Show the actions panel
+    // Show the actions panel if we just added a new action
     setShowActions(true);
   };
   
@@ -223,6 +223,9 @@ export function GreetingNode({
         return 'Unknown action';
     }
   };
+
+  // Only show the floating Actions button if there are actions
+  const hasActions = actions.length > 0;
 
   return <div className="group relative">
       {/* Glowing background effect */}
@@ -281,30 +284,32 @@ export function GreetingNode({
         </div>
       </div>
 
-      {/* Floating Actions Button - Positioned outside and below the main container */}
-      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                onClick={() => setShowActions(!showActions)}
-                className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
-              >
-                <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
-                <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
-                  Actions {actions.length > 0 && `(${actions.length})`}
-                </span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Manage actions</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+      {/* Floating Actions Button - Only show if there are actions */}
+      {hasActions && (
+        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  onClick={() => setShowActions(!showActions)}
+                  className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
+                >
+                  <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
+                  <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
+                    Actions ({actions.length})
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Manage actions</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )}
 
       {/* Floating Actions Panel */}
-      {showActions && (
+      {showActions && hasActions && (
         <div className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+2.5rem)] w-[320px] z-20 animate-fade-in">
           <div className="backdrop-blur-xl bg-white/90 dark:bg-gray-900/90 rounded-xl border border-blue-200/50 dark:border-blue-800/50 shadow-lg p-4">
             <div className="flex items-center justify-between mb-3">
