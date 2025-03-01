@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
@@ -29,7 +30,7 @@ const nodeTypes: NodeTypes = {
 const widgets = [
   { 
     type: 'greetingNode', 
-    label: 'Greeting', 
+    label: 'Speak', 
     icon: Smile, 
     color: '#60a5fa',
     description: 'Start a conversation with customizable responses'
