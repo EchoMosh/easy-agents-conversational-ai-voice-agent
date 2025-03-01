@@ -1,7 +1,8 @@
+
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageSquare, Pencil, X, Send, AlertTriangle, Webhook, Mail, MessageCirclePlus } from 'lucide-react';
+import { Plus, MessageSquare, Pencil, X, Send, AlertTriangle, Webhook, Mail, MessageCirclePlus, List } from 'lucide-react';
 import { useState, useEffect, useContext } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { ActionConfig } from './actions/action-config';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 type GreetingNodeData = {
   greeting: string;
@@ -31,6 +33,7 @@ export function GreetingNode({
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [showActionTypeDialog, setShowActionTypeDialog] = useState(false);
+  const [showActionsListDialog, setShowActionsListDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [greeting, setGreeting] = useState(data.greeting);
@@ -127,6 +130,10 @@ export function GreetingNode({
     setShowActionTypeDialog(true);
   };
 
+  const openActionsListDialog = () => {
+    setShowActionsListDialog(true);
+  };
+
   const selectActionType = (type: 'sms' | 'webhook' | 'email') => {
     setSelectedActionType(type);
     setShowActionTypeDialog(false);
@@ -176,15 +183,13 @@ export function GreetingNode({
       ...data,
       actions: updatedActions
     });
-    
-    // Open the actions panel to show the newly added action
-    setActionsOpen(true);
   };
   
   const editAction = (action: NodeAction) => {
     setEditingAction(action);
     setSelectedActionType(action.type);
     setShowActionDialog(true);
+    setShowActionsListDialog(false);
   };
   
   const removeAction = (actionId: string) => {
@@ -285,12 +290,12 @@ export function GreetingNode({
       <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 flex gap-2">
         {/* Action button - now always visible regardless of actions.length */}
         <Button 
-          onClick={openActionTypeDialog}
+          onClick={openActionsListDialog}
           className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
         >
           <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
           <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
-            Actions
+            Actions {actions.length > 0 && `(${actions.length})`}
           </span>
         </Button>
         
@@ -328,6 +333,91 @@ export function GreetingNode({
                 {editingIndex !== null ? 'Save Changes' : 'Add Outcome'}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Actions List Dialog */}
+      <Dialog open={showActionsListDialog} onOpenChange={setShowActionsListDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <List className="h-4 w-4 text-blue-500" />
+              <span>Actions for this Node</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {actions.length === 0 ? (
+              <div className="text-center py-8 px-4">
+                <div className="mx-auto w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-3">
+                  <Send className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                </div>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No actions configured</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  Actions will be executed when this node is triggered.
+                </p>
+                <Button 
+                  onClick={() => {
+                    setShowActionsListDialog(false);
+                    openActionTypeDialog();
+                  }} 
+                  className="text-xs"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Your First Action
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                {actions.map(action => (
+                  <div 
+                    key={action.id} 
+                    className="group relative flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors border border-gray-100 dark:border-gray-800"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md bg-gradient-to-br from-blue-500/10 to-sky-500/10 dark:from-blue-500/20 dark:to-sky-500/20 text-blue-600 dark:text-blue-400 border border-blue-100/50 dark:border-blue-800/50">
+                      {getActionIcon(action.type)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{action.type.charAt(0).toUpperCase() + action.type.slice(1)}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[300px]">
+                        {getActionLabel(action)}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-100 dark:hover:bg-blue-900/30" 
+                        onClick={() => editAction(action)}
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-900/30" 
+                        onClick={() => removeAction(action.id)}
+                      >
+                        <X className="h-3.5 w-3.5 text-red-500" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {actions.length > 0 && (
+              <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
+                <Button 
+                  onClick={() => {
+                    setShowActionsListDialog(false);
+                    openActionTypeDialog();
+                  }} 
+                  className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200/50 dark:border-blue-800/50"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Another Action
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
