@@ -18,6 +18,7 @@ import ProfilePage from "@/pages/dashboard/profile";
 import ChatsPage from "@/pages/dashboard/chats";
 import { ChatPage } from "@/pages/dashboard/chat"; // Fixed import to use named export
 import KnowledgePage from "@/pages/dashboard/knowledge";
+import AutomationsPage from "@/pages/dashboard/automations";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ function App() {
               <Route path="/dashboard/chats" element={<ChatsPage />} />
               <Route path="/dashboard/chats/:id" element={<ChatPage />} />
               <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
+              <Route path="/dashboard/automations" element={<AutomationsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
