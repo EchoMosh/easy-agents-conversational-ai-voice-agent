@@ -6,7 +6,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { DragDropContext, Droppable, Draggable } from "@dnd-kit/core";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { mainMenuItems } from "@/components/dashboard/sidebar/navigation-menu";
 import { GripVertical } from "lucide-react";
 
@@ -17,9 +19,48 @@ interface SidebarItem {
   visible: boolean;
 }
 
+// Sortable item component
+const SortableItem = ({ item, onToggleVisibility }: { item: SidebarItem; onToggleVisibility: (id: string) => void }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+  
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className="flex items-center p-2 border rounded-md bg-background"
+    >
+      <div {...attributes} {...listeners} className="mr-3 text-muted-foreground cursor-grab">
+        <GripVertical size={18} />
+      </div>
+      <div className="flex items-center flex-1 space-x-3">
+        <Checkbox
+          id={`visible-${item.id}`}
+          checked={item.visible}
+          onCheckedChange={() => onToggleVisibility(item.id)}
+        />
+        <Label htmlFor={`visible-${item.id}`} className="cursor-pointer flex-1">
+          {item.title}
+        </Label>
+      </div>
+    </div>
+  );
+};
+
 export function SidebarSettings() {
   const { toast } = useToast();
   const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([]);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   // Load saved settings on component mount
   useEffect(() => {
@@ -62,14 +103,17 @@ export function SidebarSettings() {
   };
 
   // Handle item reordering
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
     
-    const items = Array.from(sidebarItems);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    
-    setSidebarItems(items);
+    if (active.id !== over.id) {
+      setSidebarItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   return (
@@ -89,44 +133,26 @@ export function SidebarSettings() {
           </div>
           
           <div className="space-y-4">
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="sidebar-items">
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="space-y-2"
-                  >
-                    {sidebarItems.map((item, index) => (
-                      <Draggable key={item.id} draggableId={item.id} index={index}>
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className="flex items-center p-2 border rounded-md bg-background"
-                          >
-                            <div {...provided.dragHandleProps} className="mr-3 text-muted-foreground">
-                              <GripVertical size={18} />
-                            </div>
-                            <div className="flex items-center flex-1 space-x-3">
-                              <Checkbox
-                                id={`visible-${item.id}`}
-                                checked={item.visible}
-                                onCheckedChange={() => toggleItemVisibility(item.id)}
-                              />
-                              <Label htmlFor={`visible-${item.id}`} className="cursor-pointer flex-1">
-                                {item.title}
-                              </Label>
-                            </div>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+            <DndContext 
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext 
+                items={sidebarItems.map(item => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {sidebarItems.map((item) => (
+                    <SortableItem 
+                      key={item.id} 
+                      item={item} 
+                      onToggleVisibility={toggleItemVisibility} 
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
           
           <Separator className="my-4" />
