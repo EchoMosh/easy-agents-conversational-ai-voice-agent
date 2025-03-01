@@ -1,40 +1,21 @@
+
 import React, {
   useRef,
   useState,
   useEffect,
-  useCallback,
   forwardRef,
-  useImperativeHandle,
 } from 'react';
-import {
-  LexicalComposer,
-  LexicalComposerProps,
-  useLexicalComposerContext,
-} from '@lexical/react/LexicalComposer';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
-import { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
-import { ListItemNode, ListNode } from '@lexical/list';
-import { CodeHighlightNode, CodeNode } from '@lexical/code';
-import { AutoLinkNode, LinkNode } from '@lexical/link';
-import { TRANSFORMERS } from '@lexical/markdown';
-import { useLexicalTheme } from '@/hooks/useLexicalTheme';
-import { MentionsPlugin } from './plugins/MentionsPlugin';
-import { EmojisPlugin } from './plugins/EmojisPlugin';
-import { CharactersCounter } from './ui/CharactersCounter';
-import { Toolbar } from './ui/Toolbar';
-import { INSERT_VARIABLE_COMMAND } from './commands';
-import { VariableNode } from './nodes/VariableNode';
-import { useEditorConfig } from './config';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { useDebounce } from '@/hooks/useDebounce';
-import { Label } from '@/components/ui/label';
+import { useDebouncedCallback } from 'use-debounce';
 
-export { INSERT_VARIABLE_COMMAND };
+// Create a simple command for variable insertion
+export const INSERT_VARIABLE_COMMAND = 'INSERT_VARIABLE_COMMAND';
 
 export interface LexicalEditorProps {
   value: string;
@@ -44,22 +25,43 @@ export interface LexicalEditorProps {
   onAtMention?: () => void;
 }
 
+// Define a basic editor configuration
+const getEditorConfig = (placeholder?: string) => {
+  return {
+    namespace: 'GreetingEditor',
+    theme: {
+      paragraph: 'mb-1',
+      text: {
+        bold: 'font-bold',
+        italic: 'italic',
+        underline: 'underline',
+        strikethrough: 'line-through',
+      },
+    },
+    onError: (error: Error) => {
+      console.error('Lexical Editor Error:', error);
+    },
+    nodes: [],
+  };
+};
+
 export const LexicalEditor = forwardRef<any, LexicalEditorProps>(
   ({ value, onChange, placeholder, className, onAtMention }, ref) => {
-    const editorConfig = useEditorConfig(placeholder, onAtMention);
     const [editorValue, setEditorValue] = useState(value);
-    const debouncedValue = useDebounce(editorValue, 500);
+    const debouncedOnChange = useDebouncedCallback((newValue) => {
+      onChange(newValue);
+    }, 500);
 
     useEffect(() => {
-      onChange(debouncedValue);
-    }, [debouncedValue, onChange]);
+      debouncedOnChange(editorValue);
+    }, [editorValue, debouncedOnChange]);
 
     useEffect(() => {
       setEditorValue(value);
     }, [value]);
 
     return (
-      <LexicalComposer initialConfig={editorConfig}>
+      <LexicalComposer initialConfig={getEditorConfig(placeholder)}>
         <div className="relative">
           <div className="w-full">
             <RichTextPlugin
@@ -73,17 +75,16 @@ export const LexicalEditor = forwardRef<any, LexicalEditorProps>(
             />
             <HistoryPlugin />
             <AutoFocusPlugin />
-            <MentionsPlugin onAtMention={onAtMention} />
-            <EmojisPlugin />
             <OnChangePlugin onChange={(editorState) => {
-              // Convert editorState to JSON string
               editorState.read(() => {
                 const editorContent = editorState.toJSON();
                 setEditorValue(JSON.stringify(editorContent));
               });
             }} />
           </div>
-          <CharactersCounter />
+          <div className="text-xs text-gray-500 mt-1 text-right">
+            {editorValue ? JSON.stringify(editorValue).length : 0} characters
+          </div>
         </div>
       </LexicalComposer>
     );
