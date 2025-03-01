@@ -249,35 +249,6 @@ export function GreetingNode({
           <GreetingInput value={greeting} onChange={handleGreetingChange} />
         </div>
 
-        {/* Actions content - only shown when actionsOpen is true */}
-        <Collapsible open={actionsOpen} onOpenChange={setActionsOpen}>
-          <CollapsibleContent className="space-y-3 mb-4">
-            {actions.length === 0 ? <p className="text-xs text-gray-500 dark:text-gray-400 italic">No actions configured</p> : <div className="space-y-2">
-                {actions.map(action => <div key={action.id} className="group/action relative flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-blue-100/30 dark:border-blue-800/30">
-                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
-                      {getActionIcon(action.type)}
-                    </div>
-                    <div className="flex-1 text-xs truncate">
-                      {getActionLabel(action)}
-                    </div>
-                    <div className="flex opacity-0 group-hover/action:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => editAction(action)}>
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => removeAction(action.id)}>
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>)}
-              </div>}
-            <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={openActionTypeDialog} className="text-xs h-7 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40">
-                <Plus className="h-3 w-3 mr-1" /> Add Action
-              </Button>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-
         {/* Outcomes section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
