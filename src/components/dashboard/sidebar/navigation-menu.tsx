@@ -11,10 +11,9 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import * as icons from "lucide-react";
 
 // Create an icons object for easy lookup
-const iconComponents: Record<string, any> = {
+const iconComponents = {
   Users,
   Target,
   Settings,
@@ -114,8 +113,8 @@ export function NavigationMenu() {
       
       if (customItem) {
         // Use custom icon if available
-        const IconComponent = customItem.icon && iconComponents[customItem.icon] 
-          ? iconComponents[customItem.icon] 
+        const IconComponent = customItem.icon && iconComponents[customItem.icon as keyof typeof iconComponents] 
+          ? iconComponents[customItem.icon as keyof typeof iconComponents] 
           : menuItem.icon;
           
         return {

@@ -7,13 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { mainMenuItems } from "@/components/dashboard/sidebar/navigation-menu";
-import { GripVertical, Users, Target, GitMerge, MessageSquare, Book, Zap, Settings, Plus } from "lucide-react";
-import * as icons from "lucide-react";
+import { GripVertical, Users, Target, GitMerge, MessageSquare, Book, Zap } from "lucide-react";
 
 // Define the sidebar item type with icon
 interface SidebarItem {
@@ -25,7 +23,7 @@ interface SidebarItem {
 
 // Get all available icons from lucide-react
 const availableIcons: Record<string, any> = {
-  Users, Target, GitMerge, MessageSquare, Book, Zap, Settings, Plus
+  Users, Target, GitMerge, MessageSquare, Book, Zap
 };
 
 // Sortable item component
@@ -51,12 +49,12 @@ const SortableItem = ({
     <div 
       ref={setNodeRef} 
       style={style} 
-      className="flex items-center p-2 border rounded-md bg-background"
+      className="flex items-center p-2 border rounded-md bg-background mb-2"
     >
       <div {...attributes} {...listeners} className="mr-3 text-muted-foreground cursor-grab">
         <GripVertical size={18} />
       </div>
-      <div className="flex items-center flex-1 space-x-3">
+      <div className="flex items-center flex-1 gap-2">
         <Checkbox
           id={`visible-${item.id}`}
           checked={item.visible}
@@ -65,22 +63,27 @@ const SortableItem = ({
         <Label htmlFor={`visible-${item.id}`} className="cursor-pointer flex-1">
           {item.title}
         </Label>
-        <div className="flex items-center space-x-2">
-          <IconComponent size={18} className="text-muted-foreground" />
+        <div className="flex items-center">
+          <IconComponent size={18} className="mx-2 text-muted-foreground" />
           <Select
             value={item.icon}
             onValueChange={(value) => onIconChange(item.id, value)}
           >
             <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Icon" />
+              <SelectValue>
+                <div className="flex items-center gap-2">
+                  <IconComponent className="h-4 w-4" />
+                  <span>Users</span>
+                </div>
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {Object.keys(availableIcons).map((iconName) => {
                 const Icon = availableIcons[iconName];
                 return (
                   <SelectItem key={iconName} value={iconName}>
-                    <div className="flex items-center">
-                      <Icon className="mr-2 h-4 w-4" />
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
                       <span>{iconName}</span>
                     </div>
                   </SelectItem>
@@ -185,7 +188,7 @@ export function SidebarSettings() {
             </p>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-2">
             <DndContext 
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -195,7 +198,7 @@ export function SidebarSettings() {
                 items={sidebarItems.map(item => item.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-2">
+                <div>
                   {sidebarItems.map((item) => (
                     <SortableItem 
                       key={item.id} 
