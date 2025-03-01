@@ -16,9 +16,10 @@ import PipelinesPage from "@/pages/dashboard/pipelines";
 import SettingsPage from "@/pages/dashboard/settings";
 import ProfilePage from "@/pages/dashboard/profile";
 import ChatsPage from "@/pages/dashboard/chats";
-import { ChatPage } from "@/pages/dashboard/chat"; // Fixed import to use named export
+import { ChatPage } from "@/pages/dashboard/chat";
 import KnowledgePage from "@/pages/dashboard/knowledge";
 import AutomationsPage from "@/pages/dashboard/automations";
+import ProtectedRoute from "@/components/auth/protected-route";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -30,21 +31,26 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route path="/dashboard/agents" element={<AgentsPage />} />
-              <Route path="/dashboard/agents/flow/:id" element={<AgentFlowPage />} />
-              <Route path="/dashboard/leads" element={<LeadsPage />} />
-              <Route path="/dashboard/pipelines" element={<PipelinesPage />} />
-              <Route path="/dashboard/settings" element={<SettingsPage />} />
-              <Route path="/dashboard/profile" element={<ProfilePage />} />
-              <Route path="/dashboard/chats" element={<ChatsPage />} />
-              <Route path="/dashboard/chats/:id" element={<ChatPage />} />
-              <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
-              <Route path="/dashboard/automations" element={<AutomationsPage />} />
+            
+            {/* Protected routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route path="/dashboard/agents" element={<AgentsPage />} />
+                <Route path="/dashboard/agents/flow/:id" element={<AgentFlowPage />} />
+                <Route path="/dashboard/leads" element={<LeadsPage />} />
+                <Route path="/dashboard/pipelines" element={<PipelinesPage />} />
+                <Route path="/dashboard/settings" element={<SettingsPage />} />
+                <Route path="/dashboard/profile" element={<ProfilePage />} />
+                <Route path="/dashboard/chats" element={<ChatsPage />} />
+                <Route path="/dashboard/chats/:id" element={<ChatPage />} />
+                <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
+                <Route path="/dashboard/automations" element={<AutomationsPage />} />
+              </Route>
             </Route>
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
