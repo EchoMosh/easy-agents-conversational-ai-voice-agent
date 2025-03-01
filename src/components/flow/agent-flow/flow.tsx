@@ -3,7 +3,6 @@ import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState,
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
-import { SpeakNode } from '@/components/flow/nodes/speak-node';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
@@ -20,7 +19,6 @@ export const NodeUpdateContext = React.createContext<{
 });
 
 const nodeTypes: NodeTypes = {
-  speakNode: SpeakNode,
   greetingNode: GreetingNode,
   endNode: EndNode,
   triggerNode: TriggerNode,
@@ -29,13 +27,6 @@ const nodeTypes: NodeTypes = {
 };
 
 const widgets = [
-  { 
-    type: 'speakNode', 
-    label: 'Speak', 
-    icon: MessageCircle, 
-    color: '#c084fc',
-    description: 'Add a message response with multiple outcome paths'
-  },
   { 
     type: 'greetingNode', 
     label: 'Greeting', 
@@ -285,11 +276,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       let newNodeData: NodeData = {};
       
       switch (nodeType) {
-        case 'speakNode':
-          newNodeData = { message: 'Enter your message here' };
-          break;
         case 'greetingNode':
           newNodeData = { greeting: 'Enter your greeting here', outcomes: [] };
+          break;
+        case 'endNode':
+          newNodeData = { message: 'Enter your message here' };
           break;
         case 'triggerNode':
           newNodeData = { platform: undefined, action: undefined };
@@ -355,8 +346,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
               className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
               nodeColor={node => {
                 switch (node.type) {
-                  case 'speakNode':
-                    return '#c084fc';
+                  case 'greetingNode':
+                    return '#60a5fa';
                   case 'triggerNode':
                     return '#fbbf24';
                   case 'endNode':
