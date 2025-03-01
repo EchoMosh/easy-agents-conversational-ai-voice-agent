@@ -1,7 +1,9 @@
 
-import { useState } from 'react';
-import { LexicalEditor, INSERT_VARIABLE_COMMAND } from '@/components/editor/LexicalEditor';
+import { Label } from '@/components/ui/label';
 import { VariableSelector } from '../variable-mention/variable-selector';
+import { useRef, useState } from 'react';
+import { LexicalEditor, INSERT_VARIABLE_COMMAND } from '@/components/editor/LexicalEditor';
+import { LexicalEditor as LexicalEditorType } from 'lexical';
 
 interface GreetingInputProps {
   value: string;
@@ -10,6 +12,7 @@ interface GreetingInputProps {
 
 export function GreetingInput({ value, onChange }: GreetingInputProps) {
   const [showVariableSelector, setShowVariableSelector] = useState(false);
+  const editorRef = useRef<LexicalEditorType | null>(null);
 
   const handleChange = (newValue: string) => {
     console.log("GreetingInput change:", newValue);
@@ -21,9 +24,9 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
   };
 
   const handleVariableSelect = (variableId: string) => {
-    // Since our editor is simplified, we won't implement variable insertion yet
-    // We can add this functionality later
-    console.log("Variable selected:", variableId);
+    if (editorRef.current) {
+      editorRef.current.dispatchCommand(INSERT_VARIABLE_COMMAND, variableId);
+    }
     setShowVariableSelector(false);
   };
 
@@ -42,9 +45,11 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
       {showVariableSelector && (
         <VariableSelector
           text={value}
-          onTextChange={() => {}} // No-op as it's handled by editor
+          onTextChange={(newText) => {
+            // This is now handled by the Lexical Editor directly
+          }}
           onSelectVariable={handleVariableSelect}
-          textareaRef={null}
+          textareaRef={null} // We don't need this ref anymore
           onClose={() => setShowVariableSelector(false)}
         />
       )}

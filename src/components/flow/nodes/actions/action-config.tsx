@@ -1,126 +1,122 @@
 
 import { NodeAction } from '@/types/agent-types';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { X } from 'lucide-react';
-import { useState } from 'react';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
-export interface ActionConfigProps {
+interface ActionConfigProps {
   action: NodeAction;
   onChange: (updatedAction: NodeAction) => void;
-  onDelete: (id: string) => void;
 }
 
-export function ActionConfig({ action, onChange, onDelete }: ActionConfigProps) {
-  const [url, setUrl] = useState(action.config.url || '');
-
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newUrl = e.target.value;
-    setUrl(newUrl);
-    
+export function ActionConfig({ action, onChange }: ActionConfigProps) {
+  const handleConfigChange = (key: string, value: any) => {
     const updatedAction = {
       ...action,
       config: {
         ...action.config,
-        url: newUrl
+        [key]: value
       }
     };
-    
     onChange(updatedAction);
   };
 
-  return (
-    <div className="bg-white/10 dark:bg-gray-800/20 backdrop-blur-xl p-3 rounded-xl border border-white/20 dark:border-gray-700/30 shadow-lg">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
-          {action.type} Action
-        </span>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-6 w-6 text-gray-500 hover:text-red-500"
-          onClick={() => onDelete(action.id)}
-        >
-          <X className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-      
-      {action.type === 'webhook' && (
-        <div className="space-y-2">
-          <Input
-            placeholder="Enter webhook URL"
-            value={url}
-            onChange={handleUrlChange}
-            className="h-8 text-xs"
-          />
+  switch (action.type) {
+    case 'sms':
+      return (
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">Phone Number</Label>
+            <Input 
+              className="text-xs" 
+              placeholder="+1234567890"
+              value={action.config.phoneNumber || ''}
+              onChange={(e) => handleConfigChange('phoneNumber', e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Message</Label>
+            <Textarea 
+              className="text-xs min-h-[80px]" 
+              placeholder="Enter SMS message"
+              value={action.config.message || ''}
+              onChange={(e) => handleConfigChange('message', e.target.value)}
+            />
+          </div>
         </div>
-      )}
-      
-      {action.type === 'sms' && (
-        <div className="space-y-2">
-          <Input
-            placeholder="Enter phone number"
-            value={action.config.phoneNumber || ''}
-            onChange={(e) => {
-              onChange({
-                ...action,
-                config: {
-                  ...action.config,
-                  phoneNumber: e.target.value
-                }
-              });
-            }}
-            className="h-8 text-xs"
-          />
-          <Input
-            placeholder="Enter message"
-            value={action.config.message || ''}
-            onChange={(e) => {
-              onChange({
-                ...action,
-                config: {
-                  ...action.config,
-                  message: e.target.value
-                }
-              });
-            }}
-            className="h-8 text-xs"
-          />
+      );
+    
+    case 'webhook':
+      return (
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">URL</Label>
+            <Input 
+              className="text-xs" 
+              placeholder="https://example.com/webhook"
+              value={action.config.url || ''}
+              onChange={(e) => handleConfigChange('url', e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Method</Label>
+            <select 
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={action.config.method || 'POST'}
+              onChange={(e) => handleConfigChange('method', e.target.value)}
+            >
+              <option value="GET">GET</option>
+              <option value="POST">POST</option>
+              <option value="PUT">PUT</option>
+              <option value="DELETE">DELETE</option>
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">Payload (JSON)</Label>
+            <Textarea 
+              className="text-xs min-h-[80px] font-mono" 
+              placeholder='{"key": "value"}'
+              value={action.config.payload || ''}
+              onChange={(e) => handleConfigChange('payload', e.target.value)}
+            />
+          </div>
         </div>
-      )}
-      
-      {action.type === 'email' && (
-        <div className="space-y-2">
-          <Input
-            placeholder="Enter email address"
-            value={action.config.email || ''}
-            onChange={(e) => {
-              onChange({
-                ...action,
-                config: {
-                  ...action.config,
-                  email: e.target.value
-                }
-              });
-            }}
-            className="h-8 text-xs"
-          />
-          <Input
-            placeholder="Enter subject"
-            value={action.config.subject || ''}
-            onChange={(e) => {
-              onChange({
-                ...action,
-                config: {
-                  ...action.config,
-                  subject: e.target.value
-                }
-              });
-            }}
-            className="h-8 text-xs"
-          />
+      );
+    
+    case 'email':
+      return (
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">To</Label>
+            <Input 
+              className="text-xs" 
+              placeholder="recipient@example.com"
+              value={action.config.to || ''}
+              onChange={(e) => handleConfigChange('to', e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Subject</Label>
+            <Input 
+              className="text-xs" 
+              placeholder="Email subject"
+              value={action.config.subject || ''}
+              onChange={(e) => handleConfigChange('subject', e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Message</Label>
+            <Textarea 
+              className="text-xs min-h-[80px]" 
+              placeholder="Email content"
+              value={action.config.message || ''}
+              onChange={(e) => handleConfigChange('message', e.target.value)}
+            />
+          </div>
         </div>
-      )}
-    </div>
-  );
+      );
+    
+    default:
+      return <div>Unknown action type</div>;
+  }
 }

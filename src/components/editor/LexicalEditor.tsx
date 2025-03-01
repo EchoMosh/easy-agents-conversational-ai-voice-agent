@@ -1,60 +1,134 @@
 
-import React, { useState, useEffect, forwardRef } from 'react';
-import { useDebounce } from 'use-debounce';
+import { useEffect, useRef } from 'react';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { $getRoot, $createParagraphNode, EditorState, LexicalEditor as LexicalEditorType, $createTextNode } from 'lexical';
+import { VariableNode } from './VariableNode';
+import { VariablePlugin, INSERT_VARIABLE_COMMAND } from './VariablePlugin';
+import { VariableHighlightPlugin } from './VariableHighlightPlugin';
+import './editor.css';
+import { Variable } from '../flow/nodes/variable-mention/variable-selector';
 
-// Define the command constant
-export const INSERT_VARIABLE_COMMAND = 'INSERT_VARIABLE_COMMAND';
+// This plugin is responsible for setting the initial value
+function InitialValuePlugin({ value }: { value: string }) {
+  const [editor] = useLexicalComposerContext();
+  
+  useEffect(() => {
+    editor.update(() => {
+      const root = $getRoot();
+      if (root.getTextContent() === '') {
+        if (value) {
+          const paragraph = $createParagraphNode();
+          paragraph.append($createTextNode(value));
+          root.append(paragraph);
+        }
+      }
+    });
+  }, [editor, value]);
+  
+  return null;
+}
 
-// Define the component props
 interface LexicalEditorProps {
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
   placeholder?: string;
   className?: string;
   onAtMention?: () => void;
+  insertVariable?: (varId: string) => void;
+  variables?: Variable[];
 }
 
-export const LexicalEditor = forwardRef<HTMLTextAreaElement, LexicalEditorProps>(
-  ({ value, onChange, placeholder, className, onAtMention }, ref) => {
-    const [internalValue, setInternalValue] = useState(value);
-    const [debouncedValue] = useDebounce(internalValue, 500);
+export function LexicalEditor({ 
+  value = '', 
+  onChange, 
+  placeholder = 'Type something...',
+  className = '',
+  onAtMention,
+  insertVariable,
+  variables = []
+}: LexicalEditorProps) {
+  const editorRef = useRef<LexicalEditorType | null>(null);
 
-    useEffect(() => {
-      onChange(debouncedValue);
-    }, [debouncedValue, onChange]);
+  const initialConfig = {
+    namespace: 'FlowNodeEditor',
+    theme: {
+      paragraph: 'editor-paragraph',
+      text: {
+        base: 'editor-text',
+        underline: 'editor-text-underline',
+      },
+      variable: 'editor-variable'
+    },
+    onError: (error: Error) => {
+      console.error('Lexical Editor Error:', error);
+    },
+    nodes: [VariableNode]
+  };
 
-    useEffect(() => {
-      setInternalValue(value);
-    }, [value]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newValue = e.target.value;
-      setInternalValue(newValue);
-      
-      // Check for @ symbol to trigger mentions
-      if (newValue.includes('@') && onAtMention) {
-        const lastAtIndex = newValue.lastIndexOf('@');
-        if (lastAtIndex === newValue.length - 1) {
-          onAtMention();
-        }
+  function handleEditorChange(editorState: EditorState) {
+    editorState.read(() => {
+      const root = $getRoot();
+      const textContent = root.getTextContent();
+      if (onChange) {
+        onChange(textContent);
       }
-    };
-
-    return (
-      <textarea
-        ref={ref}
-        value={internalValue}
-        onChange={handleChange}
-        placeholder={placeholder}
-        className={`${className} w-full min-h-[100px] p-3 focus:outline-none`}
-        onKeyDown={(e) => {
-          if (e.key === '@' && onAtMention) {
-            onAtMention();
-          }
-        }}
-      />
-    );
+    });
   }
-);
 
-LexicalEditor.displayName = 'LexicalEditor';
+  // Method to expose insert variable command to parent
+  useEffect(() => {
+    if (insertVariable) {
+      const originalInsertVariable = insertVariable;
+      insertVariable = (varId: string) => {
+        if (editorRef.current) {
+          editorRef.current.dispatchCommand(INSERT_VARIABLE_COMMAND, varId);
+        }
+        originalInsertVariable(varId);
+      };
+    }
+  }, [insertVariable]);
+
+  function captureEditor(editor: LexicalEditorType) {
+    editorRef.current = editor;
+  }
+
+  return (
+    <div className={`editor-container nodrag ${className}`}>
+      <LexicalComposer initialConfig={initialConfig}>
+        <RichTextPlugin
+          contentEditable={<ContentEditable className="editor-input" />}
+          placeholder={<div className="editor-placeholder">{placeholder}</div>}
+          ErrorBoundary={({ children }) => <div>{children}</div>}
+        />
+        <OnChangePlugin onChange={handleEditorChange} />
+        <HistoryPlugin />
+        <InitialValuePlugin value={value} />
+        <VariablePlugin 
+          onAtMention={onAtMention}
+          variables={variables}
+        />
+        <VariableHighlightPlugin />
+        <CaptureEditorPlugin onCaptureEditor={captureEditor} />
+      </LexicalComposer>
+    </div>
+  );
+}
+
+// Plugin to capture the editor instance
+function CaptureEditorPlugin({ onCaptureEditor }: { onCaptureEditor: (editor: LexicalEditorType) => void }) {
+  const [editor] = useLexicalComposerContext();
+  
+  useEffect(() => {
+    onCaptureEditor(editor);
+  }, [editor, onCaptureEditor]);
+  
+  return null;
+}
+
+// Export the command for external use
+export { INSERT_VARIABLE_COMMAND };

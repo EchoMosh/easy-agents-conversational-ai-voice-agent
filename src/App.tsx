@@ -4,7 +4,6 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import HomePage from "@/pages/homepage";
 import Index from "@/pages/Index";
 import OnboardingPage from "@/pages/onboarding";
 import AuthPage from "@/pages/auth";
@@ -31,8 +30,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <Router>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/welcome" element={<Index />} />
+            <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
             
