@@ -1,19 +1,17 @@
 
-import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import DashboardLayout from "@/layouts/dashboard-layout";
 import AuthPage from "@/pages/auth";
 import OnboardingPage from "@/pages/onboarding";
-import IndexPage from "@/pages";
 import NotFound from "@/pages/NotFound";
 
 // Dashboard pages
 import AgentsPage from "@/pages/dashboard/agents";
 import AgentFlowPage from "@/pages/dashboard/agent-flow";
 import ChatsPage from "@/pages/dashboard/chats";
-import ChatPage from "@/pages/dashboard/chat";
+import { ChatPage } from "@/pages/dashboard/chat";
 import KnowledgePage from "@/pages/dashboard/knowledge";
 import LeadsPage from "@/pages/dashboard/leads";
 import PipelinesPage from "@/pages/dashboard/pipelines";
@@ -27,7 +25,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<IndexPage />} />
+          <Route path="/" element={<NotFound />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           
