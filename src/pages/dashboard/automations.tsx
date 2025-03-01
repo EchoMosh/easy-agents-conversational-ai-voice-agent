@@ -1,19 +1,5 @@
 
 import { useState, useCallback } from 'react';
-import { 
-  ReactFlow, 
-  Background, 
-  Controls, 
-  MiniMap, 
-  Panel, 
-  useNodesState, 
-  useEdgesState, 
-  addEdge,
-  Connection,
-  Edge,
-  Node
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
 import { Zap, Plus, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,69 +10,20 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { motion } from "framer-motion";
 
-// Define initial nodes for the automation flow
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'input',
-    data: { label: 'Trigger' },
-    position: { x: 250, y: 25 },
-    style: {
-      background: 'rgba(251, 191, 36, 0.2)',
-      border: '1px solid #fbbf24',
-      borderRadius: '8px',
-      padding: '10px',
-      width: 150,
-    },
-  },
-  {
-    id: '2',
-    data: { label: 'Process' },
-    position: { x: 250, y: 125 },
-    style: {
-      background: 'rgba(96, 165, 250, 0.2)',
-      border: '1px solid #60a5fa',
-      borderRadius: '8px',
-      padding: '10px',
-      width: 150,
-    },
-  },
-  {
-    id: '3',
-    type: 'output',
-    data: { label: 'Action' },
-    position: { x: 250, y: 225 },
-    style: {
-      background: 'rgba(16, 185, 129, 0.2)',
-      border: '1px solid #10b981',
-      borderRadius: '8px',
-      padding: '10px',
-      width: 150,
-    },
-  },
-];
-
-// Define initial edges connecting the nodes
-const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2', animated: true },
-  { id: 'e2-3', source: '2', target: '3', animated: true },
-];
-
 export default function AutomationsPage() {
   const { toast } = useToast();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [showCreationDialog, setShowCreationDialog] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [automationName, setAutomationName] = useState('');
   const [templateType, setTemplateType] = useState('scratch');
-  const totalSteps = 2; // Reduced from 3 to 2 steps by removing trigger step
+  const totalSteps = 2;
 
-  // Handle connection between nodes
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
+  // Mock automation data - this would typically come from an API or state management
+  const automations = [
+    { id: '1', name: 'Lead Follow-up', status: 'active', lastRun: '2 hours ago', type: 'Email sequence' },
+    { id: '2', name: 'Welcome Message', status: 'active', lastRun: '1 day ago', type: 'Chat response' },
+    { id: '3', name: 'Appointment Reminder', status: 'inactive', lastRun: 'Never', type: 'SMS notification' },
+  ];
 
   const startNewAutomation = () => {
     setShowCreationDialog(true);
@@ -146,28 +83,55 @@ export default function AutomationsPage() {
         </Button>
       </div>
 
-      <Card className="h-[600px]">
-        <CardHeader>
-          <CardTitle>Automation Flow</CardTitle>
-          <CardDescription>
-            Your automation flows will appear here. Click "New Automation" to create one.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="h-[500px]">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            fitView
-          >
-            <Background />
-            <Controls />
-            <MiniMap />
-          </ReactFlow>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6">
+        {automations.length > 0 ? (
+          automations.map((automation) => (
+            <Card key={automation.id} className="hover:bg-accent/50 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div>
+                  <CardTitle>{automation.name}</CardTitle>
+                  <CardDescription>{automation.type}</CardDescription>
+                </div>
+                <div className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  automation.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {automation.status}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground">
+                  Last run: {automation.lastRun}
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" size="sm">Edit</Button>
+                  <Button variant="outline" size="sm">
+                    <Zap className="h-4 w-4 mr-1" />
+                    Run now
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card className="text-center py-12">
+            <CardContent>
+              <div className="space-y-4">
+                <div className="mx-auto bg-muted rounded-full w-12 h-12 flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold text-lg">No automations yet</h3>
+                <p className="text-muted-foreground">
+                  Create your first automation to start automating your workflows.
+                </p>
+                <Button onClick={startNewAutomation} className="mt-2">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Automation
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       <Dialog open={showCreationDialog} onOpenChange={setShowCreationDialog}>
         <DialogContent className="sm:max-w-[500px]">
