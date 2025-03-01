@@ -1,4 +1,3 @@
-
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Plus, MessageSquare, Pencil, X, Send, AlertTriangle, Webhook, Mail, Mes
 import { useState, useEffect, useContext } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { NodeAction, NodeData } from '@/types/agent-types';
 import { ActionConfig } from './actions/action-config';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -321,17 +320,54 @@ export function GreetingNode({
 
       {/* Outcome Dialog */}
       <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{editingIndex !== null ? 'Edit Outcome' : 'Add New Outcome'}</DialogTitle>
+            <DialogDescription>
+              Create outcomes that represent user responses to your message. These become branching paths in your conversation flow.
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Input value={newOutcome} onChange={e => setNewOutcome(e.target.value)} placeholder="Enter possible response..." className="text-sm" />
+          <div className="space-y-5 py-4">
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium mb-2">Be specific and descriptive</h4>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-lg">
+                    <p className="font-semibold text-red-600 dark:text-red-400 mb-1">⛔ Poor examples:</p>
+                    <ul className="list-disc list-inside space-y-1 text-gray-700 dark:text-gray-300">
+                      <li>"Yes"</li>
+                      <li>"No"</li>
+                      <li>"Maybe"</li>
+                      <li>"I agree"</li>
+                    </ul>
+                  </div>
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30 rounded-lg">
+                    <p className="font-semibold text-green-600 dark:text-green-400 mb-1">✅ Good examples:</p>
+                    <ul className="list-disc list-inside space-y-1 text-gray-700 dark:text-gray-300">
+                      <li>"I'm interested in learning more about your pricing"</li>
+                      <li>"What features does your product offer?"</li>
+                      <li>"I'm not ready to purchase yet"</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              <Input 
+                value={newOutcome} 
+                onChange={e => setNewOutcome(e.target.value)} 
+                placeholder="Enter a detailed potential response..." 
+                className="text-sm" 
+              />
+            </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={cancelEdit}>
                 Cancel
               </Button>
-              <Button className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white" onClick={() => editingIndex !== null ? saveEdit() : addOutcome()}>
+              <Button 
+                className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white" 
+                onClick={() => editingIndex !== null ? saveEdit() : addOutcome()}
+                disabled={!newOutcome.trim() || newOutcome.trim().length < 5}
+              >
                 {editingIndex !== null ? 'Save Changes' : 'Add Outcome'}
               </Button>
             </div>
