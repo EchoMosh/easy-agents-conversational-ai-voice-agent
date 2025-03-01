@@ -10,8 +10,17 @@ export interface FlowData {
   edges: FlowEdge[];
 }
 
+export interface NodeAction {
+  type: 'sms' | 'webhook' | 'email';
+  id: string;
+  config: {
+    [key: string]: any;
+  };
+}
+
 export interface NodeData {
   [key: string]: any;
+  actions?: NodeAction[];
 }
 
 export interface Agent {

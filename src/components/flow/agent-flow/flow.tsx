@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
@@ -178,7 +177,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     };
   }, [showWidgets]);
 
-  const isValidConnection = (connection: Connection) => {
+  const isValidConnection = useCallback((connection: Connection) => {
     const sourceNode = nodes.find(node => node.id === connection.source);
     const targetNode = nodes.find(node => node.id === connection.target);
     
@@ -203,7 +202,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     }
 
     return true;
-  };
+  }, [nodes, edges]);
 
   const defaultEdgeOptions = {
     type: 'default' as const,
@@ -227,7 +226,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
     } else {
       console.log('Connection invalid');
     }
-  }, [edges, onEdgesChange, setEdges, nodes]);
+  }, [edges, onEdgesChange, setEdges, nodes, isValidConnection]);
 
   const handleNodesChange = useCallback((changes: any) => {
     console.log('[Flow] handleNodesChange called with changes:', changes);
@@ -278,7 +277,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
       
       switch (nodeType) {
         case 'greetingNode':
-          newNodeData = { greeting: 'Enter your greeting here', outcomes: [] };
+          newNodeData = { greeting: 'Enter your greeting here', outcomes: [], actions: [] };
           break;
         case 'endNode':
           newNodeData = { message: 'Enter your message here' };
