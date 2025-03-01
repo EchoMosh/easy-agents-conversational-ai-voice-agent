@@ -31,6 +31,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route path="/dashboard/agents" element={<AgentsPage />} />
