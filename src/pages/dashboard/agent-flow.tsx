@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -6,9 +7,8 @@ import { Header } from '@/components/flow/agent-flow/header';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Agent } from '@/types/agent-types';
+import { Agent, FlowData, FlowNode, FlowEdge } from '@/types/agent-types';
 import { useToast } from '@/hooks/use-toast';
-import { FlowData } from '@/types/agent-types';
 
 function generateMermaidFromFlow(flowData: FlowData): string {
   if (!flowData || !flowData.nodes || !flowData.edges) {
@@ -99,7 +99,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     }
   });
   
-  flowData.edges.forEach((edge: Edge) => {
+  flowData.edges.forEach((edge: FlowEdge) => {
     const sourceId = nodeIdMap.get(edge.source) || edge.source;
     const targetId = nodeIdMap.get(edge.target) || edge.target;
     
