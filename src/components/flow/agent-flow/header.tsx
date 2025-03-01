@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
+import { ArrowLeft, Play, PhoneCall, Settings, Clock } from "lucide-react";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
 import { Agent } from "@/types/agent";
 import { useEffect, useState } from "react";
@@ -13,9 +13,11 @@ interface HeaderProps {
   agent: Agent;
   onBack: () => void;
   onUpdateSettings: (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => Promise<void>;
+  onToggleFollowUp?: () => void;
+  showFollowUp?: boolean;
 }
 
-export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
+export function Header({ agent, onBack, onUpdateSettings, onToggleFollowUp, showFollowUp = false }: HeaderProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [showTrainingPopup, setShowTrainingPopup] = useState(false);
 
@@ -88,6 +90,27 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
               <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </Button>
           </AgentSettings>
+          
+          {/* Follow-up toggle button */}
+          {onToggleFollowUp && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant={showFollowUp ? "default" : "ghost"}
+                    size="icon"
+                    onClick={onToggleFollowUp}
+                    className={`h-10 w-10 rounded-full ${showFollowUp ? 'bg-purple-600 hover:bg-purple-700' : 'hover:bg-gray-900/5 dark:hover:bg-white/5'} mr-1`}
+                  >
+                    <Clock className={`h-5 w-5 ${showFollowUp ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{showFollowUp ? 'Hide Follow-ups' : 'Configure Follow-ups'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           
           <div className="flex items-center gap-2">
             <Button 
