@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider, Node as FlowNode, Edge } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -10,9 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Agent } from '@/types/agent-types';
 import { useToast } from '@/hooks/use-toast';
 import { FlowData } from '@/types/agent-types';
-import { FollowUpDialog } from '@/components/flow/follow-up/follow-up-dialog';
-import { ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FollowUpFlow } from '@/components/flow/follow-up/follow-up-flow';
 
 function generateMermaidFromFlow(flowData: FlowData): string {
   if (!flowData || !flowData.nodes || !flowData.edges) {
@@ -139,7 +136,7 @@ export default function AgentFlowPage() {
   const { toast } = useToast();
   const [mermaidChart, setMermaidChart] = useState<string>('');
   const [showMermaid, setShowMermaid] = useState<boolean>(true);
-  const [showFollowUpDialog, setShowFollowUpDialog] = useState<boolean>(false);
+  const [showFollowUp, setShowFollowUp] = useState<boolean>(false);
 
   const { data: agent, refetch, isError, isLoading } = useQuery({
     queryKey: ['agent', id],
@@ -299,8 +296,8 @@ export default function AgentFlowPage() {
     console.log('[AgentFlowPage] Agent settings updated successfully');
   };
 
-  const toggleFollowUpDialog = useCallback(() => {
-    setShowFollowUpDialog(prev => !prev);
+  const toggleFollowUp = useCallback(() => {
+    setShowFollowUp(prev => !prev);
   }, []);
 
   if (isLoading) {
@@ -324,12 +321,11 @@ export default function AgentFlowPage() {
           agent={agent}
           onBack={() => navigate('/dashboard/agents')}
           onUpdateSettings={handleUpdateSettings}
-          onToggleFollowUp={toggleFollowUpDialog}
-          showFollowUp={showFollowUpDialog}
+          onToggleFollowUp={toggleFollowUp}
+          showFollowUp={showFollowUp}
         />
         
-        {/* Main flow section - now takes up full height */}
-        <div className="flex-1">
+        <div className={`flex flex-col flex-1 transition-all duration-300 ease-in-out ${showFollowUp ? 'h-1/2' : 'h-full'}`}>
           <ReactFlowProvider>
             <Flow
               initialNodes={flowData.nodes || []}
@@ -358,13 +354,22 @@ export default function AgentFlowPage() {
           )}
         </div>
 
-        {/* Follow-up Dialog */}
-        {agent && (
-          <FollowUpDialog 
-            agentId={agent.id} 
-            open={showFollowUpDialog} 
-            onOpenChange={setShowFollowUpDialog} 
-          />
+        {/* Follow-up Flow */}
+        {showFollowUp && (
+          <div 
+            className="flex-1 transition-all duration-300 ease-in-out"
+            style={{
+              boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)'
+            }}
+          >
+            <div className="p-2 bg-gray-100 dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Automation</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Configure actions that happen after conversation outcomes</p>
+            </div>
+            <ReactFlowProvider>
+              <FollowUpFlow agentId={agent.id} />
+            </ReactFlowProvider>
+          </div>
         )}
       </div>
     </DragProvider>
