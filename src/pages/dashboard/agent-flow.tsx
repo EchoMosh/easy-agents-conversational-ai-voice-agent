@@ -78,7 +78,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
         mermaidString += ' (Speak)';
         break;
       case 'greetingNode':
-        mermaidString += ' (Greeting)';
+        mermaidString += ' (Speak)'; // Changed from (Greeting) to (Speak)
         break;
       case 'endNode':
         mermaidString += ' (End)';
