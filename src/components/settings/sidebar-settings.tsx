@@ -27,8 +27,13 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  Search
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/use-debounce";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Define the sidebar item type with icon
 interface SidebarItem {
@@ -68,6 +73,9 @@ const SortableItem = ({
   onIconChange: (id: string, icon: string) => void;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -75,6 +83,11 @@ const SortableItem = ({
   };
   
   const IconComponent = availableIcons[item.icon] || Users;
+  
+  // Filter icons based on search
+  const filteredIcons = Object.keys(availableIcons).filter(iconName => 
+    iconName.toLowerCase().includes(debouncedSearch.toLowerCase())
+  );
   
   return (
     <div 
@@ -96,32 +109,56 @@ const SortableItem = ({
         </Label>
         <div className="flex items-center">
           <IconComponent size={18} className="mx-2 text-muted-foreground" />
-          <Select
-            value={item.icon}
-            onValueChange={(value) => onIconChange(item.id, value)}
-          >
-            <SelectTrigger className="w-[120px]">
-              <SelectValue>
+          
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                role="combobox" 
+                aria-expanded={open}
+                className="w-[120px] justify-between"
+              >
                 <div className="flex items-center gap-2">
                   <IconComponent className="h-4 w-4" />
                   <span>{item.icon}</span>
                 </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {Object.keys(availableIcons).map((iconName) => {
-                const Icon = availableIcons[iconName];
-                return (
-                  <SelectItem key={iconName} value={iconName}>
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4" />
-                      <span>{iconName}</span>
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0" align="end">
+              <Command>
+                <CommandInput 
+                  placeholder="Search icons..." 
+                  value={search}
+                  onValueChange={setSearch}
+                  className="h-9"
+                />
+                <CommandList>
+                  <CommandEmpty>No icons found.</CommandEmpty>
+                  <CommandGroup>
+                    {filteredIcons.map((iconName) => {
+                      const Icon = availableIcons[iconName];
+                      return (
+                        <CommandItem
+                          key={iconName}
+                          value={iconName}
+                          onSelect={() => {
+                            onIconChange(item.id, iconName);
+                            setOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            <span>{iconName}</span>
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </div>
