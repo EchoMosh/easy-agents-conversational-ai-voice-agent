@@ -14,10 +14,15 @@ import {
   Node
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Zap, Plus } from 'lucide-react';
+import { Zap, Plus, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // Define initial nodes for the automation flow
 const initialNodes: Node[] = [
@@ -71,7 +76,11 @@ export default function AutomationsPage() {
   const { toast } = useToast();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedAutomation, setSelectedAutomation] = useState<string | null>(null);
+  const [showCreationDialog, setShowCreationDialog] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [automationName, setAutomationName] = useState('');
+  const [templateType, setTemplateType] = useState('scratch');
+  const [triggerDescription, setTriggerDescription] = useState('');
 
   // Handle connection between nodes
   const onConnect = useCallback(
@@ -79,18 +88,27 @@ export default function AutomationsPage() {
     [setEdges]
   );
 
-  // Sample automation templates
-  const automationTemplates = [
-    { id: 'new-lead', name: 'New Lead Notification', description: 'Send notification when a new lead is created' },
-    { id: 'follow-up', name: 'Lead Follow-up', description: 'Schedule follow-up email when lead is inactive' },
-    { id: 'task-reminder', name: 'Task Reminder', description: 'Send reminder before task deadline' },
-  ];
+  const startNewAutomation = () => {
+    setShowCreationDialog(true);
+    setCurrentStep(1);
+    setAutomationName('');
+    setTemplateType('scratch');
+    setTriggerDescription('');
+  };
 
-  const handleCreateAutomation = (templateId: string) => {
-    setSelectedAutomation(templateId);
+  const nextStep = () => {
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(1, prev - 1));
+  };
+
+  const completeSetup = () => {
+    setShowCreationDialog(false);
     toast({
-      title: "Automation Template Selected",
-      description: `You've selected the ${automationTemplates.find(t => t.id === templateId)?.name} template`,
+      title: "Automation Created",
+      description: `"${automationName}" automation has been created`,
     });
   };
 
@@ -101,70 +119,138 @@ export default function AutomationsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Automations</h1>
           <p className="text-muted-foreground">Create and manage your automated workflows</p>
         </div>
-        <Button>
+        <Button onClick={startNewAutomation}>
           <Plus className="mr-2 h-4 w-4" />
           New Automation
         </Button>
       </div>
 
-      {!selectedAutomation ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {automationTemplates.map((template) => (
-            <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Zap className="h-5 w-5 mr-2 text-amber-500" />
-                  {template.name}
-                </CardTitle>
-                <CardDescription>{template.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => handleCreateAutomation(template.id)}
-                >
-                  Use Template
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Card className="h-[600px]">
-          <CardHeader>
-            <CardTitle>
-              {automationTemplates.find(t => t.id === selectedAutomation)?.name}
-            </CardTitle>
-            <CardDescription>
-              Design your automation flow by connecting triggers, conditions, and actions
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-[500px]">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              fitView
-            >
-              <Background />
-              <Controls />
-              <MiniMap />
-              <Panel position="top-right">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setSelectedAutomation(null)}
-                >
-                  Back to Templates
-                </Button>
-              </Panel>
-            </ReactFlow>
-          </CardContent>
-        </Card>
-      )}
+      <Card className="h-[600px]">
+        <CardHeader>
+          <CardTitle>Automation Flow</CardTitle>
+          <CardDescription>
+            Your automation flows will appear here. Click "New Automation" to create one.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="h-[500px]">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            fitView
+          >
+            <Background />
+            <Controls />
+            <MiniMap />
+          </ReactFlow>
+        </CardContent>
+      </Card>
+
+      <Dialog open={showCreationDialog} onOpenChange={setShowCreationDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {currentStep === 1 ? "Name Your Automation" : 
+               currentStep === 2 ? "Choose a Template" : 
+               "Define Your Trigger"}
+            </DialogTitle>
+            <DialogDescription>
+              {currentStep === 1 ? "Give your automation a descriptive name" : 
+               currentStep === 2 ? "Select a template or start from scratch" : 
+               "Describe when this automation should trigger"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {currentStep === 1 && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="automation-name">Automation Name</Label>
+                  <Input 
+                    id="automation-name" 
+                    placeholder="Enter a name for your automation"
+                    value={automationName}
+                    onChange={(e) => setAutomationName(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <RadioGroup value={templateType} onValueChange={setTemplateType}>
+                  <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="scratch" id="scratch" />
+                    <Label htmlFor="scratch" className="flex-1 cursor-pointer">
+                      <div className="font-medium">Start from scratch</div>
+                      <div className="text-sm text-muted-foreground">Build your automation from the ground up</div>
+                    </Label>
+                    <Zap className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="lead-notify" id="lead-notify" />
+                    <Label htmlFor="lead-notify" className="flex-1 cursor-pointer">
+                      <div className="font-medium">Lead Notification</div>
+                      <div className="text-sm text-muted-foreground">Get notified when new leads come in</div>
+                    </Label>
+                    <Zap className="h-5 w-5 text-amber-500" />
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="follow-up" id="follow-up" />
+                    <Label htmlFor="follow-up" className="flex-1 cursor-pointer">
+                      <div className="font-medium">Lead Follow-up</div>
+                      <div className="text-sm text-muted-foreground">Automatically follow up with leads</div>
+                    </Label>
+                    <Zap className="h-5 w-5 text-blue-500" />
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>I want this automation to trigger when...</Label>
+                  <Textarea 
+                    placeholder="e.g., a new lead is created, a deal is closed, etc."
+                    value={triggerDescription}
+                    onChange={(e) => setTriggerDescription(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-between mt-6">
+            {currentStep > 1 ? (
+              <Button variant="outline" onClick={prevStep}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => setShowCreationDialog(false)}>
+                Cancel
+              </Button>
+            )}
+
+            {currentStep < 3 ? (
+              <Button onClick={nextStep} disabled={currentStep === 1 && !automationName}>
+                Next
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button onClick={completeSetup}>
+                Create Automation
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
