@@ -1,4 +1,3 @@
-
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -313,18 +312,16 @@ export function GreetingNode({
 
       {/* Floating Actions Button - Positioned outside and below the main container */}
       <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 flex gap-2">
-        {/* Action button */}
-        {actions.length > 0 && (
-          <Button 
-            onClick={openActionTypeDialog}
-            className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
-          >
-            <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
-            <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
-              Actions
-            </span>
-          </Button>
-        )}
+        {/* Action button - now always visible regardless of actions.length */}
+        <Button 
+          onClick={openActionTypeDialog}
+          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
+        >
+          <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
+          <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
+            Actions
+          </span>
+        </Button>
         
         {/* New Outcome/Objection button */}
         <Button 
