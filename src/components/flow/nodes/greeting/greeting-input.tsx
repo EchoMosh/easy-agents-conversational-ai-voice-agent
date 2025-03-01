@@ -1,5 +1,4 @@
 
-import { Label } from '@/components/ui/label';
 import { VariableSelector } from '../variable-mention/variable-selector';
 import { useRef, useState } from 'react';
 import { LexicalEditor, INSERT_VARIABLE_COMMAND } from '@/components/editor/LexicalEditor';
@@ -45,11 +44,9 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
       {showVariableSelector && (
         <VariableSelector
           text={value}
-          onTextChange={(newText) => {
-            // This is now handled by the Lexical Editor directly
-          }}
+          onTextChange={() => {}} // No-op as it's handled by editor
           onSelectVariable={handleVariableSelect}
-          textareaRef={null} // We don't need this ref anymore
+          textareaRef={null}
           onClose={() => setShowVariableSelector(false)}
         />
       )}

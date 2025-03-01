@@ -1,134 +1,93 @@
-
-import { useEffect, useRef } from 'react';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
+import {
+  LexicalComposer,
+  LexicalComposerProps,
+  useLexicalComposerContext,
+} from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, $createParagraphNode, EditorState, LexicalEditor as LexicalEditorType, $createTextNode } from 'lexical';
-import { VariableNode } from './VariableNode';
-import { VariablePlugin, INSERT_VARIABLE_COMMAND } from './VariablePlugin';
-import { VariableHighlightPlugin } from './VariableHighlightPlugin';
-import './editor.css';
-import { Variable } from '../flow/nodes/variable-mention/variable-selector';
+import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
+import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
+import { HeadingNode, QuoteNode } from '@lexical/rich-text';
+import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
+import { ListItemNode, ListNode } from '@lexical/list';
+import { CodeHighlightNode, CodeNode } from '@lexical/code';
+import { AutoLinkNode, LinkNode } from '@lexical/link';
+import { TRANSFORMERS } from '@lexical/markdown';
+import { useLexicalTheme } from '@/hooks/useLexicalTheme';
+import { MentionsPlugin } from './plugins/MentionsPlugin';
+import { EmojisPlugin } from './plugins/EmojisPlugin';
+import { CharactersCounter } from './ui/CharactersCounter';
+import { Toolbar } from './ui/Toolbar';
+import { INSERT_VARIABLE_COMMAND } from './commands';
+import { VariableNode } from './nodes/VariableNode';
+import { useEditorConfig } from './config';
+import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { useDebounce } from '@/hooks/useDebounce';
+import { Label } from '@/components/ui/label';
 
-// This plugin is responsible for setting the initial value
-function InitialValuePlugin({ value }: { value: string }) {
-  const [editor] = useLexicalComposerContext();
-  
-  useEffect(() => {
-    editor.update(() => {
-      const root = $getRoot();
-      if (root.getTextContent() === '') {
-        if (value) {
-          const paragraph = $createParagraphNode();
-          paragraph.append($createTextNode(value));
-          root.append(paragraph);
-        }
-      }
-    });
-  }, [editor, value]);
-  
-  return null;
-}
+export { INSERT_VARIABLE_COMMAND };
 
-interface LexicalEditorProps {
-  value?: string;
-  onChange?: (value: string) => void;
+export interface LexicalEditorProps {
+  value: string;
+  onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
   onAtMention?: () => void;
-  insertVariable?: (varId: string) => void;
-  variables?: Variable[];
 }
 
-export function LexicalEditor({ 
-  value = '', 
-  onChange, 
-  placeholder = 'Type something...',
-  className = '',
-  onAtMention,
-  insertVariable,
-  variables = []
-}: LexicalEditorProps) {
-  const editorRef = useRef<LexicalEditorType | null>(null);
+export const LexicalEditor = forwardRef<any, LexicalEditorProps>(
+  ({ value, onChange, placeholder, className, onAtMention }, ref) => {
+    const editorConfig = useEditorConfig(placeholder, onAtMention);
+    const [editorValue, setEditorValue] = useState(value);
+    const debouncedValue = useDebounce(editorValue, 500);
 
-  const initialConfig = {
-    namespace: 'FlowNodeEditor',
-    theme: {
-      paragraph: 'editor-paragraph',
-      text: {
-        base: 'editor-text',
-        underline: 'editor-text-underline',
-      },
-      variable: 'editor-variable'
-    },
-    onError: (error: Error) => {
-      console.error('Lexical Editor Error:', error);
-    },
-    nodes: [VariableNode]
-  };
+    useEffect(() => {
+      onChange(debouncedValue);
+    }, [debouncedValue, onChange]);
 
-  function handleEditorChange(editorState: EditorState) {
-    editorState.read(() => {
-      const root = $getRoot();
-      const textContent = root.getTextContent();
-      if (onChange) {
-        onChange(textContent);
-      }
-    });
-  }
+    useEffect(() => {
+      setEditorValue(value);
+    }, [value]);
 
-  // Method to expose insert variable command to parent
-  useEffect(() => {
-    if (insertVariable) {
-      const originalInsertVariable = insertVariable;
-      insertVariable = (varId: string) => {
-        if (editorRef.current) {
-          editorRef.current.dispatchCommand(INSERT_VARIABLE_COMMAND, varId);
-        }
-        originalInsertVariable(varId);
-      };
-    }
-  }, [insertVariable]);
-
-  function captureEditor(editor: LexicalEditorType) {
-    editorRef.current = editor;
-  }
-
-  return (
-    <div className={`editor-container nodrag ${className}`}>
-      <LexicalComposer initialConfig={initialConfig}>
-        <RichTextPlugin
-          contentEditable={<ContentEditable className="editor-input" />}
-          placeholder={<div className="editor-placeholder">{placeholder}</div>}
-          ErrorBoundary={({ children }) => <div>{children}</div>}
-        />
-        <OnChangePlugin onChange={handleEditorChange} />
-        <HistoryPlugin />
-        <InitialValuePlugin value={value} />
-        <VariablePlugin 
-          onAtMention={onAtMention}
-          variables={variables}
-        />
-        <VariableHighlightPlugin />
-        <CaptureEditorPlugin onCaptureEditor={captureEditor} />
+    return (
+      <LexicalComposer initialConfig={editorConfig}>
+        <div className="relative">
+          <div className="w-full">
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable className={`${className} focus:outline-none`} />
+              }
+              placeholder={
+                <div className="text-gray-500 dark:text-gray-400">{placeholder}</div>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <HistoryPlugin />
+            <AutoFocusPlugin />
+            <MentionsPlugin onAtMention={onAtMention} />
+            <EmojisPlugin />
+            <OnChangePlugin onChange={(editorState) => {
+              // Convert editorState to JSON string
+              editorState.read(() => {
+                const editorContent = editorState.toJSON();
+                setEditorValue(JSON.stringify(editorContent));
+              });
+            }} />
+          </div>
+          <CharactersCounter />
+        </div>
       </LexicalComposer>
-    </div>
-  );
-}
+    );
+  }
+);
 
-// Plugin to capture the editor instance
-function CaptureEditorPlugin({ onCaptureEditor }: { onCaptureEditor: (editor: LexicalEditorType) => void }) {
-  const [editor] = useLexicalComposerContext();
-  
-  useEffect(() => {
-    onCaptureEditor(editor);
-  }, [editor, onCaptureEditor]);
-  
-  return null;
-}
-
-// Export the command for external use
-export { INSERT_VARIABLE_COMMAND };
+LexicalEditor.displayName = 'LexicalEditor';

@@ -1,18 +1,25 @@
 
 import { createContext, useContext, useState } from "react";
 
-type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode';
+// Make sure to export the DragContext
+export type NodeType = 'greetingNode' | 'speakNode' | 'endNode' | 'triggerNode' | 'transferNode';
 
-const DragContext = createContext<{
+export const DragContext = createContext<{
+  isDragging: boolean;
   draggedNodeType: NodeType | null;
   setDraggedNodeType: (type: NodeType | null) => void;
-} | null>(null);
+}>({
+  isDragging: false,
+  draggedNodeType: null,
+  setDraggedNodeType: () => {},
+});
 
 export function DragProvider({ children }: { children: React.ReactNode }) {
   const [draggedNodeType, setDraggedNodeType] = useState<NodeType | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   return (
-    <DragContext.Provider value={{ draggedNodeType, setDraggedNodeType }}>
+    <DragContext.Provider value={{ isDragging, draggedNodeType, setDraggedNodeType }}>
       {children}
     </DragContext.Provider>
   );
