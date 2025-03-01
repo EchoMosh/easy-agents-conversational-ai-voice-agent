@@ -62,9 +62,9 @@ export default function AutomationsPage() {
         <span>Step {currentStep} of {totalSteps}</span>
         <span>{Math.round((currentStep / totalSteps) * 100)}%</span>
       </div>
-      <div className="w-full bg-muted rounded-full h-2">
+      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
         <motion.div
-          className="h-full bg-primary rounded-full"
+          className="h-full bg-gradient-to-r from-blue-500 to-purple-600"
           initial={{ width: "0%" }}
           animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
           transition={{ 
@@ -84,7 +84,10 @@ export default function AutomationsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Automations</h1>
           <p className="text-muted-foreground">Create and manage your automated workflows</p>
         </div>
-        <Button onClick={startNewAutomation}>
+        <Button 
+          onClick={startNewAutomation} 
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-700/20 dark:shadow-blue-900/30 transition-all duration-300"
+        >
           <Plus className="mr-2 h-4 w-4" />
           New Automation
         </Button>
@@ -104,34 +107,52 @@ export default function AutomationsPage() {
               }}
             >
               <Card 
-                className={`h-full transition-all overflow-hidden ${
+                className={`h-full backdrop-blur-sm overflow-hidden ${
                   automation.status === 'active' 
-                    ? 'border-blue-400 shadow-lg shadow-blue-100 dark:shadow-blue-900/20' 
-                    : 'border-gray-200 dark:border-gray-700'
+                    ? 'border-blue-400/50 dark:border-blue-500/40 shadow-xl shadow-blue-500/10 dark:shadow-blue-900/20' 
+                    : 'border-gray-200/50 dark:border-gray-700/40 shadow-md'
                 }`}
               >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
                   <div className="z-10">
-                    <CardTitle>{automation.name}</CardTitle>
+                    <CardTitle className="text-xl">{automation.name}</CardTitle>
                     <CardDescription>{automation.type}</CardDescription>
                   </div>
-                  <motion.div 
-                    className={`absolute inset-0 z-0 opacity-10 ${
-                      automation.status === 'active' ? 'bg-gradient-to-r from-blue-400 to-purple-500' : 'bg-gray-200 dark:bg-gray-800'
-                    }`}
-                    animate={automation.status === 'active' ? {
-                      opacity: [0.05, 0.15, 0.05],
-                    } : {}}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
+                  
+                  {/* Background glow effect */}
+                  {automation.status === 'active' && (
+                    <motion.div 
+                      className="absolute inset-0 z-0"
+                      initial={{ opacity: 0.05 }}
+                      animate={{
+                        opacity: [0.05, 0.15, 0.05],
+                        background: [
+                          'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.4) 0%, rgba(59, 130, 246, 0) 70%)',
+                          'radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.5) 0%, rgba(124, 58, 237, 0) 70%)',
+                          'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.4) 0%, rgba(59, 130, 246, 0) 70%)'
+                        ]
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  )}
+                  
                   <div className="z-10 flex items-center">
                     <motion.div
+                      className={`p-1.5 rounded-full ${
+                        automation.status === 'active' 
+                          ? 'bg-blue-500/10 dark:bg-blue-500/20' 
+                          : 'bg-gray-200 dark:bg-gray-800'
+                      }`}
                       animate={automation.status === 'active' ? {
-                        scale: [1, 1.2, 1],
+                        boxShadow: [
+                          '0 0 0 rgba(59, 130, 246, 0)',
+                          '0 0 15px rgba(59, 130, 246, 0.5)',
+                          '0 0 0 rgba(59, 130, 246, 0)'
+                        ],
                       } : {}}
                       transition={{
                         duration: 2,
@@ -140,7 +161,7 @@ export default function AutomationsPage() {
                       }}
                     >
                       <Zap 
-                        className={`h-6 w-6 ${
+                        className={`h-5 w-5 ${
                           automation.status === 'active' 
                             ? 'text-blue-500 drop-shadow-md' 
                             : 'text-gray-400'
@@ -149,25 +170,31 @@ export default function AutomationsPage() {
                     </motion.div>
                     <div className={`ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       automation.status === 'active' 
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                        ? 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
+                        : 'bg-gray-100/80 text-gray-800 dark:bg-gray-800/80 dark:text-gray-300'
                     }`}>
                       {automation.status}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground mb-4">
                     Last run: {automation.lastRun}
                   </div>
                   <div className="flex gap-2 mt-4">
-                    <Button variant="outline" size="sm">Edit</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-blue-200 dark:border-blue-900/30 transition-all hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-700 dark:hover:text-blue-400"
+                    >
+                      Edit
+                    </Button>
                     {automation.status === 'inactive' && (
                       <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => handleRunNow(automation.id, automation.name)}
-                        className="transition-all hover:text-blue-500 hover:border-blue-500"
+                        className="border-blue-200 dark:border-blue-900/30 transition-all hover:text-blue-500 hover:border-blue-500 dark:hover:border-blue-700 dark:hover:text-blue-400"
                       >
                         <Power className="h-4 w-4 mr-1" />
                         Run now
@@ -179,13 +206,17 @@ export default function AutomationsPage() {
             </motion.div>
           ))
         ) : (
-          <Card className="text-center py-12 col-span-full">
+          <Card className="text-center py-12 col-span-full backdrop-blur-sm border-blue-200/20 dark:border-blue-900/20">
             <CardContent>
               <div className="space-y-4">
                 <motion.div 
-                  className="mx-auto bg-muted rounded-full w-12 h-12 flex items-center justify-center"
+                  className="mx-auto bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full w-16 h-16 flex items-center justify-center"
                   animate={{
-                    boxShadow: ['0 0 0 rgba(59, 130, 246, 0)', '0 0 20px rgba(59, 130, 246, 0.5)', '0 0 0 rgba(59, 130, 246, 0)'],
+                    boxShadow: [
+                      '0 0 0 rgba(59, 130, 246, 0)', 
+                      '0 0 20px rgba(59, 130, 246, 0.5)', 
+                      '0 0 0 rgba(59, 130, 246, 0)'
+                    ],
                   }}
                   transition={{
                     duration: 2,
@@ -193,13 +224,16 @@ export default function AutomationsPage() {
                     ease: "easeInOut"
                   }}
                 >
-                  <Zap className="h-6 w-6 text-blue-500" />
+                  <Zap className="h-8 w-8 text-blue-500" />
                 </motion.div>
                 <h3 className="font-semibold text-lg">No automations yet</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground max-w-md mx-auto">
                   Create your first automation to start automating your workflows.
                 </p>
-                <Button onClick={startNewAutomation} className="mt-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                <Button 
+                  onClick={startNewAutomation} 
+                  className="mt-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-700/20 dark:shadow-blue-900/30 transition-all duration-300"
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   New Automation
                 </Button>
@@ -210,7 +244,7 @@ export default function AutomationsPage() {
       </div>
 
       <Dialog open={showCreationDialog} onOpenChange={setShowCreationDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] backdrop-blur-sm bg-background/95 border-blue-200/20 dark:border-blue-900/20">
           <DialogHeader>
             <DialogTitle>
               {currentStep === 1 ? "Name Your Automation" : "Choose a Template"}
@@ -240,6 +274,7 @@ export default function AutomationsPage() {
                     placeholder="Enter a name for your automation"
                     value={automationName}
                     onChange={(e) => setAutomationName(e.target.value)}
+                    className="focus-visible:ring-blue-500"
                   />
                 </div>
               </motion.div>
@@ -256,8 +291,8 @@ export default function AutomationsPage() {
               >
                 <RadioGroup value={templateType} onValueChange={setTemplateType}>
                   <motion.div 
-                    className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent"
-                    whileHover={{ scale: 1.02 }}
+                    className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-accent transition-all"
+                    whileHover={{ scale: 1.02, borderColor: 'rgba(59, 130, 246, 0.5)' }}
                     transition={{ duration: 0.2 }}
                   >
                     <RadioGroupItem value="scratch" id="scratch" />
@@ -269,8 +304,8 @@ export default function AutomationsPage() {
                   </motion.div>
                   
                   <motion.div 
-                    className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent"
-                    whileHover={{ scale: 1.02 }}
+                    className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-accent transition-all"
+                    whileHover={{ scale: 1.02, borderColor: 'rgba(245, 158, 11, 0.5)' }}
                     transition={{ duration: 0.2 }}
                   >
                     <RadioGroupItem value="lead-notify" id="lead-notify" />
@@ -282,8 +317,8 @@ export default function AutomationsPage() {
                   </motion.div>
                   
                   <motion.div 
-                    className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent"
-                    whileHover={{ scale: 1.02 }}
+                    className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-accent transition-all"
+                    whileHover={{ scale: 1.02, borderColor: 'rgba(59, 130, 246, 0.5)' }}
                     transition={{ duration: 0.2 }}
                   >
                     <RadioGroupItem value="follow-up" id="follow-up" />
@@ -300,12 +335,20 @@ export default function AutomationsPage() {
 
           <div className="flex justify-between mt-6">
             {currentStep > 1 ? (
-              <Button variant="outline" onClick={prevStep}>
+              <Button 
+                variant="outline" 
+                onClick={prevStep}
+                className="border-blue-200/50 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700"
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
               </Button>
             ) : (
-              <Button variant="outline" onClick={() => setShowCreationDialog(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCreationDialog(false)}
+                className="border-blue-200/50 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700"
+              >
                 Cancel
               </Button>
             )}
@@ -314,7 +357,7 @@ export default function AutomationsPage() {
               <Button 
                 onClick={nextStep} 
                 disabled={currentStep === 1 && !automationName}
-                className="transition-all"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md transition-all"
               >
                 Next
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -322,7 +365,7 @@ export default function AutomationsPage() {
             ) : (
               <Button 
                 onClick={completeSetup}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md transition-all"
               >
                 Create Automation
               </Button>
