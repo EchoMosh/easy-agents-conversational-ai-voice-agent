@@ -2,11 +2,11 @@
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageSquare, Pencil, X, Send, AlertTriangle, Webhook, Mail, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, MessageSquare, Pencil, X, Send, AlertTriangle, Webhook, Mail } from 'lucide-react';
 import { useState, useEffect, useContext } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NodeAction, NodeData } from '@/types/agent-types';
 import { ActionConfig } from './actions/action-config';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -48,6 +48,7 @@ export function GreetingNode({
   useEffect(() => {
     // Only trigger update if the greeting has actually changed from the initial data
     if (greeting !== data.greeting) {
+      console.log("Emitting node update for greeting change:", greeting);
       updateNodeData(id, {
         ...data,
         greeting
@@ -143,7 +144,7 @@ export function GreetingNode({
   const saveAction = () => {
     if (!editingAction) return;
     
-    const updatedActions = editingAction.id && actions.some(a => a.id === editingAction.id)
+    const updatedActions = editingAction.id 
       ? actions.map(a => a.id === editingAction.id ? editingAction : a)
       : [...actions, editingAction];
     
@@ -159,7 +160,7 @@ export function GreetingNode({
   };
 
   const editAction = (action: NodeAction) => {
-    setEditingAction({...action});
+    setEditingAction(action);
     setSelectedActionType(action.type);
     setShowActionDialog(true);
   };
@@ -197,15 +198,6 @@ export function GreetingNode({
     }
   };
 
-  const getActionColor = (type: string) => {
-    switch (type) {
-      case 'sms': return 'bg-blue-50 text-blue-600 border-blue-200';
-      case 'webhook': return 'bg-purple-50 text-purple-600 border-purple-200';
-      case 'email': return 'bg-green-50 text-green-600 border-green-200';
-      default: return 'bg-gray-50 text-gray-600 border-gray-200';
-    }
-  };
-
   return (
     <div className="group relative">
       {/* Glowing background effect */}
@@ -232,105 +224,68 @@ export function GreetingNode({
           <GreetingInput value={greeting} onChange={handleGreetingChange} />
         </div>
 
-        {/* Actions section - Improved UI */}
+        {/* Actions section */}
         <Collapsible
           open={actionsOpen}
           onOpenChange={setActionsOpen}
-          className="mb-4 border border-blue-100/50 dark:border-blue-800/30 rounded-xl overflow-hidden transition-all duration-300"
+          className="mb-4 border border-blue-100/50 dark:border-blue-800/30 rounded-xl overflow-hidden"
         >
-          <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-2.5 bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors">
+          <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-2 bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors">
             <div className="flex items-center gap-2">
               <Send className="h-3.5 w-3.5 text-blue-600/80 dark:text-blue-400/80" />
               <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
-                Actions
+                Actions ({actions.length})
               </span>
-              {actions.length > 0 && (
-                <span className="inline-flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-800/40 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-                  {actions.length}
-                </span>
-              )}
             </div>
             <div className="text-blue-600/70 dark:text-blue-400/70">
-              {actionsOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              {actionsOpen ? "−" : "+"}
             </div>
           </CollapsibleTrigger>
-          
           <CollapsibleContent className="px-4 py-3 bg-white/50 dark:bg-gray-900/50 space-y-3">
             {actions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-6 space-y-2 text-center">
-                <div className="rounded-full bg-blue-50 dark:bg-blue-900/20 p-3">
-                  <Send className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  No actions configured
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 max-w-xs">
-                  Actions run when this node is executed. Add SMS, webhooks, or emails.
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={addAction}
-                  className="mt-2 text-xs h-8 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40"
-                >
-                  <Plus className="h-3 w-3 mr-1" /> Add Action
-                </Button>
-              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic">No actions configured</p>
             ) : (
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  {actions.map((action) => (
-                    <div 
-                      key={action.id} 
-                      className={`group/action relative flex items-center gap-2 rounded-lg p-2.5 shadow-sm border ${getActionColor(action.type)}`}
-                    >
-                      <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-md bg-white text-blue-600 dark:text-blue-400 border border-current/20 shadow-sm">
-                        {getActionIcon(action.type)}
-                      </div>
-                      <div className="flex-1 overflow-hidden">
-                        <div className="text-xs font-medium truncate">
-                          {getActionLabel(action)}
-                        </div>
-                        <div className="text-[10px] opacity-70 truncate">
-                          {action.type === 'sms' && action.config.message ? 
-                            `"${action.config.message.substring(0, 30)}${action.config.message.length > 30 ? '...' : ''}"` : 
-                            action.type === 'webhook' ? `Endpoint: ${action.config.url || 'Not set'}` :
-                            action.type === 'email' ? `Subject: ${action.config.subject || 'No subject'}` : ''}
-                        </div>
-                      </div>
-                      <div className="flex opacity-0 group-hover/action:opacity-100 transition-opacity">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6 rounded-full"
-                          onClick={() => editAction(action)}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          onClick={() => removeAction(action.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
+              <div className="space-y-2">
+                {actions.map((action) => (
+                  <div key={action.id} className="group/action relative flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-blue-100/30 dark:border-blue-800/30">
+                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
+                      {getActionIcon(action.type)}
                     </div>
-                  ))}
-                </div>
-                <div className="flex justify-end pt-1">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={addAction}
-                    className="text-xs h-7 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40"
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Add Action
-                  </Button>
-                </div>
+                    <div className="flex-1 text-xs truncate">
+                      {getActionLabel(action)}
+                    </div>
+                    <div className="flex opacity-0 group-hover/action:opacity-100 transition-opacity">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 rounded-full"
+                        onClick={() => editAction(action)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        onClick={() => removeAction(action.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={addAction}
+                className="text-xs h-7 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40"
+              >
+                <Plus className="h-3 w-3 mr-1" /> Add Action
+              </Button>
+            </div>
           </CollapsibleContent>
         </Collapsible>
 
@@ -392,52 +347,33 @@ export function GreetingNode({
         </DialogContent>
       </Dialog>
 
-      {/* Improved Action Dialog */}
+      {/* Action Dialog */}
       <Dialog open={showActionDialog} onOpenChange={(open) => {
         setShowActionDialog(open);
         if (!open) setEditingAction(null);
       }}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {editingAction?.id ? (
-                <>
-                  {getActionIcon(editingAction.type)}
-                  <span>
-                    Edit {editingAction.type.charAt(0).toUpperCase() + editingAction.type.slice(1)} Action
-                  </span>
-                </>
-              ) : (
-                <>Add New Action</>
-              )}
-            </DialogTitle>
+            <DialogTitle>{editingAction?.id ? 'Edit Action' : 'Add New Action'}</DialogTitle>
           </DialogHeader>
-          
-          <div className="py-4">
+          <div className="space-y-4 py-4">
             {!editingAction?.id && (
-              <div className="mb-6">
-                <Label className="text-sm mb-3 block">Choose Action Type</Label>
-                <div className="grid grid-cols-3 gap-3">
+              <div className="mb-4">
+                <Label className="text-sm mb-2 block">Action Type</Label>
+                <div className="flex gap-2">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button 
-                          type="button"
-                          className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
-                            selectedActionType === 'sms' 
-                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
-                              : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 dark:border-gray-700 dark:hover:border-blue-700'
-                          }`}
+                        <Button 
+                          variant={selectedActionType === 'sms' ? 'default' : 'outline'} 
+                          className={`flex-1 ${selectedActionType === 'sms' ? 'bg-blue-500' : ''}`}
                           onClick={() => setSelectedActionType('sms')}
                         >
-                          <Send className={`h-6 w-6 mb-2 ${selectedActionType === 'sms' ? 'text-blue-500' : 'text-gray-500'}`} />
-                          <span className={`text-sm font-medium ${selectedActionType === 'sms' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
-                            SMS
-                          </span>
-                        </button>
+                          <Send className="h-4 w-4 mr-2" /> SMS
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Send SMS messages to customers</p>
+                        <p>Send SMS messages</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -445,23 +381,16 @@ export function GreetingNode({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button 
-                          type="button"
-                          className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
-                            selectedActionType === 'webhook' 
-                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30' 
-                              : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 dark:border-gray-700 dark:hover:border-purple-700'
-                          }`}
+                        <Button 
+                          variant={selectedActionType === 'webhook' ? 'default' : 'outline'} 
+                          className={`flex-1 ${selectedActionType === 'webhook' ? 'bg-violet-500' : ''}`}
                           onClick={() => setSelectedActionType('webhook')}
                         >
-                          <Webhook className={`h-6 w-6 mb-2 ${selectedActionType === 'webhook' ? 'text-purple-500' : 'text-gray-500'}`} />
-                          <span className={`text-sm font-medium ${selectedActionType === 'webhook' ? 'text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300'}`}>
-                            Webhook
-                          </span>
-                        </button>
+                          <Webhook className="h-4 w-4 mr-2" /> Webhook
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Call external API endpoints</p>
+                        <p>Call external webhooks</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -469,20 +398,13 @@ export function GreetingNode({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button 
-                          type="button"
-                          className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
-                            selectedActionType === 'email' 
-                              ? 'border-green-500 bg-green-50 dark:bg-green-900/30' 
-                              : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50 dark:border-gray-700 dark:hover:border-green-700'
-                          }`}
+                        <Button 
+                          variant={selectedActionType === 'email' ? 'default' : 'outline'} 
+                          className={`flex-1 ${selectedActionType === 'email' ? 'bg-green-500' : ''}`}
                           onClick={() => setSelectedActionType('email')}
                         >
-                          <Mail className={`h-6 w-6 mb-2 ${selectedActionType === 'email' ? 'text-green-500' : 'text-gray-500'}`} />
-                          <span className={`text-sm font-medium ${selectedActionType === 'email' ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'}`}>
-                            Email
-                          </span>
-                        </button>
+                          <Mail className="h-4 w-4 mr-2" /> Email
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Send email messages</p>
@@ -494,32 +416,24 @@ export function GreetingNode({
             )}
 
             {editingAction && (
-              <div className="max-h-[400px] overflow-y-auto pr-2 -mr-2">
-                <ActionConfig 
-                  action={editingAction} 
-                  onChange={(updatedAction) => setEditingAction(updatedAction)}
-                />
-              </div>
+              <ActionConfig 
+                action={editingAction} 
+                onChange={(updatedAction) => setEditingAction(updatedAction)}
+              />
             )}
-          </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowActionDialog(false)}>
-              Cancel
-            </Button>
-            <Button 
-              className={`${
-                editingAction?.type === 'sms' ? 'bg-blue-500 hover:bg-blue-600' : 
-                editingAction?.type === 'webhook' ? 'bg-purple-500 hover:bg-purple-600' : 
-                editingAction?.type === 'email' ? 'bg-green-500 hover:bg-green-600' : 
-                'bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600'
-              } text-white`}
-              onClick={saveAction}
-              disabled={!editingAction}
-            >
-              {editingAction?.id && actions.some(a => a.id === editingAction.id) ? 'Save Changes' : 'Add Action'}
-            </Button>
-          </DialogFooter>
+            <div className="flex justify-end gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowActionDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white" 
+                onClick={saveAction}
+              >
+                {editingAction?.id ? 'Save Changes' : 'Add Action'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
