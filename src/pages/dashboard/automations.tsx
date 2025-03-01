@@ -21,8 +21,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { motion } from "framer-motion";
 
 // Define initial nodes for the automation flow
 const initialNodes: Node[] = [
@@ -80,7 +80,7 @@ export default function AutomationsPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [automationName, setAutomationName] = useState('');
   const [templateType, setTemplateType] = useState('scratch');
-  const [triggerDescription, setTriggerDescription] = useState('');
+  const totalSteps = 2; // Reduced from 3 to 2 steps by removing trigger step
 
   // Handle connection between nodes
   const onConnect = useCallback(
@@ -93,7 +93,6 @@ export default function AutomationsPage() {
     setCurrentStep(1);
     setAutomationName('');
     setTemplateType('scratch');
-    setTriggerDescription('');
   };
 
   const nextStep = () => {
@@ -111,6 +110,18 @@ export default function AutomationsPage() {
       description: `"${automationName}" automation has been created`,
     });
   };
+  
+  // Progress bar component
+  const ProgressBar = () => (
+    <div className="w-full bg-muted rounded-full h-2 mb-6">
+      <motion.div
+        className="h-full bg-primary rounded-full"
+        initial={{ width: "0%" }}
+        animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
+        transition={{ duration: 0.3 }}
+      />
+    </div>
+  );
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -152,20 +163,26 @@ export default function AutomationsPage() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {currentStep === 1 ? "Name Your Automation" : 
-               currentStep === 2 ? "Choose a Template" : 
-               "Define Your Trigger"}
+              {currentStep === 1 ? "Name Your Automation" : "Choose a Template"}
             </DialogTitle>
             <DialogDescription>
               {currentStep === 1 ? "Give your automation a descriptive name" : 
-               currentStep === 2 ? "Select a template or start from scratch" : 
-               "Describe when this automation should trigger"}
+               "Select a template or start from scratch"}
             </DialogDescription>
           </DialogHeader>
+          
+          <ProgressBar />
 
           <div className="py-4">
             {currentStep === 1 && (
-              <div className="space-y-4">
+              <motion.div
+                key="step-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="automation-name">Automation Name</Label>
                   <Input 
@@ -175,54 +192,59 @@ export default function AutomationsPage() {
                     onChange={(e) => setAutomationName(e.target.value)}
                   />
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {currentStep === 2 && (
-              <div className="space-y-4">
+              <motion.div
+                key="step-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-4"
+              >
                 <RadioGroup value={templateType} onValueChange={setTemplateType}>
-                  <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent">
+                  <motion.div 
+                    className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <RadioGroupItem value="scratch" id="scratch" />
                     <Label htmlFor="scratch" className="flex-1 cursor-pointer">
                       <div className="font-medium">Start from scratch</div>
                       <div className="text-sm text-muted-foreground">Build your automation from the ground up</div>
                     </Label>
                     <Zap className="h-5 w-5 text-muted-foreground" />
-                  </div>
+                  </motion.div>
                   
-                  <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent">
+                  <motion.div 
+                    className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <RadioGroupItem value="lead-notify" id="lead-notify" />
                     <Label htmlFor="lead-notify" className="flex-1 cursor-pointer">
                       <div className="font-medium">Lead Notification</div>
                       <div className="text-sm text-muted-foreground">Get notified when new leads come in</div>
                     </Label>
                     <Zap className="h-5 w-5 text-amber-500" />
-                  </div>
+                  </motion.div>
                   
-                  <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent">
+                  <motion.div 
+                    className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-accent"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <RadioGroupItem value="follow-up" id="follow-up" />
                     <Label htmlFor="follow-up" className="flex-1 cursor-pointer">
                       <div className="font-medium">Lead Follow-up</div>
                       <div className="text-sm text-muted-foreground">Automatically follow up with leads</div>
                     </Label>
                     <Zap className="h-5 w-5 text-blue-500" />
-                  </div>
+                  </motion.div>
                 </RadioGroup>
-              </div>
-            )}
-
-            {currentStep === 3 && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>I want this automation to trigger when...</Label>
-                  <Textarea 
-                    placeholder="e.g., a new lead is created, a deal is closed, etc."
-                    value={triggerDescription}
-                    onChange={(e) => setTriggerDescription(e.target.value)}
-                    rows={4}
-                  />
-                </div>
-              </div>
+              </motion.div>
             )}
           </div>
 
@@ -238,13 +260,20 @@ export default function AutomationsPage() {
               </Button>
             )}
 
-            {currentStep < 3 ? (
-              <Button onClick={nextStep} disabled={currentStep === 1 && !automationName}>
+            {currentStep < totalSteps ? (
+              <Button 
+                onClick={nextStep} 
+                disabled={currentStep === 1 && !automationName}
+                className="transition-all"
+              >
                 Next
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={completeSetup}>
+              <Button 
+                onClick={completeSetup}
+                className="bg-primary hover:bg-primary/90 transition-all"
+              >
                 Create Automation
               </Button>
             )}
