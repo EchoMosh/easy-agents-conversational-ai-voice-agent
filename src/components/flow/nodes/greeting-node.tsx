@@ -1,4 +1,3 @@
-
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -7,12 +6,10 @@ import { useState, useEffect } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-
 type GreetingNodeData = {
   greeting: string;
   outcomes?: string[];
 };
-
 export function GreetingNode({
   data,
   id
@@ -48,16 +45,14 @@ export function GreetingNode({
       window.dispatchEvent(evt);
     }
   }, [greeting, id, data]);
-
   const addOutcome = () => {
     if (outcomes.length >= 5) return;
     if (!newOutcome.trim()) return;
-    
     const newOutcomes = [...outcomes, newOutcome];
     setOutcomes(newOutcomes);
     setNewOutcome('');
     setShowOutcomeDialog(false);
-    
+
     // Send update event with new outcomes
     const evt = new CustomEvent('nodeupdate', {
       detail: {
@@ -70,11 +65,10 @@ export function GreetingNode({
     });
     window.dispatchEvent(evt);
   };
-
   const removeOutcome = (index: number) => {
     const newOutcomes = outcomes.filter((_, i) => i !== index);
     setOutcomes(newOutcomes);
-    
+
     // Send update event with remaining outcomes
     const evt = new CustomEvent('nodeupdate', {
       detail: {
@@ -87,23 +81,20 @@ export function GreetingNode({
     });
     window.dispatchEvent(evt);
   };
-
   const startEditing = (index: number) => {
     setEditingIndex(index);
     setNewOutcome(outcomes[index]);
     setShowOutcomeDialog(true);
   };
-
   const saveEdit = () => {
     if (!newOutcome.trim() || editingIndex === null) return;
-    
     const updatedOutcomes = [...outcomes];
     updatedOutcomes[editingIndex] = newOutcome;
     setOutcomes(updatedOutcomes);
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(false);
-    
+
     // Send update event with updated outcomes
     const evt = new CustomEvent('nodeupdate', {
       detail: {
@@ -116,25 +107,20 @@ export function GreetingNode({
     });
     window.dispatchEvent(evt);
   };
-
   const cancelEdit = () => {
     setShowOutcomeDialog(false);
     setEditingIndex(null);
     setNewOutcome('');
   };
-
   const openNewOutcomeDialog = () => {
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(true);
   };
-
   const handleGreetingChange = (value: string) => {
     setGreeting(value);
   };
-
-  return (
-    <div className="group relative">
+  return <div className="group relative">
       {/* Glowing background effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-sky-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       
@@ -148,7 +134,7 @@ export function GreetingNode({
               <MessageSquare className="h-4 w-4" />
             </span>
           </span>
-          <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-sky-500">Greeting</span>
+          <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-sky-500">Speak</span>
         </div>
 
         {/* Message input */}
@@ -165,72 +151,37 @@ export function GreetingNode({
             <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
               Possible outcomes ({outcomes.length}/5)
             </Label>
-            {outcomes.length < 5 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-lg"
-                onClick={openNewOutcomeDialog}
-              >
+            {outcomes.length < 5 && <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-lg" onClick={openNewOutcomeDialog}>
                 <Plus className="h-4 w-4" />
-              </Button>
-            )}
+              </Button>}
           </div>
 
           <div className="space-y-2">
-            {outcomes.map((outcome, index) => (
-              <div key={index} className="group relative animate-fade-in">
+            {outcomes.map((outcome, index) => <div key={index} className="group relative animate-fade-in">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 rounded-xl py-2.5 px-4 text-sm border border-blue-100/50 dark:border-blue-800/50 shadow-sm text-gray-900 dark:text-white/90">
                     {outcome}
                   </div>
                   <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg"
-                      onClick={() => startEditing(index)}
-                    >
+                    <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg" onClick={() => startEditing(index)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg"
-                      onClick={() => removeOutcome(index)}
-                    >
+                    <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg" onClick={() => removeOutcome(index)}>
                       <X className="h-3.5 w-3.5" />
                     </Button>
                   </div>
-                  <Handle
-                    type="source"
-                    position={Position.Right}
-                    id={`outcome-${index}`}
-                    className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-blue-500"
-                  />
+                  <Handle type="source" position={Position.Right} id={`outcome-${index}`} className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-blue-500" />
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </div>
 
       {/* Input handle */}
-      <Handle 
-        type="target" 
-        position={Position.Left}
-        className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-blue-500"
-      />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-blue-500" />
       
       {/* Default output handle */}
-      {(!outcomes || outcomes.length === 0) && (
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="default"
-          className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-blue-500"
-        />
-      )}
+      {(!outcomes || outcomes.length === 0) && <Handle type="source" position={Position.Right} id="default" className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-blue-500" />}
 
       {/* Outcome Dialog */}
       <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
@@ -239,29 +190,17 @@ export function GreetingNode({
             <DialogTitle>{editingIndex !== null ? 'Edit Outcome' : 'Add New Outcome'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <Input
-              value={newOutcome}
-              onChange={(e) => setNewOutcome(e.target.value)}
-              placeholder="Enter possible response..."
-              className="text-sm"
-            />
+            <Input value={newOutcome} onChange={e => setNewOutcome(e.target.value)} placeholder="Enter possible response..." className="text-sm" />
             <div className="flex justify-end gap-3">
-              <Button 
-                variant="outline" 
-                onClick={cancelEdit}
-              >
+              <Button variant="outline" onClick={cancelEdit}>
                 Cancel
               </Button>
-              <Button 
-                className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white"
-                onClick={() => editingIndex !== null ? saveEdit() : addOutcome()}
-              >
+              <Button className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white" onClick={() => editingIndex !== null ? saveEdit() : addOutcome()}>
                 {editingIndex !== null ? 'Save Changes' : 'Add Outcome'}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
