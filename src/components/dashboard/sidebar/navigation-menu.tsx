@@ -1,5 +1,5 @@
 
-import { Users, Target, Settings, GitMerge, MessageSquare, Book } from "lucide-react";
+import { Users, Target, Settings, GitMerge, MessageSquare, Book, Zap } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   SidebarContent,
@@ -36,6 +36,11 @@ const mainMenuItems = [
     title: "Knowledge",
     icon: Book,
     url: "/dashboard/knowledge",
+  },
+  {
+    title: "Automations",
+    icon: Zap,
+    url: "/dashboard/automations",
   },
 ];
 
