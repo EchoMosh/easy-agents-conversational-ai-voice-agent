@@ -2,7 +2,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageSquare, Pencil, X, Send, AlertTriangle, Webhook, Mail } from 'lucide-react';
+import { Plus, MessageSquare, Pencil, X, Send, AlertTriangle, Webhook, Mail, MessageCirclePlus } from 'lucide-react';
 import { useState, useEffect, useContext } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { Input } from '@/components/ui/input';
@@ -312,14 +312,28 @@ export function GreetingNode({
       </div>
 
       {/* Floating Actions Button - Positioned outside and below the main container */}
-      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10">
+      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 flex gap-2">
+        {/* Action button */}
+        {actions.length > 0 && (
+          <Button 
+            onClick={openActionTypeDialog}
+            className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
+          >
+            <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
+            <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
+              Actions
+            </span>
+          </Button>
+        )}
+        
+        {/* New Outcome/Objection button */}
         <Button 
-          onClick={openActionTypeDialog}
-          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
+          onClick={openNewOutcomeDialog}
+          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 transition-colors shadow-md rounded-full border border-purple-200/50 dark:border-purple-800/50 my-[9px]"
         >
-          <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
-          <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
-            Actions
+          <MessageCirclePlus className="h-3 w-3 text-purple-600/80 dark:text-purple-400/80" />
+          <span className="text-xs font-medium text-purple-600/80 dark:text-purple-400/80">
+            Add Outcome
           </span>
         </Button>
       </div>
