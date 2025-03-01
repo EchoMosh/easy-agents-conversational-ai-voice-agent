@@ -48,6 +48,13 @@ export default function AutomationsPage() {
     });
   };
   
+  const handleRunNow = (automationId: string, automationName: string) => {
+    toast({
+      title: "Automation Triggered",
+      description: `"${automationName}" has been triggered manually`,
+    });
+  };
+  
   // Progress bar component
   const ProgressBar = () => (
     <div className="w-full space-y-2">
@@ -104,10 +111,16 @@ export default function AutomationsPage() {
                 </div>
                 <div className="flex gap-2 mt-4">
                   <Button variant="outline" size="sm">Edit</Button>
-                  <Button variant="outline" size="sm">
-                    <Zap className="h-4 w-4 mr-1" />
-                    Run now
-                  </Button>
+                  {automation.status === 'inactive' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleRunNow(automation.id, automation.name)}
+                    >
+                      <Zap className="h-4 w-4 mr-1" />
+                      Run now
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
