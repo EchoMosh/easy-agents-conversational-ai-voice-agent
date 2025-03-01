@@ -1,49 +1,377 @@
+import { useParams, useNavigate } from 'react-router-dom';
+import { ReactFlowProvider, Node as FlowNode, Edge } from '@xyflow/react';
+import { DragProvider } from '@/components/flow/drag-context';
+import { Flow } from '@/components/flow/agent-flow/flow';
+import { Header } from '@/components/flow/agent-flow/header';
+import { useCallback, useEffect, useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Agent } from '@/types/agent-types';
+import { useToast } from '@/hooks/use-toast';
+import { FlowData } from '@/types/agent-types';
+import { FollowUpFlow } from '@/components/flow/follow-up/follow-up-flow';
 
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { Flow } from "@/components/flow/agent-flow/flow";
-import { Header } from "@/components/flow/agent-flow/header";
+function generateMermaidFromFlow(flowData: FlowData): string {
+  if (!flowData || !flowData.nodes || !flowData.edges) {
+    return 'graph TD\n  EmptyFlow[Empty Flow]';
+  }
 
-const AgentFlowPage = () => {
-  const { id } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [agent, setAgent] = useState<any>(null);
+  if (Array.isArray(flowData.nodes) && flowData.nodes.length === 0) {
+    return 'graph TD\n  EmptyFlow[Empty Flow]';
+  }
+
+  let mermaidString = 'graph TD\n';
+  
+  const nodeIdMap = new Map<string, string>();
+  
+  const nodeTypeCounter: Record<string, number> = {};
+  
+  flowData.nodes.forEach((node: FlowNode) => {
+    const baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
+    
+    if (!nodeTypeCounter[baseNodeType]) {
+      nodeTypeCounter[baseNodeType] = 1;
+    } else {
+      nodeTypeCounter[baseNodeType]++;
+    }
+    
+    const simpleId = `${baseNodeType}-${nodeTypeCounter[baseNodeType]}`;
+    nodeIdMap.set(node.id, simpleId);
+  });
+  
+  flowData.nodes.forEach((node: FlowNode) => {
+    let nodeLabel = 'Node';
+    let outcomeLabels: string[] = [];
+    
+    if (node.data) {
+      if (node.type === 'speakNode' && node.data.message) {
+        nodeLabel = String(node.data.message);
+        if (node.data.outcomes && Array.isArray(node.data.outcomes)) {
+          outcomeLabels = node.data.outcomes;
+        }
+      } else if (node.type === 'greetingNode' && node.data.greeting) {
+        nodeLabel = String(node.data.greeting);
+        if (node.data.outcomes && Array.isArray(node.data.outcomes)) {
+          outcomeLabels = node.data.outcomes;
+        }
+      } else if (node.type === 'triggerNode' && node.data.platform) {
+        nodeLabel = String(node.data.platform);
+      } else if (node.type === 'webhookNode') {
+        nodeLabel = node.data.url ? `Webhook: ${node.data.url}` : 'Webhook';
+      } else if (node.type) {
+        nodeLabel = node.type;
+      }
+    }
+    
+    const cleanLabel = nodeLabel
+      .replace(/\n/g, ' ')
+      .replace(/"/g, '')
+      .substring(0, 30);
+    
+    const simpleId = nodeIdMap.get(node.id) || `unknown-${node.id}`;
+    
+    mermaidString += `  ${simpleId}["${cleanLabel}`;
+    
+    switch (node.type) {
+      case 'speakNode':
+        mermaidString += ' (Speak)';
+        break;
+      case 'greetingNode':
+        mermaidString += ' (Greeting)';
+        break;
+      case 'endNode':
+        mermaidString += ' (End)';
+        break;
+      case 'triggerNode':
+        mermaidString += ' (Trigger)';
+        break;
+      case 'transferNode':
+        mermaidString += ' (Transfer)';
+        break;
+      case 'webhookNode':
+        mermaidString += ' (Webhook)';
+        break;
+    }
+    
+    mermaidString += '"]\n';
+    
+    if (outcomeLabels.length > 0) {
+      mermaidString += `  %% Node ${simpleId} has outcomes: ${outcomeLabels.join(', ')}\n`;
+    }
+  });
+  
+  flowData.edges.forEach((edge: Edge) => {
+    const sourceId = nodeIdMap.get(edge.source) || edge.source;
+    const targetId = nodeIdMap.get(edge.target) || edge.target;
+    
+    const sourceNode = flowData.nodes.find(node => node.id === edge.source);
+    let edgeLabel = '';
+    
+    if (sourceNode && sourceNode.data && (sourceNode.type === 'speakNode' || sourceNode.type === 'greetingNode')) {
+      const outcomes = sourceNode.data.outcomes || [];
+      
+      if (edge.sourceHandle && edge.sourceHandle.startsWith('outcome-')) {
+        const outcomeIndex = parseInt(edge.sourceHandle.replace('outcome-', ''), 10);
+        if (!isNaN(outcomeIndex) && outcomeIndex < outcomes.length) {
+          edgeLabel = `|"${outcomes[outcomeIndex]}"|`;
+        }
+      }
+    }
+    
+    mermaidString += `  ${sourceId} --> ${edgeLabel} ${targetId}\n`;
+  });
+  
+  return mermaidString;
+}
+
+function sanitizeMermaidChart(mermaidChart: string): string {
+  return mermaidChart
+    .replace(/classDef .+/g, '')
+    .replace(/:::[a-zA-Z0-9_-]+/g, '');
+}
+
+export default function AgentFlowPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [mermaidChart, setMermaidChart] = useState<string>('');
+  const [showMermaid, setShowMermaid] = useState<boolean>(true);
+  const [showFollowUp, setShowFollowUp] = useState<boolean>(false);
+
+  const { data: agent, refetch, isError, isLoading } = useQuery({
+    queryKey: ['agent', id],
+    queryFn: async () => {
+      if (!id) throw new Error('No agent ID provided');
+      
+      console.log('[AgentFlowPage] Fetching agent data for ID:', id);
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[AgentFlowPage] Error fetching agent:', error);
+        throw error;
+      }
+      if (!data) {
+        console.error('[AgentFlowPage] Agent not found');
+        throw new Error('Agent not found');
+      }
+
+      console.log('[AgentFlowPage] Agent data retrieved:', data);
+      return data as Agent;
+    },
+    enabled: !!id
+  });
+
+  const saveFlowMutation = useMutation({
+    mutationFn: async (flowData: FlowData) => {
+      if (!id) throw new Error('No agent ID provided');
+      
+      const clonedData = JSON.parse(JSON.stringify(flowData));
+      
+      console.log("[AgentFlowPage] SAVING FLOW DATA TO SUPABASE:", clonedData);
+      
+      let mermaidChartStr = generateMermaidFromFlow(clonedData);
+      mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
+      
+      console.log('[AgentFlowPage] Mermaid Chart to save:', mermaidChartStr);
+      setMermaidChart(mermaidChartStr);
+      
+      try {
+        console.log(`[AgentFlowPage] Updating agent ${id} in Supabase`);
+        const { data, error } = await supabase
+          .from('agents')
+          .update({ 
+            flow: clonedData,
+            mermaid_chart: mermaidChartStr
+          })
+          .eq('id', id)
+          .select();
+        
+        if (error) {
+          console.error('[AgentFlowPage] Error saving flow data:', error);
+          throw error;
+        }
+        
+        console.log("[AgentFlowPage] Supabase update response:", data);
+        
+        await refetch();
+        return data;
+      } catch (error) {
+        console.error('[AgentFlowPage] Error in saveFlowMutation:', error);
+        throw error;
+      }
+    }
+  });
 
   useEffect(() => {
-    // Simulate loading an agent
-    const timer = setTimeout(() => {
-      setAgent({
-        id,
-        name: "Sample Agent",
-        description: "This is a sample agent",
-        flow: {
-          nodes: [],
-          edges: []
+    if (agent?.flow) {
+      try {
+        console.log('[AgentFlowPage] Processing initial flow data:', agent.flow);
+        const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+        
+        const hasNodes = Array.isArray(flowData.nodes);
+        const hasEdges = Array.isArray(flowData.edges);
+        
+        if (hasNodes || hasEdges) {
+          let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
+          mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
+          console.log('[AgentFlowPage] Initial Mermaid Chart:', mermaidChartStr);
+          setMermaidChart(mermaidChartStr);
+        } else {
+          console.log('[AgentFlowPage] Flow data is not properly formatted');
+          setMermaidChart('graph TD\n  EmptyFlow[Empty Flow]');
         }
-      });
-      setLoading(false);
-    }, 1000);
+      } catch (error) {
+        console.error('[AgentFlowPage] Error generating mermaid chart:', error);
+        setMermaidChart('graph TD\n  Error[Error generating chart]');
+      }
+    }
+  }, [agent]);
 
-    return () => clearTimeout(timer);
-  }, [id]);
+  const handleNodesChange = useCallback((newNodes: FlowNode[]) => {
+    if (!agent?.flow) {
+      console.log('[AgentFlowPage] handleNodesChange: No agent flow data available');
+      return;
+    }
+    try {
+      console.log('[AgentFlowPage] Nodes changed, nodes to save:', newNodes);
+      
+      const clonedNodes = JSON.parse(JSON.stringify(newNodes));
+      
+      const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+      const currentEdges = currentFlow.edges || [];
+      
+      const flowData: FlowData = {
+        nodes: clonedNodes,
+        edges: currentEdges
+      };
+      
+      console.log('[AgentFlowPage] Saving updated flow data with new nodes');
+      saveFlowMutation.mutate(flowData);
+    } catch (error) {
+      console.error('[AgentFlowPage] Error updating nodes:', error);
+    }
+  }, [agent, saveFlowMutation]);
 
-  if (loading) {
+  const handleEdgesChange = useCallback((newEdges: Edge[]) => {
+    if (!agent?.flow) {
+      console.log('[AgentFlowPage] handleEdgesChange: No agent flow data available');
+      return;
+    }
+    try {
+      console.log('[AgentFlowPage] Edges changed, edges to save:', newEdges);
+      
+      const clonedEdges = JSON.parse(JSON.stringify(newEdges));
+      
+      const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+      const currentNodes = currentFlow.nodes || [];
+      
+      const flowData: FlowData = {
+        nodes: currentNodes,
+        edges: clonedEdges
+      };
+      
+      console.log('[AgentFlowPage] Saving updated flow data with new edges');
+      saveFlowMutation.mutate(flowData);
+    } catch (error) {
+      console.error('[AgentFlowPage] Error updating edges:', error);
+    }
+  }, [agent, saveFlowMutation]);
+
+  const handleUpdateSettings = async (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => {
+    if (!id) return;
+    console.log('[AgentFlowPage] Updating agent settings:', settings);
+    const { error } = await supabase
+      .from('agents')
+      .update(settings)
+      .eq('id', id);
+    
+    if (error) {
+      console.error('[AgentFlowPage] Error updating agent settings:', error);
+      throw error;
+    }
+    console.log('[AgentFlowPage] Agent settings updated successfully');
+  };
+
+  const toggleFollowUp = useCallback(() => {
+    setShowFollowUp(prev => !prev);
+  }, []);
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-lg">Loading agent...</p>
-        </div>
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  return (
-    <div className="flex flex-col w-full h-full">
-      <Header agent={agent} />
-      <Flow agent={agent} />
-    </div>
-  );
-};
+  if (isError || !agent) {
+    return null;
+  }
 
-export default AgentFlowPage;
+  const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow || { nodes: [], edges: [] };
+
+  return (
+    <DragProvider>
+      <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+        <Header 
+          agent={agent}
+          onBack={() => navigate('/dashboard/agents')}
+          onUpdateSettings={handleUpdateSettings}
+          onToggleFollowUp={toggleFollowUp}
+          showFollowUp={showFollowUp}
+        />
+        
+        <div className={`flex flex-col flex-1 transition-all duration-300 ease-in-out ${showFollowUp ? 'h-1/2' : 'h-full'}`}>
+          <ReactFlowProvider>
+            <Flow
+              initialNodes={flowData.nodes || []}
+              initialEdges={flowData.edges || []}
+              onNodesChange={handleNodesChange}
+              onEdgesChange={handleEdgesChange}
+            />
+          </ReactFlowProvider>
+          
+          {showMermaid && (
+            <div 
+              className="absolute bottom-4 right-4 p-4 bg-white dark:bg-gray-800 border rounded-md shadow-md max-w-md max-h-96 overflow-auto z-50 text-xs"
+              style={{ opacity: 0.9 }}
+            >
+              <div className="flex justify-between mb-2">
+                <span className="font-bold">Mermaid Chart Preview</span>
+                <button 
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  onClick={() => setShowMermaid(false)}
+                >
+                  Close
+                </button>
+              </div>
+              <pre className="whitespace-pre-wrap break-all">{mermaidChart}</pre>
+            </div>
+          )}
+        </div>
+
+        {/* Follow-up Flow */}
+        {showFollowUp && (
+          <div 
+            className="flex-1 transition-all duration-300 ease-in-out"
+            style={{
+              boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)'
+            }}
+          >
+            <div className="p-2 bg-gray-100 dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Automation</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Configure actions that happen after conversation outcomes</p>
+            </div>
+            <ReactFlowProvider>
+              <FollowUpFlow agentId={agent.id} />
+            </ReactFlowProvider>
+          </div>
+        )}
+      </div>
+    </DragProvider>
+  );
+}

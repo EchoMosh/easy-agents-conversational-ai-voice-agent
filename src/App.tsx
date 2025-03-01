@@ -1,51 +1,55 @@
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
-import DashboardLayout from "@/layouts/dashboard-layout";
-import AuthPage from "@/pages/auth";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Index from "@/pages/Index";
 import OnboardingPage from "@/pages/onboarding";
+import AuthPage from "@/pages/auth";
 import NotFound from "@/pages/NotFound";
-
-// Dashboard pages
+import DashboardLayout from "@/layouts/dashboard-layout";
 import AgentsPage from "@/pages/dashboard/agents";
 import AgentFlowPage from "@/pages/dashboard/agent-flow";
-import ChatsPage from "@/pages/dashboard/chats";
-import { ChatPage } from "@/pages/dashboard/chat";
-import KnowledgePage from "@/pages/dashboard/knowledge";
 import LeadsPage from "@/pages/dashboard/leads";
 import PipelinesPage from "@/pages/dashboard/pipelines";
-import ProfilePage from "@/pages/dashboard/profile";
 import SettingsPage from "@/pages/dashboard/settings";
+import ProfilePage from "@/pages/dashboard/profile";
+import ChatsPage from "@/pages/dashboard/chats";
+import { ChatPage } from "@/pages/dashboard/chat"; // Fixed import to use named export
+import KnowledgePage from "@/pages/dashboard/knowledge";
 
+// Create a new QueryClient instance
 const queryClient = new QueryClient();
 
-export default function App() {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<NotFound />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<Navigate to="/dashboard/agents" replace />} />
-            <Route path="agents" element={<AgentsPage />} />
-            <Route path="agents/:id" element={<AgentFlowPage />} />
-            <Route path="chats" element={<ChatsPage />} />
-            <Route path="chat/:id" element={<ChatPage />} />
-            <Route path="knowledge" element={<KnowledgePage />} />
-            <Route path="leads" element={<LeadsPage />} />
-            <Route path="pipelines" element={<PipelinesPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-      <Toaster />
+      <ThemeProvider defaultTheme="light">
+        <Router>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route path="/dashboard/agents" element={<AgentsPage />} />
+              <Route path="/dashboard/agents/flow/:id" element={<AgentFlowPage />} />
+              <Route path="/dashboard/leads" element={<LeadsPage />} />
+              <Route path="/dashboard/pipelines" element={<PipelinesPage />} />
+              <Route path="/dashboard/settings" element={<SettingsPage />} />
+              <Route path="/dashboard/profile" element={<ProfilePage />} />
+              <Route path="/dashboard/chats" element={<ChatsPage />} />
+              <Route path="/dashboard/chats/:id" element={<ChatPage />} />
+              <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+        <Toaster />
+        <SonnerToaster />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
+
+export default App;
