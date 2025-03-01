@@ -1,5 +1,7 @@
 
 import { SidebarSettings } from "@/components/settings/sidebar-settings";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export default function SettingsPage() {
   return (
@@ -9,10 +11,25 @@ export default function SettingsPage() {
       <div className="space-y-8">
         <section>
           <h2 className="text-xl font-semibold mb-4">Appearance</h2>
-          <SidebarSettings />
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Theme</CardTitle>
+                <CardDescription>
+                  Choose your preferred theme appearance
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <span>Switch between dark and light mode</span>
+                  <ThemeToggle />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <SidebarSettings />
+          </div>
         </section>
-        
-        {/* You can add more settings sections here */}
       </div>
     </div>
   );

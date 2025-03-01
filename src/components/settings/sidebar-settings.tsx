@@ -6,27 +6,46 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { mainMenuItems } from "@/components/dashboard/sidebar/navigation-menu";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Users, Target, GitMerge, MessageSquare, Book, Zap, Settings, Plus } from "lucide-react";
+import * as icons from "lucide-react";
 
-// Define the sidebar item type
+// Define the sidebar item type with icon
 interface SidebarItem {
   id: string;
   title: string;
   visible: boolean;
+  icon: string;
 }
 
+// Get all available icons from lucide-react
+const availableIcons: Record<string, any> = {
+  Users, Target, GitMerge, MessageSquare, Book, Zap, Settings, Plus
+};
+
 // Sortable item component
-const SortableItem = ({ item, onToggleVisibility }: { item: SidebarItem; onToggleVisibility: (id: string) => void }) => {
+const SortableItem = ({ 
+  item, 
+  onToggleVisibility, 
+  onIconChange 
+}: { 
+  item: SidebarItem; 
+  onToggleVisibility: (id: string) => void;
+  onIconChange: (id: string, icon: string) => void;
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
   
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  
+  const IconComponent = availableIcons[item.icon] || Users;
   
   return (
     <div 
@@ -46,6 +65,30 @@ const SortableItem = ({ item, onToggleVisibility }: { item: SidebarItem; onToggl
         <Label htmlFor={`visible-${item.id}`} className="cursor-pointer flex-1">
           {item.title}
         </Label>
+        <div className="flex items-center space-x-2">
+          <IconComponent size={18} className="text-muted-foreground" />
+          <Select
+            value={item.icon}
+            onValueChange={(value) => onIconChange(item.id, value)}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Icon" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.keys(availableIcons).map((iconName) => {
+                const Icon = availableIcons[iconName];
+                return (
+                  <SelectItem key={iconName} value={iconName}>
+                    <div className="flex items-center">
+                      <Icon className="mr-2 h-4 w-4" />
+                      <span>{iconName}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );
@@ -72,7 +115,8 @@ export function SidebarSettings() {
       const defaultItems = mainMenuItems.map(item => ({
         id: item.title.toLowerCase(),
         title: item.title,
-        visible: true
+        visible: true,
+        icon: item.icon.name || 'Users' // Default to Users if no name property
       }));
       setSidebarItems(defaultItems);
     }
@@ -102,6 +146,15 @@ export function SidebarSettings() {
     );
   };
 
+  // Change icon of an item
+  const changeItemIcon = (id: string, icon: string) => {
+    setSidebarItems(prev => 
+      prev.map(item => 
+        item.id === id ? { ...item, icon } : item
+      )
+    );
+  };
+
   // Handle item reordering
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -121,14 +174,14 @@ export function SidebarSettings() {
       <CardHeader>
         <CardTitle>Sidebar Customization</CardTitle>
         <CardDescription>
-          Choose which items appear in your sidebar and their order
+          Choose which items appear in your sidebar, their order, and icons
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="mb-4">
             <p className="text-sm text-muted-foreground mb-2">
-              Drag items to reorder them or toggle visibility with the checkbox
+              Drag items to reorder them, toggle visibility with the checkbox, or change icons
             </p>
           </div>
           
@@ -148,6 +201,7 @@ export function SidebarSettings() {
                       key={item.id} 
                       item={item} 
                       onToggleVisibility={toggleItemVisibility} 
+                      onIconChange={changeItemIcon}
                     />
                   ))}
                 </div>

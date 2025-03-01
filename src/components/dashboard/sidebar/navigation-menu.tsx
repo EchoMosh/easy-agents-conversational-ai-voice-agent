@@ -11,6 +11,18 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import * as icons from "lucide-react";
+
+// Create an icons object for easy lookup
+const iconComponents: Record<string, any> = {
+  Users,
+  Target,
+  Settings,
+  GitMerge,
+  MessageSquare,
+  Book,
+  Zap,
+};
 
 export const mainMenuItems = [
   {
@@ -57,6 +69,7 @@ interface CustomizedMenuItem {
   id: string;
   title: string;
   visible: boolean;
+  icon?: string;
 }
 
 export function NavigationMenu() {
@@ -94,10 +107,28 @@ export function NavigationMenu() {
     if (customizedItems.length === 0) return;
 
     // Filter and reorder items based on customization
-    const newDisplayedItems = [...mainMenuItems];
-    const orderedItems = newDisplayedItems.filter(menuItem => {
+    const newDisplayedItems = [...mainMenuItems].map(menuItem => {
       const customItem = customizedItems.find(
         item => item.id === menuItem.title.toLowerCase()
+      );
+      
+      if (customItem) {
+        // Use custom icon if available
+        const IconComponent = customItem.icon && iconComponents[customItem.icon] 
+          ? iconComponents[customItem.icon] 
+          : menuItem.icon;
+          
+        return {
+          ...menuItem,
+          icon: IconComponent,
+          visible: customItem.visible
+        };
+      }
+      
+      return menuItem;
+    }).filter(item => {
+      const customItem = customizedItems.find(
+        custom => custom.id === item.title.toLowerCase()
       );
       return customItem ? customItem.visible : true;
     }).sort((a, b) => {
@@ -106,7 +137,7 @@ export function NavigationMenu() {
       return aIndex - bIndex;
     });
 
-    setDisplayedItems(orderedItems);
+    setDisplayedItems(newDisplayedItems);
   }, [customizedItems]);
 
   return (
