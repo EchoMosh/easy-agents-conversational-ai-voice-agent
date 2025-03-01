@@ -1,6 +1,5 @@
-
-import { useState, useCallback } from 'react';
-import { Zap, Plus, ArrowRight, ArrowLeft, Power } from 'lucide-react';
+import { useState } from 'react';
+import { Zap, Plus, ArrowRight, ArrowLeft, Power, Box, Settings, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { motion } from "framer-motion";
+import { GlowingEffect } from '@/components/ui/glowing-effect';
+import { cn } from '@/lib/utils';
 
 export default function AutomationsPage() {
   const { toast } = useToast();
@@ -20,9 +21,9 @@ export default function AutomationsPage() {
 
   // Mock automation data - this would typically come from an API or state management
   const automations = [
-    { id: '1', name: 'Lead Follow-up', status: 'active', lastRun: '2 hours ago', type: 'Email sequence' },
-    { id: '2', name: 'Welcome Message', status: 'active', lastRun: '1 day ago', type: 'Chat response' },
-    { id: '3', name: 'Appointment Reminder', status: 'inactive', lastRun: 'Never', type: 'SMS notification' },
+    { id: '1', name: 'Lead Follow-up', status: 'active', lastRun: '2 hours ago', type: 'Email sequence', icon: <Zap className="h-4 w-4 text-blue-500" /> },
+    { id: '2', name: 'Welcome Message', status: 'active', lastRun: '1 day ago', type: 'Chat response', icon: <Sparkles className="h-4 w-4 text-amber-500" /> },
+    { id: '3', name: 'Appointment Reminder', status: 'inactive', lastRun: 'Never', type: 'SMS notification', icon: <Settings className="h-4 w-4 text-gray-400" /> },
   ];
 
   const startNewAutomation = () => {
@@ -77,6 +78,181 @@ export default function AutomationsPage() {
     </div>
   );
 
+  const AutomationCard = ({ automation }: { automation: typeof automations[0] }) => (
+    <motion.div
+      key={automation.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ 
+        scale: 1.02,
+        transition: { duration: 0.2 }
+      }}
+      className="group"
+    >
+      <div className="relative h-full rounded-2xl p-0.5">
+        {/* Glowing effect border */}
+        <GlowingEffect
+          spread={40}
+          glow={false}
+          disabled={false}
+          proximity={64}
+          inactiveZone={0.01}
+          variant={automation.status === 'active' ? "default" : "white"}
+        />
+        
+        <Card 
+          className={cn(
+            "h-full relative overflow-hidden rounded-2xl backdrop-blur-xl bg-white/10 dark:bg-slate-900/50 border-0",
+            automation.status === 'active' 
+              ? 'shadow-lg' 
+              : 'shadow'
+          )}
+        >
+          {/* Background gradient effect */}
+          <div className={`absolute inset-0 z-0 opacity-30 ${
+            automation.status === 'active' 
+              ? 'bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10' 
+              : 'bg-gradient-to-br from-gray-200/5 via-transparent to-gray-300/5 dark:from-gray-800/5 dark:to-gray-700/5'
+          }`} />
+          
+          {/* Mesh gradient background */}
+          {automation.status === 'active' && (
+            <div className="absolute inset-0 z-0">
+              <div className="absolute h-40 w-40 rounded-full blur-3xl bg-blue-500/20 -top-20 -left-20 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
+              <div className="absolute h-40 w-40 rounded-full blur-3xl bg-purple-500/20 -bottom-20 -right-20 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
+            </div>
+          )}
+          
+          {/* Card Header with animated border */}
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative border-b border-slate-200/10 dark:border-slate-700/10">
+            <div className="z-10">
+              <CardTitle className="text-xl font-semibold tracking-tight">{automation.name}</CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">{automation.type}</CardDescription>
+            </div>
+            
+            <div className="z-10 flex items-center">
+              <motion.div
+                className={`p-2 rounded-full ${
+                  automation.status === 'active' 
+                    ? 'bg-blue-500/10 dark:bg-blue-500/20' 
+                    : 'bg-gray-200/50 dark:bg-gray-800/50'
+                }`}
+                animate={automation.status === 'active' ? {
+                  boxShadow: [
+                    '0 0 0 rgba(59, 130, 246, 0)',
+                    '0 0 15px rgba(59, 130, 246, 0.5)',
+                    '0 0 0 rgba(59, 130, 246, 0)'
+                  ],
+                } : {}}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <div className="w-fit rounded-lg border border-gray-600/20 dark:border-gray-600/40 p-1">
+                  {automation.icon}
+                </div>
+              </motion.div>
+              <div className={`ml-2 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                automation.status === 'active' 
+                  ? 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
+                  : 'bg-gray-100/80 text-gray-800 dark:bg-gray-800/50 dark:text-gray-300'
+              }`}>
+                {automation.status}
+              </div>
+            </div>
+            
+            {/* Animated light beam effect for active automations */}
+            {automation.status === 'active' && (
+              <motion.div 
+                className="absolute top-0 left-1/2 w-px h-6 bg-gradient-to-b from-blue-400 to-transparent z-0"
+                animate={{
+                  opacity: [0, 1, 0],
+                  height: ['0%', '100%', '0%'],
+                  top: ['0%', '100%', '0%'],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: 'loop',
+                  ease: 'linear',
+                  delay: Math.random() * 2
+                }}
+              />
+            )}
+          </CardHeader>
+          
+          <CardContent className="relative z-10">
+            <div className="text-sm text-muted-foreground mb-6 pt-4">
+              Last run: {automation.lastRun}
+            </div>
+            
+            {/* Hover effects with animated borders */}
+            <div className="flex gap-2 mt-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="relative overflow-hidden group border-blue-200/20 dark:border-blue-900/20 transition-all hover:border-blue-400/30 hover:text-blue-600 dark:hover:border-blue-700/30 dark:hover:text-blue-400"
+              >
+                <span className="relative z-10">Edit</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </Button>
+              
+              {automation.status === 'inactive' && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleRunNow(automation.id, automation.name)}
+                  className="relative overflow-hidden group border-blue-200/20 dark:border-blue-900/20 transition-all hover:text-blue-500 hover:border-blue-500/30 dark:hover:border-blue-700/30 dark:hover:text-blue-400"
+                >
+                  <span className="relative z-10 flex items-center">
+                    <Power className="h-4 w-4 mr-1" />
+                    Run now
+                  </span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </Button>
+              )}
+            </div>
+            
+            {/* Animated particles for active automations */}
+            {automation.status === 'active' && (
+              <>
+                <motion.div 
+                  className="absolute w-1 h-1 rounded-full bg-blue-500 z-0"
+                  style={{ top: '20%', left: '10%' }}
+                  animate={{
+                    y: [0, -20, 0],
+                    opacity: [0, 1, 0],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    delay: Math.random() * 2
+                  }}
+                />
+                <motion.div 
+                  className="absolute w-1 h-1 rounded-full bg-purple-500 z-0"
+                  style={{ bottom: '30%', right: '20%' }}
+                  animate={{
+                    y: [0, -15, 0],
+                    opacity: [0, 1, 0],
+                  }}
+                  transition={{
+                    duration: 2.5,
+                    repeat: Infinity,
+                    delay: Math.random() * 2
+                  }}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </motion.div>
+  );
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -96,169 +272,7 @@ export default function AutomationsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {automations.length > 0 ? (
           automations.map((automation) => (
-            <motion.div
-              key={automation.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              whileHover={{ 
-                scale: 1.03,
-                transition: { duration: 0.2 }
-              }}
-              className="group"
-            >
-              <Card 
-                className={`h-full relative overflow-hidden ${
-                  automation.status === 'active' 
-                    ? 'border-blue-400/30 dark:border-blue-500/20' 
-                    : 'border-gray-200/30 dark:border-gray-700/20'
-                } backdrop-blur-xl bg-white/10 dark:bg-slate-900/50`}
-              >
-                {/* Background gradient effect */}
-                <div className={`absolute inset-0 z-0 opacity-30 ${
-                  automation.status === 'active' 
-                    ? 'bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10' 
-                    : 'bg-gradient-to-br from-gray-200/5 via-transparent to-gray-300/5 dark:from-gray-800/5 dark:to-gray-700/5'
-                }`} />
-                
-                {/* Mesh gradient background */}
-                {automation.status === 'active' && (
-                  <div className="absolute inset-0 z-0">
-                    <div className="absolute h-40 w-40 rounded-full blur-3xl bg-blue-500/20 -top-20 -left-20 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
-                    <div className="absolute h-40 w-40 rounded-full blur-3xl bg-purple-500/20 -bottom-20 -right-20 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
-                  </div>
-                )}
-                
-                {/* Card Header with animated border */}
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative border-b border-slate-200/10 dark:border-slate-700/10">
-                  <div className="z-10">
-                    <CardTitle className="text-xl font-semibold tracking-tight">{automation.name}</CardTitle>
-                    <CardDescription className="text-sm text-muted-foreground">{automation.type}</CardDescription>
-                  </div>
-                  
-                  <div className="z-10 flex items-center">
-                    <motion.div
-                      className={`p-2 rounded-full ${
-                        automation.status === 'active' 
-                          ? 'bg-blue-500/10 dark:bg-blue-500/20' 
-                          : 'bg-gray-200/50 dark:bg-gray-800/50'
-                      }`}
-                      animate={automation.status === 'active' ? {
-                        boxShadow: [
-                          '0 0 0 rgba(59, 130, 246, 0)',
-                          '0 0 15px rgba(59, 130, 246, 0.5)',
-                          '0 0 0 rgba(59, 130, 246, 0)'
-                        ],
-                      } : {}}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <Zap 
-                        className={`h-5 w-5 ${
-                          automation.status === 'active' 
-                            ? 'text-blue-500 drop-shadow-md' 
-                            : 'text-gray-400'
-                        }`}
-                      />
-                    </motion.div>
-                    <div className={`ml-2 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                      automation.status === 'active' 
-                        ? 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
-                        : 'bg-gray-100/80 text-gray-800 dark:bg-gray-800/50 dark:text-gray-300'
-                    }`}>
-                      {automation.status}
-                    </div>
-                  </div>
-                  
-                  {/* Animated light beam effect for active automations */}
-                  {automation.status === 'active' && (
-                    <motion.div 
-                      className="absolute top-0 left-1/2 w-px h-6 bg-gradient-to-b from-blue-400 to-transparent z-0"
-                      animate={{
-                        opacity: [0, 1, 0],
-                        height: ['0%', '100%', '0%'],
-                        top: ['0%', '100%', '0%'],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatType: 'loop',
-                        ease: 'linear',
-                        delay: Math.random() * 2
-                      }}
-                    />
-                  )}
-                </CardHeader>
-                
-                <CardContent className="relative z-10">
-                  <div className="text-sm text-muted-foreground mb-6 pt-4">
-                    Last run: {automation.lastRun}
-                  </div>
-                  
-                  {/* Hover effects with animated borders */}
-                  <div className="flex gap-2 mt-4">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="relative overflow-hidden group border-blue-200/20 dark:border-blue-900/20 transition-all hover:border-blue-400/30 hover:text-blue-600 dark:hover:border-blue-700/30 dark:hover:text-blue-400"
-                    >
-                      <span className="relative z-10">Edit</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </Button>
-                    
-                    {automation.status === 'inactive' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleRunNow(automation.id, automation.name)}
-                        className="relative overflow-hidden group border-blue-200/20 dark:border-blue-900/20 transition-all hover:text-blue-500 hover:border-blue-500/30 dark:hover:border-blue-700/30 dark:hover:text-blue-400"
-                      >
-                        <span className="relative z-10 flex items-center">
-                          <Power className="h-4 w-4 mr-1" />
-                          Run now
-                        </span>
-                        <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {/* Animated particles for active automations */}
-                  {automation.status === 'active' && (
-                    <>
-                      <motion.div 
-                        className="absolute w-1 h-1 rounded-full bg-blue-500 z-0"
-                        style={{ top: '20%', left: '10%' }}
-                        animate={{
-                          y: [0, -20, 0],
-                          opacity: [0, 1, 0],
-                        }}
-                        transition={{
-                          duration: 3,
-                          repeat: Infinity,
-                          delay: Math.random() * 2
-                        }}
-                      />
-                      <motion.div 
-                        className="absolute w-1 h-1 rounded-full bg-purple-500 z-0"
-                        style={{ bottom: '30%', right: '20%' }}
-                        animate={{
-                          y: [0, -15, 0],
-                          opacity: [0, 1, 0],
-                        }}
-                        transition={{
-                          duration: 2.5,
-                          repeat: Infinity,
-                          delay: Math.random() * 2
-                        }}
-                      />
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
+            <AutomationCard key={automation.id} automation={automation} />
           ))
         ) : (
           <Card className="text-center py-12 col-span-full backdrop-blur-sm border-blue-200/20 dark:border-blue-900/20 bg-white/10 dark:bg-slate-900/50">
