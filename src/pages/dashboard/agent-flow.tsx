@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider, Node as FlowNode, Edge } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -10,6 +11,8 @@ import { Agent } from '@/types/agent-types';
 import { useToast } from '@/hooks/use-toast';
 import { FlowData } from '@/types/agent-types';
 import { FollowUpFlow } from '@/components/flow/follow-up/follow-up-flow';
+import { ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function generateMermaidFromFlow(flowData: FlowData): string {
   if (!flowData || !flowData.nodes || !flowData.edges) {
@@ -137,6 +140,9 @@ export default function AgentFlowPage() {
   const [mermaidChart, setMermaidChart] = useState<string>('');
   const [showMermaid, setShowMermaid] = useState<boolean>(true);
   const [showFollowUp, setShowFollowUp] = useState<boolean>(false);
+  // Control the height ratio between main flow and follow-up flow
+  const [mainFlowHeight, setMainFlowHeight] = useState<string>('60%');
+  const [followUpHeight, setFollowUpHeight] = useState<string>('40%');
 
   const { data: agent, refetch, isError, isLoading } = useQuery({
     queryKey: ['agent', id],
@@ -297,7 +303,26 @@ export default function AgentFlowPage() {
   };
 
   const toggleFollowUp = useCallback(() => {
-    setShowFollowUp(prev => !prev);
+    setShowFollowUp(prev => {
+      if (!prev) {
+        // When opening, set to a larger size
+        setMainFlowHeight('60%');
+        setFollowUpHeight('40%');
+      }
+      return !prev;
+    });
+  }, []);
+
+  // New function to expand follow-up section
+  const expandFollowUp = useCallback(() => {
+    setMainFlowHeight('35%');
+    setFollowUpHeight('65%');
+  }, []);
+
+  // New function to contract follow-up section
+  const contractFollowUp = useCallback(() => {
+    setMainFlowHeight('60%');
+    setFollowUpHeight('40%');
   }, []);
 
   if (isLoading) {
@@ -325,7 +350,11 @@ export default function AgentFlowPage() {
           showFollowUp={showFollowUp}
         />
         
-        <div className={`flex flex-col flex-1 transition-all duration-300 ease-in-out ${showFollowUp ? 'h-1/2' : 'h-full'}`}>
+        {/* Main flow section with dynamic height */}
+        <div 
+          className={`flex flex-col transition-all duration-300 ease-in-out ${showFollowUp ? '' : 'h-full'}`}
+          style={{ height: showFollowUp ? mainFlowHeight : '100%' }}
+        >
           <ReactFlowProvider>
             <Flow
               initialNodes={flowData.nodes || []}
@@ -354,21 +383,66 @@ export default function AgentFlowPage() {
           )}
         </div>
 
-        {/* Follow-up Flow */}
+        {/* Follow-up Flow with divider and controls */}
         {showFollowUp && (
-          <div 
-            className="flex-1 transition-all duration-300 ease-in-out"
-            style={{
-              boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)'
-            }}
-          >
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Automation</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Configure actions that happen after conversation outcomes</p>
+          <div className="relative">
+            {/* Resizable divider handle */}
+            <div 
+              className="absolute top-0 inset-x-0 h-6 bg-gray-200 dark:bg-gray-700 cursor-ns-resize flex items-center justify-center z-10"
+              onMouseDown={() => toast({
+                title: "Resizing coming soon",
+                description: "This feature is under development"
+              })}
+            >
+              <div className="w-20 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
             </div>
-            <ReactFlowProvider>
-              <FollowUpFlow agentId={agent.id} />
-            </ReactFlowProvider>
+            
+            {/* Controls for follow-up panel */}
+            <div className="absolute top-8 right-4 flex space-x-2 z-20">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={contractFollowUp}
+                className="text-xs"
+              >
+                <ChevronDown className="h-3 w-3 mr-1 rotate-180" />
+                Collapse
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={expandFollowUp}
+                className="text-xs"
+              >
+                <ChevronDown className="h-3 w-3 mr-1" />
+                Expand
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleFollowUp}
+                className="text-xs"
+              >
+                Close
+              </Button>
+            </div>
+            
+            <div 
+              className="transition-all duration-300 ease-in-out"
+              style={{ 
+                height: followUpHeight,
+                boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)',
+                paddingTop: '1.5rem' // Make room for the handle
+              }}
+            >
+              <div className="p-2 bg-gray-100 dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Automation</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Configure actions that happen after conversation outcomes</p>
+              </div>
+              <ReactFlowProvider>
+                <FollowUpFlow agentId={agent.id} />
+              </ReactFlowProvider>
+            </div>
           </div>
         )}
       </div>
