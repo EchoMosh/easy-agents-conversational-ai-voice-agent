@@ -8,7 +8,7 @@ import {
   WavyBackground,
   AnimatedTooltip,
   InfiniteMovingCards
-} from "aceternity-ui/components";
+} from "aceternity-ui";
 
 const products = [
   {
