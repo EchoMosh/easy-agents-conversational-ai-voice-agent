@@ -117,6 +117,8 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
         return '#fbbf24';
       case 'transferNode':
         return '#10b981';
+      case 'webhookNode':
+        return '#d946ef';
       default:
         return '#94a3b8';
     }
@@ -127,36 +129,42 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
       style={{ height: maxHeight, width: '100%' }}
       className="rounded-md overflow-hidden border border-muted bg-background/50"
     >
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable={false}
-        zoomOnScroll={false}
-        panOnScroll={false}
-        preventScrolling={false}
-        fitView
-        attributionPosition="bottom-right"
-        minZoom={0.2}
-        maxZoom={0.8}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
-        defaultEdgeOptions={{
-          animated: true,
-          style: {
-            stroke: '#94a3b8',
-            strokeWidth: 2,
-          },
-        }}
-        fitViewOptions={{ 
-          padding: 0.2,
-          includeHiddenNodes: true, 
-        }}
-      >
-        <Background color="#eee" gap={12} size={1} />
-      </ReactFlow>
+      {(parsedNodes.length === 0 && parsedEdges.length === 0) ? (
+        <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
+          No flow data available
+        </div>
+      ) : (
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          zoomOnScroll={false}
+          panOnScroll={false}
+          preventScrolling={false}
+          fitView
+          attributionPosition="bottom-right"
+          minZoom={0.2}
+          maxZoom={0.8}
+          defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+          defaultEdgeOptions={{
+            animated: true,
+            style: {
+              stroke: '#94a3b8',
+              strokeWidth: 2,
+            },
+          }}
+          fitViewOptions={{ 
+            padding: 0.2,
+            includeHiddenNodes: true, 
+          }}
+        >
+          <Background color="#eee" gap={12} size={1} />
+        </ReactFlow>
+      )}
     </div>
   );
 }

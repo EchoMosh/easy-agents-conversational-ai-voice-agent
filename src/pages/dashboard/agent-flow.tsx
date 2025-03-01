@@ -25,6 +25,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   
   const nodeTypeCounter: Record<string, number> = {};
   
+  // Process only nodes that actually exist in the current flow
   flowData.nodes.forEach((node: FlowNode) => {
     const baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
     
@@ -38,6 +39,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     nodeIdMap.set(node.id, simpleId);
   });
   
+  // Add nodes to mermaid chart
   flowData.nodes.forEach((node: FlowNode) => {
     let nodeLabel = 'Node';
     let outcomeLabels: string[] = [];
@@ -99,7 +101,12 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     }
   });
   
-  flowData.edges.forEach((edge: FlowEdge) => {
+  // Only process edges that connect existing nodes
+  const validEdges = flowData.edges.filter((edge: FlowEdge) => 
+    nodeIdMap.has(edge.source) && nodeIdMap.has(edge.target)
+  );
+  
+  validEdges.forEach((edge: FlowEdge) => {
     const sourceId = nodeIdMap.get(edge.source) || edge.source;
     const targetId = nodeIdMap.get(edge.target) || edge.target;
     
@@ -174,6 +181,7 @@ export default function AgentFlowPage() {
       
       console.log("[AgentFlowPage] SAVING FLOW DATA TO SUPABASE:", clonedData);
       
+      // Generate mermaid chart based on the current flow data
       let mermaidChartStr = generateMermaidFromFlow(clonedData);
       mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       
@@ -213,22 +221,18 @@ export default function AgentFlowPage() {
         console.log('[AgentFlowPage] Processing initial flow data:', agent.flow);
         const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
         
-        const hasNodes = Array.isArray(flowData.nodes);
-        const hasEdges = Array.isArray(flowData.edges);
-        
-        if (hasNodes || hasEdges) {
-          let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
-          mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
-          console.log('[AgentFlowPage] Initial Mermaid Chart:', mermaidChartStr);
-          setMermaidChart(mermaidChartStr);
-        } else {
-          console.log('[AgentFlowPage] Flow data is not properly formatted');
-          setMermaidChart('graph TD\n  EmptyFlow[Empty Flow]');
-        }
+        // Generate fresh mermaid chart from the current flow data
+        let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
+        mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
+        console.log('[AgentFlowPage] Initial Mermaid Chart:', mermaidChartStr);
+        setMermaidChart(mermaidChartStr);
       } catch (error) {
         console.error('[AgentFlowPage] Error generating mermaid chart:', error);
         setMermaidChart('graph TD\n  Error[Error generating chart]');
       }
+    } else {
+      // Set empty flow message if no flow data exists
+      setMermaidChart('graph TD\n  EmptyFlow[Empty Flow]');
     }
   }, [agent]);
 
@@ -309,7 +313,10 @@ export default function AgentFlowPage() {
     return null;
   }
 
-  const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow || { nodes: [], edges: [] };
+  // Ensure we're working with a properly structured flow object
+  const flowData = typeof agent.flow === 'string' 
+    ? JSON.parse(agent.flow) 
+    : agent.flow || { nodes: [], edges: [] };
 
   return (
     <DragProvider>
