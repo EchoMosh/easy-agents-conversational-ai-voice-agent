@@ -1,3 +1,4 @@
+
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -11,11 +12,13 @@ import { ActionConfig } from './actions/action-config';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
+
 type GreetingNodeData = {
   greeting: string;
   outcomes?: string[];
   actions?: NodeAction[];
 };
+
 export function GreetingNode({
   data,
   id
@@ -28,6 +31,7 @@ export function GreetingNode({
   } = useContext(NodeUpdateContext);
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
+  const [showActionTypeDialog, setShowActionTypeDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [greeting, setGreeting] = useState(data.greeting);
@@ -54,6 +58,7 @@ export function GreetingNode({
       });
     }
   }, [greeting, id, data, updateNodeData]);
+  
   const addOutcome = () => {
     if (outcomes.length >= 5) return;
     if (!newOutcome.trim()) return;
@@ -68,6 +73,7 @@ export function GreetingNode({
       outcomes: newOutcomes
     });
   };
+  
   const removeOutcome = (index: number) => {
     const newOutcomes = outcomes.filter((_, i) => i !== index);
     setOutcomes(newOutcomes);
@@ -78,11 +84,13 @@ export function GreetingNode({
       outcomes: newOutcomes
     });
   };
+  
   const startEditing = (index: number) => {
     setEditingIndex(index);
     setNewOutcome(outcomes[index]);
     setShowOutcomeDialog(true);
   };
+  
   const saveEdit = () => {
     if (!newOutcome.trim() || editingIndex === null) return;
     const updatedOutcomes = [...outcomes];
@@ -98,53 +106,68 @@ export function GreetingNode({
       outcomes: updatedOutcomes
     });
   };
+  
   const cancelEdit = () => {
     setShowOutcomeDialog(false);
     setEditingIndex(null);
     setNewOutcome('');
   };
+  
   const openNewOutcomeDialog = () => {
     setEditingIndex(null);
     setNewOutcome('');
     setShowOutcomeDialog(true);
   };
+  
   const handleGreetingChange = (value: string) => {
     setGreeting(value);
   };
 
   // Action handling
-  const addAction = () => {
+  const openActionTypeDialog = () => {
+    setShowActionTypeDialog(true);
+  };
+
+  const selectActionType = (type: 'sms' | 'webhook' | 'email') => {
+    setSelectedActionType(type);
+    setShowActionTypeDialog(false);
+    
     const newAction: NodeAction = {
       id: `action-${Date.now()}`,
-      type: selectedActionType,
+      type: type,
       config: {}
     };
 
     // Default configs based on action type
-    if (selectedActionType === 'sms') {
+    if (type === 'sms') {
       newAction.config = {
         phoneNumber: '',
         message: ''
       };
-    } else if (selectedActionType === 'webhook') {
+    } else if (type === 'webhook') {
       newAction.config = {
         url: '',
         method: 'POST',
         payload: '{}'
       };
-    } else if (selectedActionType === 'email') {
+    } else if (type === 'email') {
       newAction.config = {
         to: '',
         subject: '',
         message: ''
       };
     }
+    
     setEditingAction(newAction);
     setShowActionDialog(true);
   };
+  
   const saveAction = () => {
     if (!editingAction) return;
-    const updatedActions = editingAction.id ? actions.map(a => a.id === editingAction.id ? editingAction : a) : [...actions, editingAction];
+    const updatedActions = editingAction.id ? 
+      actions.map(a => a.id === editingAction.id ? editingAction : a) : 
+      [...actions, editingAction];
+    
     setActions(updatedActions);
     setEditingAction(null);
     setShowActionDialog(false);
@@ -154,12 +177,17 @@ export function GreetingNode({
       ...data,
       actions: updatedActions
     });
+    
+    // Open the actions panel to show the newly added action
+    setActionsOpen(true);
   };
+  
   const editAction = (action: NodeAction) => {
     setEditingAction(action);
     setSelectedActionType(action.type);
     setShowActionDialog(true);
   };
+  
   const removeAction = (actionId: string) => {
     const newActions = actions.filter(a => a.id !== actionId);
     setActions(newActions);
@@ -170,6 +198,7 @@ export function GreetingNode({
       actions: newActions
     });
   };
+  
   const getActionIcon = (type: string) => {
     switch (type) {
       case 'sms':
@@ -182,6 +211,7 @@ export function GreetingNode({
         return <AlertTriangle className="h-3.5 w-3.5" />;
     }
   };
+  
   const getActionLabel = (action: NodeAction) => {
     switch (action.type) {
       case 'sms':
@@ -194,6 +224,7 @@ export function GreetingNode({
         return 'Unknown action';
     }
   };
+
   return <div className="group relative">
       {/* Glowing background effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-sky-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -241,7 +272,7 @@ export function GreetingNode({
                   </div>)}
               </div>}
             <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={addAction} className="text-xs h-7 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40">
+              <Button variant="outline" size="sm" onClick={openActionTypeDialog} className="text-xs h-7 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40">
                 <Plus className="h-3 w-3 mr-1" /> Add Action
               </Button>
             </div>
@@ -281,14 +312,17 @@ export function GreetingNode({
       </div>
 
       {/* Floating Actions Button - Positioned outside and below the main container */}
-      <Collapsible open={actionsOpen} onOpenChange={setActionsOpen} className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10">
-        <CollapsibleTrigger className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]">
+      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10">
+        <Button 
+          onClick={openActionTypeDialog}
+          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
+        >
           <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
           <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
-            Actions {actionsOpen ? "−" : "+"}
+            Actions
           </span>
-        </CollapsibleTrigger>
-      </Collapsible>
+        </Button>
+      </div>
 
       {/* Input handle */}
       <Handle type="target" position={Position.Left} className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-blue-500" />
@@ -316,6 +350,57 @@ export function GreetingNode({
         </DialogContent>
       </Dialog>
 
+      {/* Action Type Selection Dialog */}
+      <Dialog open={showActionTypeDialog} onOpenChange={setShowActionTypeDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Select Action Type</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="grid grid-cols-1 gap-3">
+              <Button 
+                onClick={() => selectActionType('sms')} 
+                className="flex items-center justify-start gap-3 h-14 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50"
+              >
+                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
+                  <Send className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium">SMS Message</div>
+                  <div className="text-xs text-blue-600/70 dark:text-blue-400/70">Send text messages to phones</div>
+                </div>
+              </Button>
+              
+              <Button 
+                onClick={() => selectActionType('email')} 
+                className="flex items-center justify-start gap-3 h-14 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800/50"
+              >
+                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-800 flex items-center justify-center">
+                  <Mail className="h-4 w-4 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium">Email</div>
+                  <div className="text-xs text-green-600/70 dark:text-green-400/70">Send emails to your customers</div>
+                </div>
+              </Button>
+              
+              <Button 
+                onClick={() => selectActionType('webhook')} 
+                className="flex items-center justify-start gap-3 h-14 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50"
+              >
+                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 flex items-center justify-center">
+                  <Webhook className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium">Webhook</div>
+                  <div className="text-xs text-purple-600/70 dark:text-purple-400/70">Call external services or APIs</div>
+                </div>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Action Dialog */}
       <Dialog open={showActionDialog} onOpenChange={open => {
       setShowActionDialog(open);
@@ -323,53 +408,16 @@ export function GreetingNode({
     }}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
-            <DialogTitle>{editingAction?.id ? 'Edit Action' : 'Add New Action'}</DialogTitle>
+            <DialogTitle>
+              {editingAction?.id ? 'Edit Action' : 'Add New Action'}
+              {editingAction && <span className="ml-2 text-sm font-normal">
+                ({editingAction.type === 'sms' ? 'SMS' : 
+                  editingAction.type === 'email' ? 'Email' : 
+                  editingAction.type === 'webhook' ? 'Webhook' : 'Unknown'})
+              </span>}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {!editingAction?.id && <div className="mb-4">
-                <Label className="text-sm mb-2 block">Action Type</Label>
-                <div className="flex gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant={selectedActionType === 'sms' ? 'default' : 'outline'} className={`flex-1 ${selectedActionType === 'sms' ? 'bg-blue-500' : ''}`} onClick={() => setSelectedActionType('sms')}>
-                          <Send className="h-4 w-4 mr-2" /> SMS
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Send SMS messages</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant={selectedActionType === 'webhook' ? 'default' : 'outline'} className={`flex-1 ${selectedActionType === 'webhook' ? 'bg-violet-500' : ''}`} onClick={() => setSelectedActionType('webhook')}>
-                          <Webhook className="h-4 w-4 mr-2" /> Webhook
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Call external webhooks</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant={selectedActionType === 'email' ? 'default' : 'outline'} className={`flex-1 ${selectedActionType === 'email' ? 'bg-green-500' : ''}`} onClick={() => setSelectedActionType('email')}>
-                          <Mail className="h-4 w-4 mr-2" /> Email
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Send email messages</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </div>}
-
             {editingAction && <ActionConfig action={editingAction} onChange={updatedAction => setEditingAction(updatedAction)} />}
 
             <div className="flex justify-end gap-3 mt-6">
