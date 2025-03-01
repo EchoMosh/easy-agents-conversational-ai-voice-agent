@@ -1,23 +1,12 @@
 
-import React, {
-  useRef,
-  useState,
-  useEffect,
-  forwardRef,
-} from 'react';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
-import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { useDebouncedCallback } from 'use-debounce';
+import React, { useState, useEffect, forwardRef } from 'react';
+import { useDebounce } from 'use-debounce';
 
-// Create a simple command for variable insertion
+// Define the command constant
 export const INSERT_VARIABLE_COMMAND = 'INSERT_VARIABLE_COMMAND';
 
-export interface LexicalEditorProps {
+// Define the component props
+interface LexicalEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -25,68 +14,45 @@ export interface LexicalEditorProps {
   onAtMention?: () => void;
 }
 
-// Define a basic editor configuration
-const getEditorConfig = (placeholder?: string) => {
-  return {
-    namespace: 'GreetingEditor',
-    theme: {
-      paragraph: 'mb-1',
-      text: {
-        bold: 'font-bold',
-        italic: 'italic',
-        underline: 'underline',
-        strikethrough: 'line-through',
-      },
-    },
-    onError: (error: Error) => {
-      console.error('Lexical Editor Error:', error);
-    },
-    nodes: [],
-  };
-};
-
-export const LexicalEditor = forwardRef<any, LexicalEditorProps>(
+export const LexicalEditor = forwardRef<HTMLTextAreaElement, LexicalEditorProps>(
   ({ value, onChange, placeholder, className, onAtMention }, ref) => {
-    const [editorValue, setEditorValue] = useState(value);
-    const debouncedOnChange = useDebouncedCallback((newValue) => {
-      onChange(newValue);
-    }, 500);
+    const [internalValue, setInternalValue] = useState(value);
+    const [debouncedValue] = useDebounce(internalValue, 500);
 
     useEffect(() => {
-      debouncedOnChange(editorValue);
-    }, [editorValue, debouncedOnChange]);
+      onChange(debouncedValue);
+    }, [debouncedValue, onChange]);
 
     useEffect(() => {
-      setEditorValue(value);
+      setInternalValue(value);
     }, [value]);
 
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newValue = e.target.value;
+      setInternalValue(newValue);
+      
+      // Check for @ symbol to trigger mentions
+      if (newValue.includes('@') && onAtMention) {
+        const lastAtIndex = newValue.lastIndexOf('@');
+        if (lastAtIndex === newValue.length - 1) {
+          onAtMention();
+        }
+      }
+    };
+
     return (
-      <LexicalComposer initialConfig={getEditorConfig(placeholder)}>
-        <div className="relative">
-          <div className="w-full">
-            <RichTextPlugin
-              contentEditable={
-                <ContentEditable className={`${className} focus:outline-none`} />
-              }
-              placeholder={
-                <div className="text-gray-500 dark:text-gray-400">{placeholder}</div>
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            <HistoryPlugin />
-            <AutoFocusPlugin />
-            <OnChangePlugin onChange={(editorState) => {
-              editorState.read(() => {
-                const editorContent = editorState.toJSON();
-                setEditorValue(JSON.stringify(editorContent));
-              });
-            }} />
-          </div>
-          <div className="text-xs text-gray-500 mt-1 text-right">
-            {editorValue ? JSON.stringify(editorValue).length : 0} characters
-          </div>
-        </div>
-      </LexicalComposer>
+      <textarea
+        ref={ref}
+        value={internalValue}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className={`${className} w-full min-h-[100px] p-3 focus:outline-none`}
+        onKeyDown={(e) => {
+          if (e.key === '@' && onAtMention) {
+            onAtMention();
+          }
+        }}
+      />
     );
   }
 );
