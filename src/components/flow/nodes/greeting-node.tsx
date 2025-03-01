@@ -254,36 +254,38 @@ export function GreetingNode({
           <GreetingInput value={greeting} onChange={handleGreetingChange} />
         </div>
 
-        {/* Outcomes section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
-              Possible outcomes ({outcomes.length}/5)
-            </Label>
-            {outcomes.length < 5 && <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-lg" onClick={openNewOutcomeDialog}>
-                <Plus className="h-4 w-4" />
-              </Button>}
-          </div>
+        {/* Outcomes section - only render if there are outcomes */}
+        {outcomes.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
+                Possible outcomes ({outcomes.length}/5)
+              </Label>
+              {outcomes.length < 5 && <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-lg" onClick={openNewOutcomeDialog}>
+                  <Plus className="h-4 w-4" />
+                </Button>}
+            </div>
 
-          <div className="space-y-2">
-            {outcomes.map((outcome, index) => <div key={index} className="group relative animate-fade-in">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 rounded-xl py-2.5 px-4 text-sm border border-blue-100/50 dark:border-blue-800/50 shadow-sm text-gray-900 dark:text-white/90">
-                    {outcome}
+            <div className="space-y-2">
+              {outcomes.map((outcome, index) => <div key={index} className="group relative animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 rounded-xl py-2.5 px-4 text-sm border border-blue-100/50 dark:border-blue-800/50 shadow-sm text-gray-900 dark:text-white/90">
+                      {outcome}
+                    </div>
+                    <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg" onClick={() => startEditing(index)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg" onClick={() => removeOutcome(index)}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <Handle type="source" position={Position.Right} id={`outcome-${index}`} className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-blue-500" />
                   </div>
-                  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg" onClick={() => startEditing(index)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg" onClick={() => removeOutcome(index)}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  <Handle type="source" position={Position.Right} id={`outcome-${index}`} className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-blue-500" />
-                </div>
-              </div>)}
+                </div>)}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Floating Actions Button - Positioned outside and below the main container */}

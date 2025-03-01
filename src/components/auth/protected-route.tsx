@@ -34,7 +34,7 @@ const ProtectedRoute = () => {
   if (isAuthenticated === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner />
         <p className="ml-2 text-muted-foreground">Checking authentication...</p>
       </div>
     );
