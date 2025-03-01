@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from "react";
 import { Users, Target, Settings, GitMerge, MessageSquare, Book, Zap } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -11,7 +12,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-const mainMenuItems = [
+export const mainMenuItems = [
   {
     title: "Agents",
     icon: Users,
@@ -52,13 +53,68 @@ const bottomMenuItems = [
   },
 ];
 
+interface CustomizedMenuItem {
+  id: string;
+  title: string;
+  visible: boolean;
+}
+
 export function NavigationMenu() {
+  const [customizedItems, setCustomizedItems] = useState<CustomizedMenuItem[]>([]);
+  const [displayedItems, setDisplayedItems] = useState(mainMenuItems);
+
+  // Load sidebar customization settings
+  useEffect(() => {
+    const loadSavedSettings = () => {
+      const savedItems = localStorage.getItem('sidebar-settings');
+      if (savedItems) {
+        setCustomizedItems(JSON.parse(savedItems));
+      }
+    };
+
+    // Initial load
+    loadSavedSettings();
+
+    // Listen for changes from the settings page
+    const handleSettingsChanged = (event: any) => {
+      if (event.detail && event.detail.items) {
+        setCustomizedItems(event.detail.items);
+      }
+    };
+
+    window.addEventListener('sidebar-settings-changed', handleSettingsChanged);
+    
+    return () => {
+      window.removeEventListener('sidebar-settings-changed', handleSettingsChanged);
+    };
+  }, []);
+
+  // Apply customization when settings change
+  useEffect(() => {
+    if (customizedItems.length === 0) return;
+
+    // Filter and reorder items based on customization
+    const newDisplayedItems = [...mainMenuItems];
+    const orderedItems = newDisplayedItems.filter(menuItem => {
+      const customItem = customizedItems.find(
+        item => item.id === menuItem.title.toLowerCase()
+      );
+      return customItem ? customItem.visible : true;
+    }).sort((a, b) => {
+      const aIndex = customizedItems.findIndex(item => item.id === a.title.toLowerCase());
+      const bIndex = customizedItems.findIndex(item => item.id === b.title.toLowerCase());
+      return aIndex - bIndex;
+    });
+
+    setDisplayedItems(orderedItems);
+  }, [customizedItems]);
+
   return (
     <SidebarContent>
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
-            {mainMenuItems.map((item) => (
+            {displayedItems.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
                   <NavLink
