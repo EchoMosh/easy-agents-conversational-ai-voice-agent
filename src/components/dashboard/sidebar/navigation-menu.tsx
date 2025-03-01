@@ -1,6 +1,22 @@
 
 import { useEffect, useState } from "react";
-import { Users, Target, Settings, GitMerge, MessageSquare, Book, Zap } from "lucide-react";
+import { 
+  Users, 
+  Target, 
+  Settings, 
+  GitMerge, 
+  MessageSquare, 
+  Book, 
+  Zap,
+  ChevronDown,
+  ChevronUp, 
+  ChevronLeft, 
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   SidebarContent,
@@ -21,6 +37,14 @@ const iconComponents = {
   MessageSquare,
   Book,
   Zap,
+  ChevronDown,
+  ChevronUp, 
+  ChevronLeft, 
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight
 };
 
 export const mainMenuItems = [

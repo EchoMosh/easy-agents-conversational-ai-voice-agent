@@ -11,7 +11,24 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { mainMenuItems } from "@/components/dashboard/sidebar/navigation-menu";
-import { GripVertical, Users, Target, GitMerge, MessageSquare, Book, Zap } from "lucide-react";
+import { 
+  GripVertical, 
+  Users, 
+  Target, 
+  GitMerge, 
+  MessageSquare, 
+  Book, 
+  Zap, 
+  Settings,
+  ChevronDown,
+  ChevronUp, 
+  ChevronLeft, 
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight
+} from "lucide-react";
 
 // Define the sidebar item type with icon
 interface SidebarItem {
@@ -23,7 +40,21 @@ interface SidebarItem {
 
 // Get all available icons from lucide-react
 const availableIcons: Record<string, any> = {
-  Users, Target, GitMerge, MessageSquare, Book, Zap
+  Users, 
+  Target, 
+  GitMerge, 
+  MessageSquare, 
+  Book, 
+  Zap, 
+  Settings,
+  ChevronDown,
+  ChevronUp, 
+  ChevronLeft, 
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight
 };
 
 // Sortable item component
@@ -73,7 +104,7 @@ const SortableItem = ({
               <SelectValue>
                 <div className="flex items-center gap-2">
                   <IconComponent className="h-4 w-4" />
-                  <span>Users</span>
+                  <span>{item.icon}</span>
                 </div>
               </SelectValue>
             </SelectTrigger>
