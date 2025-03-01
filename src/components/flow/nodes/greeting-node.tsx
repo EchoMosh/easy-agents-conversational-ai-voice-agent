@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NodeAction, NodeData } from '@/types/agent-types';
 import { ActionConfig } from './actions/action-config';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
 
@@ -39,7 +38,7 @@ export function GreetingNode({
   const [actions, setActions] = useState<NodeAction[]>(data.actions || []);
   const [selectedActionType, setSelectedActionType] = useState<'sms' | 'webhook' | 'email'>('sms');
   const [editingAction, setEditingAction] = useState<NodeAction | null>(null);
-  const [actionsOpen, setActionsOpen] = useState(false);
+  const [showActions, setShowActions] = useState(false);
 
   // Sync with data when it changes from the parent
   useEffect(() => {
@@ -178,8 +177,8 @@ export function GreetingNode({
       actions: updatedActions
     });
     
-    // Open the actions panel to show the newly added action
-    setActionsOpen(true);
+    // Show the actions panel
+    setShowActions(true);
   };
   
   const editAction = (action: NodeAction) => {
@@ -250,35 +249,6 @@ export function GreetingNode({
           <GreetingInput value={greeting} onChange={handleGreetingChange} />
         </div>
 
-        {/* Actions content - only shown when actionsOpen is true */}
-        <Collapsible open={actionsOpen} onOpenChange={setActionsOpen}>
-          <CollapsibleContent className="space-y-3 mb-4">
-            {actions.length === 0 ? <p className="text-xs text-gray-500 dark:text-gray-400 italic">No actions configured</p> : <div className="space-y-2">
-                {actions.map(action => <div key={action.id} className="group/action relative flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-blue-100/30 dark:border-blue-800/30">
-                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
-                      {getActionIcon(action.type)}
-                    </div>
-                    <div className="flex-1 text-xs truncate">
-                      {getActionLabel(action)}
-                    </div>
-                    <div className="flex opacity-0 group-hover/action:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => editAction(action)}>
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => removeAction(action.id)}>
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>)}
-              </div>}
-            <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={openActionTypeDialog} className="text-xs h-7 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40">
-                <Plus className="h-3 w-3 mr-1" /> Add Action
-              </Button>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-
         {/* Outcomes section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -313,16 +283,72 @@ export function GreetingNode({
 
       {/* Floating Actions Button - Positioned outside and below the main container */}
       <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10">
-        <Button 
-          onClick={openActionTypeDialog}
-          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
-        >
-          <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
-          <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
-            Actions
-          </span>
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                onClick={() => setShowActions(!showActions)}
+                className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
+              >
+                <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
+                <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
+                  Actions {actions.length > 0 && `(${actions.length})`}
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Manage actions</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
+
+      {/* Floating Actions Panel */}
+      {showActions && (
+        <div className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+2.5rem)] w-[320px] z-20 animate-fade-in">
+          <div className="backdrop-blur-xl bg-white/90 dark:bg-gray-900/90 rounded-xl border border-blue-200/50 dark:border-blue-800/50 shadow-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-blue-700 dark:text-blue-400">Actions</h3>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={openActionTypeDialog} className="text-xs h-7 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40">
+                  <Plus className="h-3 w-3 mr-1" /> Add Action
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowActions(false)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            {actions.length === 0 ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic">No actions configured</p>
+            ) : (
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                {actions.map(action => (
+                  <div key={action.id} className="group/action relative flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-blue-100/30 dark:border-blue-800/30">
+                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
+                      {getActionIcon(action.type)}
+                    </div>
+                    <div className="flex-1 text-xs truncate">
+                      {getActionLabel(action)}
+                    </div>
+                    <div className="flex opacity-0 group-hover/action:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => editAction(action)}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => removeAction(action.id)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Connecting line */}
+          <div className="absolute left-1/2 -translate-x-1/2 -top-5 w-0.5 h-5 bg-blue-200/50 dark:bg-blue-800/50"></div>
+        </div>
+      )}
 
       {/* Input handle */}
       <Handle type="target" position={Position.Left} className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-blue-500" />
