@@ -224,70 +224,53 @@ export function GreetingNode({
           <GreetingInput value={greeting} onChange={handleGreetingChange} />
         </div>
 
-        {/* Actions section */}
-        <Collapsible
-          open={actionsOpen}
-          onOpenChange={setActionsOpen}
-          className="mb-4 border border-blue-100/50 dark:border-blue-800/30 rounded-xl overflow-hidden"
-        >
-          <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-2 bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors">
-            <div className="flex items-center gap-2">
-              <Send className="h-3.5 w-3.5 text-blue-600/80 dark:text-blue-400/80" />
-              <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
-                Actions ({actions.length})
-              </span>
-            </div>
-            <div className="text-blue-600/70 dark:text-blue-400/70">
-              {actionsOpen ? "−" : "+"}
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="px-4 py-3 bg-white/50 dark:bg-gray-900/50 space-y-3">
-            {actions.length === 0 ? (
-              <p className="text-xs text-gray-500 dark:text-gray-400 italic">No actions configured</p>
-            ) : (
-              <div className="space-y-2">
-                {actions.map((action) => (
-                  <div key={action.id} className="group/action relative flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-blue-100/30 dark:border-blue-800/30">
-                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
-                      {getActionIcon(action.type)}
-                    </div>
-                    <div className="flex-1 text-xs truncate">
-                      {getActionLabel(action)}
-                    </div>
-                    <div className="flex opacity-0 group-hover/action:opacity-100 transition-opacity">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6 rounded-full"
-                        onClick={() => editAction(action)}
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        onClick={() => removeAction(action.id)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
+        {/* Actions content - moved outside the Collapsible component */}
+        <CollapsibleContent className="bg-white/50 dark:bg-gray-900/50 space-y-3 border border-blue-100/50 dark:border-blue-800/30 rounded-xl p-4 mb-4" open={actionsOpen}>
+          {actions.length === 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400 italic">No actions configured</p>
+          ) : (
+            <div className="space-y-2">
+              {actions.map((action) => (
+                <div key={action.id} className="group/action relative flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm border border-blue-100/30 dark:border-blue-800/30">
+                  <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
+                    {getActionIcon(action.type)}
                   </div>
-                ))}
-              </div>
-            )}
-            <div className="flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={addAction}
-                className="text-xs h-7 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40"
-              >
-                <Plus className="h-3 w-3 mr-1" /> Add Action
-              </Button>
+                  <div className="flex-1 text-xs truncate">
+                    {getActionLabel(action)}
+                  </div>
+                  <div className="flex opacity-0 group-hover/action:opacity-100 transition-opacity">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 rounded-full"
+                      onClick={() => editAction(action)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      onClick={() => removeAction(action.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
-          </CollapsibleContent>
-        </Collapsible>
+          )}
+          <div className="flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={addAction}
+              className="text-xs h-7 bg-blue-50/70 dark:bg-blue-900/20 border-blue-200/50 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100/70 dark:hover:bg-blue-900/40"
+            >
+              <Plus className="h-3 w-3 mr-1" /> Add Action
+            </Button>
+          </div>
+        </CollapsibleContent>
 
         {/* Outcomes section */}
         <div className="space-y-3">
@@ -320,6 +303,20 @@ export function GreetingNode({
           </div>
         </div>
       </div>
+
+      {/* Floating Actions Button - Moved outside the main container */}
+      <Collapsible
+        open={actionsOpen}
+        onOpenChange={setActionsOpen}
+        className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10"
+      >
+        <CollapsibleTrigger className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50">
+          <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
+          <span className="text-xs font-medium text-blue-600/80 dark:text-blue-400/80">
+            Actions {actionsOpen ? "−" : "+"}
+          </span>
+        </CollapsibleTrigger>
+      </Collapsible>
 
       {/* Input handle */}
       <Handle type="target" position={Position.Left} className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-blue-500" />
