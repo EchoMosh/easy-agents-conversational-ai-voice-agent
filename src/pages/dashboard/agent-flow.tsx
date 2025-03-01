@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ReactFlowProvider, Node as FlowNode, Edge } from '@xyflow/react';
+import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
 import { Header } from '@/components/flow/agent-flow/header';
@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Agent } from '@/types/agent-types';
 import { useToast } from '@/hooks/use-toast';
 import { FlowData } from '@/types/agent-types';
-import { FollowUpFlow } from '@/components/flow/follow-up/follow-up-flow';
 
 function generateMermaidFromFlow(flowData: FlowData): string {
   if (!flowData || !flowData.nodes || !flowData.edges) {
@@ -136,7 +135,6 @@ export default function AgentFlowPage() {
   const { toast } = useToast();
   const [mermaidChart, setMermaidChart] = useState<string>('');
   const [showMermaid, setShowMermaid] = useState<boolean>(true);
-  const [showFollowUp, setShowFollowUp] = useState<boolean>(false);
 
   const { data: agent, refetch, isError, isLoading } = useQuery({
     queryKey: ['agent', id],
@@ -231,7 +229,7 @@ export default function AgentFlowPage() {
     }
   }, [agent]);
 
-  const handleNodesChange = useCallback((newNodes: FlowNode[]) => {
+  const handleNodesChange = useCallback((newNodes: any[]) => {
     if (!agent?.flow) {
       console.log('[AgentFlowPage] handleNodesChange: No agent flow data available');
       return;
@@ -256,7 +254,7 @@ export default function AgentFlowPage() {
     }
   }, [agent, saveFlowMutation]);
 
-  const handleEdgesChange = useCallback((newEdges: Edge[]) => {
+  const handleEdgesChange = useCallback((newEdges: any[]) => {
     if (!agent?.flow) {
       console.log('[AgentFlowPage] handleEdgesChange: No agent flow data available');
       return;
@@ -296,10 +294,6 @@ export default function AgentFlowPage() {
     console.log('[AgentFlowPage] Agent settings updated successfully');
   };
 
-  const toggleFollowUp = useCallback(() => {
-    setShowFollowUp(prev => !prev);
-  }, []);
-
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
@@ -321,11 +315,9 @@ export default function AgentFlowPage() {
           agent={agent}
           onBack={() => navigate('/dashboard/agents')}
           onUpdateSettings={handleUpdateSettings}
-          onToggleFollowUp={toggleFollowUp}
-          showFollowUp={showFollowUp}
         />
         
-        <div className={`flex flex-col flex-1 transition-all duration-300 ease-in-out ${showFollowUp ? 'h-1/2' : 'h-full'}`}>
+        <div className="flex flex-col flex-1">
           <ReactFlowProvider>
             <Flow
               initialNodes={flowData.nodes || []}
@@ -353,24 +345,6 @@ export default function AgentFlowPage() {
             </div>
           )}
         </div>
-
-        {/* Follow-up Flow */}
-        {showFollowUp && (
-          <div 
-            className="flex-1 transition-all duration-300 ease-in-out"
-            style={{
-              boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)'
-            }}
-          >
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up Automation</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Configure actions that happen after conversation outcomes</p>
-            </div>
-            <ReactFlowProvider>
-              <FollowUpFlow agentId={agent.id} />
-            </ReactFlowProvider>
-          </div>
-        )}
       </div>
     </DragProvider>
   );
