@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider, Node as FlowNode, Edge } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';

@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from 'react';
-import { LexicalComposer } from '@lexical/react/LexicalComposerContext';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';

@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $isVariableNode } from './VariableNode';
-import { LexicalNode, $getRoot, TextNode } from 'lexical';
+import { LexicalNode, $getRoot, TextNode, NodeMutation } from 'lexical';
 
 // This plugin highlights variable nodes and provides proper styling
 export function VariableHighlightPlugin() {
@@ -21,8 +21,8 @@ export function VariableHighlightPlugin() {
             textNodes.push(node);
           }
           
-          // Check if node has children method before calling it
-          if (node.getChildren && typeof node.getChildren === 'function') {
+          // Check if node is a parent node with children method
+          if ('getChildren' in node && typeof node.getChildren === 'function') {
             const children = node.getChildren();
             children.forEach(collectTextNodes);
           }
@@ -43,8 +43,9 @@ export function VariableHighlightPlugin() {
 
     // Listen for node mutations
     const removeListener = editor.registerMutationListener(
-      (mutationListMap) => {
-        for (const [nodeKey, mutation] of Object.entries(mutationListMap)) {
+      TextNode,
+      (mutations: Map<string, NodeMutation>) => {
+        for (const [nodeKey, mutation] of mutations.entries()) {
           if (mutation === 'created') {
             scanForVariables();
           }
