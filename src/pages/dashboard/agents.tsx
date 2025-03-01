@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -143,14 +143,27 @@ const AgentsPage = () => {
     setIsCreating(false);
   };
 
+  const handleAutomationsClick = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Automations feature is under development",
+    });
+  };
+
   return (
     <div className="w-full p-8 bg-background text-foreground relative">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Agents</h1>
-        <Button onClick={() => setIsCreating(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Agent
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleAutomationsClick}>
+            <Zap className="w-4 h-4 mr-2" />
+            Automations
+          </Button>
+          <Button onClick={() => setIsCreating(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Agent
+          </Button>
+        </div>
       </div>
 
       {isLoading && (
