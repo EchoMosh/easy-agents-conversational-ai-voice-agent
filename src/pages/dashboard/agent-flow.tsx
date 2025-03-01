@@ -107,7 +107,10 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     let edgeLabel = '';
     
     if (sourceNode && sourceNode.data && (sourceNode.type === 'speakNode' || sourceNode.type === 'greetingNode')) {
-      const outcomes = sourceNode.data.outcomes || [];
+      // Explicitly check if outcomes is an array and access its length safely
+      const outcomes = sourceNode.data.outcomes && Array.isArray(sourceNode.data.outcomes) 
+        ? sourceNode.data.outcomes 
+        : [];
       
       if (edge.sourceHandle && edge.sourceHandle.startsWith('outcome-')) {
         const outcomeIndex = parseInt(edge.sourceHandle.replace('outcome-', ''), 10);
