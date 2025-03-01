@@ -47,11 +47,19 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
       }
       
       // Log what we're working with
-      console.log('Processing flow data:', processedFlow);
+      console.log('Processing flow data for preview:', processedFlow);
       
       // Set the nodes and edges
       const flowNodes = Array.isArray(processedFlow.nodes) ? processedFlow.nodes : [];
       const flowEdges = Array.isArray(processedFlow.edges) ? processedFlow.edges : [];
+      
+      // If there are no nodes or edges, render an empty state
+      if (flowNodes.length === 0) {
+        console.log('No nodes in flow data, rendering empty state');
+        setParsedNodes([]);
+        setParsedEdges([]);
+        return;
+      }
       
       // Apply styling to nodes for better preview
       const styledNodes = flowNodes.map((node: any) => ({
@@ -79,7 +87,11 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
       }));
       
       // Apply styling to edges for better visibility
-      const styledEdges = flowEdges.map((edge: any) => ({
+      const styledEdges = flowEdges.filter((edge: any) => {
+        // Only include edges that connect existing nodes
+        return flowNodes.some(n => n.id === edge.source) && 
+               flowNodes.some(n => n.id === edge.target);
+      }).map((edge: any) => ({
         ...edge,
         style: {
           ...edge.style,
@@ -93,7 +105,7 @@ export function AgentFlowPreviewContent({ flowData, maxHeight = 120 }: AgentFlow
       setParsedNodes(styledNodes);
       setParsedEdges(styledEdges);
     } catch (error) {
-      console.error('Error processing flow data:', error);
+      console.error('Error processing flow data for preview:', error);
       setParsedNodes([]);
       setParsedEdges([]);
     }

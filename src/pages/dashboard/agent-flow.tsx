@@ -145,6 +145,7 @@ export default function AgentFlowPage() {
   const { toast } = useToast();
   const [mermaidChart, setMermaidChart] = useState<string>('');
   const [showMermaid, setShowMermaid] = useState<boolean>(true);
+  const [flowState, setFlowState] = useState<FlowData>({ nodes: [], edges: [] });
 
   const { data: agent, refetch, isError, isLoading } = useQuery({
     queryKey: ['agent', id],
@@ -215,11 +216,13 @@ export default function AgentFlowPage() {
     }
   });
 
+  // Update flowState when agent.flow changes
   useEffect(() => {
     if (agent?.flow) {
       try {
         console.log('[AgentFlowPage] Processing initial flow data:', agent.flow);
         const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
+        setFlowState(flowData as FlowData);
         
         // Generate fresh mermaid chart from the current flow data
         let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
@@ -232,6 +235,7 @@ export default function AgentFlowPage() {
       }
     } else {
       // Set empty flow message if no flow data exists
+      setFlowState({ nodes: [], edges: [] });
       setMermaidChart('graph TD\n  EmptyFlow[Empty Flow]');
     }
   }, [agent]);
@@ -246,12 +250,19 @@ export default function AgentFlowPage() {
       
       const clonedNodes = JSON.parse(JSON.stringify(newNodes));
       
-      const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-      const currentEdges = currentFlow.edges || [];
+      // Update the flowState with new nodes
+      setFlowState(prevState => {
+        const newState = {
+          nodes: clonedNodes,
+          edges: prevState.edges || []
+        };
+        return newState;
+      });
       
+      // Save the updated flow data
       const flowData: FlowData = {
         nodes: clonedNodes,
-        edges: currentEdges
+        edges: flowState.edges || []
       };
       
       console.log('[AgentFlowPage] Saving updated flow data with new nodes');
@@ -259,7 +270,7 @@ export default function AgentFlowPage() {
     } catch (error) {
       console.error('[AgentFlowPage] Error updating nodes:', error);
     }
-  }, [agent, saveFlowMutation]);
+  }, [agent, saveFlowMutation, flowState]);
 
   const handleEdgesChange = useCallback((newEdges: any[]) => {
     if (!agent?.flow) {
@@ -271,11 +282,18 @@ export default function AgentFlowPage() {
       
       const clonedEdges = JSON.parse(JSON.stringify(newEdges));
       
-      const currentFlow = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
-      const currentNodes = currentFlow.nodes || [];
+      // Update the flowState with new edges
+      setFlowState(prevState => {
+        const newState = {
+          nodes: prevState.nodes || [],
+          edges: clonedEdges
+        };
+        return newState;
+      });
       
+      // Save the updated flow data
       const flowData: FlowData = {
-        nodes: currentNodes,
+        nodes: flowState.nodes || [],
         edges: clonedEdges
       };
       
@@ -284,7 +302,33 @@ export default function AgentFlowPage() {
     } catch (error) {
       console.error('[AgentFlowPage] Error updating edges:', error);
     }
-  }, [agent, saveFlowMutation]);
+  }, [agent, saveFlowMutation, flowState]);
+
+  // New function to handle node deletion
+  const handleNodeDeletion = useCallback((deletedNodes: any[], remainingNodes: any[], remainingEdges: any[]) => {
+    console.log('[AgentFlowPage] Nodes deleted:', deletedNodes);
+    console.log('[AgentFlowPage] Remaining nodes:', remainingNodes);
+    console.log('[AgentFlowPage] Remaining edges:', remainingEdges);
+    
+    // Update the flowState with remaining nodes and edges
+    setFlowState({
+      nodes: remainingNodes,
+      edges: remainingEdges
+    });
+    
+    // Generate and update the mermaid chart
+    const updatedFlowData: FlowData = {
+      nodes: remainingNodes,
+      edges: remainingEdges
+    };
+    
+    let mermaidChartStr = generateMermaidFromFlow(updatedFlowData);
+    mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
+    setMermaidChart(mermaidChartStr);
+    
+    // Save the updated flow data
+    saveFlowMutation.mutate(updatedFlowData);
+  }, [saveFlowMutation]);
 
   const handleUpdateSettings = async (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => {
     if (!id) return;
@@ -334,6 +378,7 @@ export default function AgentFlowPage() {
               initialEdges={flowData.edges || []}
               onNodesChange={handleNodesChange}
               onEdgesChange={handleEdgesChange}
+              onNodeDeletion={handleNodeDeletion}
             />
           </ReactFlowProvider>
           

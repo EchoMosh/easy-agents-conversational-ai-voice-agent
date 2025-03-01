@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
@@ -69,9 +70,10 @@ interface FlowProps {
   initialEdges: Edge[];
   onNodesChange: (nodes: Node[]) => void;
   onEdgesChange: (edges: Edge[]) => void;
+  onNodeDeletion?: (deletedNodes: Node[], remainingNodes: Node[], remainingEdges: Edge[]) => void;
 }
 
-export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange }: FlowProps) {
+export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange, onNodeDeletion }: FlowProps) {
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
   const [showWidgets, setShowWidgets] = useState(false);
@@ -138,10 +140,15 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange 
         onNodesChange(newNodes);
         onEdgesChange(newEdges);
         
+        // Call onNodeDeletion if provided
+        if (onNodeDeletion) {
+          onNodeDeletion(selectedNodes, newNodes, newEdges);
+        }
+        
         event.preventDefault();
       }
     }
-  }, [nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange]);
+  }, [nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion]);
 
   useEffect(() => {
     if (JSON.stringify(initialNodes) !== JSON.stringify(nodes)) {
