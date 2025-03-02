@@ -12,20 +12,39 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('Function started - new request received');
+
   try {
-    const { name, role, objective = "answer_calls", language = "en", voiceId } = await req.json();
+    // Log the raw request body for debugging
+    const rawBody = await req.text();
+    console.log('Raw request body:', rawBody);
+    
+    // Parse the request body
+    let requestData;
+    try {
+      requestData = JSON.parse(rawBody);
+      console.log('Parsed request data:', JSON.stringify(requestData, null, 2));
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      throw new Error('Invalid request format: Could not parse JSON');
+    }
+    
+    const { name, role, objective = "answer_calls", language = "en", voiceId } = requestData;
     
     if (!name) {
+      console.error('Missing required field: name');
       throw new Error('Agent name is required');
     }
     
-    console.log(`Creating ElevenLabs agent: ${name}, role: ${role}`);
+    console.log(`Creating ElevenLabs agent: ${name}, role: ${role}, language: ${language}`);
     
     // Check if API key is configured
     const apiKey = Deno.env.get('ELEVENLABS_API_KEY');
     if (!apiKey) {
       console.error('ELEVENLABS_API_KEY environment variable is not set');
       throw new Error('ElevenLabs API key not configured');
+    } else {
+      console.log('ELEVENLABS_API_KEY is set (masked for security)');
     }
     
     // Map our role to a system prompt for ElevenLabs
@@ -59,8 +78,6 @@ serve(async (req) => {
     if (objective) {
       systemPrompt += ` Your primary objective is to ${objective}.`;
     }
-
-    console.log('About to call ElevenLabs API with the following payload:');
     
     // Create the payload, removing any fields that might cause issues
     const payload = {
@@ -75,23 +92,32 @@ serve(async (req) => {
       enable_voice: true
     };
     
-    console.log(JSON.stringify(payload, null, 2));
+    console.log('Payload to be sent to ElevenLabs API:', JSON.stringify(payload, null, 2));
+    console.log('Using ElevenLabs API endpoint: https://api.elevenlabs.io/v1/convai/agents');
 
-    // Create a new agent in ElevenLabs - reverting to the original URL without /create-agent
-    const response = await fetch(
-      "https://api.elevenlabs.io/v1/convai/agents",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "xi-api-key": apiKey,
-        },
-        body: JSON.stringify(payload),
-      }
-    );
+    // Create a new agent in ElevenLabs
+    console.log('Sending request to ElevenLabs API...');
+    let response;
+    try {
+      response = await fetch(
+        "https://api.elevenlabs.io/v1/convai/agents",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "xi-api-key": apiKey,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      
+      console.log(`ElevenLabs API response status: ${response.status}`);
+    } catch (fetchError) {
+      console.error('Network error while fetching from ElevenLabs API:', fetchError);
+      throw new Error(`Network error connecting to ElevenLabs API: ${fetchError.message}`);
+    }
 
     const responseText = await response.text();
-    console.log(`ElevenLabs API response status: ${response.status}`);
     console.log(`ElevenLabs API response body: ${responseText}`);
 
     if (!response.ok) {
@@ -110,6 +136,7 @@ serve(async (req) => {
     let data;
     try {
       data = JSON.parse(responseText);
+      console.log('Parsed response from ElevenLabs:', JSON.stringify(data, null, 2));
     } catch (e) {
       console.error('Failed to parse ElevenLabs API response as JSON:', e);
       throw new Error('Invalid response format from ElevenLabs API');
@@ -122,24 +149,33 @@ serve(async (req) => {
     
     console.log('Successfully created ElevenLabs agent with ID:', data.agent_id);
     
+    const successResponse = {
+      elevenlabsAgentId: data.agent_id,
+      success: true
+    };
+    
+    console.log('Returning success response:', JSON.stringify(successResponse));
+    
     return new Response(
-      JSON.stringify({ 
-        elevenlabsAgentId: data.agent_id,
-        success: true
-      }),
+      JSON.stringify(successResponse),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
     console.error('Error creating ElevenLabs agent:', error);
+    console.error('Error stack:', error.stack);
+    
+    const errorResponse = { 
+      error: error.message,
+      details: error.stack,
+      success: false
+    };
+    
+    console.log('Returning error response:', JSON.stringify(errorResponse));
     
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error.stack,
-        success: false
-      }),
+      JSON.stringify(errorResponse),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

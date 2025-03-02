@@ -19,6 +19,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newAgent, setNewAgent] = useState<{
     name: string;
     role: Agent["role"];
@@ -40,6 +41,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     setIsCreating(true);
+    setError(null);
 
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -54,6 +56,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     try {
+      console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role);
+      
       // First, create an agent in ElevenLabs
       const { data: elevenlabsData, error: elevenlabsError } = await supabase.functions.invoke('create-elevenlabs-agent', {
         body: {
@@ -63,14 +67,18 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         }
       });
 
+      console.log('ElevenLabs agent creation response:', elevenlabsData, 'Error:', elevenlabsError);
+
       if (elevenlabsError) {
         console.error('Error creating ElevenLabs agent:', elevenlabsError);
-        throw new Error('Failed to create ElevenLabs agent');
+        setError(`Failed to create ElevenLabs agent: ${elevenlabsError.message || 'Unknown error'}`);
+        throw new Error(`Failed to create ElevenLabs agent: ${elevenlabsError.message || 'Unknown error'}`);
       }
 
       if (!elevenlabsData?.success || !elevenlabsData?.elevenlabsAgentId) {
         console.error('ElevenLabs agent creation failed:', elevenlabsData);
-        throw new Error('Failed to create ElevenLabs agent: ' + (elevenlabsData?.error || 'Unknown error'));
+        setError(`Failed to create ElevenLabs agent: ${elevenlabsData?.error || 'Unknown error'}`);
+        throw new Error(`Failed to create ElevenLabs agent: ${elevenlabsData?.error || 'Unknown error'}`);
       }
 
       console.log('Successfully created ElevenLabs agent with ID:', elevenlabsData.elevenlabsAgentId);
@@ -93,18 +101,24 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating agent in database:', error);
+        setError(`Failed to create agent in database: ${error.message}`);
+        throw error;
+      }
 
       await onSuccess(data.id);
       navigate(`/dashboard/agents/flow/${data.id}`, { replace: true });
     } catch (error) {
       console.error('Error creating agent:', error);
+      const errorMessage = typeof error === 'object' && error !== null && 'message' in error 
+        ? String(error.message) 
+        : "Failed to create agent";
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: typeof error === 'object' && error !== null && 'message' in error 
-          ? String(error.message) 
-          : "Failed to create agent",
+        description: errorMessage,
       });
     } finally {
       setIsCreating(false);
@@ -114,6 +128,13 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   return (
     <div className="space-y-6 py-6">
       <CreateAgentProgress currentStep={step} totalSteps={2} />
+      
+      {error && (
+        <div className="bg-destructive/20 p-4 rounded-md text-sm text-destructive mb-4">
+          <p className="font-semibold">Error creating agent:</p>
+          <p>{error}</p>
+        </div>
+      )}
       
       <div className="space-y-6">
         {step === 1 && (
