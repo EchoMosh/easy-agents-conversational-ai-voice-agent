@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   Dialog,
@@ -26,7 +25,7 @@ import { fetchDocuments } from "@/utils/knowledge-api";
 import { supabase } from "@/integrations/supabase/client";
 
 // Single ElevenLabs voice
-const voice = { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" };
+const voice = { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" };
 
 // Languages data for the dropdown select
 const languages = [
