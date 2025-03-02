@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
@@ -154,7 +155,27 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         throw new Error(`Error: ${response.status}`);
       }
       
-      const data = await response.json();
+      // Try to parse the response as JSON to validate it
+      let data;
+      const responseText = await response.text();
+      
+      try {
+        // Only try to parse if there's actual content
+        if (responseText && responseText.trim()) {
+          data = JSON.parse(responseText);
+        } else {
+          throw new Error("Empty response from webhook");
+        }
+      } catch (parseError) {
+        console.error('Error parsing webhook response:', parseError);
+        console.error('Raw response text:', responseText);
+        throw new Error("Failed to get a valid response from the webhook. The agent might not have been updated correctly.");
+      }
+      
+      if (!data) {
+        throw new Error("No data returned from webhook. The agent might not have been updated correctly.");
+      }
+      
       console.log('Webhook response:', data);
       
       toast({
@@ -165,7 +186,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       console.error('Error updating agent:', error);
       toast({
         title: "Error",
-        description: "Failed to update agent",
+        description: error instanceof Error ? error.message : "Failed to update agent",
         variant: "destructive",
       });
     } finally {
