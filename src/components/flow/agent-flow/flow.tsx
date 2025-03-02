@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
@@ -276,7 +275,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   }, [nodes, edges]);
 
   const defaultEdgeOptions = {
-    type: 'buttonEdge' as const, // Changed from 'default' to 'buttonEdge'
+    type: 'buttonEdge' as const,
     animated: true,
     style: {
       strokeWidth: 2,
@@ -421,18 +420,20 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             snapGrid={[15, 15]}
             deleteKeyCode={['Delete', 'Backspace']}
           >
-            <style jsx global>{`
-              @keyframes dashdraw {
-                from {
-                  stroke-dashoffset: 10;
+            <style>
+              {`
+                @keyframes dashdraw {
+                  from {
+                    stroke-dashoffset: 10;
+                  }
                 }
-              }
-              
-              .edge-delete-button {
-                cursor: pointer;
-                z-index: 10;
-              }
-            `}</style>
+                
+                .edge-delete-button {
+                  cursor: pointer;
+                  z-index: 10;
+                }
+              `}
+            </style>
             
             <Background className="opacity-40" />
             <MiniMap
