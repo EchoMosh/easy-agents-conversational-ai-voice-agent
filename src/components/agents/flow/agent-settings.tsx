@@ -323,7 +323,7 @@ export function AgentSettings({
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
                     {voices.map((v) => (
-                      <SelectItem key={v.id} value={v.id} className="flex items-center justify-between">
+                      <SelectItem key={v.id} value={v.id}>
                         {v.name}
                       </SelectItem>
                     ))}
@@ -342,28 +342,8 @@ export function AgentSettings({
                   }
                 </Button>
               </div>
-              <div className="mt-2">
-                <div className="text-sm font-medium mb-2">Preview Voices</div>
-                <div className="grid grid-cols-2 gap-2">
-                  {voices.map((v) => (
-                    <Button
-                      key={v.id}
-                      variant="outline"
-                      size="sm"
-                      className="justify-start text-xs py-1 px-2"
-                      onClick={() => previewVoice(v.id)}
-                    >
-                      {previewingVoice === v.id ? 
-                        <Pause className="h-3 w-3 mr-1" /> : 
-                        <Play className="h-3 w-3 mr-1" />
-                      }
-                      {v.name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
               <p className="text-xs text-gray-500">
-                Choose the voice for your agent
+                Choose a voice and click the play button to preview
               </p>
             </div>
             <div className="space-y-3">
