@@ -71,13 +71,17 @@ export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogPr
             setConversationText(prev => [...prev, message.content]);
           }
         },
-        onStatusChange: (status: string) => {
-          console.log("Status changed:", status);
+        onStatusChange: (prop: { status: any }) => {
+          // Correctly handle the status object parameter
+          console.log("Status changed:", prop.status);
         },
-        onModeChange: (mode: { is_speaking: boolean; is_processing: boolean; is_listening: boolean }) => {
-          console.log("Mode changed:", mode);
-          setIsSpeaking(mode.is_speaking);
-          setIsListening(mode.is_listening);
+        onModeChange: (prop: { mode: any }) => {
+          // Correctly handle the mode object parameter
+          console.log("Mode changed:", prop.mode);
+          if (prop.mode) {
+            setIsSpeaking(prop.mode.is_speaking || false);
+            setIsListening(prop.mode.is_listening || false);
+          }
         },
         onError: (error: any) => {
           console.error("Conversation error:", error);
