@@ -28,7 +28,6 @@ const nodeTypes: NodeTypes = {
 
 // Custom edge with animated line
 const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd }: any) => {
-  const { setEdges } = useReactFlow();
   const [isHovered, setIsHovered] = useState(false);
   
   const edgePathStyle = {
@@ -43,15 +42,6 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
   const dx = Math.abs(targetX - sourceX) * 0.5;
   const edgePath = `M ${sourceX} ${sourceY} C ${sourceX + dx} ${sourceY}, ${targetX - dx} ${targetY}, ${targetX} ${targetY}`;
   
-  const handleDelete = () => {
-    console.log(`[Flow] Deleting edge with ID: ${id}`);
-    setEdges((edges) => edges.filter((edge) => edge.id !== id));
-  };
-  
-  const handleEdgeClick = () => {
-    handleDelete();
-  };
-  
   return (
     <>
       <path
@@ -65,7 +55,6 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
         className="edge-hit-area"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={handleEdgeClick}
       />
       <path
         id={id}
@@ -75,7 +64,6 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
         markerEnd={markerEnd}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={handleEdgeClick}
       />
     </>
   );
@@ -316,12 +304,12 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     }, 0);
   }, [edges, onEdgesChange, onEdgesChangeInternal]);
 
-  const onEdgeClick: EdgeMouseHandler = useCallback((_, edge) => {
+  // Update the onEdgeClick handler to avoid deleting edges on click
+  const onEdgeClick: EdgeMouseHandler = useCallback((event, edge) => {
+    // Do nothing or add custom selection logic here if needed
     console.log('[Flow] Edge clicked:', edge);
-    const updatedEdges = edges.filter(e => e.id !== edge.id);
-    setEdges(updatedEdges);
-    onEdgesChange(updatedEdges);
-  }, [edges, setEdges, onEdgesChange]);
+    // Not deleting the edge anymore, just logging it was clicked
+  }, []);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
