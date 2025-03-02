@@ -67,7 +67,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     const cleanLabel = nodeLabel
       .replace(/\n/g, ' ')
       .replace(/"/g, '')
-      .substring(0, 30);
+      .substring(0, 100); // Increased from 30 to 100 characters
     
     const simpleId = nodeIdMap.get(node.id) || `unknown-${node.id}`;
     
@@ -122,7 +122,9 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       if (edge.sourceHandle && edge.sourceHandle.startsWith('outcome-')) {
         const outcomeIndex = parseInt(edge.sourceHandle.replace('outcome-', ''), 10);
         if (!isNaN(outcomeIndex) && outcomeIndex < outcomes.length) {
-          edgeLabel = `|"${outcomes[outcomeIndex]}"|`;
+          // Increase outcome label length from truncated to 50 characters
+          const outcomeText = outcomes[outcomeIndex].substring(0, 50);
+          edgeLabel = `|"${outcomeText}"|`;
         }
       }
     }
