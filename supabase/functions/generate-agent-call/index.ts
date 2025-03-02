@@ -13,13 +13,13 @@ serve(async (req) => {
   }
 
   try {
-    const { agentId } = await req.json();
+    const { agentId, elevenLabsAgentId } = await req.json();
     
     if (!agentId) {
       throw new Error('Agent ID is required');
     }
     
-    console.log(`Generating signed URL for agent: ${agentId}`);
+    console.log(`Generating signed URL for agent: ${agentId}, ElevenLabs agent ID: ${elevenLabsAgentId || 'not provided'}`);
     
     // Check if API key is configured
     const apiKey = Deno.env.get('ELEVENLABS_API_KEY');
@@ -28,9 +28,12 @@ serve(async (req) => {
       throw new Error('ElevenLabs API key not configured');
     }
     
+    // Use the ElevenLabs agent ID if provided, otherwise use the local agent ID
+    const targetAgentId = elevenLabsAgentId || agentId;
+    
     // Request signed URL from ElevenLabs API
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${targetAgentId}`,
       {
         method: 'GET',
         headers: {
@@ -39,10 +42,12 @@ serve(async (req) => {
       }
     );
 
+    const responseText = await response.text();
+    console.log(`ElevenLabs API response status: ${response.status}`);
+    console.log(`ElevenLabs API response body: ${responseText}`);
+
     if (!response.ok) {
-      const errorData = await response.text();
       const status = response.status;
-      console.error(`ElevenLabs API error (${status}):`, errorData);
       
       // Provide more descriptive error based on status code
       if (status === 401) {
@@ -50,11 +55,17 @@ serve(async (req) => {
       } else if (status === 404) {
         throw new Error('ElevenLabs API error: Agent not found or not configured for voice');
       } else {
-        throw new Error(`ElevenLabs API error: ${status} - ${errorData}`);
+        throw new Error(`ElevenLabs API error: ${status} - ${responseText}`);
       }
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse ElevenLabs API response as JSON:', e);
+      throw new Error('Invalid response format from ElevenLabs API');
+    }
     
     if (!data.signed_url) {
       console.error('ElevenLabs API response missing signed_url:', data);

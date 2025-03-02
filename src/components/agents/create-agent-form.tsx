@@ -54,8 +54,30 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     try {
+      // First, create an agent in ElevenLabs
+      const { data: elevenlabsData, error: elevenlabsError } = await supabase.functions.invoke('create-elevenlabs-agent', {
+        body: {
+          name: newAgent.name,
+          role: newAgent.role,
+          objective: 'answer_calls'
+        }
+      });
+
+      if (elevenlabsError) {
+        console.error('Error creating ElevenLabs agent:', elevenlabsError);
+        throw new Error('Failed to create ElevenLabs agent');
+      }
+
+      if (!elevenlabsData?.success || !elevenlabsData?.elevenlabsAgentId) {
+        console.error('ElevenLabs agent creation failed:', elevenlabsData);
+        throw new Error('Failed to create ElevenLabs agent: ' + (elevenlabsData?.error || 'Unknown error'));
+      }
+
+      console.log('Successfully created ElevenLabs agent with ID:', elevenlabsData.elevenlabsAgentId);
+
       const flow = getDefaultFlow();
       
+      // Then, create the agent in our database with the ElevenLabs agent ID
       const { data, error } = await supabase
         .from('agents')
         .insert({
@@ -65,7 +87,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           flow: JSON.stringify(flow),
           is_active: true,
           objective: 'answer_calls',
-          interaction_type: ['inbound']
+          interaction_type: ['inbound'],
+          elevenlabs_agent_id: elevenlabsData.elevenlabsAgentId // Store the ElevenLabs agent ID
         })
         .select()
         .single();
@@ -79,7 +102,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create agent",
+        description: typeof error === 'object' && error !== null && 'message' in error 
+          ? String(error.message) 
+          : "Failed to create agent",
       });
     } finally {
       setIsCreating(false);

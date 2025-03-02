@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog,
@@ -34,6 +33,22 @@ export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogPr
   const conversationRef = useRef<any>(null);
   const { toast } = useToast();
 
+  // Fetch the full agent data including the ElevenLabs agent ID
+  const fetchAgentData = useCallback(async (agentId: string) => {
+    const { data, error } = await supabase
+      .from('agents')
+      .select('*')
+      .eq('id', agentId)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching agent data:", error);
+      throw new Error("Failed to fetch agent data. Please try again later.");
+    }
+    
+    return data;
+  }, []);
+
   // Initialize the conversation
   const initializeConversation = useCallback(async () => {
     if (!open) return;
@@ -51,9 +66,16 @@ export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogPr
         throw new Error("Microphone access denied. Please allow microphone access to use this feature.");
       }
       
+      // Fetch full agent data to get ElevenLabs agent ID if available
+      const agentData = await fetchAgentData(agent.id);
+      console.log("Full agent data:", agentData);
+      
       // Get signed URL from our backend
       const { data, error: urlError } = await supabase.functions.invoke('generate-agent-call', {
-        body: { agentId: agent.id }
+        body: { 
+          agentId: agent.id,
+          elevenLabsAgentId: agentData.elevenlabs_agent_id // Pass the ElevenLabs agent ID if available
+        }
       });
       
       if (urlError) {
@@ -107,7 +129,7 @@ export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogPr
       setError(err instanceof Error ? err.message : "Failed to initialize voice call");
       setIsLoading(false);
     }
-  }, [agent, open]);
+  }, [agent, open, fetchAgentData]);
   
   // Clean up the conversation when the dialog closes
   const cleanupConversation = useCallback(() => {

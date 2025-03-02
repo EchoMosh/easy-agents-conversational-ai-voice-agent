@@ -2,3 +2,5 @@
 project_id = "YOUR_PROJECT_ID"
 [functions.generate-agent-call]
 verify_jwt = true
+[functions.create-elevenlabs-agent]
+verify_jwt = true
