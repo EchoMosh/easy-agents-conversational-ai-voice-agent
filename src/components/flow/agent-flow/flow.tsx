@@ -35,12 +35,13 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
     ...style,
     strokeWidth: isHovered ? 4 : 3,
     stroke: isHovered ? '#64748b' : '#94a3b8',
-    strokeDasharray: style.strokeDasharray || 'none',
+    strokeDasharray: '8 4',
     animation: 'dashdraw 0.8s linear infinite',
     transition: 'all 0.2s ease',
   };
 
-  const edgePath = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
+  const dx = Math.abs(targetX - sourceX) * 0.5;
+  const edgePath = `M ${sourceX} ${sourceY} C ${sourceX + dx} ${sourceY}, ${targetX - dx} ${targetY}, ${targetX} ${targetY}`;
   
   const handleDelete = () => {
     console.log(`[Flow] Deleting edge with ID: ${id}`);
@@ -53,7 +54,6 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
   
   return (
     <>
-      {/* Add transparent wider path for better hit detection */}
       <path
         d={edgePath}
         style={{
@@ -419,7 +419,10 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
               {`
                 @keyframes dashdraw {
                   from {
-                    stroke-dashoffset: 10;
+                    stroke-dashoffset: 24;
+                  }
+                  to {
+                    stroke-dashoffset: 0;
                   }
                 }
                 
@@ -460,7 +463,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 }
                 
                 .react-flow__edge-path {
-                  stroke-dasharray: 5;
+                  stroke-dasharray: 8 4;
                   animation: dashdraw 0.8s linear infinite;
                 }
               `}
