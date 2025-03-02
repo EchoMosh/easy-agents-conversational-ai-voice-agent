@@ -60,47 +60,62 @@ serve(async (req) => {
       systemPrompt += ` Your primary objective is to ${objective}.`;
     }
 
-    // Create a new agent in ElevenLabs
+    console.log('About to call ElevenLabs API with the following payload:');
+    
+    const payload = {
+      name: name,
+      description: `A ${role} agent created from the application`,
+      system: systemPrompt,
+      initial_message: `Hello, I'm ${name}. How can I help you today?`,
+      knowledge_source: "none",
+      model: "eleven_turbo_v2_5",
+      voice_id: voiceId || "TxGEqnHWrfWFTfGW9XjX", // Default voice if none provided
+      language: language,
+      temperature: 0.7,
+      enable_voice: true
+    };
+    
+    console.log(JSON.stringify(payload, null, 2));
+
+    // Create a new agent in ElevenLabs using the correct endpoint
     const response = await fetch(
-      "https://api.elevenlabs.io/v1/convai/agents",
+      "https://api.elevenlabs.io/v1/convai/agents/create-agent",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "xi-api-key": apiKey,
         },
-        body: JSON.stringify({
-          name: name,
-          description: `A ${role} agent created from the application`,
-          avatar_url: null,
-          system: systemPrompt,
-          initial_message: `Hello, I'm ${name}. How can I help you today?`,
-          knowledge_source: "none",
-          model: "eleven_turbo_v2_5",
-          voice_id: voiceId || "TxGEqnHWrfWFTfGW9XjX", // Default voice if none provided
-          language: language,
-          temperature: 0.7,
-          enable_voice: true
-        }),
+        body: JSON.stringify(payload),
       }
     );
 
+    const responseText = await response.text();
+    console.log(`ElevenLabs API response status: ${response.status}`);
+    console.log(`ElevenLabs API response body: ${responseText}`);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`ElevenLabs API error (${response.status}):`, errorText);
+      console.error(`ElevenLabs API error (${response.status}):`, responseText);
       
       if (response.status === 401) {
         throw new Error('ElevenLabs API authentication failed: Invalid API key');
       } else {
-        throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+        throw new Error(`ElevenLabs API error: ${response.status} - ${responseText}`);
       }
     }
 
-    const data = await response.json();
+    // Parse the response JSON after checking it's valid
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse ElevenLabs API response as JSON:', e);
+      throw new Error('Invalid response format from ElevenLabs API');
+    }
     
     if (!data.agent_id) {
       console.error('ElevenLabs API response missing agent_id:', data);
-      throw new Error('Invalid response from ElevenLabs API');
+      throw new Error('Invalid response from ElevenLabs API: Missing agent_id');
     }
     
     console.log('Successfully created ElevenLabs agent with ID:', data.agent_id);
