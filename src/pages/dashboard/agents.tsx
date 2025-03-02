@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -146,69 +147,12 @@ const AgentsPage = () => {
     });
   };
 
-  const handleCreateAgentClick = async () => {
-    try {
-      toast({
-        title: "Creating agent",
-        description: "Connecting to external service...",
-      });
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user?.id) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "You must be logged in to create an agent",
-        });
-        return;
-      }
-      
-      const response = await fetch('https://moshi.app.n8n.cloud/webhook/create-agent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: session.user.id,
-          email: session.user.email,
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to create agent: ${errorText}`);
-      }
-      
-      const result = await response.json();
-      
-      toast({
-        title: "Success",
-        description: "Agent creation started. It will appear in your list shortly.",
-      });
-      
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['agents'] });
-      }, 2000);
-      
-    } catch (error) {
-      console.error("Error creating agent via webhook:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: typeof error === 'object' && error !== null && 'message' in error 
-          ? String(error.message) 
-          : "Failed to create agent via external service",
-      });
-    }
-  };
-
   return (
     <div className="w-full p-8 bg-background text-foreground relative">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Agents</h1>
         <div className="flex gap-2">
-          <Button onClick={handleCreateAgentClick}>
+          <Button onClick={() => setIsCreating(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Create Agent
           </Button>

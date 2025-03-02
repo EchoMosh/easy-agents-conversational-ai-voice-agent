@@ -58,36 +58,39 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     try {
       console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role);
       
-      // First, create an agent in ElevenLabs
-      const { data: elevenlabsData, error: elevenlabsError } = await supabase.functions.invoke('create-elevenlabs-agent', {
-        body: {
+      // Make POST request to the webhook
+      const response = await fetch('https://moshi.app.n8n.cloud/webhook/create-agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: session.user.id,
+          email: session.user.email,
           name: newAgent.name,
-          role: newAgent.role,
-          objective: 'answer_calls'
-        }
+          role: newAgent.role
+        }),
       });
-
-      console.log('ElevenLabs agent creation response:', elevenlabsData, 'Error:', elevenlabsError);
-
-      if (elevenlabsError) {
-        console.error('Error creating ElevenLabs agent:', elevenlabsError);
-        setError(`Failed to create ElevenLabs agent: ${elevenlabsError.message || 'Unknown error'}`);
-        throw new Error(`Failed to create ElevenLabs agent: ${elevenlabsError.message || 'Unknown error'}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create agent: ${errorText}`);
       }
-
-      if (!elevenlabsData?.success || !elevenlabsData?.elevenlabsAgentId) {
-        console.error('ElevenLabs agent creation failed:', elevenlabsData);
-        const detailedError = elevenlabsData?.error || 'Unknown error';
-        const errorDetails = elevenlabsData?.details ? `\n\nDetails: ${elevenlabsData.details}` : '';
-        setError(`Failed to create ElevenLabs agent: ${detailedError}${errorDetails}`);
-        throw new Error(`Failed to create ElevenLabs agent: ${detailedError}`);
+      
+      const result = await response.json();
+      
+      if (!result || !result.success) {
+        throw new Error("Webhook returned an unsuccessful response");
       }
-
-      console.log('Successfully created ElevenLabs agent with ID:', elevenlabsData.elevenlabsAgentId);
-
+      
+      toast({
+        title: "Success",
+        description: "Agent created successfully. Redirecting to flow editor...",
+      });
+      
+      // Create or save the agent in our database
       const flow = getDefaultFlow();
       
-      // Then, create the agent in our database with the ElevenLabs agent ID
       const { data, error } = await supabase
         .from('agents')
         .insert({
@@ -97,8 +100,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           flow: JSON.stringify(flow),
           is_active: true,
           objective: 'answer_calls',
-          interaction_type: ['inbound'],
-          elevenlabs_agent_id: elevenlabsData.elevenlabsAgentId // Store the ElevenLabs agent ID
+          interaction_type: ['inbound']
         })
         .select()
         .single();
@@ -122,7 +124,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         title: "Error",
         description: errorMessage,
       });
-    } finally {
       setIsCreating(false);
     }
   };
