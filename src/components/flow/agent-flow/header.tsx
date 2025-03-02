@@ -21,6 +21,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [showTrainingPopup, setShowTrainingPopup] = useState(false);
   const [showVoiceCallDialog, setShowVoiceCallDialog] = useState(false);
   const [isUpdatingAgent, setIsUpdatingAgent] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,6 +52,31 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     };
   }, []);
 
+  // Fetch current user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Get profile data if available
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+          
+        setCurrentUser({
+          id: session.user.id,
+          email: session.user.email,
+          profile: profileData || {}
+        });
+        
+        console.log('Current user data fetched:', profileData);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+
   // Log whenever connection status changes
   useEffect(() => {
     console.log('Connection status changed:', isConnected);
@@ -63,17 +89,31 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     try {
       console.log('Updating agent via webhook...');
       
+      const payload = {
+        agentId: agent.id,
+        agentName: agent.name,
+        agentRole: agent.role,
+        elevenlabsAgentId: agent.elevenlabs_agent_id || null,
+        user: currentUser ? {
+          id: currentUser.id,
+          email: currentUser.email,
+          firstName: currentUser.profile?.first_name || '',
+          lastName: currentUser.profile?.last_name || '',
+          avatar: currentUser.profile?.avatar_url || ''
+        } : null,
+        voiceId: agent.voice_id || null,
+        language: agent.language || 'en',
+        objective: agent.objective || ''
+      };
+      
+      console.log('Sending webhook payload:', payload);
+      
       const response = await fetch('https://moshi.app.n8n.cloud/webhook/update-agent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          agentId: agent.id,
-          agentName: agent.name,
-          agentRole: agent.role,
-          // Add any other agent data you want to send
-        }),
+        body: JSON.stringify(payload),
       });
       
       if (!response.ok) {
