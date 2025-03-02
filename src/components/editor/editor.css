@@ -16,6 +16,10 @@
   border-radius: 0.5rem;
   color: inherit;
   background: transparent;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .editor-placeholder {
@@ -40,4 +44,18 @@
 .dark .editor-variable {
   background-color: rgba(99, 102, 241, 0.2);
   color: #818cf8;
+}
+
+.editor-paragraph {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.editor-text {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
