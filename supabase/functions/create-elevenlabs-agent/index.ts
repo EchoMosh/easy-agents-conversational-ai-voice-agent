@@ -62,12 +62,12 @@ serve(async (req) => {
 
     console.log('About to call ElevenLabs API with the following payload:');
     
+    // Create the payload, removing any fields that might cause issues
     const payload = {
       name: name,
       description: `A ${role} agent created from the application`,
       system: systemPrompt,
       initial_message: `Hello, I'm ${name}. How can I help you today?`,
-      knowledge_source: "none",
       model: "eleven_turbo_v2_5",
       voice_id: voiceId || "TxGEqnHWrfWFTfGW9XjX", // Default voice if none provided
       language: language,
@@ -77,9 +77,9 @@ serve(async (req) => {
     
     console.log(JSON.stringify(payload, null, 2));
 
-    // Create a new agent in ElevenLabs using the correct endpoint
+    // Create a new agent in ElevenLabs - reverting to the original URL without /create-agent
     const response = await fetch(
-      "https://api.elevenlabs.io/v1/convai/agents/create-agent",
+      "https://api.elevenlabs.io/v1/convai/agents",
       {
         method: "POST",
         headers: {
@@ -99,6 +99,8 @@ serve(async (req) => {
       
       if (response.status === 401) {
         throw new Error('ElevenLabs API authentication failed: Invalid API key');
+      } else if (response.status === 405) {
+        throw new Error(`Method Not Allowed: The API endpoint does not support this method. Please check the API documentation.`);
       } else {
         throw new Error(`ElevenLabs API error: ${response.status} - ${responseText}`);
       }
