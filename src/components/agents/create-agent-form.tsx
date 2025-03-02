@@ -78,8 +78,12 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       }
       
       const result = await response.json();
+      console.log('Webhook response:', result);
       
-      if (!result || !result.success) {
+      // Check if the result is an array and has at least one item
+      const webhookSuccess = Array.isArray(result) && result.length > 0 && result[0].agent_id;
+      
+      if (!webhookSuccess) {
         throw new Error("Webhook returned an unsuccessful response");
       }
       
@@ -100,7 +104,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           flow: JSON.stringify(flow),
           is_active: true,
           objective: 'answer_calls',
-          interaction_type: ['inbound']
+          interaction_type: ['inbound'],
+          elevenlabs_agent_id: Array.isArray(result) && result.length > 0 ? result[0].agent_id : null
         })
         .select()
         .single();
