@@ -59,7 +59,18 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     try {
       console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role);
       
-      // Make POST request to the webhook
+      // Get additional user profile information
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email, username, avatar_url')
+        .eq('id', session.user.id)
+        .single();
+        
+      // Unique tracking ID for this agent creation operation
+      const tempAgentId = crypto.randomUUID();
+      const createdAt = new Date().toISOString();
+      
+      // Make POST request to the webhook with expanded user information
       const response = await fetch('https://moshi.app.n8n.cloud/webhook/create-agent', {
         method: 'POST',
         headers: {
@@ -68,8 +79,15 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         body: JSON.stringify({
           userId: session.user.id,
           email: session.user.email,
+          username: profile?.username || session.user.email,
+          firstName: profile?.first_name || '',
+          lastName: profile?.last_name || '',
+          avatarUrl: profile?.avatar_url || '',
           name: newAgent.name,
-          role: newAgent.role
+          role: newAgent.role,
+          tempAgentId: tempAgentId,
+          createdAt: createdAt,
+          source: 'dashboard'
         }),
       });
       
