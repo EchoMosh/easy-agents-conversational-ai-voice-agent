@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
@@ -9,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
 import { VoiceCallDialog } from "@/components/agents/voice-call/voice-call-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { FlowData, FlowNode } from "@/types/agent-types";
 
 interface HeaderProps {
   agent: Agent;
@@ -23,6 +23,34 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [isUpdatingAgent, setIsUpdatingAgent] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
+
+  const findFirstMessage = (flowData: FlowData): string => {
+    if (!flowData || !flowData.nodes || !Array.isArray(flowData.nodes) || flowData.nodes.length === 0) {
+      return "Hello, how can I help you today?"; // Default message if no nodes exist
+    }
+
+    // Look for greeting or speak nodes
+    const greetingNodes = flowData.nodes.filter(
+      (node: FlowNode) => node.type === 'greetingNode' || node.type === 'speakNode'
+    );
+
+    if (greetingNodes.length === 0) {
+      return "Hello, how can I help you today?"; // Default message if no greeting/speak nodes
+    }
+
+    // Get the first greeting/speak node's message
+    const firstNode = greetingNodes[0];
+    if (firstNode.data) {
+      // Check for message or greeting property
+      if (firstNode.type === 'greetingNode' && firstNode.data.greeting) {
+        return firstNode.data.greeting;
+      } else if (firstNode.type === 'speakNode' && firstNode.data.message) {
+        return firstNode.data.message;
+      }
+    }
+
+    return "Hello, how can I help you today?"; // Default fallback
+  };
 
   useEffect(() => {
     console.log('Setting up Supabase realtime connection...');
@@ -101,6 +129,23 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         throw new Error(`Failed to fetch complete agent data: ${agentError.message}`);
       }
       
+      // Parse flow data to find the first message
+      let flowData: FlowData;
+      if (typeof fullAgentData.flow === 'string') {
+        try {
+          flowData = JSON.parse(fullAgentData.flow);
+        } catch (e) {
+          console.error('Failed to parse flow data:', e);
+          flowData = { nodes: [], edges: [] };
+        }
+      } else {
+        flowData = fullAgentData.flow || { nodes: [], edges: [] };
+      }
+      
+      // Get the first message from the flow data
+      const firstMessage = findFirstMessage(flowData);
+      console.log('First message extracted from flow:', firstMessage);
+      
       // Log the retrieved voice ID for debugging
       console.log('Voice ID from database:', fullAgentData.voice_id);
       console.log('Full agent data from database:', fullAgentData);
@@ -125,6 +170,9 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         isActive: fullAgentData.is_active,
         mermaidChart: fullAgentData.mermaid_chart,
         
+        // Add the first message from the flow
+        firstMessage: firstMessage,
+        
         // Add user information to the payload
         user: currentUser ? {
           id: currentUser.id,
@@ -141,7 +189,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         timestamp: new Date().toISOString()
       };
       
-      console.log('Sending webhook payload (without flow data):', payload);
+      console.log('Sending webhook payload (with firstMessage):', payload);
       
       const response = await fetch('https://moshi.app.n8n.cloud/webhook/update-agent', {
         method: 'POST',
