@@ -59,7 +59,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     try {
       console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role);
       
-      // Make POST request to the webhook
+      // Generate a temporary ID to track this agent creation
+      const tempAgentId = crypto.randomUUID();
+      
+      // Make POST request to the webhook with more detailed information
       const response = await fetch('https://moshi.app.n8n.cloud/webhook/create-agent', {
         method: 'POST',
         headers: {
@@ -69,7 +72,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           userId: session.user.id,
           email: session.user.email,
           name: newAgent.name,
-          role: newAgent.role
+          role: newAgent.role,
+          tempAgentId: tempAgentId,
+          createdAt: new Date().toISOString(),
+          source: 'dashboard'
         }),
       });
       
@@ -115,7 +121,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          elevenlabs_agent_id: agentId
+          elevenlabs_agent_id: agentId,
+          temp_tracking_id: tempAgentId
         })
         .select()
         .single();
