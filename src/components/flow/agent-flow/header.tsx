@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
 import { VoiceCallDialog } from "@/components/agents/voice-call/voice-call-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
   agent: Agent;
@@ -19,6 +20,8 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [showTrainingPopup, setShowTrainingPopup] = useState(false);
   const [showVoiceCallDialog, setShowVoiceCallDialog] = useState(false);
+  const [isUpdatingAgent, setIsUpdatingAgent] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     console.log('Setting up Supabase realtime connection...');
@@ -52,6 +55,49 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   useEffect(() => {
     console.log('Connection status changed:', isConnected);
   }, [isConnected]);
+
+  const handleUpdateAgent = async () => {
+    if (isUpdatingAgent) return;
+    
+    setIsUpdatingAgent(true);
+    try {
+      console.log('Updating agent via webhook...');
+      
+      const response = await fetch('https://moshi.app.n8n.cloud/webhook/update-agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agentId: agent.id,
+          agentName: agent.name,
+          agentRole: agent.role,
+          // Add any other agent data you want to send
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Webhook response:', data);
+      
+      toast({
+        title: "Success",
+        description: "Agent updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating agent:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update agent",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingAgent(false);
+    }
+  };
 
   return (
     <>
@@ -94,10 +140,11 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             <Button 
               variant="secondary"
               className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 font-medium"
-              onClick={() => setShowVoiceCallDialog(true)}
+              onClick={handleUpdateAgent}
+              disabled={isUpdatingAgent}
             >
               <PhoneCall className="h-4 w-4 mr-2" />
-              Call Me
+              {isUpdatingAgent ? "Updating..." : "Call Me"}
             </Button>
             
             <Button 
