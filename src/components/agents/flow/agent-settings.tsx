@@ -230,29 +230,27 @@ export function AgentSettings({
       
       console.log("Previewing voice:", voice.id);
       
-      // Use the API endpoint to generate a voice preview
-      const response = await fetch('/api/text-to-speech', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Use the Supabase Edge Function to generate a voice preview
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: { 
           text: "Hello, this is a preview of my voice.",
-          voice_id: voice.id,
-        }),
+          voice_id: voice.id
+        }
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Voice preview error:", errorData);
-        throw new Error(errorData.error || 'Failed to generate voice preview');
+      if (error) {
+        console.error("Voice preview error:", error);
+        throw new Error('Failed to generate voice preview');
       }
       
-      const data = await response.json();
+      if (!data?.audio_content) {
+        console.error("Missing audio content in response:", data);
+        throw new Error('No audio content received');
+      }
       
       // Create a new audio source from the base64 audio content
       const audioBlob = new Blob(
-        [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))], 
+        [Uint8Array.from(atob(data.audio_content), c => c.charCodeAt(0))], 
         { type: 'audio/mp3' }
       );
       const audioUrl = URL.createObjectURL(audioBlob);

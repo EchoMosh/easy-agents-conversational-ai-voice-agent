@@ -90,24 +90,58 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       console.log('Updating agent via webhook...');
       console.log('Agent data:', agent);
       
+      // Get the complete agent data from the database
+      const { data: fullAgentData, error: agentError } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('id', agent.id)
+        .single();
+        
+      if (agentError) {
+        throw new Error(`Failed to fetch complete agent data: ${agentError.message}`);
+      }
+      
+      // Prepare the payload with ALL agent information
       const payload = {
+        // Basic agent info
         agentId: agent.id,
         agentName: agent.name,
         agentRole: agent.role,
         elevenlabsAgentId: agent.elevenlabs_agent_id || null,
+        
+        // Complete agent data
+        fullAgentData: fullAgentData,
+        
+        // Flow information
+        flow: agent.flow,
+        
+        // Settings
+        voiceId: agent.voice_id || null,
+        language: agent.language || 'en',
+        objective: agent.objective || '',
+        humorLevel: agent.humorLevel || 50,
+        interactionType: agent.interaction_type || ['inbound'],
+        knowledgeIds: agent.knowledge_ids || [],
+        isActive: agent.is_active,
+        mermaidChart: agent.mermaid_chart,
+        
+        // Add user information to the payload
         user: currentUser ? {
           id: currentUser.id,
           email: currentUser.email,
           firstName: currentUser.profile?.first_name || '',
           lastName: currentUser.profile?.last_name || '',
-          avatar: currentUser.profile?.avatar_url || ''
+          avatar: currentUser.profile?.avatar_url || '',
+          businessType: currentUser.profile?.business_type || '',
+          employeeCount: currentUser.profile?.employee_count || '',
+          username: currentUser.profile?.username || ''
         } : null,
-        voiceId: agent.voice_id || null,
-        language: agent.language || 'en',
-        objective: agent.objective || ''
+        
+        // Include timestamp for logging/debugging
+        timestamp: new Date().toISOString()
       };
       
-      console.log('Sending webhook payload:', payload);
+      console.log('Sending complete webhook payload:', payload);
       
       const response = await fetch('https://moshi.app.n8n.cloud/webhook/update-agent', {
         method: 'POST',
@@ -126,7 +160,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       
       toast({
         title: "Success",
-        description: "Agent updated successfully",
+        description: "Agent update request sent with complete information",
       });
     } catch (error) {
       console.error('Error updating agent:', error);
@@ -185,7 +219,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
               disabled={isUpdatingAgent}
             >
               <PhoneCall className="h-4 w-4 mr-2" />
-              {isUpdatingAgent ? "Updating..." : "Call Me"}
+              {isUpdatingAgent ? "Sending data..." : "Call Me"}
             </Button>
             
             <Button 

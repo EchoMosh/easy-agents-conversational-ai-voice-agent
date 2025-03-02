@@ -1,69 +1,99 @@
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import OpenAI from 'https://esm.sh/openai@4.20.1'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
+
+interface RequestBody {
+  text: string;
+  voice_id: string;
+  model_id?: string;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-
   try {
-    const { text, voice_id } = await req.json()
-
+    // Extract the request body
+    const { text, voice_id, model_id = "eleven_multilingual_v2" } = await req.json() as RequestBody;
+    
     if (!text) {
-      throw new Error('Text is required')
+      return new Response(
+        JSON.stringify({ error: "Text is required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
-
-    // Initialize OpenAI
-    const openai = new OpenAI({
-      apiKey: Deno.env.get('OPENAI_API_KEY'),
-    })
-
-    // Generate speech from text
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tts-1',
-        input: text,
-        voice: 'nova',  // default OpenAI voice
-        response_format: 'mp3',
-      }),
-    })
-
+    
+    if (!voice_id) {
+      return new Response(
+        JSON.stringify({ error: "Voice ID is required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (!ELEVENLABS_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: "ElevenLabs API key not configured" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log(`Generating speech for text: ${text.substring(0, 50)}...`);
+    
+    // Call the ElevenLabs API
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voice_id}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "xi-api-key": ELEVENLABS_API_KEY,
+        },
+        body: JSON.stringify({
+          text: text,
+          model_id: model_id,
+          voice_settings: {
+            stability: 0.75,
+            similarity_boost: 0.75,
+          },
+        }),
+      }
+    );
+    
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error?.message || 'Failed to generate speech')
+      const errorText = await response.text();
+      console.error(`ElevenLabs API error (${response.status}):`, errorText);
+      
+      return new Response(
+        JSON.stringify({ 
+          error: `ElevenLabs API returned ${response.status}`,
+          details: errorText
+        }),
+        { status: response.status, headers: { "Content-Type": "application/json" } }
+      );
     }
-
-    // Convert audio buffer to base64
-    const arrayBuffer = await response.arrayBuffer()
+    
+    // Get the audio data as an ArrayBuffer
+    const audioData = await response.arrayBuffer();
+    
+    // Convert to base64
     const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
-    )
-
+      String.fromCharCode(...new Uint8Array(audioData))
+    );
+    
+    console.log("Successfully generated speech");
+    
+    // Return the base64-encoded audio data
     return new Response(
-      JSON.stringify({ audioContent: base64Audio }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    )
+      JSON.stringify({
+        audio_content: base64Audio,
+        content_type: "audio/mpeg",
+      }),
+      { headers: { "Content-Type": "application/json" } }
+    );
   } catch (error) {
+    console.error("Error in text-to-speech function:", error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    )
+      JSON.stringify({ error: "Internal server error", details: error.message }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
-})
+});
