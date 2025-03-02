@@ -93,18 +93,19 @@ serve(async (req) => {
     };
     
     console.log('Payload to be sent to ElevenLabs API:', JSON.stringify(payload, null, 2));
-    console.log('Using ElevenLabs API endpoint: https://api.elevenlabs.io/v1/convai/agents');
+    console.log('Using ElevenLabs API endpoint: https://api.elevenlabs.io/v1/convai/agents/create-agent');
 
-    // Create a new agent in ElevenLabs
+    // Create a new agent in ElevenLabs with the correct endpoint
     console.log('Sending request to ElevenLabs API...');
     let response;
     try {
       response = await fetch(
-        "https://api.elevenlabs.io/v1/convai/agents",
+        "https://api.elevenlabs.io/v1/convai/agents/create-agent",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json",
             "xi-api-key": apiKey,
           },
           body: JSON.stringify(payload),

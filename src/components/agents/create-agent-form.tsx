@@ -77,8 +77,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
       if (!elevenlabsData?.success || !elevenlabsData?.elevenlabsAgentId) {
         console.error('ElevenLabs agent creation failed:', elevenlabsData);
-        setError(`Failed to create ElevenLabs agent: ${elevenlabsData?.error || 'Unknown error'}`);
-        throw new Error(`Failed to create ElevenLabs agent: ${elevenlabsData?.error || 'Unknown error'}`);
+        const detailedError = elevenlabsData?.error || 'Unknown error';
+        const errorDetails = elevenlabsData?.details ? `\n\nDetails: ${elevenlabsData.details}` : '';
+        setError(`Failed to create ElevenLabs agent: ${detailedError}${errorDetails}`);
+        throw new Error(`Failed to create ElevenLabs agent: ${detailedError}`);
       }
 
       console.log('Successfully created ElevenLabs agent with ID:', elevenlabsData.elevenlabsAgentId);
@@ -132,7 +134,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       {error && (
         <div className="bg-destructive/20 p-4 rounded-md text-sm text-destructive mb-4">
           <p className="font-semibold">Error creating agent:</p>
-          <p>{error}</p>
+          <p className="whitespace-pre-line">{error}</p>
         </div>
       )}
       
