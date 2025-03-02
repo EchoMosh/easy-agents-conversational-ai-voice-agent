@@ -30,9 +30,21 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
     setShowVariableSelector(false);
   };
 
+  const containerStyle = {
+    maxWidth: '100%',
+    minWidth: '0',
+    flex: '1 1 auto'
+  };
+
+  const editorContainerStyle = {
+    maxWidth: '100%', 
+    width: '100%',
+    minWidth: '0'
+  };
+
   return (
-    <div className="flex flex-col gap-2 relative" style={{ maxWidth: '100%' }}>
-      <div className="relative" style={{ maxWidth: '100%', width: '100%' }}>
+    <div className="flex flex-col gap-2 relative" style={containerStyle}>
+      <div className="relative" style={editorContainerStyle}>
         <LexicalEditor
           value={value}
           onChange={handleChange}

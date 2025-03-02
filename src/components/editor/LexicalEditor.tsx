@@ -97,11 +97,27 @@ export function LexicalEditor({
     editorRef.current = editor;
   }
 
+  const containerStyle = {
+    width: '100%', 
+    maxWidth: '100%',
+    minWidth: '0', // Important for flex containers
+    flex: '1 1 auto' // Allow shrinking
+  };
+
+  const contentEditableStyle = {
+    maxWidth: '100%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    wordBreak: 'break-word' as const,
+    overflowWrap: 'break-word' as const,
+    whiteSpace: 'pre-wrap' as const
+  };
+
   return (
-    <div className={`editor-container nodrag ${className}`} style={{ width: '100%', maxWidth: '100%' }}>
+    <div className={`editor-container nodrag ${className}`} style={containerStyle}>
       <LexicalComposer initialConfig={initialConfig}>
         <RichTextPlugin
-          contentEditable={<ContentEditable className="editor-input" style={{ maxWidth: '100%' }} />}
+          contentEditable={<ContentEditable className="editor-input" style={contentEditableStyle} />}
           placeholder={<div className="editor-placeholder">{placeholder}</div>}
           ErrorBoundary={({ children }) => <div>{children}</div>}
         />
