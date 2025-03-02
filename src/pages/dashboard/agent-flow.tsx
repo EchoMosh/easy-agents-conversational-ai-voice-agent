@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -66,8 +65,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     
     const cleanLabel = nodeLabel
       .replace(/\n/g, ' ')
-      .replace(/"/g, '')
-      .substring(0, 100); // Increased from 30 to 100 characters
+      .replace(/"/g, ''); // Remove character limit, allow full text
     
     const simpleId = nodeIdMap.get(node.id) || `unknown-${node.id}`;
     
@@ -122,8 +120,8 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       if (edge.sourceHandle && edge.sourceHandle.startsWith('outcome-')) {
         const outcomeIndex = parseInt(edge.sourceHandle.replace('outcome-', ''), 10);
         if (!isNaN(outcomeIndex) && outcomeIndex < outcomes.length) {
-          // Increase outcome label length from truncated to 50 characters
-          const outcomeText = outcomes[outcomeIndex].substring(0, 50);
+          // Display full outcome text without truncation
+          const outcomeText = outcomes[outcomeIndex].replace(/"/g, '');
           edgeLabel = `|"${outcomeText}"|`;
         }
       }
