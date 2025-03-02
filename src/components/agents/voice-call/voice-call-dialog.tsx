@@ -5,13 +5,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Agent } from '@/types/agent-types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, PhoneOff, Volume2, VolumeX } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Dynamically import the ElevenLabs client to avoid SSR issues
 const importConversation = () => import('@11labs/client').then(mod => mod.Conversation);
@@ -54,9 +56,14 @@ export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogPr
         body: { agentId: agent.id }
       });
       
-      if (urlError || !data?.signedUrl) {
-        console.error("Error fetching signed URL:", urlError);
+      if (urlError) {
+        console.error("Error from generate-agent-call function:", urlError);
         throw new Error("Failed to initialize voice call. Please try again later.");
+      }
+      
+      if (!data?.signedUrl) {
+        console.error("Missing signed URL in response:", data);
+        throw new Error("Failed to generate communication URL. Please check if the agent is properly configured.");
       }
       
       // Dynamically import the Conversation module
@@ -146,11 +153,22 @@ export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogPr
     onOpenChange(false);
   }, [cleanupConversation, onOpenChange]);
   
+  // Handle retry
+  const handleRetry = useCallback(() => {
+    setError(null);
+    initializeConversation();
+  }, [initializeConversation]);
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Call with {agent.name}</DialogTitle>
+          {!isLoading && !error && (
+            <DialogDescription>
+              Speak naturally with the agent. You can ask questions or provide information.
+            </DialogDescription>
+          )}
         </DialogHeader>
         
         {isLoading ? (
@@ -162,8 +180,15 @@ export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogPr
           </div>
         ) : error ? (
           <div className="p-6 text-center">
-            <p className="text-destructive mb-4">{error}</p>
-            <Button onClick={handleClose}>Close</Button>
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>
+                {error}
+              </AlertDescription>
+            </Alert>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={handleRetry} variant="outline">Retry</Button>
+              <Button onClick={handleClose} variant="default">Close</Button>
+            </div>
           </div>
         ) : (
           <>
