@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
@@ -101,6 +100,10 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         throw new Error(`Failed to fetch complete agent data: ${agentError.message}`);
       }
       
+      // Log the retrieved voice ID for debugging
+      console.log('Voice ID from database:', fullAgentData.voice_id);
+      console.log('Full agent data from database:', fullAgentData);
+      
       // Prepare the payload without the flow data
       const payload = {
         // Basic agent info
@@ -109,15 +112,17 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         agentRole: agent.role,
         elevenlabsAgentId: agent.elevenlabs_agent_id || null,
         
-        // Only include essential agent data, excluding the flow
-        voiceId: agent.voice_id || null,
-        language: agent.language || 'en',
-        objective: agent.objective || '',
-        humorLevel: agent.humorLevel || 50,
-        interactionType: agent.interaction_type || ['inbound'],
+        // Explicitly use the voice ID from the database
+        voiceId: fullAgentData.voice_id || "FGY2WhTYpPnrIDTdsKH5", // Default to Laura if null
+        
+        // Other agent properties
+        language: fullAgentData.language || 'en',
+        objective: fullAgentData.objective || '',
+        humorLevel: fullAgentData.humor_level || 50,
+        interactionType: fullAgentData.interaction_type || ['inbound'],
         knowledgeIds: fullAgentData.knowledge_ids || [],
-        isActive: agent.is_active,
-        mermaidChart: agent.mermaid_chart,
+        isActive: fullAgentData.is_active,
+        mermaidChart: fullAgentData.mermaid_chart,
         
         // Add user information to the payload
         user: currentUser ? {

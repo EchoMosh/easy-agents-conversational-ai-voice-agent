@@ -35,10 +35,11 @@ export interface Agent {
   objective?: string;
   interaction_type?: string[];
   language?: string;
-  voice_id?: string;
-  humorLevel?: number;
+  voice_id?: string; // This field should match the database column name
+  humor_level?: number; // Changed to match database column name
+  humorLevel?: number; // Keep for backward compatibility
   maxDurationSeconds?: number;
   mermaid_chart?: string;
   elevenlabs_agent_id?: string;
-  knowledge_ids?: string[]; // Add this property to match the database structure
+  knowledge_ids?: string[]; // Array of knowledge base IDs
 }
