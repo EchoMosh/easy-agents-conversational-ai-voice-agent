@@ -26,29 +26,8 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchDocuments } from "@/utils/knowledge-api";
 import { supabase } from "@/integrations/supabase/client";
 
-// Updated ElevenLabs voices data for the dropdown select
-const voices = [
-  { id: "9BWtsMINqrJLrRacOk9x", name: "Aria" },
-  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger" },
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
-  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" },
-  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie" },
-  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
-  { id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum" },
-  { id: "SAz9YHcvj6GT2YYXdXww", name: "River" },
-  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam" },
-  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte" },
-  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice" },
-  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda" },
-  { id: "bIHbv24MWmeRgasZH58o", name: "Will" },
-  { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica" },
-  { id: "cjVigY5qzO86Huf0OWal", name: "Eric" },
-  { id: "iP95p4xoKVk53GoZ742B", name: "Chris" },
-  { id: "nPczCjzI2devNBz1zQrb", name: "Brian" },
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel" },
-  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily" },
-  { id: "pqHfZKP75CvOlQylNhV4", name: "Bill" },
-];
+// Single ElevenLabs voice
+const voice = { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" };
 
 // Languages data for the dropdown select
 const languages = [
@@ -85,12 +64,11 @@ export function AgentSettings({
   onUpdateSettings,
 }: AgentSettingsProps) {
   const [open, setOpen] = React.useState(false);
-  const [voice, setVoice] = React.useState(currentVoice || "");
   const [language, setLanguage] = React.useState(currentLanguage || "en-US");
   const [knowledgeBase, setKnowledgeBase] = React.useState("none");
   const [humorLevel, setHumorLevel] = React.useState(currentHumorLevel);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [previewingVoice, setPreviewingVoice] = React.useState<string | null>(null);
+  const [isPreviewingVoice, setIsPreviewingVoice] = React.useState(false);
   const [audioElement, setAudioElement] = React.useState<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   
@@ -101,7 +79,7 @@ export function AgentSettings({
     staleTime: 0, // Always consider data stale to ensure fresh fetches
   });
   
-  // Initialize audio element for voice previews
+  // Initialize audio element for voice preview
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       setAudioElement(new Audio());
@@ -132,11 +110,6 @@ export function AgentSettings({
           if (error) throw error;
           
           if (data) {
-            // Set voice if exists
-            if (data.voice_id) {
-              setVoice(data.voice_id);
-            }
-            
             // Set language if exists
             if (data.language) {
               setLanguage(data.language);
@@ -182,7 +155,7 @@ export function AgentSettings({
     try {
       console.log("Saving agent settings:", {
         agentId,
-        voice,
+        voice: voice.id,
         language,
         humorLevel,
         knowledgeBase
@@ -190,7 +163,7 @@ export function AgentSettings({
       
       // First update the agent in Supabase
       const updateData = {
-        voice_id: voice || null,
+        voice_id: voice.id,
         language: language,
         humor_level: humorLevel,
         knowledge_ids: knowledgeBase && knowledgeBase !== "none" ? [knowledgeBase] : []
@@ -214,7 +187,7 @@ export function AgentSettings({
       // Call the onUpdateSettings prop to maintain component API compatibility
       try {
         await onUpdateSettings({
-          voiceId: voice,
+          voiceId: voice.id,
           language,
           knowledgeBaseId: knowledgeBase === "none" ? null : knowledgeBase,
           humorLevel: humorLevel,
@@ -242,25 +215,19 @@ export function AgentSettings({
   };
 
   // Preview voice function
-  const previewVoice = async (voiceId: string) => {
+  const previewVoice = async () => {
     if (!audioElement) return;
     
-    // If the same voice is already playing, stop it
-    if (previewingVoice === voiceId) {
+    // If the voice is already playing, stop it
+    if (isPreviewingVoice) {
       audioElement.pause();
       audioElement.currentTime = 0;
-      setPreviewingVoice(null);
+      setIsPreviewingVoice(false);
       return;
     }
     
-    // If a different voice is playing, stop it
-    if (previewingVoice) {
-      audioElement.pause();
-      audioElement.currentTime = 0;
-    }
-    
     try {
-      setPreviewingVoice(voiceId);
+      setIsPreviewingVoice(true);
       
       // Use the ElevenLabs text-to-speech API to generate a preview
       const response = await fetch('/api/text-to-speech', {
@@ -270,7 +237,7 @@ export function AgentSettings({
         },
         body: JSON.stringify({
           text: "Hello, this is a preview of my voice.",
-          voice_id: voiceId,
+          voice_id: voice.id,
         }),
       });
       
@@ -283,13 +250,13 @@ export function AgentSettings({
       
       audioElement.src = audioUrl;
       audioElement.onended = () => {
-        setPreviewingVoice(null);
+        setIsPreviewingVoice(false);
         URL.revokeObjectURL(audioUrl);
       };
       
       audioElement.play().catch((error) => {
         console.error('Error playing audio:', error);
-        setPreviewingVoice(null);
+        setIsPreviewingVoice(false);
       });
     } catch (error) {
       console.error('Error previewing voice:', error);
@@ -298,7 +265,7 @@ export function AgentSettings({
         description: "Failed to preview voice",
         variant: "destructive",
       });
-      setPreviewingVoice(null);
+      setIsPreviewingVoice(false);
     }
   };
 
@@ -317,33 +284,23 @@ export function AgentSettings({
             <div className="space-y-3">
               <Label htmlFor="voice">Voice</Label>
               <div className="grid grid-cols-[1fr_auto] gap-2">
-                <Select onValueChange={setVoice} value={voice}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select voice" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {voices.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="border rounded-md px-3 py-2 bg-background flex items-center">
+                  {voice.name}
+                </div>
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  disabled={!voice}
-                  onClick={() => voice && previewVoice(voice)}
+                  onClick={previewVoice}
                   className="h-10 w-10"
                 >
-                  {previewingVoice === voice ? 
+                  {isPreviewingVoice ? 
                     <Pause className="h-4 w-4" /> : 
                     <Play className="h-4 w-4" />
                   }
                 </Button>
               </div>
               <p className="text-xs text-gray-500">
-                Choose a voice and click the play button to preview
+                Click the play button to preview the voice
               </p>
             </div>
             <div className="space-y-3">
