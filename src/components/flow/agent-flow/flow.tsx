@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
@@ -34,7 +33,7 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
   
   const edgePathStyle = {
     ...style,
-    strokeWidth: showDeleteButton ? 4 : 3, // Increased from 3/2 to 4/3
+    strokeWidth: showDeleteButton ? 4 : 3,
     stroke: showDeleteButton ? '#94a3b8' : '#94a3b8',
     strokeDasharray: style.strokeDasharray || 'none',
     animation: style.animated ? 'dashdraw 0.5s linear infinite' : 'none',
@@ -57,8 +56,8 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
       <path
         d={edgePath}
         style={{
-          strokeWidth: 12, // Much wider path for easier selection
-          stroke: 'transparent', // Transparent so it's invisible
+          strokeWidth: 20,
+          stroke: 'transparent',
           cursor: 'pointer',
         }}
         className="edge-hit-area"
@@ -87,7 +86,7 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
           requiredExtensions="http://www.w3.org/1999/xhtml"
         >
           <div 
-            className="flex items-center justify-center w-full h-full rounded-full bg-white dark:bg-gray-800 shadow cursor-pointer"
+            className="flex items-center justify-center w-full h-full rounded-full bg-white dark:bg-gray-800 shadow cursor-pointer animate-pulse"
             onClick={handleDelete}
           >
             <X className="w-4 h-4 text-gray-500 hover:text-red-500" />
@@ -291,7 +290,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     type: 'buttonEdge' as const,
     animated: true,
     style: {
-      strokeWidth: 3, // Increased from 2 to 3
+      strokeWidth: 3,
       stroke: '#94a3b8',
     }
   };
@@ -441,9 +440,24 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                   }
                 }
                 
+                @keyframes pulse {
+                  0%, 100% {
+                    opacity: 1;
+                    transform: scale(1);
+                  }
+                  50% {
+                    opacity: 0.8;
+                    transform: scale(1.05);
+                  }
+                }
+                
                 .edge-delete-button {
                   cursor: pointer;
                   z-index: 10;
+                }
+                
+                .edge-delete-button .animate-pulse {
+                  animation: pulse 1.5s infinite ease-in-out;
                 }
                 
                 .edge-hit-area {
@@ -453,10 +467,13 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 .react-flow__edge {
                   pointer-events: all;
                   cursor: pointer;
+                  transition: all 0.2s ease;
                 }
                 
                 .react-flow__edge:hover .react-flow__edge-path {
                   stroke-width: 4px;
+                  stroke: #64748b;
+                  transition: all 0.2s ease;
                 }
               `}
             </style>
