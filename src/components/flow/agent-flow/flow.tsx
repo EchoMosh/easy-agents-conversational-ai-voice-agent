@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
@@ -33,7 +34,7 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
   
   const edgePathStyle = {
     ...style,
-    strokeWidth: showDeleteButton ? 3 : 2,
+    strokeWidth: showDeleteButton ? 4 : 3, // Increased from 3/2 to 4/3
     stroke: showDeleteButton ? '#94a3b8' : '#94a3b8',
     strokeDasharray: style.strokeDasharray || 'none',
     animation: style.animated ? 'dashdraw 0.5s linear infinite' : 'none',
@@ -52,6 +53,18 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
   
   return (
     <>
+      {/* Add transparent wider path for better hit detection */}
+      <path
+        d={edgePath}
+        style={{
+          strokeWidth: 12, // Much wider path for easier selection
+          stroke: 'transparent', // Transparent so it's invisible
+          cursor: 'pointer',
+        }}
+        className="edge-hit-area"
+        onMouseEnter={() => setShowDeleteButton(true)}
+        onMouseLeave={() => setShowDeleteButton(false)}
+      />
       <path
         id={id}
         className="react-flow__edge-path"
@@ -278,7 +291,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     type: 'buttonEdge' as const,
     animated: true,
     style: {
-      strokeWidth: 2,
+      strokeWidth: 3, // Increased from 2 to 3
       stroke: '#94a3b8',
     }
   };
@@ -431,6 +444,19 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 .edge-delete-button {
                   cursor: pointer;
                   z-index: 10;
+                }
+                
+                .edge-hit-area {
+                  pointer-events: all;
+                }
+                
+                .react-flow__edge {
+                  pointer-events: all;
+                  cursor: pointer;
+                }
+                
+                .react-flow__edge:hover .react-flow__edge-path {
+                  stroke-width: 4px;
                 }
               `}
             </style>
