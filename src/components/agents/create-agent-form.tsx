@@ -80,11 +80,20 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       const result = await response.json();
       console.log('Webhook response:', result);
       
-      // Check if the result is an array and has at least one item
-      const webhookSuccess = Array.isArray(result) && result.length > 0 && result[0].agent_id;
+      // More robust check for response - looking for agent_id in various possible formats
+      let agentId = null;
       
-      if (!webhookSuccess) {
-        throw new Error("Webhook returned an unsuccessful response");
+      if (Array.isArray(result) && result.length > 0) {
+        // Format: [{agent_id: "xxx"}]
+        agentId = result[0].agent_id;
+      } else if (result && typeof result === 'object') {
+        // Format: {agent_id: "xxx"} or other object structure
+        agentId = result.agent_id;
+      }
+      
+      if (!agentId) {
+        console.error('No agent_id found in response:', result);
+        throw new Error("Could not retrieve agent ID from the webhook response");
       }
       
       toast({
@@ -105,7 +114,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          elevenlabs_agent_id: Array.isArray(result) && result.length > 0 ? result[0].agent_id : null
+          elevenlabs_agent_id: agentId
         })
         .select()
         .single();
