@@ -10,9 +10,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings, Play, Pause } from "lucide-react";
+import { Play, Pause } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -229,7 +228,9 @@ export function AgentSettings({
     try {
       setIsPreviewingVoice(true);
       
-      // Use the ElevenLabs text-to-speech API to generate a preview
+      console.log("Previewing voice:", voice.id);
+      
+      // Use the API endpoint to generate a voice preview
       const response = await fetch('/api/text-to-speech', {
         method: 'POST',
         headers: {
@@ -242,10 +243,18 @@ export function AgentSettings({
       });
       
       if (!response.ok) {
-        throw new Error('Failed to generate voice preview');
+        const errorData = await response.json();
+        console.error("Voice preview error:", errorData);
+        throw new Error(errorData.error || 'Failed to generate voice preview');
       }
       
-      const audioBlob = await response.blob();
+      const data = await response.json();
+      
+      // Create a new audio source from the base64 audio content
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))], 
+        { type: 'audio/mp3' }
+      );
       const audioUrl = URL.createObjectURL(audioBlob);
       
       audioElement.src = audioUrl;
