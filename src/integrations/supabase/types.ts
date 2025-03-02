@@ -48,6 +48,7 @@ export type Database = {
       agents: {
         Row: {
           created_at: string
+          elevenlabs_agent_id: string | null
           flow: Json | null
           humor_level: number | null
           id: string
@@ -64,6 +65,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          elevenlabs_agent_id?: string | null
           flow?: Json | null
           humor_level?: number | null
           id?: string
@@ -80,6 +82,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          elevenlabs_agent_id?: string | null
           flow?: Json | null
           humor_level?: number | null
           id?: string

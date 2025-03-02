@@ -39,4 +39,5 @@ export interface Agent {
   humorLevel?: number;
   maxDurationSeconds?: number;
   mermaid_chart?: string;
+  elevenlabs_agent_id?: string;
 }

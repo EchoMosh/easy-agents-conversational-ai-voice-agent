@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog,
@@ -23,6 +24,11 @@ interface VoiceCallDialogProps {
   agent: Agent;
 }
 
+// Interface for the agent data with the elevenlabs_agent_id field
+interface AgentWithElevenLabsId extends Agent {
+  elevenlabs_agent_id?: string;
+}
+
 export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +52,7 @@ export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogPr
       throw new Error("Failed to fetch agent data. Please try again later.");
     }
     
-    return data;
+    return data as AgentWithElevenLabsId;
   }, []);
 
   // Initialize the conversation
