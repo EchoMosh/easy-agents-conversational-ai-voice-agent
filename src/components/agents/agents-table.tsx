@@ -1,9 +1,18 @@
-
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Agent } from "@/types/agent";
 import { DeleteDialog } from "./table/delete-dialog";
-import { Pencil, Trash, CheckCircle, XCircle, Share2, Fingerprint, Search } from "lucide-react";
+import { 
+  Pencil, 
+  Trash, 
+  CheckCircle, 
+  XCircle, 
+  Share2, 
+  Fingerprint, 
+  Search,
+  Table2,
+  Grid
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -21,8 +30,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { AgentFlowPreview } from "./agent-flow-preview";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AgentsTableProps {
@@ -36,7 +52,7 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewType, setViewType] = useState<"grid" | "list">("grid");
+  const [viewType, setViewType] = useState<"grid" | "table">("table");
 
   const getAvatarUrl = (agentId: string, role: string) => {
     const seed = `${agentId}-${role}`;
@@ -115,12 +131,18 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
           <Tabs 
             defaultValue={viewType} 
             value={viewType} 
-            onValueChange={(value) => setViewType(value as "grid" | "list")}
+            onValueChange={(value) => setViewType(value as "grid" | "table")}
             className="border rounded-md overflow-hidden"
           >
             <TabsList className="bg-muted h-9 px-1">
-              <TabsTrigger value="grid" className="text-xs h-7 px-2 data-[state=active]:bg-background">Grid</TabsTrigger>
-              <TabsTrigger value="list" className="text-xs h-7 px-2 data-[state=active]:bg-background">List</TabsTrigger>
+              <TabsTrigger value="grid" className="text-xs h-7 px-2 data-[state=active]:bg-background">
+                <Grid className="h-3.5 w-3.5 mr-1" />
+                Grid
+              </TabsTrigger>
+              <TabsTrigger value="table" className="text-xs h-7 px-2 data-[state=active]:bg-background">
+                <Table2 className="h-3.5 w-3.5 mr-1" />
+                Table
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -153,6 +175,7 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
                       </CardDescription>
                     </div>
                   </div>
+                  
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -245,87 +268,94 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
           ))}
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr className="text-xs text-muted-foreground font-medium">
-                  <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">Role</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Created</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filteredAgents.map((agent) => (
-                  <tr key={agent.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8 border border-primary/10">
-                          <AvatarImage 
-                            src={getAvatarUrl(agent.id, agent.role)} 
-                            alt={agent.name} 
-                          />
-                          <AvatarFallback>
-                            {agent.name ? agent.name.substring(0, 2).toUpperCase() : "AG"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{agent.name}</span>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-[300px]">Agent</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>ID</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAgents.map((agent) => (
+                <TableRow key={agent.id} className="hover:bg-muted/30">
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-9 w-9 border border-primary/10">
+                        <AvatarImage 
+                          src={getAvatarUrl(agent.id, agent.role)} 
+                          alt={agent.name} 
+                        />
+                        <AvatarFallback>
+                          {agent.name ? agent.name.substring(0, 2).toUpperCase() : "AG"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-0.5">
+                        <p className="font-medium">{agent.name}</p>
+                        <p className="text-sm text-muted-foreground capitalize">{agent.role.replace('_', ' ')}</p>
                       </div>
-                    </td>
-                    <td className="px-4 py-3 capitalize">{agent.role.replace('_', ' ')}</td>
-                    <td className="px-4 py-3">
-                      <span 
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          agent.is_active 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                        }`}
-                      >
-                        {agent.is_active ? (
-                          <>
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Active
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3 h-3 mr-1" />
-                            Inactive
-                          </>
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span 
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        agent.is_active 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' 
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300'
+                      }`}
+                    >
+                      {agent.is_active ? (
+                        <>
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Active
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-3 h-3 mr-1" />
+                          Inactive
+                        </>
+                      )}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {agent.id ? agent.id.substring(0, 8) : "N/A"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
                       {agent.created_at ? new Date(agent.created_at).toLocaleDateString() : "Recently"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditFlow(agent.id)}
-                          className="h-8 text-xs"
-                        >
-                          <Pencil className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(agent.id)}
-                          className="h-8 text-xs text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50"
-                        >
-                          <Trash className="w-3 h-3 mr-1" />
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditFlow(agent.id)}
+                        className="h-8 text-xs"
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(agent.id)}
+                        className="h-8 text-xs text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash className="w-3 h-3 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
