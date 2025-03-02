@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings } from "lucide-react";
+import { Settings, Play, Pause } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,14 +26,28 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchDocuments } from "@/utils/knowledge-api";
 import { supabase } from "@/integrations/supabase/client";
 
-// Voices data for the dropdown select
+// Updated ElevenLabs voices data for the dropdown select
 const voices = [
-  { id: "alloy", name: "Alloy - Balanced" },
-  { id: "echo", name: "Echo - Baritone" },
-  { id: "fable", name: "Fable - British" },
-  { id: "onyx", name: "Onyx - Deep" },
-  { id: "nova", name: "Nova - Warm" },
-  { id: "shimmer", name: "Shimmer - Clear" },
+  { id: "9BWtsMINqrJLrRacOk9x", name: "Aria" },
+  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger" },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" },
+  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
+  { id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum" },
+  { id: "SAz9YHcvj6GT2YYXdXww", name: "River" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam" },
+  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda" },
+  { id: "bIHbv24MWmeRgasZH58o", name: "Will" },
+  { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica" },
+  { id: "cjVigY5qzO86Huf0OWal", name: "Eric" },
+  { id: "iP95p4xoKVk53GoZ742B", name: "Chris" },
+  { id: "nPczCjzI2devNBz1zQrb", name: "Brian" },
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel" },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily" },
+  { id: "pqHfZKP75CvOlQylNhV4", name: "Bill" },
 ];
 
 // Languages data for the dropdown select
@@ -76,6 +90,8 @@ export function AgentSettings({
   const [knowledgeBase, setKnowledgeBase] = React.useState("none");
   const [humorLevel, setHumorLevel] = React.useState(currentHumorLevel);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [previewingVoice, setPreviewingVoice] = React.useState<string | null>(null);
+  const [audioElement, setAudioElement] = React.useState<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   
   // Fetch knowledge documents with refetch capability
@@ -84,6 +100,20 @@ export function AgentSettings({
     queryFn: fetchDocuments,
     staleTime: 0, // Always consider data stale to ensure fresh fetches
   });
+  
+  // Initialize audio element for voice previews
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setAudioElement(new Audio());
+    }
+    
+    return () => {
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.src = '';
+      }
+    };
+  }, []);
   
   // Refetch documents when dialog opens
   React.useEffect(() => {
@@ -211,6 +241,67 @@ export function AgentSettings({
     }
   };
 
+  // Preview voice function
+  const previewVoice = async (voiceId: string) => {
+    if (!audioElement) return;
+    
+    // If the same voice is already playing, stop it
+    if (previewingVoice === voiceId) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+      setPreviewingVoice(null);
+      return;
+    }
+    
+    // If a different voice is playing, stop it
+    if (previewingVoice) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    }
+    
+    try {
+      setPreviewingVoice(voiceId);
+      
+      // Use the ElevenLabs text-to-speech API to generate a preview
+      const response = await fetch('/api/text-to-speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: "Hello, this is a preview of my voice.",
+          voice_id: voiceId,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate voice preview');
+      }
+      
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      audioElement.src = audioUrl;
+      audioElement.onended = () => {
+        setPreviewingVoice(null);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      audioElement.play().catch((error) => {
+        console.error('Error playing audio:', error);
+        setPreviewingVoice(null);
+      });
+    } catch (error) {
+      console.error('Error previewing voice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to preview voice",
+        variant: "destructive",
+      });
+      setPreviewingVoice(null);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -225,18 +316,52 @@ export function AgentSettings({
           <div className="grid gap-6">
             <div className="space-y-3">
               <Label htmlFor="voice">Voice</Label>
-              <Select onValueChange={setVoice} value={voice}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select voice" />
-                </SelectTrigger>
-                <SelectContent>
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <Select onValueChange={setVoice} value={voice}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select voice" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {voices.map((v) => (
+                      <SelectItem key={v.id} value={v.id} className="flex items-center justify-between">
+                        {v.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  disabled={!voice}
+                  onClick={() => voice && previewVoice(voice)}
+                  className="h-10 w-10"
+                >
+                  {previewingVoice === voice ? 
+                    <Pause className="h-4 w-4" /> : 
+                    <Play className="h-4 w-4" />
+                  }
+                </Button>
+              </div>
+              <div className="mt-2">
+                <div className="text-sm font-medium mb-2">Preview Voices</div>
+                <div className="grid grid-cols-2 gap-2">
                   {voices.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
+                    <Button
+                      key={v.id}
+                      variant="outline"
+                      size="sm"
+                      className="justify-start text-xs py-1 px-2"
+                      onClick={() => previewVoice(v.id)}
+                    >
+                      {previewingVoice === v.id ? 
+                        <Pause className="h-3 w-3 mr-1" /> : 
+                        <Play className="h-3 w-3 mr-1" />
+                      }
                       {v.name}
-                    </SelectItem>
+                    </Button>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              </div>
               <p className="text-xs text-gray-500">
                 Choose the voice for your agent
               </p>
