@@ -31,6 +31,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AgentsTableProps {
   agents: Agent[];
@@ -133,122 +134,124 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
         </div>
       ) : (
         <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-[300px]">Agent</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>ID</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAgents.map((agent) => (
-                <React.Fragment key={agent.id}>
-                  <TableRow className="hover:bg-muted/30">
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-9 w-9 border border-primary/10">
-                          <AvatarImage 
-                            src={getAvatarUrl(agent.id, agent.role)} 
-                            alt={agent.name} 
-                          />
-                          <AvatarFallback>
-                            {agent.name ? agent.name.substring(0, 2).toUpperCase() : "AG"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="space-y-0.5">
-                          <p className="font-medium">{agent.name}</p>
-                          <p className="text-sm text-muted-foreground capitalize">{agent.role.replace('_', ' ')}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span 
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          agent.is_active 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' 
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300'
-                        }`}
-                      >
-                        {agent.is_active ? (
-                          <>
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Active
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3 h-3 mr-1" />
-                            Inactive
-                          </>
-                        )}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs font-mono text-muted-foreground">
-                        {agent.id ? agent.id.substring(0, 8) : "N/A"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {agent.created_at ? new Date(agent.created_at).toLocaleDateString() : "Recently"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleAgentExpansion(agent.id)}
-                          className="h-8 text-xs"
-                        >
-                          <span className="mr-1">Flow</span>
-                          {expandedAgents[agent.id] ? 
-                            <ChevronUp className="w-3 h-3" /> : 
-                            <ChevronDown className="w-3 h-3" />
-                          }
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditFlow(agent.id)}
-                          className="h-8 text-xs"
-                        >
-                          <Pencil className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(agent.id)}
-                          className="h-8 text-xs text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
-                        >
-                          <Trash className="w-3 h-3 mr-1" />
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow className={expandedAgents[agent.id] ? "" : "hidden"}>
-                    <TableCell colSpan={5} className="p-0 border-t-0">
-                      <Collapsible open={expandedAgents[agent.id]} className="w-full">
-                        <CollapsibleContent className="px-4 pb-4">
-                          <div className="pt-2 w-full">
-                            <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground">
-                              <Share2 className="h-3 w-3" />
-                              <span>Flow Preview</span>
-                            </div>
-                            <AgentFlowPreview flowData={agent.flow} maxHeight={180} />
+          <ScrollArea className="h-[calc(100vh-220px)]">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[300px]">Agent</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAgents.map((agent) => (
+                  <React.Fragment key={agent.id}>
+                    <TableRow className="hover:bg-muted/30">
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-9 w-9 border border-primary/10">
+                            <AvatarImage 
+                              src={getAvatarUrl(agent.id, agent.role)} 
+                              alt={agent.name} 
+                            />
+                            <AvatarFallback>
+                              {agent.name ? agent.name.substring(0, 2).toUpperCase() : "AG"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="space-y-0.5">
+                            <p className="font-medium">{agent.name}</p>
+                            <p className="text-sm text-muted-foreground capitalize">{agent.role.replace('_', ' ')}</p>
                           </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    </TableCell>
-                  </TableRow>
-                </React.Fragment>
-              ))}
-            </TableBody>
-          </Table>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span 
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            agent.is_active 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' 
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300'
+                          }`}
+                        >
+                          {agent.is_active ? (
+                            <>
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Active
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Inactive
+                            </>
+                          )}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs font-mono text-muted-foreground">
+                          {agent.id ? agent.id.substring(0, 8) : "N/A"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {agent.created_at ? new Date(agent.created_at).toLocaleDateString() : "Recently"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleAgentExpansion(agent.id)}
+                            className="h-8 text-xs"
+                          >
+                            <span className="mr-1">Flow</span>
+                            {expandedAgents[agent.id] ? 
+                              <ChevronUp className="w-3 h-3" /> : 
+                              <ChevronDown className="w-3 h-3" />
+                            }
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditFlow(agent.id)}
+                            className="h-8 text-xs"
+                          >
+                            <Pencil className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(agent.id)}
+                            className="h-8 text-xs text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
+                          >
+                            <Trash className="w-3 h-3 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className={expandedAgents[agent.id] ? "" : "hidden"}>
+                      <TableCell colSpan={5} className="p-0 border-t-0">
+                        <Collapsible open={expandedAgents[agent.id]} className="w-full">
+                          <CollapsibleContent className="px-4 pb-4">
+                            <div className="pt-2 w-full">
+                              <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground">
+                                <Share2 className="h-3 w-3" />
+                                <span>Flow Preview</span>
+                              </div>
+                              <AgentFlowPreview flowData={agent.flow} maxHeight={180} />
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
         </div>
       )}
 
