@@ -59,6 +59,7 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
         style={{
           strokeWidth: 25,
           stroke: 'transparent',
+          fill: 'none',
           cursor: 'pointer',
         }}
         className="edge-hit-area"
@@ -448,6 +449,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 
                 .edge-hit-area {
                   pointer-events: all;
+                  fill: none;
                 }
                 
                 .react-flow__edge {
@@ -465,6 +467,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 .react-flow__edge-path {
                   stroke-dasharray: 8 4;
                   animation: dashdraw 0.8s linear infinite;
+                  fill: none;
                 }
               `}
             </style>
