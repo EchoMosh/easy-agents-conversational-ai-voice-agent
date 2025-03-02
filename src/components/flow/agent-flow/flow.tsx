@@ -26,28 +26,29 @@ const nodeTypes: NodeTypes = {
   webhookNode: WebhookNode
 };
 
-// Custom edge with delete button
+// Custom edge with animated line
 const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd }: any) => {
   const { setEdges } = useReactFlow();
-  const [showDeleteButton, setShowDeleteButton] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
   const edgePathStyle = {
     ...style,
-    strokeWidth: showDeleteButton ? 4 : 3,
-    stroke: showDeleteButton ? '#94a3b8' : '#94a3b8',
+    strokeWidth: isHovered ? 4 : 3,
+    stroke: isHovered ? '#64748b' : '#94a3b8',
     strokeDasharray: style.strokeDasharray || 'none',
-    animation: style.animated ? 'dashdraw 0.5s linear infinite' : 'none',
+    animation: 'dashdraw 0.8s linear infinite',
+    transition: 'all 0.2s ease',
   };
 
   const edgePath = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
   
-  // Calculate midpoint for delete button
-  const midX = (sourceX + targetX) / 2;
-  const midY = (sourceY + targetY) / 2;
-  
   const handleDelete = () => {
     console.log(`[Flow] Deleting edge with ID: ${id}`);
     setEdges((edges) => edges.filter((edge) => edge.id !== id));
+  };
+  
+  const handleEdgeClick = () => {
+    handleDelete();
   };
   
   return (
@@ -56,13 +57,14 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
       <path
         d={edgePath}
         style={{
-          strokeWidth: 20,
+          strokeWidth: 25,
           stroke: 'transparent',
           cursor: 'pointer',
         }}
         className="edge-hit-area"
-        onMouseEnter={() => setShowDeleteButton(true)}
-        onMouseLeave={() => setShowDeleteButton(false)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={handleEdgeClick}
       />
       <path
         id={id}
@@ -70,29 +72,10 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
         d={edgePath}
         style={edgePathStyle}
         markerEnd={markerEnd}
-        onMouseEnter={() => setShowDeleteButton(true)}
-        onMouseLeave={() => setShowDeleteButton(false)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={handleEdgeClick}
       />
-      
-      {showDeleteButton && (
-        <foreignObject
-          width={24}
-          height={24}
-          x={midX - 12}
-          y={midY - 12}
-          className="edge-delete-button"
-          onMouseEnter={() => setShowDeleteButton(true)}
-          onMouseLeave={() => setShowDeleteButton(false)}
-          requiredExtensions="http://www.w3.org/1999/xhtml"
-        >
-          <div 
-            className="flex items-center justify-center w-full h-full rounded-full bg-white dark:bg-gray-800 shadow cursor-pointer animate-pulse"
-            onClick={handleDelete}
-          >
-            <X className="w-4 h-4 text-gray-500 hover:text-red-500" />
-          </div>
-        </foreignObject>
-      )}
     </>
   );
 };
@@ -474,6 +457,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                   stroke-width: 4px;
                   stroke: #64748b;
                   transition: all 0.2s ease;
+                }
+                
+                .react-flow__edge-path {
+                  stroke-dasharray: 5;
+                  animation: dashdraw 0.8s linear infinite;
                 }
               `}
             </style>
