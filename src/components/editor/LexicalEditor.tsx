@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -13,7 +12,6 @@ import { VariableHighlightPlugin } from './VariableHighlightPlugin';
 import './editor.css';
 import { Variable } from '../flow/nodes/variable-mention/variable-selector';
 
-// This plugin is responsible for setting the initial value
 function InitialValuePlugin({ value }: { value: string }) {
   const [editor] = useLexicalComposerContext();
   
@@ -80,7 +78,6 @@ export function LexicalEditor({
     });
   }
 
-  // Method to expose insert variable command to parent
   useEffect(() => {
     if (insertVariable) {
       const originalInsertVariable = insertVariable;
@@ -98,19 +95,22 @@ export function LexicalEditor({
   }
 
   const containerStyle = {
-    width: '100%', 
-    maxWidth: '100%',
-    minWidth: '0', // Important for flex containers
-    flex: '1 1 auto' // Allow shrinking
+    width: '250px',
+    maxWidth: '250px', 
+    minWidth: '0',
+    overflow: 'hidden',
+    flex: '1 1 auto'
   };
 
   const contentEditableStyle = {
+    width: '100%',
     maxWidth: '100%',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     wordBreak: 'break-word' as const,
     overflowWrap: 'break-word' as const,
-    whiteSpace: 'pre-wrap' as const
+    whiteSpace: 'pre-wrap' as const,
+    hyphens: 'auto' as const
   };
 
   return (
@@ -135,7 +135,6 @@ export function LexicalEditor({
   );
 }
 
-// Plugin to capture the editor instance
 function CaptureEditorPlugin({ onCaptureEditor }: { onCaptureEditor: (editor: LexicalEditorType) => void }) {
   const [editor] = useLexicalComposerContext();
   
@@ -146,5 +145,4 @@ function CaptureEditorPlugin({ onCaptureEditor }: { onCaptureEditor: (editor: Le
   return null;
 }
 
-// Export the command for external use
 export { INSERT_VARIABLE_COMMAND };

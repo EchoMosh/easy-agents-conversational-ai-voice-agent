@@ -7,6 +7,7 @@
   font-size: 0.875rem;
   max-width: 100%;
   width: 100%;
+  overflow: hidden; /* Prevent overflow */
 }
 
 .editor-input {
@@ -22,6 +23,7 @@
   word-wrap: break-word;
   word-break: break-word;
   max-width: 100%;
+  white-space: pre-wrap;
 }
 
 .editor-placeholder {
@@ -54,10 +56,13 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   max-width: 100%;
+  overflow: hidden;
 }
 
 .editor-text {
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
+  overflow: hidden;
+  max-width: 100%;
 }

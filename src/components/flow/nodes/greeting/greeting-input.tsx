@@ -31,15 +31,18 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
   };
 
   const containerStyle = {
-    maxWidth: '100%',
+    maxWidth: '250px', // Fixed width constraint
+    width: '250px',
     minWidth: '0',
+    overflow: 'hidden',
     flex: '1 1 auto'
   };
 
   const editorContainerStyle = {
     maxWidth: '100%', 
     width: '100%',
-    minWidth: '0'
+    minWidth: '0',
+    overflow: 'hidden'
   };
 
   return (
