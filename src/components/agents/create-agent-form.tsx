@@ -8,6 +8,7 @@ import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
 import { TemplateStep } from "./form-steps/template-step";
 import { getDefaultFlow } from "./utils/default-flow";
+import { AIVoiceLoader } from "./ai-voice-loader";
 
 interface CreateAgentFormProps {
   onSuccess: (agentId: string) => Promise<void>;
@@ -141,6 +142,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       setIsCreating(false);
     }
   };
+
+  if (isCreating) {
+    return <AIVoiceLoader />;
+  }
 
   return (
     <div className="space-y-6 py-6">
