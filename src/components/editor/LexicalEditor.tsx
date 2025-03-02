@@ -98,10 +98,10 @@ export function LexicalEditor({
   }
 
   return (
-    <div className={`editor-container nodrag ${className}`}>
+    <div className={`editor-container nodrag ${className}`} style={{ width: '100%', maxWidth: '100%' }}>
       <LexicalComposer initialConfig={initialConfig}>
         <RichTextPlugin
-          contentEditable={<ContentEditable className="editor-input" />}
+          contentEditable={<ContentEditable className="editor-input" style={{ maxWidth: '100%' }} />}
           placeholder={<div className="editor-placeholder">{placeholder}</div>}
           ErrorBoundary={({ children }) => <div>{children}</div>}
         />

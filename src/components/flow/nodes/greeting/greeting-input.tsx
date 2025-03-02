@@ -31,8 +31,8 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2 relative">
-      <div className="relative">
+    <div className="flex flex-col gap-2 relative" style={{ maxWidth: '100%' }}>
+      <div className="relative" style={{ maxWidth: '100%', width: '100%' }}>
         <LexicalEditor
           value={value}
           onChange={handleChange}
