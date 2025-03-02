@@ -1,7 +1,7 @@
 
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode } from '@xyflow/react';
-import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook } from 'lucide-react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
+import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
@@ -25,6 +25,70 @@ const nodeTypes: NodeTypes = {
   triggerNode: TriggerNode,
   transferNode: TransferNode,
   webhookNode: WebhookNode
+};
+
+// Custom edge with delete button
+const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd }: any) => {
+  const { setEdges } = useReactFlow();
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
+  
+  const edgePathStyle = {
+    ...style,
+    strokeWidth: showDeleteButton ? 3 : 2,
+    stroke: showDeleteButton ? '#94a3b8' : '#94a3b8',
+    strokeDasharray: style.strokeDasharray || 'none',
+    animation: style.animated ? 'dashdraw 0.5s linear infinite' : 'none',
+  };
+
+  const edgePath = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
+  
+  // Calculate midpoint for delete button
+  const midX = (sourceX + targetX) / 2;
+  const midY = (sourceY + targetY) / 2;
+  
+  const handleDelete = () => {
+    console.log(`[Flow] Deleting edge with ID: ${id}`);
+    setEdges((edges) => edges.filter((edge) => edge.id !== id));
+  };
+  
+  return (
+    <>
+      <path
+        id={id}
+        className="react-flow__edge-path"
+        d={edgePath}
+        style={edgePathStyle}
+        markerEnd={markerEnd}
+        onMouseEnter={() => setShowDeleteButton(true)}
+        onMouseLeave={() => setShowDeleteButton(false)}
+      />
+      
+      {showDeleteButton && (
+        <foreignObject
+          width={24}
+          height={24}
+          x={midX - 12}
+          y={midY - 12}
+          className="edge-delete-button"
+          onMouseEnter={() => setShowDeleteButton(true)}
+          onMouseLeave={() => setShowDeleteButton(false)}
+          requiredExtensions="http://www.w3.org/1999/xhtml"
+        >
+          <div 
+            className="flex items-center justify-center w-full h-full rounded-full bg-white dark:bg-gray-800 shadow cursor-pointer"
+            onClick={handleDelete}
+          >
+            <X className="w-4 h-4 text-gray-500 hover:text-red-500" />
+          </div>
+        </foreignObject>
+      )}
+    </>
+  );
+};
+
+// Define edge types
+const edgeTypes = {
+  buttonEdge: ButtonEdge
 };
 
 const widgets = [
@@ -212,7 +276,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   }, [nodes, edges]);
 
   const defaultEdgeOptions = {
-    type: 'default' as const,
+    type: 'buttonEdge' as const, // Changed from 'default' to 'buttonEdge'
     animated: true,
     style: {
       strokeWidth: 2,
@@ -256,6 +320,13 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
       onEdgesChange(updatedEdges);
     }, 0);
   }, [edges, onEdgesChange, onEdgesChangeInternal]);
+
+  const onEdgeClick: EdgeMouseHandler = useCallback((_, edge) => {
+    console.log('[Flow] Edge clicked:', edge);
+    const updatedEdges = edges.filter(e => e.id !== edge.id);
+    setEdges(updatedEdges);
+    onEdgesChange(updatedEdges);
+  }, [edges, setEdges, onEdgesChange]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -337,9 +408,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
             onConnect={onConnect}
+            onEdgeClick={onEdgeClick}
             onDragOver={onDragOver}
             onDrop={onDrop}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             fitView
             defaultEdgeOptions={defaultEdgeOptions}
             connectionMode={ConnectionMode.Loose}
@@ -348,6 +421,19 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             snapGrid={[15, 15]}
             deleteKeyCode={['Delete', 'Backspace']}
           >
+            <style jsx global>{`
+              @keyframes dashdraw {
+                from {
+                  stroke-dashoffset: 10;
+                }
+              }
+              
+              .edge-delete-button {
+                cursor: pointer;
+                z-index: 10;
+              }
+            `}</style>
+            
             <Background className="opacity-40" />
             <MiniMap
               className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"

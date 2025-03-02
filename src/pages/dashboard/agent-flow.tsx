@@ -299,10 +299,16 @@ export default function AgentFlowPage() {
       
       console.log('[AgentFlowPage] Saving updated flow data with new edges');
       saveFlowMutation.mutate(flowData);
+
+      // Update mermaid chart
+      let mermaidChartStr = generateMermaidFromFlow(flowData);
+      mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
+      setMermaidChart(mermaidChartStr);
+      
     } catch (error) {
       console.error('[AgentFlowPage] Error updating edges:', error);
     }
-  }, [agent, saveFlowMutation, flowState]);
+  }, [agent, saveFlowMutation, flowState, generateMermaidFromFlow, sanitizeMermaidChart]);
 
   // New function to handle node deletion
   const handleNodeDeletion = useCallback((deletedNodes: any[], remainingNodes: any[], remainingEdges: any[]) => {
