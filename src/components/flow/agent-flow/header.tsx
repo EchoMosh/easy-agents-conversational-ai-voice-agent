@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
+import { VoiceCallDialog } from "@/components/agents/voice-call/voice-call-dialog";
 
 interface HeaderProps {
   agent: Agent;
@@ -17,6 +18,7 @@ interface HeaderProps {
 export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [showTrainingPopup, setShowTrainingPopup] = useState(false);
+  const [showVoiceCallDialog, setShowVoiceCallDialog] = useState(false);
 
   useEffect(() => {
     console.log('Setting up Supabase realtime connection...');
@@ -92,6 +94,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             <Button 
               variant="secondary"
               className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 font-medium"
+              onClick={() => setShowVoiceCallDialog(true)}
             >
               <PhoneCall className="h-4 w-4 mr-2" />
               Call Me
@@ -131,6 +134,13 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         agent={agent} 
         open={showTrainingPopup} 
         onOpenChange={setShowTrainingPopup} 
+      />
+      
+      {/* Voice Call Dialog */}
+      <VoiceCallDialog
+        agent={agent}
+        open={showVoiceCallDialog}
+        onOpenChange={setShowVoiceCallDialog}
       />
     </>
   );

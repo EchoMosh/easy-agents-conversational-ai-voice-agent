@@ -1,0 +1,211 @@
+
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Agent } from '@/types/agent-types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Mic, MicOff, PhoneOff, Volume2, VolumeX } from 'lucide-react';
+
+// Dynamically import the ElevenLabs client to avoid SSR issues
+const importConversation = () => import('@11labs/client').then(mod => mod.Conversation);
+
+interface VoiceCallDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  agent: Agent;
+}
+
+export function VoiceCallDialog({ open, onOpenChange, agent }: VoiceCallDialogProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [conversationText, setConversationText] = useState<string[]>([]);
+  const conversationRef = useRef<any>(null);
+  const { toast } = useToast();
+
+  // Initialize the conversation
+  const initializeConversation = useCallback(async () => {
+    if (!open) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log("Initializing voice call for agent:", agent.id);
+      
+      // Request microphone permission
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        throw new Error("Microphone access denied. Please allow microphone access to use this feature.");
+      }
+      
+      // Get signed URL from our backend
+      const { data, error: urlError } = await supabase.functions.invoke('generate-agent-call', {
+        body: { agentId: agent.id }
+      });
+      
+      if (urlError || !data?.signedUrl) {
+        console.error("Error fetching signed URL:", urlError);
+        throw new Error("Failed to initialize voice call. Please try again later.");
+      }
+      
+      // Dynamically import the Conversation module
+      const Conversation = await importConversation();
+      
+      // Initialize the conversation
+      const conversation = await Conversation.startSession({
+        signedUrl: data.signedUrl,
+        onMessage: (message: any) => {
+          console.log("Message received:", message);
+          if (message.type === 'text') {
+            setConversationText(prev => [...prev, message.content]);
+          }
+        },
+        onStatusChange: (status: string) => {
+          console.log("Status changed:", status);
+        },
+        onModeChange: (mode: { is_speaking: boolean; is_processing: boolean; is_listening: boolean }) => {
+          console.log("Mode changed:", mode);
+          setIsSpeaking(mode.is_speaking);
+          setIsListening(mode.is_listening);
+        },
+        onError: (error: any) => {
+          console.error("Conversation error:", error);
+          setError("An error occurred during the conversation. Please try again.");
+        }
+      });
+      
+      conversationRef.current = conversation;
+      setIsLoading(false);
+      
+      // Add welcome message
+      setConversationText([`Connected to ${agent.name}`]);
+      
+    } catch (err) {
+      console.error("Error initializing conversation:", err);
+      setError(err instanceof Error ? err.message : "Failed to initialize voice call");
+      setIsLoading(false);
+    }
+  }, [agent, open]);
+  
+  // Clean up the conversation when the dialog closes
+  const cleanupConversation = useCallback(() => {
+    if (conversationRef.current) {
+      console.log("Ending conversation session");
+      conversationRef.current.endSession().catch(console.error);
+      conversationRef.current = null;
+    }
+  }, []);
+  
+  // Initialize conversation when dialog opens
+  useEffect(() => {
+    if (open) {
+      initializeConversation();
+    }
+    
+    return () => {
+      cleanupConversation();
+    };
+  }, [open, initializeConversation, cleanupConversation]);
+  
+  // Handle mute/unmute
+  const toggleMute = useCallback(() => {
+    if (!conversationRef.current) return;
+    
+    try {
+      // Set volume to 0 when muted, 1 when unmuted
+      conversationRef.current.setVolume({ volume: isMuted ? 1 : 0 });
+      setIsMuted(!isMuted);
+    } catch (err) {
+      console.error("Error toggling mute:", err);
+      toast({
+        title: "Error",
+        description: "Failed to change audio settings",
+        variant: "destructive",
+      });
+    }
+  }, [isMuted, toast]);
+  
+  // Handle dialog close
+  const handleClose = useCallback(() => {
+    cleanupConversation();
+    onOpenChange(false);
+  }, [cleanupConversation, onOpenChange]);
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Call with {agent.name}</DialogTitle>
+        </DialogHeader>
+        
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-4"></div>
+            <p className="text-center text-sm text-muted-foreground">
+              Connecting to {agent.name}...
+            </p>
+          </div>
+        ) : error ? (
+          <div className="p-6 text-center">
+            <p className="text-destructive mb-4">{error}</p>
+            <Button onClick={handleClose}>Close</Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col space-y-2 p-4 h-64 overflow-y-auto bg-muted/30 rounded-md">
+              {conversationText.map((text, i) => (
+                <div key={i} className="text-sm p-2 rounded">
+                  {text}
+                </div>
+              ))}
+              
+              <div className="flex items-center justify-center h-12">
+                {isSpeaking && (
+                  <p className="text-sm text-muted-foreground animate-pulse">
+                    {agent.name} is speaking...
+                  </p>
+                )}
+                {isListening && !isSpeaking && (
+                  <p className="text-sm text-muted-foreground animate-pulse">
+                    Listening...
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-center space-x-4 p-4">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full h-12 w-12"
+                onClick={toggleMute}
+              >
+                {isMuted ? <VolumeX /> : <Volume2 />}
+              </Button>
+              
+              <Button 
+                variant="destructive"
+                size="icon"
+                className="rounded-full h-12 w-12"
+                onClick={handleClose}
+              >
+                <PhoneOff />
+              </Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

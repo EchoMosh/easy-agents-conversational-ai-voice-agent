@@ -1,1 +1,4 @@
-project_id = "ahpmmgnkksrbpthniptg"
+
+project_id = "YOUR_PROJECT_ID"
+[functions.generate-agent-call]
+verify_jwt = true
