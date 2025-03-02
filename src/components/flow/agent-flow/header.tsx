@@ -101,7 +101,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         throw new Error(`Failed to fetch complete agent data: ${agentError.message}`);
       }
       
-      // Prepare the payload with ALL agent information
+      // Prepare the payload without the flow data
       const payload = {
         // Basic agent info
         agentId: agent.id,
@@ -109,19 +109,13 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         agentRole: agent.role,
         elevenlabsAgentId: agent.elevenlabs_agent_id || null,
         
-        // Complete agent data
-        fullAgentData: fullAgentData,
-        
-        // Flow information
-        flow: agent.flow,
-        
-        // Settings
+        // Only include essential agent data, excluding the flow
         voiceId: agent.voice_id || null,
         language: agent.language || 'en',
         objective: agent.objective || '',
         humorLevel: agent.humorLevel || 50,
         interactionType: agent.interaction_type || ['inbound'],
-        knowledgeIds: agent.knowledge_ids || [],
+        knowledgeIds: fullAgentData.knowledge_ids || [],
         isActive: agent.is_active,
         mermaidChart: agent.mermaid_chart,
         
@@ -141,7 +135,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         timestamp: new Date().toISOString()
       };
       
-      console.log('Sending complete webhook payload:', payload);
+      console.log('Sending webhook payload (without flow data):', payload);
       
       const response = await fetch('https://moshi.app.n8n.cloud/webhook/update-agent', {
         method: 'POST',
@@ -160,7 +154,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       
       toast({
         title: "Success",
-        description: "Agent update request sent with complete information",
+        description: "Agent update request sent successfully",
       });
     } catch (error) {
       console.error('Error updating agent:', error);

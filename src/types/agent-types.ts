@@ -40,4 +40,5 @@ export interface Agent {
   maxDurationSeconds?: number;
   mermaid_chart?: string;
   elevenlabs_agent_id?: string;
+  knowledge_ids?: string[]; // Add this property to match the database structure
 }
