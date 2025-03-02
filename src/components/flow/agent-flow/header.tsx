@@ -88,6 +88,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     setIsUpdatingAgent(true);
     try {
       console.log('Updating agent via webhook...');
+      console.log('Agent data:', agent);
       
       const payload = {
         agentId: agent.id,
