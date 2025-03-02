@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
@@ -169,6 +170,12 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
       console.log('[Flow] Delete/Backspace key pressed, checking for selected nodes');
       
       const selectedNodes = nodes.filter(node => node.selected);
+      const selectedEdges = edges.filter(edge => edge.selected);
+      
+      let nodesChanged = false;
+      let edgesChanged = false;
+      
+      // Process selected nodes deletion
       if (selectedNodes.length > 0) {
         console.log('[Flow] Selected nodes to delete:', selectedNodes);
         
@@ -192,6 +199,25 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           onNodeDeletion(selectedNodes, newNodes, newEdges);
         }
         
+        nodesChanged = true;
+        edgesChanged = true;
+      }
+      
+      // Process selected edges deletion
+      if (selectedEdges.length > 0 && !nodesChanged) {
+        console.log('[Flow] Selected edges to delete:', selectedEdges);
+        
+        const newEdges = edges.filter(edge => !edge.selected);
+        
+        setEdges(newEdges);
+        
+        console.log('[Flow] Notifying parent about deleted edges');
+        onEdgesChange(newEdges);
+        
+        edgesChanged = true;
+      }
+      
+      if (nodesChanged || edgesChanged) {
         event.preventDefault();
       }
     }
@@ -297,8 +323,12 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     console.log('[Flow] handleEdgesChange called with changes:', changes);
     onEdgesChangeInternal(changes);
     
+    // Check if there are any remove changes (which indicate edge deletion)
+    const hasRemoveChanges = changes.some((change: any) => change.type === 'remove');
+    
     setTimeout(() => {
       console.log('[Flow] Notifying parent after edge changes, current edges:', edges);
+      // Make sure we're sending the most current state
       const updatedEdges = edges.map(edge => ({ ...edge }));
       onEdgesChange(updatedEdges);
     }, 0);

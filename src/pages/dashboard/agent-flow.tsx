@@ -300,7 +300,7 @@ export default function AgentFlowPage() {
       console.log('[AgentFlowPage] Saving updated flow data with new edges');
       saveFlowMutation.mutate(flowData);
 
-      // Update mermaid chart
+      // Update mermaid chart immediately when edges change
       let mermaidChartStr = generateMermaidFromFlow(flowData);
       mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       setMermaidChart(mermaidChartStr);
