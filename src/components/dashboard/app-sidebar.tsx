@@ -7,7 +7,6 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
-import { Sparkles } from "lucide-react";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -42,13 +41,12 @@ export function AppSidebar() {
         </p>
       </div>
       
-      {/* Stylish Easy Agents Text */}
+      {/* Easy Agents Text (without hover effect) */}
       <div className="relative px-3 py-3 text-center border-t border-sidebar-border">
         <div className="relative">
-          <GlowingEffect glow={true} blur={10} spread={30} disabled={false} />
-          <div className="flex items-center justify-center gap-1.5">
-            <Sparkles size={16} className="text-[#9b87f5]" />
-            <span className="font-bold text-sm bg-gradient-to-r from-[#9b87f5] to-[#0EA5E9] bg-clip-text text-transparent">
+          <GlowingEffect glow={false} disabled={true} />
+          <div className="flex items-center justify-center">
+            <span className="font-bold text-base bg-gradient-to-r from-[#9b87f5] to-[#0EA5E9] bg-clip-text text-transparent">
               Easy Agents
             </span>
           </div>
