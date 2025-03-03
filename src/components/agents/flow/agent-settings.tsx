@@ -1,432 +1,545 @@
+import * as React from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Play, Pause, Info, VolumeX, Volume2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { fetchDocuments } from "@/utils/knowledge-api";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Agent, TrainingExample } from '@/types/agent';
-import { voicesData } from '@/components/agents/utils/voices-data';
-import { languagesData } from '@/components/agents/utils/languages-data';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus, Search } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
-import { useToast } from '@/hooks/use-toast';
+// Available voices data
+const voices = [
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", gender: "female" },
+  { id: "UgBBYS2sOqTuMpoF3BR0", name: "Thomas", gender: "male" },
+  { id: "pwMBn0SsmN1220Aorv15", name: "Michael", gender: "male" }
+];
 
-export interface AgentSettingsProps {
-  agent: Agent;
-  onUpdate: (settings: {
-    voice_id?: string;
+// Languages data for the dropdown select
+const languages = [
+  { id: "en-US", name: "English (US)" },
+  { id: "en-GB", name: "English (UK)" },
+  { id: "es-ES", name: "Spanish" },
+  { id: "fr-FR", name: "French" },
+  { id: "de-DE", name: "German" },
+  { id: "it-IT", name: "Italian" },
+  { id: "pt-BR", name: "Portuguese (Brazil)" },
+  { id: "nl-NL", name: "Dutch" },
+];
+
+interface AgentSettingsProps {
+  agentId: string;
+  currentVoice?: string;
+  currentLanguage?: string;
+  currentHumorLevel?: number;
+  children: React.ReactNode;
+  onUpdateSettings: (settings: {
+    voiceId?: string;
     language?: string;
-    humor_level?: number;
-    maxDurationSeconds?: number;
-    knowledge_ids?: string[];
+    knowledgeBaseId?: string;
+    humorLevel?: number;
   }) => Promise<void>;
 }
 
-export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
-  const [tab, setTab] = useState('general');
-  const [voiceId, setVoiceId] = useState(agent.voice_id || '');
-  const [language, setLanguage] = useState(agent.language || 'en');
-  const [humorLevel, setHumorLevel] = useState(
-    typeof agent.humor_level === 'number'
-      ? agent.humor_level
-      : typeof agent.humorLevel === 'number'
-      ? agent.humorLevel
-      : 0
-  );
-  const [knowledgeIds, setKnowledgeIds] = useState<string[]>(agent.knowledge_ids || []);
-  const [trainingExamples, setTrainingExamples] = useState<TrainingExample[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // For editing training examples
-  const [editingExample, setEditingExample] = useState<TrainingExample | null>(null);
-  const [userMessage, setUserMessage] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
-  const [correctedResponse, setCorrectedResponse] = useState('');
-  
+export function AgentSettings({
+  agentId,
+  currentVoice,
+  currentLanguage,
+  currentHumorLevel = 50,
+  children,
+  onUpdateSettings,
+}: AgentSettingsProps) {
+  const [open, setOpen] = React.useState(false);
+  const [selectedVoice, setSelectedVoice] = React.useState(currentVoice || voices[0].id);
+  const [language, setLanguage] = React.useState(currentLanguage || "en-US");
+  const [knowledgeBase, setKnowledgeBase] = React.useState("none");
+  const [humorLevel, setHumorLevel] = React.useState(currentHumorLevel);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isPreviewingVoice, setIsPreviewingVoice] = React.useState(false);
+  const [audioElement, setAudioElement] = React.useState<HTMLAudioElement | null>(null);
+  const [showVoiceInfo, setShowVoiceInfo] = React.useState(false);
   const { toast } = useToast();
+  
+  const currentVoiceObject = React.useMemo(() => 
+    voices.find(v => v.id === selectedVoice) || voices[0],
+  [selectedVoice]);
+  
+  const { data: knowledgeDocuments, isLoading: isLoadingDocuments, refetch } = useQuery({
+    queryKey: ['knowledgeDocuments'],
+    queryFn: fetchDocuments,
+    staleTime: 0,
+  });
+  
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const audio = new Audio();
+      
+      audio.onended = () => {
+        console.log("Audio playback ended naturally");
+        setIsPreviewingVoice(false);
+      };
+      
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        console.error('Audio error code:', audio.error?.code);
+        console.error('Audio error message:', audio.error?.message);
+        setIsPreviewingVoice(false);
+        toast({
+          title: "Error",
+          description: `Audio playback failed: ${audio.error?.message || 'Unknown error'}`,
+          variant: "destructive",
+        });
+      };
+      
+      setAudioElement(audio);
+    }
+    
+    return () => {
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.src = '';
+      }
+    };
+  }, []);
+  
+  React.useEffect(() => {
+    if (open) {
+      refetch();
+      
+      const fetchAgentData = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('agents')
+            .select('knowledge_ids, voice_id, language, humor_level')
+            .eq('id', agentId)
+            .maybeSingle();
+            
+          if (error) throw error;
+          
+          if (data) {
+            if (data.voice_id) {
+              setSelectedVoice(data.voice_id);
+            }
+            
+            if (data.language) {
+              setLanguage(data.language);
+            }
+            
+            if (data.humor_level !== undefined && data.humor_level !== null) {
+              setHumorLevel(data.humor_level);
+            }
+            
+            if (data.knowledge_ids && data.knowledge_ids.length > 0) {
+              setKnowledgeBase(data.knowledge_ids[0]);
+            } else {
+              setKnowledgeBase("none");
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching agent data:", error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch agent data",
+            variant: "destructive",
+          });
+        }
+      };
+      
+      fetchAgentData();
+    }
+  }, [open, agentId, refetch]);
+  
+  const knowledgeBases = React.useMemo(() => {
+    const documents = knowledgeDocuments || [];
+    return [
+      { id: "none", name: "None" },
+      ...documents.map(doc => ({ id: doc.id, name: doc.title })),
+    ];
+  }, [knowledgeDocuments]);
 
-  useEffect(() => {
-    fetchTrainingExamples();
-  }, [agent.id]);
-
-  const fetchTrainingExamples = async () => {
+  const handleSave = async () => {
     setIsLoading(true);
     try {
+      console.log("Saving agent settings:", {
+        agentId,
+        voice: selectedVoice,
+        language,
+        humorLevel,
+        knowledgeBase
+      });
+      
+      const updateData = {
+        voice_id: selectedVoice,
+        language: language,
+        humor_level: humorLevel,
+        knowledge_ids: knowledgeBase && knowledgeBase !== "none" ? [knowledgeBase] : []
+      };
+      
+      console.log("Updating agent with data:", updateData);
+      
       const { data, error } = await supabase
-        .from('agent_training_examples')
-        .select('*')
-        .eq('agent_id', agent.id)
-        .order('created_at', { ascending: false });
-
+        .from('agents')
+        .update(updateData)
+        .eq('id', agentId)
+        .select();
+      
       if (error) {
-        console.error('Error fetching training examples:', error);
-        toast({
-          title: 'Failed to load training examples',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return;
+        console.error("Supabase update error:", error);
+        throw new Error(`Database error: ${error.message}`);
       }
-
-      setTrainingExamples(data || []);
-    } catch (err) {
-      console.error('Error in fetchTrainingExamples:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVoiceChange = (value: string) => {
-    setVoiceId(value);
-    onUpdate({ voice_id: value });
-  };
-
-  const handleLanguageChange = (value: string) => {
-    setLanguage(value);
-    onUpdate({ language: value });
-  };
-
-  const handleHumorLevelChange = (value: number[]) => {
-    const level = value[0];
-    setHumorLevel(level);
-    onUpdate({ humor_level: level });
-  };
-
-  const handleSaveTrainingExample = async () => {
-    try {
-      if (!userMessage || !aiResponse || !correctedResponse) {
-        toast({
-          title: 'Incomplete fields',
-          description: 'Please fill in all fields for the training example',
-          variant: 'destructive',
+      
+      console.log("Supabase update result:", data);
+      
+      try {
+        await onUpdateSettings({
+          voiceId: selectedVoice,
+          language,
+          knowledgeBaseId: knowledgeBase === "none" ? null : knowledgeBase,
+          humorLevel: humorLevel,
         });
-        return;
+      } catch (callbackError) {
+        console.error("onUpdateSettings callback error:", callbackError);
       }
-
-      setIsLoading(true);
-
-      // Get the current user's ID from Supabase auth
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      if (editingExample) {
-        // Update existing example
-        const { error } = await supabase
-          .from('agent_training_examples')
-          .update({
-            user_message: userMessage,
-            ai_response: aiResponse,
-            corrected_response: correctedResponse,
-          })
-          .eq('id', editingExample.id);
-
-        if (error) throw error;
-
-        toast({
-          title: 'Example updated',
-          description: 'Training example has been updated successfully',
-        });
-      } else {
-        // Create new example
-        const { error } = await supabase
-          .from('agent_training_examples')
-          .insert({
-            agent_id: agent.id,
-            user_id: user.id,
-            user_message: userMessage,
-            ai_response: aiResponse,
-            corrected_response: correctedResponse,
-          });
-
-        if (error) throw error;
-
-        toast({
-          title: 'Example added',
-          description: 'New training example has been added successfully',
-        });
-      }
-
-      // Reset form and refresh examples
-      setUserMessage('');
-      setAiResponse('');
-      setCorrectedResponse('');
-      setEditingExample(null);
-      await fetchTrainingExamples();
-    } catch (error: any) {
-      console.error('Error saving training example:', error);
-      toast({
-        title: 'Error saving example',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteTrainingExample = async (id: string) => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase
-        .from('agent_training_examples')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setTrainingExamples(trainingExamples.filter(example => example.id !== id));
       
       toast({
-        title: 'Example deleted',
-        description: 'Training example has been deleted successfully',
+        title: "Success",
+        description: "Agent settings updated",
       });
-      
-      // If we were editing this example, reset the form
-      if (editingExample && editingExample.id === id) {
-        setEditingExample(null);
-        setUserMessage('');
-        setAiResponse('');
-        setCorrectedResponse('');
-      }
-    } catch (error: any) {
-      console.error('Error deleting training example:', error);
+      setOpen(false);
+    } catch (error) {
+      console.error("Error updating agent settings:", error);
       toast({
-        title: 'Error deleting example',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update agent settings",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEditTrainingExample = (example: TrainingExample) => {
-    setEditingExample(example);
-    setUserMessage(example.user_message);
-    setAiResponse(example.ai_response);
-    setCorrectedResponse(example.corrected_response);
+  const previewVoice = async () => {
+    if (!audioElement) {
+      console.error('Audio element not initialized');
+      toast({
+        title: "Error",
+        description: "Audio player not initialized. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (isPreviewingVoice) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+      setIsPreviewingVoice(false);
+      return;
+    }
+    
+    try {
+      setIsPreviewingVoice(true);
+      
+      console.log("Previewing voice:", selectedVoice);
+      
+      const previewText = selectedVoice === "UgBBYS2sOqTuMpoF3BR0" 
+        ? "Nice to meet you! I'm your new AI voice, here to perform CPR on whatever the heck died on this page you're calling a script."
+        : (selectedVoice === "pwMBn0SsmN1220Aorv15"
+          ? "I'm Michael, your new AI voice assistant, ready to make your app sound amazing."
+          : "Hello, this is a preview of my voice.");
+      
+      const payload = { 
+        text: previewText,
+        voice_id: selectedVoice,
+        model_id: "eleven_multilingual_v2"
+      };
+      
+      console.log("Sending text-to-speech request with payload:", payload);
+      
+      const response = await supabase.functions.invoke('text-to-speech', {
+        method: 'POST',
+        body: payload,
+      });
+      
+      console.log("Received response from edge function:", response);
+      
+      if (response.error) {
+        throw new Error(`Failed to generate voice preview: ${response.error}`);
+      }
+      
+      if (!response.data) {
+        throw new Error('No data returned from the edge function');
+      }
+      
+      if (!response.data.audio_content) {
+        if (response.data.error) {
+          throw new Error(`ElevenLabs API error: ${response.data.error}`);
+        }
+        throw new Error('No audio content received from the text-to-speech function');
+      }
+      
+      console.log("Received audio content, length:", response.data.audio_content.length);
+      
+      const binaryData = atob(response.data.audio_content);
+      const bytes = new Uint8Array(binaryData.length);
+      for (let i = 0; i < binaryData.length; i++) {
+        bytes[i] = binaryData.charCodeAt(i);
+      }
+      
+      const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      console.log("Created audio URL:", audioUrl);
+      
+      audioElement.src = audioUrl;
+      audioElement.load();
+      
+      console.log("Starting audio playback");
+      
+      try {
+        await audioElement.play();
+        console.log("Audio playback started successfully");
+      } catch (playError) {
+        console.error('Error playing audio:', playError);
+        setIsPreviewingVoice(false);
+        URL.revokeObjectURL(audioUrl);
+        throw new Error(`Failed to play audio: ${playError.message}`);
+      }
+      
+      audioElement.onended = () => {
+        console.log("Audio playback ended");
+        setIsPreviewingVoice(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+    } catch (error) {
+      console.error('Error previewing voice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to preview voice: " + (error instanceof Error ? error.message : String(error)),
+        variant: "destructive",
+      });
+      setIsPreviewingVoice(false);
+    }
   };
-
-  const filteredExamples = trainingExamples.filter(example => {
-    if (!searchQuery) return true;
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    return (
-      example.user_message.toLowerCase().includes(lowerCaseQuery) ||
-      example.ai_response.toLowerCase().includes(lowerCaseQuery) ||
-      example.corrected_response.toLowerCase().includes(lowerCaseQuery)
-    );
-  });
 
   return (
-    <div className="space-y-6 px-1 py-2">
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="general">General Settings</TabsTrigger>
-          <TabsTrigger value="training">Training Examples</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="general" className="space-y-6 py-4">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="voice">Voice</Label>
-              <Select value={voiceId} onValueChange={handleVoiceChange}>
-                <SelectTrigger id="voice">
-                  <SelectValue placeholder="Select a voice" />
-                </SelectTrigger>
-                <SelectContent>
-                  {voicesData.map((voice) => (
-                    <SelectItem key={voice.id} value={voice.id}>
-                      {voice.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="language">Language</Label>
-              <Select value={language} onValueChange={handleLanguageChange}>
-                <SelectTrigger id="language">
-                  <SelectValue placeholder="Select a language" />
-                </SelectTrigger>
-                <SelectContent>
-                  {languagesData.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code}>
-                      {lang.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label htmlFor="humor-level">Humor Level</Label>
-                <span className="text-sm text-muted-foreground">{humorLevel}</span>
-              </div>
-              <Slider
-                id="humor-level"
-                defaultValue={[humorLevel]}
-                max={10}
-                step={1}
-                onValueChange={handleHumorLevelChange}
-              />
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="training" className="space-y-6 py-4">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search examples..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setEditingExample(null);
-                  setUserMessage('');
-                  setAiResponse('');
-                  setCorrectedResponse('');
-                }}
-                disabled={!editingExample}
-              >
-                <Plus className="h-4 w-4 mr-2" /> New Example
-              </Button>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 border-0 shadow-xl">
+          <div className="relative">
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-6 text-white">
+              <DialogTitle className="text-2xl font-bold tracking-tight mb-1">Agent Settings</DialogTitle>
+              <DialogDescription className="text-white/90 text-sm">
+                Configure your agent's voice, language, and knowledge settings
+              </DialogDescription>
             </div>
             
-            <div className="grid grid-cols-1 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="user-message">User Message</Label>
-                      <Textarea
-                        id="user-message"
-                        placeholder="What the user says..."
-                        value={userMessage}
-                        onChange={(e) => setUserMessage(e.target.value)}
-                        className="min-h-[60px]"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="ai-response">Original AI Response</Label>
-                      <Textarea
-                        id="ai-response"
-                        placeholder="How the AI originally responded..."
-                        value={aiResponse}
-                        onChange={(e) => setAiResponse(e.target.value)}
-                        className="min-h-[80px]"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="corrected-response">Corrected Response</Label>
-                      <Textarea
-                        id="corrected-response"
-                        placeholder="How the AI should have responded..."
-                        value={correctedResponse}
-                        onChange={(e) => setCorrectedResponse(e.target.value)}
-                        className="min-h-[80px]"
-                      />
-                    </div>
-                    <div className="flex justify-end">
+            <div className="p-6 max-h-[calc(80vh-140px)] overflow-y-auto space-y-8">
+              <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
+                <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
+                  <Volume2 className="h-5 w-5 text-purple-500" /> 
+                  Voice Settings
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="voice" className="text-sm font-medium mb-2 block">Voice</Label>
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+                      <Select onValueChange={setSelectedVoice} value={selectedVoice}>
+                        <SelectTrigger className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-lg">
+                          <SelectValue placeholder="Select voice" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-gray-900">
+                          {voices.map((voice) => (
+                            <SelectItem key={voice.id} value={voice.id} className="focus:bg-gray-100 dark:focus:bg-gray-800">
+                              {voice.name} ({voice.gender})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Button 
-                        onClick={handleSaveTrainingExample}
-                        disabled={isLoading || !userMessage || !aiResponse || !correctedResponse}
+                        variant="outline" 
+                        size="icon" 
+                        onClick={previewVoice}
+                        className="h-10 w-10 rounded-lg border-gray-200 dark:border-gray-700"
                       >
-                        {editingExample ? 'Update Example' : 'Add Example'}
+                        {isPreviewingVoice ? 
+                          <Pause className="h-4 w-4 text-gray-700 dark:text-gray-300" /> : 
+                          <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                        }
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setShowVoiceInfo(!showVoiceInfo)}
+                        className="h-10 w-10 rounded-lg border-gray-200 dark:border-gray-700"
+                      >
+                        <Info className="h-4 w-4 text-gray-700 dark:text-gray-300" />
                       </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              
-              <Separator className="my-4" />
-              
-              {isLoading && filteredExamples.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-sm text-muted-foreground">Loading examples...</p>
+                  
+                  {showVoiceInfo && (
+                    <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-sm text-gray-600 dark:text-gray-400 animate-fade-in">
+                      <p>This voice is provided by ElevenLabs and is optimized for natural-sounding speech in multiple languages.</p>
+                    </div>
+                  )}
                 </div>
-              ) : filteredExamples.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No training examples found.</p>
+              </div>
+                
+              <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="language" className="text-sm font-medium mb-1 block">Language</Label>
+                  <Select onValueChange={setLanguage} value={language}>
+                    <SelectTrigger className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-lg">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-900">
+                      {languages.map((l) => (
+                        <SelectItem key={l.id} value={l.id} className="focus:bg-gray-100 dark:focus:bg-gray-800">
+                          {l.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredExamples.map((example) => (
-                    <Card key={example.id} className="relative overflow-hidden">
-                      <CardContent className="pt-6">
-                        <div className="absolute top-2 right-2 flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEditTrainingExample(example)}
-                            className="h-8 w-8"
-                          >
-                            <svg 
-                              xmlns="http://www.w3.org/2000/svg" 
-                              width="15" 
-                              height="15" 
-                              viewBox="0 0 24 24" 
-                              fill="none" 
-                              stroke="currentColor" 
-                              strokeWidth="2" 
-                              strokeLinecap="round" 
-                              strokeLinejoin="round"
-                            >
-                              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                              <path d="m15 5 4 4"/>
-                            </svg>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteTrainingExample(example.id || '')}
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="space-y-2">
-                          <div>
-                            <Badge variant="outline" className="font-normal mb-1">User</Badge>
-                            <p className="text-sm">{example.user_message}</p>
-                          </div>
-                          <div>
-                            <Badge variant="outline" className="font-normal mb-1">Original AI</Badge>
-                            <p className="text-sm">{example.ai_response}</p>
-                          </div>
-                          <div>
-                            <Badge variant="outline" className="font-normal mb-1">Corrected</Badge>
-                            <p className="text-sm">{example.corrected_response}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <Label htmlFor="humor" className="text-sm font-medium">Humor Level</Label>
+                    <span className="text-sm font-medium text-purple-600 dark:text-purple-400">{humorLevel}%</span>
+                  </div>
+                  <Slider
+                    id="humor"
+                    min={0}
+                    max={100}
+                    step={10}
+                    value={[humorLevel]}
+                    onValueChange={(values) => setHumorLevel(values[0])}
+                    className="mt-2"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Serious</span>
+                    <span>Balanced</span>
+                    <span>Humorous</span>
+                  </div>
                 </div>
-              )}
+              </div>
+                
+              <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
+                <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
+                  <Info className="h-5 w-5 text-blue-500" /> 
+                  Knowledge Settings
+                </h3>
+                
+                <div className="space-y-3">
+                  <Label htmlFor="knowledge" className="text-sm font-medium mb-1 block">Knowledge Base</Label>
+                  <Select onValueChange={setKnowledgeBase} value={knowledgeBase}>
+                    <SelectTrigger className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-lg">
+                      <SelectValue placeholder={isLoadingDocuments ? "Loading..." : "Select knowledge base"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-900">
+                      {knowledgeBases.map((kb) => (
+                        <SelectItem key={kb.id} value={kb.id} className="focus:bg-gray-100 dark:focus:bg-gray-800">
+                          {kb.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Connect a knowledge base to your agent to provide it with specific information
+                  </p>
+                </div>
+              </div>
             </div>
+            
+            <DialogFooter className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setOpen(false)} className="border-gray-300 dark:border-gray-700">
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={isLoading}
+                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
+              >
+                {isLoading ? "Saving..." : "Save changes"}
+              </Button>
+            </DialogFooter>
           </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+        </DialogContent>
+      </Dialog>
+      
+      <Sheet open={showVoiceInfo} onOpenChange={setShowVoiceInfo}>
+        <SheetContent className="w-full sm:max-w-md bg-white dark:bg-gray-900 p-0">
+          <SheetHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
+            <SheetTitle className="text-white">Voice Information</SheetTitle>
+            <SheetDescription className="text-white/90">
+              Details about the ElevenLabs voice
+            </SheetDescription>
+          </SheetHeader>
+          <div className="p-6 space-y-6">
+            <div className="space-y-2">
+              <h3 className="font-medium">Voice: {currentVoiceObject.name}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                This is a premium {currentVoiceObject.gender} voice from ElevenLabs designed to sound natural and expressive.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">Capabilities</h3>
+              <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <li>Natural intonation and prosody</li>
+                <li>Multilingual support</li>
+                <li>Emotional expression</li>
+                <li>Variable speaking styles</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">Usage tips</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Adjust the humor level to make the voice sound more serious or more playful depending on your agent's purpose.
+              </p>
+            </div>
+            <Button 
+              onClick={previewVoice}
+              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+            >
+              {isPreviewingVoice ? (
+                <>
+                  <Pause className="mr-2 h-4 w-4" /> Stop Preview
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" /> Preview Voice
+                </>
+              )}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

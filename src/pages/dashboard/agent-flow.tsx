@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
 import { Flow } from '@/components/flow/agent-flow/flow';
-import AgentSettings from '@/components/flow/agent-flow/header';
+import { Header } from '@/components/flow/agent-flow/header';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +27,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   
   const nodeTypeCounter: Record<string, number> = {};
   
+  // Process only nodes that actually exist in the current flow
   flowData.nodes.forEach((node: FlowNode) => {
     const baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
     
@@ -40,6 +41,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     nodeIdMap.set(node.id, simpleId);
   });
   
+  // Add nodes to mermaid chart
   flowData.nodes.forEach((node: FlowNode) => {
     let nodeLabel = 'Node';
     let outcomeLabels: string[] = [];
@@ -66,7 +68,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     
     const cleanLabel = nodeLabel
       .replace(/\n/g, ' ')
-      .replace(/"/g, '');
+      .replace(/"/g, ''); // Remove character limit, allow full text
     
     const simpleId = nodeIdMap.get(node.id) || `unknown-${node.id}`;
     
@@ -77,7 +79,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
         mermaidString += ' (Speak)';
         break;
       case 'greetingNode':
-        mermaidString += ' (Speak)';
+        mermaidString += ' (Speak)'; // Changed from (Greeting) to (Speak)
         break;
       case 'endNode':
         mermaidString += ' (End)';
@@ -100,6 +102,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     }
   });
   
+  // Only process edges that connect existing nodes
   const validEdges = flowData.edges.filter((edge: FlowEdge) => 
     nodeIdMap.has(edge.source) && nodeIdMap.has(edge.target)
   );
@@ -112,6 +115,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     let edgeLabel = '';
     
     if (sourceNode && sourceNode.data && (sourceNode.type === 'speakNode' || sourceNode.type === 'greetingNode')) {
+      // Explicitly check if outcomes is an array and access its length safely
       const outcomes = sourceNode.data.outcomes && Array.isArray(sourceNode.data.outcomes) 
         ? sourceNode.data.outcomes 
         : [];
@@ -119,6 +123,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       if (edge.sourceHandle && edge.sourceHandle.startsWith('outcome-')) {
         const outcomeIndex = parseInt(edge.sourceHandle.replace('outcome-', ''), 10);
         if (!isNaN(outcomeIndex) && outcomeIndex < outcomes.length) {
+          // Display full outcome text without truncation
           const outcomeText = outcomes[outcomeIndex].replace(/"/g, '');
           edgeLabel = `|"${outcomeText}"|`;
         }
@@ -181,6 +186,7 @@ export default function AgentFlowPage() {
       
       console.log("[AgentFlowPage] SAVING FLOW DATA TO SUPABASE:", clonedData);
       
+      // Generate mermaid chart based on the current flow data
       let mermaidChartStr = generateMermaidFromFlow(clonedData);
       mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       
@@ -214,6 +220,7 @@ export default function AgentFlowPage() {
     }
   });
 
+  // Update flowState when agent.flow changes
   useEffect(() => {
     if (agent?.flow) {
       try {
@@ -221,6 +228,7 @@ export default function AgentFlowPage() {
         const flowData = typeof agent.flow === 'string' ? JSON.parse(agent.flow) : agent.flow;
         setFlowState(flowData as FlowData);
         
+        // Generate fresh mermaid chart from the current flow data
         let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
         mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
         console.log('[AgentFlowPage] Initial Mermaid Chart:', mermaidChartStr);
@@ -230,6 +238,7 @@ export default function AgentFlowPage() {
         setMermaidChart('graph TD\n  Error[Error generating chart]');
       }
     } else {
+      // Set empty flow message if no flow data exists
       setFlowState({ nodes: [], edges: [] });
       setMermaidChart('graph TD\n  EmptyFlow[Empty Flow]');
     }
@@ -245,6 +254,7 @@ export default function AgentFlowPage() {
       
       const clonedNodes = JSON.parse(JSON.stringify(newNodes));
       
+      // Update the flowState with new nodes
       setFlowState(prevState => {
         const newState = {
           nodes: clonedNodes,
@@ -253,6 +263,7 @@ export default function AgentFlowPage() {
         return newState;
       });
       
+      // Save the updated flow data
       const flowData: FlowData = {
         nodes: clonedNodes,
         edges: flowState.edges || []
@@ -275,6 +286,7 @@ export default function AgentFlowPage() {
       
       const clonedEdges = JSON.parse(JSON.stringify(newEdges));
       
+      // Update the flowState with new edges
       setFlowState(prevState => {
         const newState = {
           nodes: prevState.nodes || [],
@@ -283,6 +295,7 @@ export default function AgentFlowPage() {
         return newState;
       });
       
+      // Save the updated flow data
       const flowData: FlowData = {
         nodes: flowState.nodes || [],
         edges: clonedEdges
@@ -291,6 +304,7 @@ export default function AgentFlowPage() {
       console.log('[AgentFlowPage] Saving updated flow data with new edges');
       saveFlowMutation.mutate(flowData);
 
+      // Update mermaid chart immediately when edges change
       let mermaidChartStr = generateMermaidFromFlow(flowData);
       mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
       setMermaidChart(mermaidChartStr);
@@ -300,16 +314,19 @@ export default function AgentFlowPage() {
     }
   }, [agent, saveFlowMutation, flowState, generateMermaidFromFlow, sanitizeMermaidChart]);
 
+  // New function to handle node deletion
   const handleNodeDeletion = useCallback((deletedNodes: any[], remainingNodes: any[], remainingEdges: any[]) => {
     console.log('[AgentFlowPage] Nodes deleted:', deletedNodes);
     console.log('[AgentFlowPage] Remaining nodes:', remainingNodes);
     console.log('[AgentFlowPage] Remaining edges:', remainingEdges);
     
+    // Update the flowState with remaining nodes and edges
     setFlowState({
       nodes: remainingNodes,
       edges: remainingEdges
     });
     
+    // Generate and update the mermaid chart
     const updatedFlowData: FlowData = {
       nodes: remainingNodes,
       edges: remainingEdges
@@ -319,10 +336,11 @@ export default function AgentFlowPage() {
     mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
     setMermaidChart(mermaidChartStr);
     
+    // Save the updated flow data
     saveFlowMutation.mutate(updatedFlowData);
   }, [saveFlowMutation]);
 
-  const handleUpdateSettings = async (settings: { voice_id?: string; language?: string; humor_level?: number; maxDurationSeconds?: number }) => {
+  const handleUpdateSettings = async (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => {
     if (!id) return;
     console.log('[AgentFlowPage] Updating agent settings:', settings);
     const { error } = await supabase
@@ -349,6 +367,7 @@ export default function AgentFlowPage() {
     return null;
   }
 
+  // Ensure we're working with a properly structured flow object
   const flowData = typeof agent.flow === 'string' 
     ? JSON.parse(agent.flow) 
     : agent.flow || { nodes: [], edges: [] };
@@ -357,10 +376,10 @@ export default function AgentFlowPage() {
     <DragProvider>
       <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
         <div className="flex justify-between items-center">
-          <AgentSettings 
+          <Header 
             agent={agent}
             onBack={() => navigate('/dashboard/agents')}
-            onUpdate={handleUpdateSettings}
+            onUpdateSettings={handleUpdateSettings}
           />
         </div>
         

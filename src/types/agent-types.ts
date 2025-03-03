@@ -28,10 +28,6 @@ export interface TrainingExample {
   ai_response: string;
   corrected_response: string;
   created_at?: string;
-  id?: string; // Adding ID to help with editing/deleting
-  user_id?: string; // Add user_id field to match database requirements
-  agent_id?: string; // Add agent_id field to match database structure
-  is_processed?: boolean; // Add is_processed field from the database
 }
 
 export interface Agent {
@@ -58,4 +54,5 @@ export interface Agent {
   training_status?: 'not_started' | 'in_progress' | 'completed';
   last_trained_at?: string;
   training_webhook_url?: string;
+  training_examples?: TrainingExample[]; // New field for training examples
 }

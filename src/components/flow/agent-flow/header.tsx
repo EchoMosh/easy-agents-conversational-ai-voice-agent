@@ -1,438 +1,318 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Agent, TrainingExample } from '@/types/agent-types';
-import { voicesData } from '@/components/agents/utils/voices-data';
-import { languagesData } from '@/components/agents/utils/languages-data';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus, Search, ArrowLeft } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
+import { AgentSettings } from "@/components/agents/flow/agent-settings";
+import { Agent } from "@/types/agent";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
+import { VoiceCallDialog } from "@/components/agents/voice-call/voice-call-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { FlowData, FlowNode } from "@/types/agent-types";
 
-interface AgentSettingsProps {
+interface HeaderProps {
   agent: Agent;
-  onBack?: () => void;
-  onUpdate: (settings: {
-    voice_id?: string;
-    language?: string;
-    humor_level?: number;
-    maxDurationSeconds?: number;
-    knowledge_ids?: string[];
-  }) => Promise<void>;
+  onBack: () => void;
+  onUpdateSettings: (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => Promise<void>;
 }
 
-export function AgentSettings({ agent, onBack, onUpdate }: AgentSettingsProps) {
-  const [tab, setTab] = useState('general');
-  const [voiceId, setVoiceId] = useState(agent.voice_id || '');
-  const [language, setLanguage] = useState(agent.language || 'en');
-  const [humorLevel, setHumorLevel] = useState(
-    typeof agent.humor_level === 'number'
-      ? agent.humor_level
-      : typeof agent.humorLevel === 'number'
-      ? agent.humorLevel
-      : 0
-  );
-  const [knowledgeIds, setKnowledgeIds] = useState<string[]>(agent.knowledge_ids || []);
-  const [trainingExamples, setTrainingExamples] = useState<TrainingExample[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  const [editingExample, setEditingExample] = useState<TrainingExample | null>(null);
-  const [userMessage, setUserMessage] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
-  const [correctedResponse, setCorrectedResponse] = useState('');
-  
+export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
+  const [isConnected, setIsConnected] = useState(false);
+  const [showTrainingPopup, setShowTrainingPopup] = useState(false);
+  const [showVoiceCallDialog, setShowVoiceCallDialog] = useState(false);
+  const [isUpdatingAgent, setIsUpdatingAgent] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchTrainingExamples();
-  }, [agent.id]);
-
-  const fetchTrainingExamples = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('agent_training_examples')
-        .select('*')
-        .eq('agent_id', agent.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching training examples:', error);
-        toast({
-          title: 'Failed to load training examples',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      setTrainingExamples(data || []);
-    } catch (err) {
-      console.error('Error in fetchTrainingExamples:', err);
-    } finally {
-      setIsLoading(false);
+  const findFirstMessage = (flowData: FlowData): string => {
+    if (!flowData || !flowData.nodes || !Array.isArray(flowData.nodes) || flowData.nodes.length === 0) {
+      return "Hello, how can I help you today?"; // Default message if no nodes exist
     }
-  };
 
-  const handleVoiceChange = (value: string) => {
-    setVoiceId(value);
-    onUpdate({ voice_id: value });
-  };
-
-  const handleLanguageChange = (value: string) => {
-    setLanguage(value);
-    onUpdate({ language: value });
-  };
-
-  const handleHumorLevelChange = (value: number[]) => {
-    const level = value[0];
-    setHumorLevel(level);
-    onUpdate({ humor_level: level });
-  };
-
-  const handleSaveTrainingExample = async () => {
-    try {
-      if (!userMessage || !aiResponse || !correctedResponse) {
-        toast({
-          title: 'Incomplete fields',
-          description: 'Please fill in all fields for the training example',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      setIsLoading(true);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      if (editingExample) {
-        const { error } = await supabase
-          .from('agent_training_examples')
-          .update({
-            user_message: userMessage,
-            ai_response: aiResponse,
-            corrected_response: correctedResponse,
-            user_id: user.id
-          })
-          .eq('id', editingExample.id);
-
-        if (error) throw error;
-
-        toast({
-          title: 'Example updated',
-          description: 'Training example has been updated successfully',
-        });
-      } else {
-        const { error } = await supabase
-          .from('agent_training_examples')
-          .insert({
-            agent_id: agent.id,
-            user_id: user.id,
-            user_message: userMessage,
-            ai_response: aiResponse,
-            corrected_response: correctedResponse,
-          });
-
-        if (error) throw error;
-
-        toast({
-          title: 'Example added',
-          description: 'New training example has been added successfully',
-        });
-      }
-
-      setUserMessage('');
-      setAiResponse('');
-      setCorrectedResponse('');
-      setEditingExample(null);
-      await fetchTrainingExamples();
-    } catch (error: any) {
-      console.error('Error saving training example:', error);
-      toast({
-        title: 'Error saving example',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteTrainingExample = async (id: string) => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase
-        .from('agent_training_examples')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setTrainingExamples(trainingExamples.filter(example => example.id !== id));
-      
-      toast({
-        title: 'Example deleted',
-        description: 'Training example has been deleted successfully',
-      });
-      
-      if (editingExample && editingExample.id === id) {
-        setEditingExample(null);
-        setUserMessage('');
-        setAiResponse('');
-        setCorrectedResponse('');
-      }
-    } catch (error: any) {
-      console.error('Error deleting training example:', error);
-      toast({
-        title: 'Error deleting example',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEditTrainingExample = (example: TrainingExample) => {
-    setEditingExample(example);
-    setUserMessage(example.user_message);
-    setAiResponse(example.ai_response);
-    setCorrectedResponse(example.corrected_response);
-  };
-
-  const filteredExamples = trainingExamples.filter(example => {
-    if (!searchQuery) return true;
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    return (
-      example.user_message.toLowerCase().includes(lowerCaseQuery) ||
-      example.ai_response.toLowerCase().includes(lowerCaseQuery) ||
-      example.corrected_response.toLowerCase().includes(lowerCaseQuery)
+    // Look for greeting or speak nodes
+    const greetingNodes = flowData.nodes.filter(
+      (node: FlowNode) => node.type === 'greetingNode' || node.type === 'speakNode'
     );
-  });
+
+    if (greetingNodes.length === 0) {
+      return "Hello, how can I help you today?"; // Default message if no greeting/speak nodes
+    }
+
+    // Get the first greeting/speak node's message
+    const firstNode = greetingNodes[0];
+    if (firstNode.data) {
+      // Check for message or greeting property
+      if (firstNode.type === 'greetingNode' && firstNode.data.greeting) {
+        return String(firstNode.data.greeting);
+      } else if (firstNode.type === 'speakNode' && firstNode.data.message) {
+        return String(firstNode.data.message);
+      }
+    }
+
+    return "Hello, how can I help you today?"; // Default fallback
+  };
+
+  useEffect(() => {
+    console.log('Setting up Supabase realtime connection...');
+    
+    // Subscribe to the real-time channel
+    const channel = supabase.channel('agent-flow')
+      .on('presence', { event: 'sync' }, () => {
+        console.log('Presence sync event received');
+        setIsConnected(true);
+      })
+      .subscribe((status) => {
+        console.log('Channel status changed:', status);
+        setIsConnected(status === 'SUBSCRIBED');
+      });
+
+    console.log('Channel created:', channel);
+
+    // Log connection state changes
+    const subscription = supabase.getChannels().forEach(channel => {
+      console.log('Current channel state:', channel.state);
+    });
+
+    // Cleanup subscription
+    return () => {
+      console.log('Cleaning up Supabase channel...');
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Get profile data if available
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+          
+        setCurrentUser({
+          id: session.user.id,
+          email: session.user.email,
+          profile: profileData || {}
+        });
+        
+        console.log('Current user data fetched:', profileData);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    console.log('Connection status changed:', isConnected);
+  }, [isConnected]);
+
+  const handleUpdateAgent = async () => {
+    if (isUpdatingAgent) return;
+    
+    setIsUpdatingAgent(true);
+    try {
+      console.log('Updating agent via webhook...');
+      console.log('Agent data:', agent);
+      
+      const { data: fullAgentData, error: agentError } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('id', agent.id)
+        .single();
+        
+      if (agentError) {
+        throw new Error(`Failed to fetch complete agent data: ${agentError.message}`);
+      }
+      
+      let flowData: FlowData;
+      if (typeof fullAgentData.flow === 'string') {
+        try {
+          flowData = JSON.parse(fullAgentData.flow);
+        } catch (e) {
+          console.error('Failed to parse flow data:', e);
+          flowData = { nodes: [], edges: [] };
+        }
+      } else if (fullAgentData.flow) {
+        flowData = (fullAgentData.flow as unknown) as FlowData;
+      } else {
+        flowData = { nodes: [], edges: [] };
+      }
+      
+      const firstMessage = findFirstMessage(flowData);
+      console.log('First message extracted from flow:', firstMessage);
+      
+      console.log('Voice ID from database:', fullAgentData.voice_id);
+      console.log('Full agent data from database:', fullAgentData);
+      
+      const payload = {
+        agentId: agent.id,
+        agentName: agent.name,
+        agentRole: agent.role,
+        elevenlabsAgentId: agent.elevenlabs_agent_id || null,
+        
+        voiceId: fullAgentData.voice_id || "FGY2WhTYpPnrIDTdsKH5",
+        
+        language: fullAgentData.language || 'en',
+        objective: fullAgentData.objective || '',
+        humorLevel: fullAgentData.humor_level || 50,
+        interactionType: fullAgentData.interaction_type || ['inbound'],
+        knowledgeIds: fullAgentData.knowledge_ids || [],
+        isActive: fullAgentData.is_active,
+        mermaidChart: fullAgentData.mermaid_chart,
+        
+        firstMessage: firstMessage,
+        
+        user: currentUser ? {
+          id: currentUser.id,
+          email: currentUser.email,
+          firstName: currentUser.profile?.first_name || '',
+          lastName: currentUser.profile?.last_name || '',
+          avatar: currentUser.profile?.avatar_url || '',
+          businessType: currentUser.profile?.business_type || '',
+          employeeCount: currentUser.profile?.employee_count || '',
+          username: currentUser.profile?.username || ''
+        } : null,
+        
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('Sending webhook payload (with firstMessage):', payload);
+      
+      const response = await fetch('https://moshi.app.n8n.cloud/webhook/update-agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      let data;
+      const responseText = await response.text();
+      
+      try {
+        if (responseText && responseText.trim()) {
+          data = JSON.parse(responseText);
+        } else {
+          throw new Error("Empty response from webhook");
+        }
+      } catch (parseError) {
+        console.error('Error parsing webhook response:', parseError);
+        console.error('Raw response text:', responseText);
+        throw new Error("Failed to get a valid response from the webhook. The agent might not have been updated correctly.");
+      }
+      
+      if (!data) {
+        throw new Error("No data returned from webhook. The agent might not have been updated correctly.");
+      }
+      
+      console.log('Webhook response:', data);
+      
+      toast({
+        title: "Success",
+        description: "Agent update request sent successfully",
+      });
+    } catch (error) {
+      console.error('Error updating agent:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update agent",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingAgent(false);
+    }
+  };
 
   return (
-    <div className="space-y-6 px-1 py-2">
-      {onBack && (
-        <div className="flex items-center mb-4">
-          <Button variant="ghost" size="sm" onClick={onBack} className="gap-1">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back</span>
+    <>
+      <div className="relative h-16 w-full bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl flex items-center px-8 z-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
+        <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/30 to-white/60 dark:from-gray-900/60 dark:via-gray-800/30 dark:to-gray-900/60 pointer-events-none" />
+        
+        <div className="flex items-center gap-6 relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onBack}
+            className="hover:bg-gray-900/5 dark:hover:bg-white/5 transition-all duration-300 rounded-full"
+          >
+            <ArrowLeft className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+          </Button>
+          <div className="flex flex-col">
+            <h1 className="font-medium text-gray-900 dark:text-white">{agent.name}</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{agent.role.replace('_', ' ')}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 relative ml-auto">
+          <AgentSettings
+            agentId={agent.id}
+            currentVoice={agent.voice_id || undefined}
+            currentLanguage={agent.language}
+            onUpdateSettings={onUpdateSettings}
+          >
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5"
+            >
+              <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            </Button>
+          </AgentSettings>
+          
+          <Button 
+            variant="secondary"
+            className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 font-medium"
+            onClick={handleUpdateAgent}
+            disabled={isUpdatingAgent}
+          >
+            <PhoneCall className="h-4 w-4 mr-2" />
+            {isUpdatingAgent ? "Sending data..." : "Call Me"}
+          </Button>
+          
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
+            onClick={() => setShowTrainingPopup(true)}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Train Agent
           </Button>
         </div>
-      )}
+      </div>
       
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="general">General Settings</TabsTrigger>
-          <TabsTrigger value="training">Training Examples</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="general" className="space-y-6 py-4">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="voice">Voice</Label>
-              <Select value={voiceId} onValueChange={handleVoiceChange}>
-                <SelectTrigger id="voice">
-                  <SelectValue placeholder="Select a voice" />
-                </SelectTrigger>
-                <SelectContent>
-                  {voicesData.map((voice) => (
-                    <SelectItem key={voice.id} value={voice.id}>
-                      {voice.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="language">Language</Label>
-              <Select value={language} onValueChange={handleLanguageChange}>
-                <SelectTrigger id="language">
-                  <SelectValue placeholder="Select a language" />
-                </SelectTrigger>
-                <SelectContent>
-                  {languagesData.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code}>
-                      {lang.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label htmlFor="humor-level">Humor Level</Label>
-                <span className="text-sm text-muted-foreground">{humorLevel}</span>
-              </div>
-              <Slider
-                id="humor-level"
-                defaultValue={[humorLevel]}
-                max={10}
-                step={1}
-                onValueChange={handleHumorLevelChange}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="absolute top-16 right-8 z-50 p-3">
+              <div 
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 shadow-lg ${
+                  isConnected ? 'bg-green-500' : 'bg-red-500'
+                }`}
               />
             </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="training" className="space-y-6 py-4">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search examples..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setEditingExample(null);
-                  setUserMessage('');
-                  setAiResponse('');
-                  setCorrectedResponse('');
-                }}
-                disabled={!editingExample}
-              >
-                <Plus className="h-4 w-4 mr-2" /> New Example
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="user-message">User Message</Label>
-                      <Textarea
-                        id="user-message"
-                        placeholder="What the user says..."
-                        value={userMessage}
-                        onChange={(e) => setUserMessage(e.target.value)}
-                        className="min-h-[60px]"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="ai-response">Original AI Response</Label>
-                      <Textarea
-                        id="ai-response"
-                        placeholder="How the AI originally responded..."
-                        value={aiResponse}
-                        onChange={(e) => setAiResponse(e.target.value)}
-                        className="min-h-[80px]"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="corrected-response">Corrected Response</Label>
-                      <Textarea
-                        id="corrected-response"
-                        placeholder="How the AI should have responded..."
-                        value={correctedResponse}
-                        onChange={(e) => setCorrectedResponse(e.target.value)}
-                        className="min-h-[80px]"
-                      />
-                    </div>
-                    <div className="flex justify-end">
-                      <Button 
-                        onClick={handleSaveTrainingExample}
-                        disabled={isLoading || !userMessage || !aiResponse || !correctedResponse}
-                      >
-                        {editingExample ? 'Update Example' : 'Add Example'}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Separator className="my-4" />
-              
-              {isLoading && filteredExamples.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-sm text-muted-foreground">Loading examples...</p>
-                </div>
-              ) : filteredExamples.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No training examples found.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredExamples.map((example) => (
-                    <Card key={example.id} className="relative overflow-hidden">
-                      <CardContent className="pt-6">
-                        <div className="absolute top-2 right-2 flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEditTrainingExample(example)}
-                            className="h-8 w-8"
-                          >
-                            <svg 
-                              xmlns="http://www.w3.org/2000/svg" 
-                              width="15" 
-                              height="15" 
-                              viewBox="0 0 24 24" 
-                              fill="none" 
-                              stroke="currentColor" 
-                              strokeWidth="2" 
-                              strokeLinecap="round" 
-                              strokeLinejoin="round"
-                            >
-                              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                              <path d="m15 5 4 4"/>
-                            </svg>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteTrainingExample(example.id || '')}
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="space-y-2">
-                          <div>
-                            <Badge variant="outline" className="font-normal mb-1">User</Badge>
-                            <p className="text-sm">{example.user_message}</p>
-                          </div>
-                          <div>
-                            <Badge variant="outline" className="font-normal mb-1">Original AI</Badge>
-                            <p className="text-sm">{example.ai_response}</p>
-                          </div>
-                          <div>
-                            <Badge variant="outline" className="font-normal mb-1">Corrected</Badge>
-                            <p className="text-sm">{example.corrected_response}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{isConnected ? 'Connected' : 'Disconnected'}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <AgentTrainingPopup 
+        agent={agent} 
+        open={showTrainingPopup} 
+        onOpenChange={setShowTrainingPopup} 
+      />
+      
+      <VoiceCallDialog
+        agent={agent}
+        open={showVoiceCallDialog}
+        onOpenChange={setShowVoiceCallDialog}
+      />
+    </>
   );
 }
-
-export default AgentSettings;
