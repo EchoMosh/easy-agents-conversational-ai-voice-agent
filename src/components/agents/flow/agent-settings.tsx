@@ -267,38 +267,34 @@ export function AgentSettings({
       console.log("Sending text-to-speech request with payload:", payload);
       
       // Call the text-to-speech edge function
-      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+      const response = await supabase.functions.invoke('text-to-speech', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        body: payload,
       });
       
-      if (error) {
-        console.error("Edge function error:", error);
-        throw new Error(`Failed to generate voice preview: ${error.message || 'Unknown error'}`);
+      console.log("Received response from edge function:", response);
+      
+      if (response.error) {
+        throw new Error(`Failed to generate voice preview: ${response.error}`);
       }
       
-      if (!data) {
-        console.error("No data returned from edge function");
-        throw new Error('No data received from the text-to-speech function');
+      if (!response.data) {
+        throw new Error('No data returned from the edge function');
       }
       
-      if (!data.audio_content) {
-        console.error("Missing audio content in response:", data);
-        if (data.error) {
-          throw new Error(`ElevenLabs API error: ${data.error}`);
+      if (!response.data.audio_content) {
+        if (response.data.error) {
+          throw new Error(`ElevenLabs API error: ${response.data.error}`);
         }
         throw new Error('No audio content received from the text-to-speech function');
       }
       
-      console.log("Received audio content, length:", data.audio_content.length);
+      console.log("Received audio content, length:", response.data.audio_content.length);
       
       // Create a new audio source from the base64 audio content
       try {
         // Safe conversion of base64 to binary
-        const binaryData = atob(data.audio_content);
+        const binaryData = atob(response.data.audio_content);
         const bytes = new Uint8Array(binaryData.length);
         for (let i = 0; i < binaryData.length; i++) {
           bytes[i] = binaryData.charCodeAt(i);
