@@ -1,5 +1,5 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   AreaChart,
   Area,
@@ -14,7 +14,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { ArrowUpRight } from "lucide-react";
+import { ChevronUp, Target, Users, MessageSquare, ArrowUpRight } from "lucide-react";
 
 // Sample data for charts
 const activityData = [
@@ -42,11 +42,11 @@ const conversionData = [
   { name: "Lost", value: 10 },
 ];
 
-const COLORS = ["#000000", "#DDDDDD", "#F0F0F0"];
+const COLORS = ["#0088FE", "#FFBB28", "#FF8042"];
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="mb-10">
         <h2 className="text-3xl font-medium text-slate-900">Dashboard</h2>
         <p className="text-slate-500 mt-1">
@@ -56,43 +56,97 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
         {/* Simplified Metric Cards */}
-        <MetricCard 
-          title="Total Leads" 
-          value="1,248" 
-          change="+18.2%" 
-          positive={true} 
-        />
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+          <CardContent className="p-6">
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-500">Total Leads</span>
+                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <ChevronUp className="h-3 w-3 text-emerald-500" />
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <h3 className="text-2xl font-medium text-slate-900">1,248</h3>
+                <div className="flex items-center text-xs text-emerald-500">
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                  18.2%
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <MetricCard 
-          title="Active Agents" 
-          value="12" 
-          change="+2 new" 
-          positive={true} 
-        />
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+          <CardContent className="p-6">
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-500">Active Agents</span>
+                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <ChevronUp className="h-3 w-3 text-emerald-500" />
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <h3 className="text-2xl font-medium text-slate-900">12</h3>
+                <div className="flex items-center text-xs text-emerald-500">
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                  +2 new
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <MetricCard 
-          title="Conversations" 
-          value="432" 
-          change="+57 today" 
-          positive={true} 
-        />
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+          <CardContent className="p-6">
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-500">Conversations</span>
+                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <ChevronUp className="h-3 w-3 text-emerald-500" />
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <h3 className="text-2xl font-medium text-slate-900">432</h3>
+                <div className="flex items-center text-xs text-emerald-500">
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                  +57 today
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <MetricCard 
-          title="Conversion Rate" 
-          value="24.3%" 
-          change="+5.2%" 
-          positive={true} 
-        />
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+          <CardContent className="p-6">
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-500">Conversion Rate</span>
+                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <ChevronUp className="h-3 w-3 text-emerald-500" />
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <h3 className="text-2xl font-medium text-slate-900">24.3%</h3>
+                <div className="flex items-center text-xs text-emerald-500">
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                  5.2%
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Area Chart */}
-        <Card className="col-span-2 border-none shadow-sm rounded-xl overflow-hidden">
-          <CardContent className="p-6">
-            <div className="mb-6">
-              <h3 className="text-lg font-medium text-slate-900">Lead Acquisition</h3>
-              <p className="text-sm text-slate-500">Monthly trends</p>
-            </div>
+        {/* Area Chart - Simplified */}
+        <Card className="col-span-2 bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+          <CardHeader className="pb-2 pt-6 px-6">
+            <CardTitle className="text-slate-900 text-base font-medium">Lead Acquisition</CardTitle>
+            <CardDescription className="text-slate-500 text-xs">
+              Monthly trends
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 pt-4">
             <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={leadData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <defs>
@@ -117,7 +171,7 @@ export default function DashboardPage() {
                 <Area 
                   type="monotone" 
                   dataKey="leads" 
-                  stroke="#000000" 
+                  stroke="#0f172a" 
                   strokeWidth={1.5}
                   fillOpacity={1} 
                   fill="url(#colorLeads)" 
@@ -127,13 +181,15 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         
-        {/* Pie Chart */}
-        <Card className="border-none shadow-sm rounded-xl overflow-hidden">
-          <CardContent className="p-6">
-            <div className="mb-6">
-              <h3 className="text-lg font-medium text-slate-900">Conversion Status</h3>
-              <p className="text-sm text-slate-500">Current metrics</p>
-            </div>
+        {/* Pie Chart - Simplified */}
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+          <CardHeader className="pb-2 pt-6 px-6">
+            <CardTitle className="text-slate-900 text-base font-medium">Conversion Status</CardTitle>
+            <CardDescription className="text-slate-500 text-xs">
+              Current metrics
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 pt-2">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
@@ -184,13 +240,15 @@ export default function DashboardPage() {
         </Card>
       </div>
       
-      {/* Bar Chart */}
-      <Card className="border-none shadow-sm rounded-xl overflow-hidden">
-        <CardContent className="p-6">
-          <div className="mb-6">
-            <h3 className="text-lg font-medium text-slate-900">Weekly Activity</h3>
-            <p className="text-sm text-slate-500">Last 7 days</p>
-          </div>
+      {/* Bar Chart - Weekly Activity */}
+      <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+        <CardHeader className="pb-2 pt-6 px-6">
+          <CardTitle className="text-slate-900 text-base font-medium">Weekly Activity</CardTitle>
+          <CardDescription className="text-slate-500 text-xs">
+            Last 7 days
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-6 pt-4">
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={activityData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" vertical={false} />
@@ -215,7 +273,7 @@ export default function DashboardPage() {
                 {activityData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`}
-                    fill={index === 4 ? "#000000" : "#f1f5f9"}
+                    fill={index === 4 ? "#0f172a" : "#f1f5f9"}
                   />
                 ))}
               </Bar>
@@ -224,30 +282,5 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-// Component for metric cards
-function MetricCard({ title, value, change, positive }: { 
-  title: string; 
-  value: string; 
-  change: string;
-  positive: boolean;
-}) {
-  return (
-    <Card className="border-none shadow-sm rounded-xl overflow-hidden">
-      <CardContent className="p-6">
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-slate-500 mb-2">{title}</span>
-          <div className="flex items-end justify-between">
-            <h3 className="text-2xl font-medium text-slate-900">{value}</h3>
-            <div className={`flex items-center text-xs ${positive ? 'text-emerald-500' : 'text-red-500'}`}>
-              <ArrowUpRight className="h-3 w-3 mr-0.5" />
-              {change}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
