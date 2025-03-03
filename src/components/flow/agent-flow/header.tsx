@@ -251,6 +251,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       <div className="relative h-16 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl flex items-center justify-between px-8 z-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
         <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/30 to-white/60 dark:from-gray-900/60 dark:via-gray-800/30 dark:to-gray-900/60 pointer-events-none" />
         
+        {/* Left side with back button and agent info */}
         <div className="flex items-center gap-6 relative">
           <Button 
             variant="ghost" 
@@ -266,8 +267,9 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 relative">
-          {/* Settings button with reduced spacing */}
+        {/* Right side with action buttons */}
+        <div className="flex items-center gap-3 relative">
+          {/* Settings button */}
           <AgentSettings
             agentId={agent.id}
             currentVoice={agent.voice_id || undefined}
@@ -277,31 +279,31 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             <Button 
               variant="ghost" 
               size="icon"
-              className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5 mr-1"
+              className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5"
             >
               <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </Button>
           </AgentSettings>
           
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="secondary"
-              className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 font-medium"
-              onClick={handleUpdateAgent}
-              disabled={isUpdatingAgent}
-            >
-              <PhoneCall className="h-4 w-4 mr-2" />
-              {isUpdatingAgent ? "Sending data..." : "Call Me"}
-            </Button>
-            
-            <Button 
-              className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
-              onClick={() => setShowTrainingPopup(true)}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Train {agent.name}
-            </Button>
-          </div>
+          {/* Call Me button */}
+          <Button 
+            variant="secondary"
+            className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 font-medium"
+            onClick={handleUpdateAgent}
+            disabled={isUpdatingAgent}
+          >
+            <PhoneCall className="h-4 w-4 mr-2" />
+            {isUpdatingAgent ? "Sending data..." : "Call Me"}
+          </Button>
+          
+          {/* Train Agent button (Updated text) */}
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
+            onClick={() => setShowTrainingPopup(true)}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Train Agent
+          </Button>
         </div>
       </div>
       
