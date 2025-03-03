@@ -80,7 +80,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     };
   }, []);
 
-  // Fetch current user data
   useEffect(() => {
     const fetchUserData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -105,7 +104,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     fetchUserData();
   }, []);
 
-  // Log whenever connection status changes
   useEffect(() => {
     console.log('Connection status changed:', isConnected);
   }, [isConnected]);
@@ -118,7 +116,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       console.log('Updating agent via webhook...');
       console.log('Agent data:', agent);
       
-      // Get the complete agent data from the database
       const { data: fullAgentData, error: agentError } = await supabase
         .from('agents')
         .select('*')
@@ -129,7 +126,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         throw new Error(`Failed to fetch complete agent data: ${agentError.message}`);
       }
       
-      // Parse flow data to find the first message
       let flowData: FlowData;
       if (typeof fullAgentData.flow === 'string') {
         try {
@@ -139,32 +135,25 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
           flowData = { nodes: [], edges: [] };
         }
       } else if (fullAgentData.flow) {
-        // Cast to unknown first, then to FlowData to satisfy TypeScript
         flowData = (fullAgentData.flow as unknown) as FlowData;
       } else {
         flowData = { nodes: [], edges: [] };
       }
       
-      // Get the first message from the flow data
       const firstMessage = findFirstMessage(flowData);
       console.log('First message extracted from flow:', firstMessage);
       
-      // Log the retrieved voice ID for debugging
       console.log('Voice ID from database:', fullAgentData.voice_id);
       console.log('Full agent data from database:', fullAgentData);
       
-      // Prepare the payload without the flow data
       const payload = {
-        // Basic agent info
         agentId: agent.id,
         agentName: agent.name,
         agentRole: agent.role,
         elevenlabsAgentId: agent.elevenlabs_agent_id || null,
         
-        // Explicitly use the voice ID from the database
-        voiceId: fullAgentData.voice_id || "FGY2WhTYpPnrIDTdsKH5", // Default to Laura if null
+        voiceId: fullAgentData.voice_id || "FGY2WhTYpPnrIDTdsKH5",
         
-        // Other agent properties
         language: fullAgentData.language || 'en',
         objective: fullAgentData.objective || '',
         humorLevel: fullAgentData.humor_level || 50,
@@ -173,10 +162,8 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         isActive: fullAgentData.is_active,
         mermaidChart: fullAgentData.mermaid_chart,
         
-        // Add the first message from the flow
         firstMessage: firstMessage,
         
-        // Add user information to the payload
         user: currentUser ? {
           id: currentUser.id,
           email: currentUser.email,
@@ -188,7 +175,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
           username: currentUser.profile?.username || ''
         } : null,
         
-        // Include timestamp for logging/debugging
         timestamp: new Date().toISOString()
       };
       
@@ -206,12 +192,10 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         throw new Error(`Error: ${response.status}`);
       }
       
-      // Try to parse the response as JSON to validate it
       let data;
       const responseText = await response.text();
       
       try {
-        // Only try to parse if there's actual content
         if (responseText && responseText.trim()) {
           data = JSON.parse(responseText);
         } else {
@@ -250,7 +234,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       <div className="relative h-16 w-full bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl flex items-center px-8 z-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
         <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/30 to-white/60 dark:from-gray-900/60 dark:via-gray-800/30 dark:to-gray-900/60 pointer-events-none" />
         
-        {/* Left side with back button and agent info */}
         <div className="flex items-center gap-6 relative">
           <Button 
             variant="ghost" 
@@ -266,9 +249,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right side with action buttons */}
         <div className="flex items-center gap-3 relative ml-auto">
-          {/* Settings button */}
           <AgentSettings
             agentId={agent.id}
             currentVoice={agent.voice_id || undefined}
@@ -284,7 +265,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             </Button>
           </AgentSettings>
           
-          {/* Call Me button */}
           <Button 
             variant="secondary"
             className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 font-medium"
@@ -295,7 +275,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             {isUpdatingAgent ? "Sending data..." : "Call Me"}
           </Button>
           
-          {/* Train Agent button */}
           <Button 
             className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
             onClick={() => setShowTrainingPopup(true)}
@@ -306,7 +285,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         </div>
       </div>
       
-      {/* Connection status indicator positioned below header */}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -324,14 +302,12 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         </Tooltip>
       </TooltipProvider>
 
-      {/* Agent Training Popup */}
       <AgentTrainingPopup 
         agent={agent} 
         open={showTrainingPopup} 
         onOpenChange={setShowTrainingPopup} 
       />
       
-      {/* Voice Call Dialog */}
       <VoiceCallDialog
         agent={agent}
         open={showVoiceCallDialog}

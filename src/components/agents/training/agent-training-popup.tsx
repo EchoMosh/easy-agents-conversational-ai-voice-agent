@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Check, Volume2, Send, X, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -6,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Agent } from "@/types/agent";
 import { Input } from "@/components/ui/input";
-import { initiateTraining, sendUserMessage } from "@/utils/agent-training-api";
+import { sendUserMessage } from "@/utils/agent-training-api";
 import { useToast } from "@/hooks/use-toast";
+import { FlowData, FlowNode } from "@/types/agent-types";
 
 interface AgentTrainingPopupProps {
   agent: Agent;
@@ -29,7 +29,6 @@ export function AgentTrainingPopup({
   open,
   onOpenChange
 }: AgentTrainingPopupProps) {
-  const [initialMessage, setInitialMessage] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -43,79 +42,89 @@ export function AgentTrainingPopup({
   const { toast } = useToast();
   const initialized = useRef(false);
 
-  // Initialize training session when dialog opens
+  const findFirstMessage = (flowData: FlowData): string => {
+    if (!flowData || !flowData.nodes || !Array.isArray(flowData.nodes) || flowData.nodes.length === 0) {
+      return `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. How can I help you today?`;
+    }
+
+    const greetingNodes = flowData.nodes.filter(
+      (node: FlowNode) => node.type === 'greetingNode' || node.type === 'speakNode'
+    );
+
+    if (greetingNodes.length === 0) {
+      return `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. How can I help you today?`;
+    }
+
+    const firstNode = greetingNodes[0];
+    if (firstNode.data) {
+      if (firstNode.type === 'greetingNode' && firstNode.data.greeting) {
+        return String(firstNode.data.greeting);
+      } else if (firstNode.type === 'speakNode' && firstNode.data.message) {
+        return String(firstNode.data.message);
+      }
+    }
+
+    return `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. How can I help you today?`;
+  };
+
   useEffect(() => {
     if (open && !initialized.current) {
-      initializeTrainingSession();
-      initialized.current = true;
+      setIsInitializing(true);
+      
+      try {
+        let flowData: FlowData;
+        if (typeof agent.flow === 'string') {
+          try {
+            flowData = JSON.parse(agent.flow);
+          } catch (e) {
+            console.error('Failed to parse flow data:', e);
+            flowData = { nodes: [], edges: [] };
+          }
+        } else if (agent.flow) {
+          flowData = agent.flow as FlowData;
+        } else {
+          flowData = { nodes: [], edges: [] };
+        }
+        
+        const firstMessage = findFirstMessage(flowData);
+        console.log('[AgentTrainingPopup] First message from flow:', firstMessage);
+        
+        setMessages([{
+          id: "1",
+          role: "agent",
+          content: firstMessage,
+          timestamp: new Date()
+        }]);
+        
+        initialized.current = true;
+      } catch (error) {
+        console.error('[AgentTrainingPopup] Error initializing training:', error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize training session",
+          variant: "destructive",
+        });
+        
+        setMessages([{
+          id: "1",
+          role: "agent",
+          content: `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. I'm here to help you with anything you need. How can I assist you today?`,
+          timestamp: new Date()
+        }]);
+      } finally {
+        setIsInitializing(false);
+      }
     }
     
     if (!open) {
-      // Reset state when dialog closes
       setShowCorrectionSlider(false);
       setCorrectionTargetId(null);
       setCorrectionInput("");
       initialized.current = false;
+      setMessages([]);
     }
   }, [open, agent]);
 
-  const initializeTrainingSession = async () => {
-    if (!agent || !agent.id) return;
-    
-    setIsInitializing(true);
-    
-    try {
-      const response = await initiateTraining(agent);
-      
-      // Only set messages if this is the first initialization
-      if (messages.length === 0) {
-        if (response.success) {
-          setInitialMessage(response.message);
-          
-          // Add welcome message with the response from the webhook
-          setMessages([{
-            id: "1",
-            role: "agent",
-            content: response.message || `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. I'm here to help you with anything you need. How can I assist you today?`,
-            timestamp: new Date()
-          }]);
-        } else {
-          toast({
-            title: "Training Error",
-            description: response.message || "Failed to initialize training session",
-            variant: "destructive",
-          });
-          
-          // Add fallback message in case of error
-          setMessages([{
-            id: "1",
-            role: "agent",
-            content: `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. I'm here to help you with anything you need. How can I assist you today?`,
-            timestamp: new Date()
-          }]);
-        }
-      }
-    } catch (error) {
-      console.error('[AgentTrainingPopup] Error initializing training:', error);
-      toast({
-        title: "Error",
-        description: "Failed to initialize training session",
-        variant: "destructive",
-      });
-      
-      // Add fallback message in case of error
-      setMessages([{
-        id: "1",
-        role: "agent",
-        content: `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. I'm here to help you with anything you need. How can I assist you today?`,
-        timestamp: new Date()
-      }]);
-    } finally {
-      setIsInitializing(false);
-    }
-  };
-
-  // Auto-scroll to the bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping, editingMessageId, showCorrectionSlider]);
@@ -129,7 +138,6 @@ export function AgentTrainingPopup({
   const handleSendMessage = async () => {
     if (!userInput.trim() || !agent.id) return;
 
-    // Add user message
     const userMessageId = Date.now().toString();
     const newUserMessage: Message = {
       id: userMessageId,
@@ -143,10 +151,8 @@ export function AgentTrainingPopup({
     setIsTyping(true);
 
     try {
-      // Send message to webhook
       const response = await sendUserMessage(agent.id, userInput);
       
-      // Add agent response with the message from the webhook
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
@@ -158,7 +164,6 @@ export function AgentTrainingPopup({
     } catch (error) {
       console.error('[AgentTrainingPopup] Error sending message:', error);
       
-      // Add fallback agent response in case of error
       const fallbackResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
@@ -186,13 +191,8 @@ export function AgentTrainingPopup({
   };
 
   const playTextToSpeech = (messageId: string, text: string) => {
-    // This is a placeholder for actual text-to-speech functionality
-    // In a real implementation, you would call a TTS API or use the Web Speech API
-
-    // For now, we'll just toggle the speaking state to show visual feedback
     setSpeakingMessageId(messageId === speakingMessageId ? null : messageId);
 
-    // Simulate speech ending after 3 seconds
     if (messageId !== speakingMessageId) {
       setTimeout(() => {
         setSpeakingMessageId(null);
@@ -221,18 +221,14 @@ export function AgentTrainingPopup({
   const handleSubmitCorrectionFromSlider = () => {
     if (!correctionInput.trim() || !correctionTargetId) return;
 
-    // Store the correction
     setMessages(prev => prev.map(message => message.id === correctionTargetId ? {
       ...message,
       correction: correctionInput,
-      feedback: "negative" // Ensure feedback is set to negative
+      feedback: "negative"
     } : message));
 
-    // In a real implementation, you would send this correction to your backend
-    // to use for retraining the model
     console.log("Correction submitted for message:", correctionTargetId, "Correction:", correctionInput);
 
-    // Reset the correction slider state
     setShowCorrectionSlider(false);
     setCorrectionTargetId(null);
     setCorrectionInput("");
@@ -241,18 +237,14 @@ export function AgentTrainingPopup({
   const handleSubmitCorrection = () => {
     if (!correctionInput.trim() || !editingMessageId) return;
 
-    // Store the correction
     setMessages(prev => prev.map(message => message.id === editingMessageId ? {
       ...message,
       correction: correctionInput,
-      feedback: "negative" // Ensure feedback is set to negative
+      feedback: "negative"
     } : message));
 
-    // In a real implementation, you would send this correction to your backend
-    // to use for retraining the model
     console.log("Correction submitted for message:", editingMessageId, "Correction:", correctionInput);
 
-    // Reset the editing state
     setEditingMessageId(null);
     setCorrectionInput("");
   };
@@ -335,7 +327,6 @@ export function AgentTrainingPopup({
                       <>
                         <p className="text-lg leading-relaxed">{message.content}</p>
                         
-                        {/* Show the correction if there is one */}
                         {message.correction && (
                           <div className="mt-2 p-2 bg-white dark:bg-gray-950 rounded border border-green-300 dark:border-green-700">
                             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Corrected to:</p>
@@ -379,13 +370,11 @@ export function AgentTrainingPopup({
                 </div>
               )}
               
-              {/* Invisible div at the end of messages to scroll to */}
               <div ref={messagesEndRef} />
             </>
           )}
         </div>
 
-        {/* Slide-up correction panel */}
         {showCorrectionSlider && (
           <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-4 transition-transform duration-300 transform translate-y-0 z-20">
             <div className="mb-3 flex items-center justify-between">
