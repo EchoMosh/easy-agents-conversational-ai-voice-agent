@@ -151,7 +151,17 @@ export function AgentTrainingPopup({
     setIsTyping(true);
 
     try {
-      const response = await sendUserMessage(agent.id, userInput);
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+      
+      conversationHistory.push({
+        role: "user",
+        content: userInput
+      });
+      
+      const response = await sendUserMessage(agent.id, userInput, conversationHistory);
       
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),

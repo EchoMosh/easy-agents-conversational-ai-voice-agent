@@ -11,13 +11,15 @@ interface SendUserMessageResponse {
 /**
  * Sends a user message to the training webhook
  */
-export async function sendUserMessage(agentId: string, message: string): Promise<SendUserMessageResponse> {
+export async function sendUserMessage(agentId: string, message: string, conversationHistory: {role: string, content: string}[] = []): Promise<SendUserMessageResponse> {
   try {
     console.log(`[TrainingAPI] Sending user message to webhook for agent ${agentId}:`, message);
+    console.log(`[TrainingAPI] Including conversation history:`, conversationHistory);
     
     const payload = {
       agent_id: agentId,
       message,
+      conversation_history: conversationHistory,
       timestamp: new Date().toISOString()
     };
     
