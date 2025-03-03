@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -62,68 +63,56 @@
   }
 }
 
-/* React Flow Dark Mode Styles */
-.react-flow__controls {
-  @apply bg-background border-border;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.react-flow__controls button {
-  @apply bg-background border-border text-foreground hover:bg-accent;
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.react-flow__controls button path {
-  @apply fill-foreground;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
-.react-flow__panel.react-flow__attribution {
-  @apply bg-background text-foreground;
+@keyframes highlight-glow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.2);
+  }
 }
 
-.react-flow__minimap {
-  @apply bg-background;
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
 }
 
-.react-flow__minimap-mask {
-  @apply fill-muted;
+.animate-scale-in {
+  animation: scale-in 0.4s ease-out forwards;
 }
 
-.react-flow__minimap-node {
-  @apply fill-foreground;
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.react-flow__node {
-  @apply bg-background border-border text-foreground;
-}
-
-.react-flow__handle {
-  @apply bg-foreground border-background;
-}
-
-.react-flow__edge-path {
-  @apply stroke-foreground;
-}
-
-.react-flow__background {
-  @apply bg-background;
-}
-
-.react-flow__background-pattern path {
-  @apply stroke-border;
-}
-
-/* Node type specific styles */
-.react-flow__node-greetingNode,
-.react-flow__node-speakNode {
-  @apply bg-background border-border text-foreground shadow-sm;
-}
-
-.writing-mode-vertical-rl {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-}
-
-.writing-mode-vertical-lr {
-  writing-mode: vertical-lr;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-}
+/* ... keep existing code (React Flow Dark Mode Styles) */
