@@ -26,7 +26,7 @@ export function AppSidebar() {
   }, [location.pathname, isAgentFlowPage, setOpen]);
 
   return (
-    <Sidebar className="border-r bg-[#f8f8f8]">
+    <Sidebar className="border-r">
       <ProfileSection />
       <NavigationMenu />
       
@@ -35,14 +35,23 @@ export function AppSidebar() {
         <div className="flex flex-col space-y-4">
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Minutes Used</span>
-              <span className="text-xs font-medium text-muted-foreground">{creditUsage.used}/{creditUsage.total}</span>
+              <span className="text-xs font-medium text-muted-foreground">Credits</span>
+              <span className="text-xs font-medium">{creditUsage.used}/{creditUsage.total}</span>
             </div>
-            <Progress value={creditUsage.percentage} className="h-1.5 bg-gray-200" indicatorClassName="bg-blue-400" />
+            <Progress value={creditUsage.percentage} className="h-1.5 bg-secondary/50" />
           </div>
           
-          <div className="flex justify-center">
-            <p className="text-sm text-gray-400 font-light">Easy Agents</p>
+          <div>
+            <p className="text-[10px] text-muted-foreground mb-2">
+              Credits are used for AI generations and voice calls
+            </p>
+            <Button 
+              size="sm" 
+              className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-medium shadow-sm"
+            >
+              <Sparkles size={14} className="mr-1.5" />
+              Upgrade Plan
+            </Button>
           </div>
         </div>
       </div>
