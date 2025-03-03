@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Agent, TrainingExample } from '@/types/agent';
+import { Agent, TrainingExample } from '@/types/agent-types';
 import { voicesData } from '@/components/agents/utils/voices-data';
 import { languagesData } from '@/components/agents/utils/languages-data';
 import { Separator } from '@/components/ui/separator';
@@ -13,13 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus, Search } from 'lucide-react';
+import { Trash2, Plus, Search, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/hooks/use-toast';
 
 interface AgentSettingsProps {
   agent: Agent;
+  onBack?: () => void;
   onUpdate: (settings: {
     voice_id?: string;
     language?: string;
@@ -29,7 +29,7 @@ interface AgentSettingsProps {
   }) => Promise<void>;
 }
 
-export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
+export function AgentSettings({ agent, onBack, onUpdate }: AgentSettingsProps) {
   const [tab, setTab] = useState('general');
   const [voiceId, setVoiceId] = useState(agent.voice_id || '');
   const [language, setLanguage] = useState(agent.language || 'en');
@@ -45,7 +45,6 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // For editing training examples
   const [editingExample, setEditingExample] = useState<TrainingExample | null>(null);
   const [userMessage, setUserMessage] = useState('');
   const [aiResponse, setAiResponse] = useState('');
@@ -113,21 +112,19 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
 
       setIsLoading(true);
 
-      // Get the current user's ID from Supabase auth
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
 
       if (editingExample) {
-        // Update existing example
         const { error } = await supabase
           .from('agent_training_examples')
           .update({
             user_message: userMessage,
             ai_response: aiResponse,
             corrected_response: correctedResponse,
-            user_id: user.id // Ensure user_id is included in updates
+            user_id: user.id
           })
           .eq('id', editingExample.id);
 
@@ -138,7 +135,6 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
           description: 'Training example has been updated successfully',
         });
       } else {
-        // Create new example
         const { error } = await supabase
           .from('agent_training_examples')
           .insert({
@@ -157,7 +153,6 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
         });
       }
 
-      // Reset form and refresh examples
       setUserMessage('');
       setAiResponse('');
       setCorrectedResponse('');
@@ -192,7 +187,6 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
         description: 'Training example has been deleted successfully',
       });
       
-      // If we were editing this example, reset the form
       if (editingExample && editingExample.id === id) {
         setEditingExample(null);
         setUserMessage('');
@@ -230,6 +224,15 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
 
   return (
     <div className="space-y-6 px-1 py-2">
+      {onBack && (
+        <div className="flex items-center mb-4">
+          <Button variant="ghost" size="sm" onClick={onBack} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back</span>
+          </Button>
+        </div>
+      )}
+      
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="general">General Settings</TabsTrigger>
@@ -432,5 +435,4 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
   );
 }
 
-// Export the AgentSettings component for use elsewhere
 export default AgentSettings;

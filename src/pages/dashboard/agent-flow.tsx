@@ -322,7 +322,7 @@ export default function AgentFlowPage() {
     saveFlowMutation.mutate(updatedFlowData);
   }, [saveFlowMutation]);
 
-  const handleUpdateSettings = async (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => {
+  const handleUpdateSettings = async (settings: { voice_id?: string; language?: string; humor_level?: number; maxDurationSeconds?: number }) => {
     if (!id) return;
     console.log('[AgentFlowPage] Updating agent settings:', settings);
     const { error } = await supabase
@@ -360,7 +360,7 @@ export default function AgentFlowPage() {
           <AgentSettings 
             agent={agent}
             onBack={() => navigate('/dashboard/agents')}
-            onUpdateSettings={handleUpdateSettings}
+            onUpdate={handleUpdateSettings}
           />
         </div>
         
