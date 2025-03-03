@@ -4,7 +4,7 @@ import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState,
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
-import GreetingNode from '@/components/flow/nodes/greeting-node';
+import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
 import { TransferNode } from '@/components/flow/nodes/transfer-node';
