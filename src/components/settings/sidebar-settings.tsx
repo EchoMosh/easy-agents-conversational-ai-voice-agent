@@ -41,6 +41,7 @@ interface SidebarItem {
   title: string;
   visible: boolean;
   icon: string;
+  subItems?: SidebarItem[];
 }
 
 // Get all available icons from lucide-react
@@ -66,16 +67,19 @@ const availableIcons: Record<string, any> = {
 const SortableItem = ({ 
   item, 
   onToggleVisibility, 
-  onIconChange 
+  onIconChange,
+  level = 0
 }: { 
   item: SidebarItem; 
-  onToggleVisibility: (id: string) => void;
-  onIconChange: (id: string, icon: string) => void;
+  onToggleVisibility: (id: string, parentId?: string) => void;
+  onIconChange: (id: string, icon: string, parentId?: string) => void;
+  level?: number;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
+  const [showSubItems, setShowSubItems] = useState(false);
   
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -88,79 +92,107 @@ const SortableItem = ({
   const filteredIcons = Object.keys(availableIcons).filter(iconName => 
     iconName.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
-  
+
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      className="flex items-center p-2 border rounded-md bg-background mb-2"
-    >
-      <div {...attributes} {...listeners} className="mr-3 text-muted-foreground cursor-grab">
-        <GripVertical size={18} />
-      </div>
-      <div className="flex items-center flex-1 gap-2">
-        <Checkbox
-          id={`visible-${item.id}`}
-          checked={item.visible}
-          onCheckedChange={() => onToggleVisibility(item.id)}
-        />
-        <Label htmlFor={`visible-${item.id}`} className="cursor-pointer flex-1">
-          {item.title}
-        </Label>
-        <div className="flex items-center">
-          <IconComponent size={18} className="mx-2 text-muted-foreground" />
+    <div>
+      <div 
+        ref={setNodeRef} 
+        style={style} 
+        className={`flex items-center p-2 border rounded-md bg-background mb-2 ${level > 0 ? 'ml-6' : ''}`}
+      >
+        <div {...attributes} {...listeners} className="mr-3 text-muted-foreground cursor-grab">
+          <GripVertical size={18} />
+        </div>
+        <div className="flex items-center flex-1 gap-2">
+          <Checkbox
+            id={`visible-${item.id}`}
+            checked={item.visible}
+            onCheckedChange={() => onToggleVisibility(item.id)}
+          />
+          <Label htmlFor={`visible-${item.id}`} className="cursor-pointer flex-1">
+            {item.title}
+          </Label>
+          <div className="flex items-center">
+            <IconComponent size={18} className="mx-2 text-muted-foreground" />
+            
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  role="combobox" 
+                  aria-expanded={open}
+                  className="w-[120px] justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <IconComponent className="h-4 w-4" />
+                    <span>{item.icon}</span>
+                  </div>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0" align="end">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search icons..." 
+                    value={search}
+                    onValueChange={setSearch}
+                    className="h-9"
+                  />
+                  <CommandList>
+                    <CommandEmpty>No icons found.</CommandEmpty>
+                    <CommandGroup>
+                      {filteredIcons.map((iconName) => {
+                        const Icon = availableIcons[iconName];
+                        return (
+                          <CommandItem
+                            key={iconName}
+                            value={iconName}
+                            onSelect={() => {
+                              onIconChange(item.id, iconName);
+                              setOpen(false);
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Icon className="h-4 w-4" />
+                              <span>{iconName}</span>
+                            </div>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
           
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                role="combobox" 
-                aria-expanded={open}
-                className="w-[120px] justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <IconComponent className="h-4 w-4" />
-                  <span>{item.icon}</span>
-                </div>
-                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0" align="end">
-              <Command>
-                <CommandInput 
-                  placeholder="Search icons..." 
-                  value={search}
-                  onValueChange={setSearch}
-                  className="h-9"
-                />
-                <CommandList>
-                  <CommandEmpty>No icons found.</CommandEmpty>
-                  <CommandGroup>
-                    {filteredIcons.map((iconName) => {
-                      const Icon = availableIcons[iconName];
-                      return (
-                        <CommandItem
-                          key={iconName}
-                          value={iconName}
-                          onSelect={() => {
-                            onIconChange(item.id, iconName);
-                            setOpen(false);
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4" />
-                            <span>{iconName}</span>
-                          </div>
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          {item.subItems && item.subItems.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowSubItems(!showSubItems)}
+              className="p-0 h-8 w-8"
+            >
+              {showSubItems ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Render sub-items if expanded */}
+      {item.subItems && showSubItems && (
+        <div className="pl-6">
+          {item.subItems.map(subItem => (
+            <SortableItem
+              key={subItem.id}
+              item={subItem}
+              onToggleVisibility={(id) => onToggleVisibility(id, item.id)}
+              onIconChange={(id, icon) => onIconChange(id, icon, item.id)}
+              level={level + 1}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -178,19 +210,29 @@ export function SidebarSettings() {
   
   // Load saved settings on component mount
   useEffect(() => {
-    const savedItems = localStorage.getItem('sidebar-settings');
-    if (savedItems) {
-      setSidebarItems(JSON.parse(savedItems));
-    } else {
-      // Initialize with default items from navigation menu
-      const defaultItems = mainMenuItems.map(item => ({
-        id: item.title.toLowerCase(),
-        title: item.title,
-        visible: true,
-        icon: item.icon.name || 'Users' // Default to Users if no name property
-      }));
-      setSidebarItems(defaultItems);
-    }
+    const loadSavedSettings = () => {
+      const savedItems = localStorage.getItem('sidebar-settings');
+      if (savedItems) {
+        setSidebarItems(JSON.parse(savedItems));
+      } else {
+        // Initialize with default items from navigation menu
+        const defaultItems = mainMenuItems.map(item => ({
+          id: item.title.toLowerCase(),
+          title: item.title,
+          visible: true,
+          icon: item.icon.name || 'Users', // Default to Users if no name property
+          subItems: item.subItems?.map(subItem => ({
+            id: subItem.title.toLowerCase(),
+            title: subItem.title,
+            visible: true,
+            icon: subItem.icon.name || 'Book'
+          }))
+        }));
+        setSidebarItems(defaultItems);
+      }
+    };
+
+    loadSavedSettings();
   }, []);
 
   // Save changes to localStorage and update global state
@@ -209,21 +251,59 @@ export function SidebarSettings() {
   };
 
   // Toggle visibility of an item
-  const toggleItemVisibility = (id: string) => {
-    setSidebarItems(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, visible: !item.visible } : item
-      )
-    );
+  const toggleItemVisibility = (id: string, parentId?: string) => {
+    if (parentId) {
+      // Toggle visibility of a sub-item
+      setSidebarItems(prev => 
+        prev.map(item => 
+          item.id === parentId
+            ? { 
+                ...item, 
+                subItems: item.subItems?.map(subItem => 
+                  subItem.id === id 
+                    ? { ...subItem, visible: !subItem.visible } 
+                    : subItem
+                )
+              }
+            : item
+        )
+      );
+    } else {
+      // Toggle visibility of a main item
+      setSidebarItems(prev => 
+        prev.map(item => 
+          item.id === id ? { ...item, visible: !item.visible } : item
+        )
+      );
+    }
   };
 
   // Change icon of an item
-  const changeItemIcon = (id: string, icon: string) => {
-    setSidebarItems(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, icon } : item
-      )
-    );
+  const changeItemIcon = (id: string, icon: string, parentId?: string) => {
+    if (parentId) {
+      // Change icon of a sub-item
+      setSidebarItems(prev => 
+        prev.map(item => 
+          item.id === parentId
+            ? { 
+                ...item, 
+                subItems: item.subItems?.map(subItem => 
+                  subItem.id === id 
+                    ? { ...subItem, icon } 
+                    : subItem
+                )
+              }
+            : item
+        )
+      );
+    } else {
+      // Change icon of a main item
+      setSidebarItems(prev => 
+        prev.map(item => 
+          item.id === id ? { ...item, icon } : item
+        )
+      );
+    }
   };
 
   // Handle item reordering
