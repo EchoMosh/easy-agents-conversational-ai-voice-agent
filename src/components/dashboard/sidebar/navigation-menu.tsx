@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { 
   Users, 
@@ -15,7 +16,8 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
-  LayoutDashboard
+  LayoutDashboard,
+  CalendarDays
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -47,7 +49,8 @@ const iconComponents = {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
-  LayoutDashboard
+  LayoutDashboard,
+  CalendarDays
 };
 
 export const mainMenuItems = [
@@ -55,6 +58,11 @@ export const mainMenuItems = [
     title: "Dashboard",
     icon: LayoutDashboard,
     url: "/dashboard/overview",
+  },
+  {
+    title: "Calendar",
+    icon: CalendarDays,
+    url: "/dashboard/calendar",
   },
   {
     title: "Agents",
