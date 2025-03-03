@@ -1,4 +1,3 @@
-
 import { Node as ReactFlowNode, Edge } from '@xyflow/react';
 
 // Rename to avoid conflict with the imported type
@@ -29,6 +28,9 @@ export interface TrainingExample {
   corrected_response: string;
   created_at?: string;
   id?: string; // Adding ID to help with editing/deleting
+  user_id?: string; // Add user_id field to match database requirements
+  agent_id?: string; // Add agent_id field to match database structure
+  is_processed?: boolean; // Add is_processed field from the database
 }
 
 export interface Agent {

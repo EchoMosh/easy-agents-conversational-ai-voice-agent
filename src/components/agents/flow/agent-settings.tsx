@@ -18,7 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/hooks/use-toast';
 
-interface AgentSettingsProps {
+export interface AgentSettingsProps {
   agent: Agent;
   onUpdate: (settings: {
     voice_id?: string;
@@ -113,6 +113,12 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
 
       setIsLoading(true);
 
+      // Get the current user's ID from Supabase auth
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       if (editingExample) {
         // Update existing example
         const { error } = await supabase
@@ -135,12 +141,11 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
         const { error } = await supabase
           .from('agent_training_examples')
           .insert({
-            id: uuidv4(),
             agent_id: agent.id,
+            user_id: user.id,
             user_message: userMessage,
             ai_response: aiResponse,
             corrected_response: correctedResponse,
-            created_at: new Date().toISOString(),
           });
 
         if (error) throw error;
