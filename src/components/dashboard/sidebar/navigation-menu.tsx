@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { 
   Users, 
@@ -312,9 +311,7 @@ export function NavigationMenu() {
                       }`
                     }
                   >
-                    <item.icon className={({ isActive }: { isActive: boolean }) => 
-                      `h-4 w-4 ${isActive ? "text-green-500" : "text-gray-400"}`
-                    } />
+                    <item.icon className={`h-4 w-4 ${location.pathname === item.url ? "text-green-500" : "text-gray-400"}`} />
                     <span className="text-sm">{item.title}</span>
                   </NavLink>
                 </SidebarMenuButton>
@@ -339,9 +336,7 @@ export function NavigationMenu() {
                       }`
                     }
                   >
-                    <item.icon className={({ isActive }: { isActive: boolean }) => 
-                      `h-4 w-4 ${isActive ? "text-green-500" : "text-gray-400"}`
-                    } />
+                    <item.icon className={`h-4 w-4 ${location.pathname === item.url ? "text-green-500" : "text-gray-400"}`} />
                     <span className="text-sm">{item.title}</span>
                   </NavLink>
                 </SidebarMenuButton>
