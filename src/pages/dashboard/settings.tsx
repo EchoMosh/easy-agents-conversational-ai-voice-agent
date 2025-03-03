@@ -1,40 +1,66 @@
 
+import { useState } from "react";
 import { SidebarSettings } from "@/components/settings/sidebar-settings";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { AccountSettings } from "@/components/settings/account-settings";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Monitor, User, Layout } from "lucide-react";
 
 export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState("appearance");
+  
   return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-8">Settings</h1>
-      
-      <div className="space-y-8">
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Appearance</h2>
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Theme</CardTitle>
-                <CardDescription>
-                  Choose your preferred theme appearance
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <span>Switch between dark and light mode</span>
-                  <ThemeToggle />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <SidebarSettings />
-          </div>
-        </section>
-
-        <AccountSettings />
+    <div className="container max-w-5xl py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold">Settings</h1>
       </div>
+      
+      <Tabs 
+        defaultValue="appearance" 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
+        <TabsList className="grid w-full grid-cols-3 md:w-auto">
+          <TabsTrigger value="appearance" className="flex items-center gap-2">
+            <Monitor size={16} />
+            <span>Appearance</span>
+          </TabsTrigger>
+          <TabsTrigger value="sidebar" className="flex items-center gap-2">
+            <Layout size={16} />
+            <span>Sidebar</span>
+          </TabsTrigger>
+          <TabsTrigger value="account" className="flex items-center gap-2">
+            <User size={16} />
+            <span>Account</span>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="appearance" className="space-y-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium">Theme</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Switch between dark and light mode
+                  </p>
+                </div>
+                <ThemeToggle />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="sidebar" className="space-y-4">
+          <SidebarSettings />
+        </TabsContent>
+        
+        <TabsContent value="account" className="space-y-4">
+          <AccountSettings />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

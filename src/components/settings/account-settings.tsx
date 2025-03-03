@@ -1,7 +1,7 @@
 
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -40,19 +40,15 @@ export function AccountSettings() {
   };
 
   return (
-    <section>
-      <h2 className="text-xl font-semibold mb-4">Account</h2>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Session</CardTitle>
-            <CardDescription>
-              Manage your current session
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex flex-col space-y-8">
+          <div>
+            <h3 className="text-lg font-medium mb-2">Session Management</h3>
             <div className="flex items-center justify-between">
-              <span>Sign out from your account</span>
+              <p className="text-sm text-muted-foreground">
+                Sign out from your current account session
+              </p>
               <Button 
                 variant="destructive" 
                 onClick={handleLogout}
@@ -62,9 +58,9 @@ export function AccountSettings() {
                 Logout
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </section>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
