@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Info, VolumeX, Volume2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -24,6 +24,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDocuments } from "@/utils/knowledge-api";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 // Single ElevenLabs voice
 const voice = { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" };
@@ -69,6 +77,7 @@ export function AgentSettings({
   const [isLoading, setIsLoading] = React.useState(false);
   const [isPreviewingVoice, setIsPreviewingVoice] = React.useState(false);
   const [audioElement, setAudioElement] = React.useState<HTMLAudioElement | null>(null);
+  const [showVoiceInfo, setShowVoiceInfo] = React.useState(false);
   const { toast } = useToast();
   
   // Fetch knowledge documents with refetch capability
@@ -343,105 +352,198 @@ export function AgentSettings({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Agent Settings</DialogTitle>
-          <DialogDescription>
-            Configure the agent's voice and language settings
-          </DialogDescription>
-        </DialogHeader>
-        <div className="p-8 space-y-8 max-h-[75vh] overflow-y-auto bg-background/50">
-          <div className="grid gap-6">
-            <div className="space-y-3">
-              <Label htmlFor="voice">Voice</Label>
-              <div className="grid grid-cols-[1fr_auto] gap-2">
-                <div className="border rounded-md px-3 py-2 bg-background flex items-center">
-                  {voice.name}
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 border-0 shadow-xl">
+          <div className="relative">
+            {/* Header with gradient background */}
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-6 text-white">
+              <DialogTitle className="text-2xl font-bold tracking-tight mb-1">Agent Settings</DialogTitle>
+              <DialogDescription className="text-white/90 text-sm">
+                Configure your agent's voice, language, and knowledge settings
+              </DialogDescription>
+            </div>
+            
+            {/* Main content */}
+            <div className="p-6 max-h-[calc(80vh-140px)] overflow-y-auto space-y-8">
+              {/* Voice Section */}
+              <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
+                <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
+                  <Volume2 className="h-5 w-5 text-purple-500" /> 
+                  Voice Settings
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="voice" className="text-sm font-medium mb-2 block">Voice</Label>
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+                      <div className="border rounded-lg px-4 py-2.5 bg-gray-50 dark:bg-gray-900 flex items-center">
+                        {voice.name}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={previewVoice}
+                        className="h-10 w-10 rounded-lg border-gray-200 dark:border-gray-700"
+                      >
+                        {isPreviewingVoice ? 
+                          <Pause className="h-4 w-4 text-gray-700 dark:text-gray-300" /> : 
+                          <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                        }
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setShowVoiceInfo(!showVoiceInfo)}
+                        className="h-10 w-10 rounded-lg border-gray-200 dark:border-gray-700"
+                      >
+                        <Info className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {showVoiceInfo && (
+                    <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-sm text-gray-600 dark:text-gray-400 animate-fade-in">
+                      <p>This voice is provided by ElevenLabs and is optimized for natural-sounding speech in multiple languages.</p>
+                    </div>
+                  )}
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={previewVoice}
-                  className="h-10 w-10"
-                >
-                  {isPreviewingVoice ? 
-                    <Pause className="h-4 w-4" /> : 
-                    <Play className="h-4 w-4" />
-                  }
-                </Button>
               </div>
-              <p className="text-xs text-gray-500">
-                Click the play button to preview the voice
-              </p>
-            </div>
-            <div className="space-y-3">
-              <Label htmlFor="language">Language</Label>
-              <Select onValueChange={setLanguage} value={language}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {l.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                Choose the language for your agent
-              </p>
-            </div>
-            <div className="space-y-3">
-              <Label htmlFor="humor">Humor Level: {humorLevel}%</Label>
-              <Slider
-                id="humor"
-                min={0}
-                max={100}
-                step={10}
-                value={[humorLevel]}
-                onValueChange={(values) => setHumorLevel(values[0])}
-              />
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Serious</span>
-                <span>Balanced</span>
-                <span>Humorous</span>
+                
+              {/* Language and Humor Section */}
+              <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="language" className="text-sm font-medium mb-1 block">Language</Label>
+                  <Select onValueChange={setLanguage} value={language}>
+                    <SelectTrigger className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-lg">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-900">
+                      {languages.map((l) => (
+                        <SelectItem key={l.id} value={l.id} className="focus:bg-gray-100 dark:focus:bg-gray-800">
+                          {l.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <Label htmlFor="humor" className="text-sm font-medium">Humor Level</Label>
+                    <span className="text-sm font-medium text-purple-600 dark:text-purple-400">{humorLevel}%</span>
+                  </div>
+                  <Slider
+                    id="humor"
+                    min={0}
+                    max={100}
+                    step={10}
+                    value={[humorLevel]}
+                    onValueChange={(values) => setHumorLevel(values[0])}
+                    className="mt-2"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Serious</span>
+                    <span>Balanced</span>
+                    <span>Humorous</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Set how humorous the agent should be in conversations
-              </p>
+                
+              {/* Knowledge Base Section */}
+              <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
+                <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
+                  <Info className="h-5 w-5 text-blue-500" /> 
+                  Knowledge Settings
+                </h3>
+                
+                <div className="space-y-3">
+                  <Label htmlFor="knowledge" className="text-sm font-medium mb-1 block">Knowledge Base</Label>
+                  <Select onValueChange={setKnowledgeBase} value={knowledgeBase}>
+                    <SelectTrigger className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-lg">
+                      <SelectValue placeholder={isLoadingDocuments ? "Loading..." : "Select knowledge base"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-900">
+                      {knowledgeBases.map((kb) => (
+                        <SelectItem key={kb.id} value={kb.id} className="focus:bg-gray-100 dark:focus:bg-gray-800">
+                          {kb.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Connect a knowledge base to your agent to provide it with specific information
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="knowledge">Knowledge Base</Label>
-              <Select onValueChange={setKnowledgeBase} value={knowledgeBase}>
-                <SelectTrigger>
-                  <SelectValue placeholder={isLoadingDocuments ? "Loading..." : "Select knowledge base"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {knowledgeBases.map((kb) => (
-                    <SelectItem key={kb.id} value={kb.id}>
-                      {kb.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                Connect a knowledge base to your agent
-              </p>
-            </div>
+            
+            {/* Footer */}
+            <DialogFooter className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setOpen(false)} className="border-gray-300 dark:border-gray-700">
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={isLoading}
+                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
+              >
+                {isLoading ? "Saving..." : "Save changes"}
+              </Button>
+            </DialogFooter>
           </div>
-        </div>
-        <DialogFooter className="px-6 py-4">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button type="submit" onClick={handleSave} disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save changes"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Voice Information Sheet */}
+      <Sheet open={showVoiceInfo} onOpenChange={setShowVoiceInfo}>
+        <SheetContent className="w-full sm:max-w-md bg-white dark:bg-gray-900 p-0">
+          <SheetHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
+            <SheetTitle className="text-white">Voice Information</SheetTitle>
+            <SheetDescription className="text-white/90">
+              Details about the ElevenLabs voice
+            </SheetDescription>
+          </SheetHeader>
+          <div className="p-6 space-y-6">
+            <div className="space-y-2">
+              <h3 className="font-medium">Voice: {voice.name}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                This is a premium voice from ElevenLabs designed to sound natural and expressive.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">Capabilities</h3>
+              <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <li>Natural intonation and prosody</li>
+                <li>Multilingual support</li>
+                <li>Emotional expression</li>
+                <li>Variable speaking styles</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium">Usage tips</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Adjust the humor level to make the voice sound more serious or more playful depending on your agent's purpose.
+              </p>
+            </div>
+            <Button 
+              onClick={previewVoice}
+              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+            >
+              {isPreviewingVoice ? (
+                <>
+                  <Pause className="mr-2 h-4 w-4" /> Stop Preview
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" /> Preview Voice
+                </>
+              )}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
