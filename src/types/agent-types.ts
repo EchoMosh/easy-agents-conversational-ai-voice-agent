@@ -28,6 +28,7 @@ export interface TrainingExample {
   ai_response: string;
   corrected_response: string;
   created_at?: string;
+  id?: string; // Adding ID to help with editing/deleting
 }
 
 export interface Agent {

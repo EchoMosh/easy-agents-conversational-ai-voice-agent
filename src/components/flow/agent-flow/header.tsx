@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
@@ -13,7 +14,7 @@ import { FlowData, FlowNode } from "@/types/agent-types";
 interface HeaderProps {
   agent: Agent;
   onBack: () => void;
-  onUpdateSettings: (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number }) => Promise<void>;
+  onUpdateSettings: (settings: { voiceId?: string; language?: string; humorLevel?: number; maxDurationSeconds?: number; knowledgeBaseId?: string }) => Promise<void>;
 }
 
 export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {

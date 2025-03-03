@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Play, Pause, Info, VolumeX, Volume2 } from "lucide-react";
+import { Play, Pause, Info, VolumeX, Volume2, Book, Edit, Plus, Trash } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -31,6 +31,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { TrainingExample } from "@/types/agent-types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 // Available voices data
 const voices = [
@@ -84,6 +95,18 @@ export function AgentSettings({
   const [showVoiceInfo, setShowVoiceInfo] = React.useState(false);
   const { toast } = useToast();
   
+  // Training examples section states
+  const [trainingExamples, setTrainingExamples] = React.useState<TrainingExample[]>([]);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [showExampleEditor, setShowExampleEditor] = React.useState(false);
+  const [currentExample, setCurrentExample] = React.useState<TrainingExample | null>(null);
+  const [isAddingExample, setIsAddingExample] = React.useState(false);
+
+  // New training example form state
+  const [userMessage, setUserMessage] = React.useState("");
+  const [aiResponse, setAiResponse] = React.useState("");
+  const [correctedResponse, setCorrectedResponse] = React.useState("");
+  
   const currentVoiceObject = React.useMemo(() => 
     voices.find(v => v.id === selectedVoice) || voices[0],
   [selectedVoice]);
@@ -134,7 +157,7 @@ export function AgentSettings({
         try {
           const { data, error } = await supabase
             .from('agents')
-            .select('knowledge_ids, voice_id, language, humor_level')
+            .select('knowledge_ids, voice_id, language, humor_level, training_examples')
             .eq('id', agentId)
             .maybeSingle();
             
@@ -158,6 +181,12 @@ export function AgentSettings({
             } else {
               setKnowledgeBase("none");
             }
+            
+            if (data.training_examples && Array.isArray(data.training_examples)) {
+              setTrainingExamples(data.training_examples);
+            } else {
+              setTrainingExamples([]);
+            }
           }
         } catch (error) {
           console.error("Error fetching agent data:", error);
@@ -180,6 +209,127 @@ export function AgentSettings({
       ...documents.map(doc => ({ id: doc.id, name: doc.title })),
     ];
   }, [knowledgeDocuments]);
+
+  const filteredExamples = React.useMemo(() => {
+    if (!searchQuery) return trainingExamples;
+    
+    const query = searchQuery.toLowerCase();
+    return trainingExamples.filter(example => 
+      example.user_message.toLowerCase().includes(query) ||
+      example.ai_response.toLowerCase().includes(query) ||
+      example.corrected_response.toLowerCase().includes(query)
+    );
+  }, [trainingExamples, searchQuery]);
+
+  const handleSaveExample = async () => {
+    if (!userMessage || !aiResponse || !correctedResponse) {
+      toast({
+        title: "Validation Error",
+        description: "All fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      let updatedExamples: TrainingExample[];
+      const newExample: TrainingExample = {
+        user_message: userMessage,
+        ai_response: aiResponse,
+        corrected_response: correctedResponse,
+        created_at: new Date().toISOString(),
+        id: isAddingExample ? Date.now().toString() : currentExample?.id || Date.now().toString()
+      };
+      
+      if (isAddingExample) {
+        updatedExamples = [...trainingExamples, newExample];
+      } else {
+        updatedExamples = trainingExamples.map(ex => 
+          ex.id === currentExample?.id ? newExample : ex
+        );
+      }
+      
+      const { error } = await supabase
+        .from('agents')
+        .update({ training_examples: updatedExamples })
+        .eq('id', agentId);
+      
+      if (error) throw error;
+      
+      setTrainingExamples(updatedExamples);
+      setUserMessage("");
+      setAiResponse("");
+      setCorrectedResponse("");
+      setShowExampleEditor(false);
+      setIsAddingExample(false);
+      setCurrentExample(null);
+      
+      toast({
+        title: "Success",
+        description: isAddingExample ? "Example added successfully" : "Example updated successfully",
+      });
+    } catch (error) {
+      console.error("Error saving training example:", error);
+      toast({
+        title: "Error",
+        description: `Failed to save training example: ${error instanceof Error ? error.message : "Unknown error"}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteExample = async (exampleId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const updatedExamples = trainingExamples.filter(ex => ex.id !== exampleId);
+      
+      const { error } = await supabase
+        .from('agents')
+        .update({ training_examples: updatedExamples })
+        .eq('id', agentId);
+      
+      if (error) throw error;
+      
+      setTrainingExamples(updatedExamples);
+      
+      toast({
+        title: "Success",
+        description: "Example deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting training example:", error);
+      toast({
+        title: "Error",
+        description: `Failed to delete training example: ${error instanceof Error ? error.message : "Unknown error"}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditExample = (example: TrainingExample) => {
+    setCurrentExample(example);
+    setUserMessage(example.user_message);
+    setAiResponse(example.ai_response);
+    setCorrectedResponse(example.corrected_response);
+    setIsAddingExample(false);
+    setShowExampleEditor(true);
+  };
+
+  const handleAddExample = () => {
+    setCurrentExample(null);
+    setUserMessage("");
+    setAiResponse("");
+    setCorrectedResponse("");
+    setIsAddingExample(true);
+    setShowExampleEditor(true);
+  };
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -474,6 +624,142 @@ export function AgentSettings({
                     Connect a knowledge base to your agent to provide it with specific information
                   </p>
                 </div>
+              </div>
+              
+              <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
+                <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
+                  <Book className="h-5 w-5 text-emerald-500" /> 
+                  Training Examples
+                </h3>
+                
+                {!showExampleEditor ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div className="relative flex-1 mr-2">
+                        <Input
+                          type="text"
+                          placeholder="Search examples..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-lg pr-8"
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleAddExample}
+                        variant="outline"
+                        className="h-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-lg flex items-center gap-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add</span>
+                      </Button>
+                    </div>
+                    
+                    {filteredExamples.length === 0 ? (
+                      <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                        {searchQuery ? "No examples match your search" : "No training examples yet"}
+                      </div>
+                    ) : (
+                      <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                        {filteredExamples.map((example, index) => (
+                          <Card key={example.id || index} className="border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <CardHeader className="p-3 pb-0">
+                              <CardTitle className="text-sm font-medium flex justify-between items-center">
+                                <span className="text-gray-600 dark:text-gray-400">User Message</span>
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEditExample(example)}
+                                    className="h-7 w-7 rounded-full"
+                                  >
+                                    <Edit className="h-3.5 w-3.5 text-gray-500" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteExample(example.id || index.toString())}
+                                    className="h-7 w-7 rounded-full"
+                                  >
+                                    <Trash className="h-3.5 w-3.5 text-gray-500" />
+                                  </Button>
+                                </div>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-3 pt-1">
+                              <p className="text-sm truncate">{example.user_message}</p>
+                              
+                              <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">AI Response:</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{example.ai_response}</p>
+                              </div>
+                              
+                              <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                <p className="text-xs font-medium text-green-600 dark:text-green-400 mb-1">Corrected Response:</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{example.corrected_response}</p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {isAddingExample ? "Add New Example" : "Edit Example"}
+                    </h4>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="userMessage" className="text-xs">User Message</Label>
+                      <Textarea 
+                        id="userMessage"
+                        placeholder="What the user asked..."
+                        value={userMessage}
+                        onChange={(e) => setUserMessage(e.target.value)}
+                        className="h-20 resize-none bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="aiResponse" className="text-xs">AI Response</Label>
+                      <Textarea 
+                        id="aiResponse"
+                        placeholder="How the AI responded initially..."
+                        value={aiResponse}
+                        onChange={(e) => setAiResponse(e.target.value)}
+                        className="h-20 resize-none bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="correctedResponse" className="text-xs">Corrected Response</Label>
+                      <Textarea 
+                        id="correctedResponse"
+                        placeholder="The corrected response you want the AI to learn from..."
+                        value={correctedResponse}
+                        onChange={(e) => setCorrectedResponse(e.target.value)}
+                        className="h-20 resize-none bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowExampleEditor(false)}
+                        className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleSaveExample}
+                        disabled={isLoading}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        {isLoading ? "Saving..." : "Save Example"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
