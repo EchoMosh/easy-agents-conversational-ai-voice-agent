@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { 
   Users, 
@@ -17,7 +16,7 @@ import {
   ArrowLeft,
   ArrowRight
 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   SidebarContent,
   SidebarGroup,
@@ -99,6 +98,7 @@ interface CustomizedMenuItem {
 
 export function NavigationMenu() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [customizedItems, setCustomizedItems] = useState<CustomizedMenuItem[]>([]);
   const [displayedItems, setDisplayedItems] = useState(mainMenuItems);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -110,6 +110,25 @@ export function NavigationMenu() {
         ? prev.filter(item => item !== title) 
         : [...prev, title]
     );
+  };
+
+  // Handle item click - navigate and toggle submenu if it has subitems
+  const handleItemClick = (item: any, event: React.MouseEvent) => {
+    if (item.subItems && item.subItems.length > 0) {
+      // If clicking on the icon or text area (not on the chevron), navigate to the URL
+      const target = event.target as HTMLElement;
+      const isChevronClick = target.closest('.chevron-toggle');
+      
+      if (!isChevronClick) {
+        navigate(item.url);
+      }
+      
+      // Toggle the submenu regardless
+      toggleExpand(item.title);
+    } else {
+      // For items without subitems, just navigate
+      navigate(item.url);
+    }
   };
 
   // Check if a menu item is active or has an active child
@@ -227,7 +246,7 @@ export function NavigationMenu() {
                 {item.subItems && item.subItems.length > 0 ? (
                   <>
                     <SidebarMenuButton 
-                      onClick={() => toggleExpand(item.title)}
+                      onClick={(e) => handleItemClick(item, e)}
                       isActive={isActiveOrHasActiveChild(item)}
                       className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-md transition-colors ${
                         isActiveOrHasActiveChild(item)
@@ -239,11 +258,13 @@ export function NavigationMenu() {
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </div>
-                      {expandedItems.includes(item.title) ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
+                      <div className="chevron-toggle">
+                        {expandedItems.includes(item.title) ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
                     </SidebarMenuButton>
                     
                     {expandedItems.includes(item.title) && (
