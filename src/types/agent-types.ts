@@ -23,6 +23,13 @@ export interface NodeData {
   actions?: NodeAction[];
 }
 
+export interface TrainingExample {
+  user_message: string;
+  ai_response: string;
+  corrected_response: string;
+  created_at?: string;
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -47,4 +54,5 @@ export interface Agent {
   training_status?: 'not_started' | 'in_progress' | 'completed';
   last_trained_at?: string;
   training_webhook_url?: string;
+  training_examples?: TrainingExample[]; // New field for training examples
 }

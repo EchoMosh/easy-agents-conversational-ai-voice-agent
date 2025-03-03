@@ -1,12 +1,16 @@
 
 import { Agent } from '@/types/agent-types';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SendUserMessageResponse {
   message: string;
   success: boolean;
   [key: string]: any;
+}
+
+interface TrainingExample {
+  user_message: string;
+  corrected_response: string;
 }
 
 /**
@@ -35,6 +39,20 @@ export async function sendUserMessage(
     
     console.log('[TrainingAPI] Retrieved agent data:', fullAgentData);
     
+    // Fetch training examples for this agent
+    const { data: trainingExamples, error: examplesError } = await supabase
+      .from('agent_training_examples')
+      .select('user_message, corrected_response')
+      .eq('agent_id', agentId)
+      .limit(10) // Limit to most recent 10 examples
+      .order('created_at', { ascending: false });
+    
+    if (examplesError) {
+      console.error('[TrainingAPI] Error fetching training examples:', examplesError);
+    }
+    
+    console.log('[TrainingAPI] Retrieved training examples:', trainingExamples);
+    
     // Create enhanced payload with more agent information
     const payload = {
       agent_id: agentId,
@@ -54,7 +72,10 @@ export async function sendUserMessage(
         elevenlabs_agent_id: fullAgentData.elevenlabs_agent_id,
         voice_id: fullAgentData.voice_id,
         mermaid_chart: fullAgentData.mermaid_chart
-      }
+      },
+      
+      // Include training examples if available
+      training_examples: trainingExamples || []
     };
     
     console.log('[TrainingAPI] Enhanced webhook payload:', payload);

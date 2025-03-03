@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { sendUserMessage } from "@/utils/agent-training-api";
 import { useToast } from "@/hooks/use-toast";
 import { FlowData, FlowNode } from "@/types/agent-types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AgentTrainingPopupProps {
   agent: Agent;
@@ -228,8 +229,70 @@ export function AgentTrainingPopup({
     setCorrectionInput("");
   };
 
-  const handleSubmitCorrectionFromSlider = () => {
+  const saveTrainingExample = async (
+    agentId: string, 
+    userMessage: string, 
+    aiResponse: string, 
+    correctedResponse: string
+  ) => {
+    try {
+      const { error } = await supabase
+        .from('agent_training_examples')
+        .insert({
+          agent_id: agentId,
+          user_message: userMessage,
+          ai_response: aiResponse,
+          corrected_response: correctedResponse,
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        });
+
+      if (error) {
+        console.error('[TrainingPopup] Error saving training example:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save training example",
+          variant: "destructive",
+        });
+      } else {
+        console.log('[TrainingPopup] Training example saved successfully');
+        toast({
+          title: "Success",
+          description: "Training example saved",
+        });
+      }
+    } catch (error) {
+      console.error('[TrainingPopup] Error saving training example:', error);
+    }
+  };
+
+  const handleSubmitCorrectionFromSlider = async () => {
     if (!correctionInput.trim() || !correctionTargetId) return;
+
+    const correctedMessageIndex = messages.findIndex(msg => msg.id === correctionTargetId);
+    if (correctedMessageIndex <= 0) {
+      console.error("[TrainingPopup] Cannot find message or preceding user message");
+      return;
+    }
+
+    const agentMessage = messages[correctedMessageIndex];
+    let userMessageIndex = correctedMessageIndex - 1;
+    while (userMessageIndex >= 0) {
+      if (messages[userMessageIndex].role === "user") {
+        break;
+      }
+      userMessageIndex--;
+    }
+
+    if (userMessageIndex >= 0) {
+      const userMessage = messages[userMessageIndex];
+      
+      await saveTrainingExample(
+        agent.id,
+        userMessage.content,
+        agentMessage.content,
+        correctionInput
+      );
+    }
 
     setMessages(prev => prev.map(message => message.id === correctionTargetId ? {
       ...message,
@@ -237,23 +300,45 @@ export function AgentTrainingPopup({
       feedback: "negative"
     } : message));
 
-    console.log("Correction submitted for message:", correctionTargetId, "Correction:", correctionInput);
-
     setShowCorrectionSlider(false);
     setCorrectionTargetId(null);
     setCorrectionInput("");
   };
 
-  const handleSubmitCorrection = () => {
+  const handleSubmitCorrection = async () => {
     if (!correctionInput.trim() || !editingMessageId) return;
+
+    const correctedMessageIndex = messages.findIndex(msg => msg.id === editingMessageId);
+    if (correctedMessageIndex <= 0) {
+      console.error("[TrainingPopup] Cannot find message or preceding user message");
+      return;
+    }
+
+    const agentMessage = messages[correctedMessageIndex];
+    let userMessageIndex = correctedMessageIndex - 1;
+    while (userMessageIndex >= 0) {
+      if (messages[userMessageIndex].role === "user") {
+        break;
+      }
+      userMessageIndex--;
+    }
+
+    if (userMessageIndex >= 0) {
+      const userMessage = messages[userMessageIndex];
+      
+      await saveTrainingExample(
+        agent.id,
+        userMessage.content,
+        agentMessage.content,
+        correctionInput
+      );
+    }
 
     setMessages(prev => prev.map(message => message.id === editingMessageId ? {
       ...message,
       correction: correctionInput,
       feedback: "negative"
     } : message));
-
-    console.log("Correction submitted for message:", editingMessageId, "Correction:", correctionInput);
 
     setEditingMessageId(null);
     setCorrectionInput("");
