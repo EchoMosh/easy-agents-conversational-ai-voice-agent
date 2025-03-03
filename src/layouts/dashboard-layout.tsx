@@ -9,7 +9,7 @@ export default function DashboardLayout() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-screen w-full bg-muted/10">
+      <div className="flex h-screen w-full bg-background">
         <AppSidebar />
         <main className={`flex-1 overflow-auto w-full ${isAgentFlowPage ? 'pl-0 pr-0 pt-0 pb-0' : 'p-6'}`}>
           <Outlet />

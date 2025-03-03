@@ -26,28 +26,32 @@ export function AppSidebar() {
   }, [location.pathname, isAgentFlowPage, setOpen]);
 
   return (
-    <Sidebar className="border-r">
+    <Sidebar className="border-r border-border/30 bg-background/95 backdrop-blur-sm">
       <ProfileSection />
       <NavigationMenu />
       
       {/* Credit Usage Indicator with Upgrade Button */}
-      <div className="mt-auto p-4 border-t">
+      <div className="mt-auto p-5 border-t border-border/30">
         <div className="flex flex-col space-y-4">
           <div>
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center mb-2.5">
               <span className="text-xs font-medium text-muted-foreground">Credits</span>
-              <span className="text-xs font-medium">{creditUsage.used}/{creditUsage.total}</span>
+              <span className="text-xs font-semibold">{creditUsage.used}/{creditUsage.total}</span>
             </div>
-            <Progress value={creditUsage.percentage} className="h-1.5 bg-secondary/50" />
+            <Progress 
+              value={creditUsage.percentage} 
+              className="h-1.5 bg-secondary/50 rounded-full overflow-hidden" 
+              indicatorClassName="bg-gradient-to-r from-indigo-500 to-purple-500"
+            />
           </div>
           
           <div>
-            <p className="text-[10px] text-muted-foreground mb-2">
+            <p className="text-[11px] text-muted-foreground mb-3 font-light">
               Credits are used for AI generations and voice calls
             </p>
             <Button 
               size="sm" 
-              className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-medium shadow-sm"
+              className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 text-white font-medium shadow-md transition-all duration-300 rounded-md border border-white/5"
             >
               <Sparkles size={14} className="mr-1.5" />
               Upgrade Plan
