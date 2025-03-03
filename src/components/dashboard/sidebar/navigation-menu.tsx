@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { 
   Users, 
@@ -24,7 +25,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
 
 // Create an icons object for easy lookup
@@ -160,7 +160,7 @@ export function NavigationMenu() {
   }, [customizedItems]);
 
   return (
-    <SidebarContent>
+    <SidebarContent className="py-2">
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
@@ -170,10 +170,10 @@ export function NavigationMenu() {
                   <NavLink
                     to={item.url}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                      `flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors ${
                         isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "text-foreground/70 hover:bg-muted hover:text-foreground"
                       }`
                     }
                   >

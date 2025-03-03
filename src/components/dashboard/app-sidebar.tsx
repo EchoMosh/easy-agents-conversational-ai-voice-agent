@@ -26,28 +26,33 @@ export function AppSidebar() {
   }, [location.pathname, isAgentFlowPage, setOpen]);
 
   return (
-    <Sidebar>
+    <Sidebar className="border-r">
       <ProfileSection />
       <NavigationMenu />
       
       {/* Credit Usage Indicator with Upgrade Button */}
-      <div className="mt-auto px-3 py-2 border-t border-sidebar-border">
-        <div className="flex justify-between items-center mb-1 text-xs">
-          <span className="text-muted-foreground">Credits Used</span>
-          <span className="font-medium">{creditUsage.used}/{creditUsage.total}</span>
-        </div>
-        <Progress value={creditUsage.percentage} className="h-1" />
-        <div className="flex flex-col gap-2 mt-2">
-          <p className="text-[10px] text-muted-foreground">
-            Credits are used for AI generations and voice calls
-          </p>
-          <Button 
-            size="sm" 
-            className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
-          >
-            <Sparkles size={14} className="mr-1" />
-            Upgrade Plan
-          </Button>
+      <div className="mt-auto p-4 border-t">
+        <div className="flex flex-col space-y-4">
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-medium text-muted-foreground">Credits</span>
+              <span className="text-xs font-medium">{creditUsage.used}/{creditUsage.total}</span>
+            </div>
+            <Progress value={creditUsage.percentage} className="h-1.5 bg-secondary/50" />
+          </div>
+          
+          <div>
+            <p className="text-[10px] text-muted-foreground mb-2">
+              Credits are used for AI generations and voice calls
+            </p>
+            <Button 
+              size="sm" 
+              className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-medium shadow-sm"
+            >
+              <Sparkles size={14} className="mr-1.5" />
+              Upgrade Plan
+            </Button>
+          </div>
         </div>
       </div>
     </Sidebar>

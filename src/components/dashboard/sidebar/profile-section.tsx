@@ -71,27 +71,27 @@ export function ProfileSection() {
   }, []);
 
   return (
-    <SidebarHeader className="border-b p-4">
+    <SidebarHeader className="p-4 border-b">
       <div className="flex items-center gap-3">
         <div className="relative group">
-          <Avatar>
+          <Avatar className="h-10 w-10 ring-2 ring-background">
             <AvatarImage src={avatarUrl} alt={username} />
-            <AvatarFallback>
-              <User className="h-6 w-6" />
+            <AvatarFallback className="bg-primary/10 text-primary">
+              <User className="h-5 w-5" />
             </AvatarFallback>
           </Avatar>
           <Button
             size="icon"
             variant="ghost"
-            className="absolute -bottom-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-background opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
             onClick={handleRandomizeAvatar}
             title="Randomize avatar"
           >
-            <Shuffle className="h-3 w-3" />
+            <Shuffle className="h-2.5 w-2.5" />
           </Button>
         </div>
         <div className="flex flex-col">
-          <span className="font-semibold text-sm">{firstName || username}</span>
+          <span className="font-medium text-sm">{firstName || username}</span>
           <span className="text-xs text-muted-foreground">
             Welcome back!
           </span>
