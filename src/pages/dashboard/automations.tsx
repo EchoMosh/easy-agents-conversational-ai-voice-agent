@@ -1,9 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { Zap, Construction } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 export default function AutomationsPage() {
   const [visible, setVisible] = useState(false);
@@ -95,24 +94,6 @@ export default function AutomationsPage() {
                   </Card>
                 </motion.div>
               ))}
-            </motion.div>
-
-            {/* Get notified button */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-              className="mt-8"
-            >
-              <Button 
-                className="bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-800"
-                size="lg"
-              >
-                <span className="flex items-center">
-                  <Construction className="mr-2 h-4 w-4" />
-                  Get Notified When It's Ready
-                </span>
-              </Button>
             </motion.div>
           </motion.div>
         )}
