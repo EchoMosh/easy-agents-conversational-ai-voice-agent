@@ -1,11 +1,13 @@
+
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
+import { ArrowLeft, Play, PhoneCall, Settings, BookOpen } from "lucide-react";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
 import { Agent } from "@/types/agent";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
+import { TrainingExamplesManager } from "@/components/agents/training/training-examples-manager";
 import { VoiceCallDialog } from "@/components/agents/voice-call/voice-call-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { FlowData, FlowNode } from "@/types/agent-types";
@@ -19,6 +21,7 @@ interface HeaderProps {
 export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [showTrainingPopup, setShowTrainingPopup] = useState(false);
+  const [showTrainingExamples, setShowTrainingExamples] = useState(false);
   const [showVoiceCallDialog, setShowVoiceCallDialog] = useState(false);
   const [isUpdatingAgent, setIsUpdatingAgent] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -250,6 +253,24 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3 relative ml-auto">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5"
+                  onClick={() => setShowTrainingExamples(true)}
+                >
+                  <BookOpen className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Training Examples</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        
           <AgentSettings
             agentId={agent.id}
             currentVoice={agent.voice_id || undefined}
@@ -306,6 +327,12 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         agent={agent} 
         open={showTrainingPopup} 
         onOpenChange={setShowTrainingPopup} 
+      />
+      
+      <TrainingExamplesManager
+        agent={agent}
+        open={showTrainingExamples}
+        onOpenChange={setShowTrainingExamples}
       />
       
       <VoiceCallDialog

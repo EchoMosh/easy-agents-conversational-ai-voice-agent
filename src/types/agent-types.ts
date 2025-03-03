@@ -58,4 +58,5 @@ export interface Agent {
   last_trained_at?: string;
   training_webhook_url?: string;
   training_examples?: TrainingExample[]; // New field for training examples
+  show_training_examples?: boolean; // New field to control UI visibility
 }

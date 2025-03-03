@@ -15,7 +15,9 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  BookOpen,
+  Gear
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -36,6 +38,7 @@ const iconComponents = {
   GitMerge,
   MessageSquare,
   Book,
+  BookOpen,
   Zap,
   ChevronDown,
   ChevronUp, 
@@ -44,7 +47,8 @@ const iconComponents = {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  Gear
 };
 
 export const mainMenuItems = [
