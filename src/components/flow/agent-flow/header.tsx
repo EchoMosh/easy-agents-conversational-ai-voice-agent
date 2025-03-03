@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -126,6 +127,7 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
             user_message: userMessage,
             ai_response: aiResponse,
             corrected_response: correctedResponse,
+            user_id: user.id // Ensure user_id is included in updates
           })
           .eq('id', editingExample.id);
 
@@ -429,3 +431,6 @@ export function AgentSettings({ agent, onUpdate }: AgentSettingsProps) {
     </div>
   );
 }
+
+// Export the AgentSettings component for use elsewhere
+export default AgentSettings;

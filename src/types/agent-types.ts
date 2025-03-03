@@ -1,3 +1,4 @@
+
 import { Node as ReactFlowNode, Edge } from '@xyflow/react';
 
 // Rename to avoid conflict with the imported type
@@ -57,5 +58,4 @@ export interface Agent {
   training_status?: 'not_started' | 'in_progress' | 'completed';
   last_trained_at?: string;
   training_webhook_url?: string;
-  training_examples?: TrainingExample[]; // New field for training examples
 }
