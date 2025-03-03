@@ -24,9 +24,12 @@ export interface NodeData {
 }
 
 export interface TrainingExample {
+  id: string;
   user_message: string;
   ai_response: string;
   corrected_response: string;
+  agent_id: string;
+  user_id?: string;
   created_at?: string;
 }
 
