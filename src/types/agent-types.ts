@@ -24,12 +24,9 @@ export interface NodeData {
 }
 
 export interface TrainingExample {
-  id: string;
   user_message: string;
   ai_response: string;
   corrected_response: string;
-  agent_id: string;
-  user_id?: string;
   created_at?: string;
 }
 
@@ -58,5 +55,4 @@ export interface Agent {
   last_trained_at?: string;
   training_webhook_url?: string;
   training_examples?: TrainingExample[]; // New field for training examples
-  show_training_examples?: boolean; // New field to control UI visibility
 }

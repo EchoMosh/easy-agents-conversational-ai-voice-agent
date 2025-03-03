@@ -4,7 +4,8 @@ import { Check, Volume2, Send, X, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Agent } from "@/types/agent-types";
+import { Agent } from "@/types/agent";
+import { Input } from "@/components/ui/input";
 import { sendUserMessage } from "@/utils/agent-training-api";
 import { useToast } from "@/hooks/use-toast";
 import { FlowData, FlowNode } from "@/types/agent-types";
@@ -39,7 +40,6 @@ export function AgentTrainingPopup({
   const [correctionInput, setCorrectionInput] = useState("");
   const [showCorrectionSlider, setShowCorrectionSlider] = useState(false);
   const [correctionTargetId, setCorrectionTargetId] = useState<string | null>(null);
-  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const initialized = useRef(false);
@@ -237,7 +237,7 @@ export function AgentTrainingPopup({
     correctedResponse: string
   ) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('agent_training_examples')
         .insert({
           agent_id: agentId,
@@ -245,8 +245,7 @@ export function AgentTrainingPopup({
           ai_response: aiResponse,
           corrected_response: correctedResponse,
           user_id: (await supabase.auth.getUser()).data.user?.id
-        })
-        .select();
+        });
 
       if (error) {
         console.error('[TrainingPopup] Error saving training example:', error);
@@ -255,18 +254,15 @@ export function AgentTrainingPopup({
           description: "Failed to save training example",
           variant: "destructive",
         });
-        return null;
       } else {
-        console.log('[TrainingPopup] Training example saved successfully:', data);
+        console.log('[TrainingPopup] Training example saved successfully');
         toast({
           title: "Success",
           description: "Training example saved",
         });
-        return data[0];
       }
     } catch (error) {
       console.error('[TrainingPopup] Error saving training example:', error);
-      return null;
     }
   };
 
@@ -375,7 +371,7 @@ export function AgentTrainingPopup({
             <>
               {messages.map(message => (
                 <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[60%] rounded-2xl px-4 py-2 shadow-sm relative group ${message.role === "user" ? "bg-blue-500 text-white rounded-br-none" : message.feedback === "negative" ? "bg-red-100 dark:bg-red-900/50 text-foreground rounded-bl-none" : message.feedback === "positive" ? "bg-green-100 dark:bg-green-900/50 text-foreground rounded-bl-none" : "bg-white dark:bg-gray-800/30 text-foreground rounded-bl-none"}`}>
+                  <div className={`max-w-[60%] rounded-2xl px-4 py-2 shadow-sm relative group ${message.role === "user" ? "bg-blue-500 text-white rounded-br-none" : message.feedback === "negative" ? "bg-red-100 dark:bg-red-900 rounded-bl-none" : message.feedback === "positive" ? "bg-green-100 dark:bg-green-900 rounded-bl-none" : "bg-white dark:bg-gray-800/30 rounded-bl-none"}`}>
                     {message.role === "agent" && (
                       <div className="absolute top-1/2 -translate-y-1/2 -right-28 flex space-x-2">
                         <Button
