@@ -2,6 +2,7 @@
 import { SidebarSettings } from "@/components/settings/sidebar-settings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function SettingsPage() {
   return (
