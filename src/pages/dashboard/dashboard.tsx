@@ -14,6 +14,9 @@ import {
   Funnel,
   Cell,
   LabelList,
+  PieChart,
+  Pie,
+  Legend,
 } from "recharts";
 import { 
   ChevronUp, 
@@ -45,12 +48,20 @@ const leadData = [
   { name: "Jun", leads: 290 },
 ];
 
+// Data for funnel chart
 const conversionData = [
   { name: "Leads", value: 100, fill: "#0088FE" },
   { name: "Qualified", value: 80, fill: "#00C49F" },
   { name: "Meetings", value: 50, fill: "#FFBB28" },
   { name: "Proposals", value: 30, fill: "#FF8042" },
   { name: "Converted", value: 20, fill: "#8884d8" },
+];
+
+// Data for pie chart - but we'll use the funnel instead
+const conversionPieData = [
+  { name: "Converted", value: 68, fill: "#4f46e5" },
+  { name: "Pending", value: 22, fill: "#fbbf24" },
+  { name: "Lost", value: 10, fill: "#f97316" },
 ];
 
 export default function DashboardPage() {
@@ -149,7 +160,7 @@ export default function DashboardPage() {
       </div>
       
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Lead Acquisition Chart - With Toggle */}
+        {/* Lead Acquisition Chart - With Toggle - Default to Bar Chart */}
         <Card className="col-span-2 bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
           <CardHeader className="pb-2 pt-6 px-6">
             <div className="flex items-center justify-between">
@@ -238,7 +249,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         
-        {/* Funnel Chart - Replacing Pie Chart */}
+        {/* Conversion Status as a Funnel Chart (not a Pie Chart) */}
         <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
           <CardHeader className="pb-2 pt-6 px-6">
             <CardTitle className="text-slate-900 text-base font-medium">Conversion Status</CardTitle>
