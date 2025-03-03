@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
@@ -43,9 +44,9 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     if (firstNode.data) {
       // Check for message or greeting property
       if (firstNode.type === 'greetingNode' && firstNode.data.greeting) {
-        return firstNode.data.greeting;
+        return String(firstNode.data.greeting);
       } else if (firstNode.type === 'speakNode' && firstNode.data.message) {
-        return firstNode.data.message;
+        return String(firstNode.data.message);
       }
     }
 
@@ -139,7 +140,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
           flowData = { nodes: [], edges: [] };
         }
       } else {
-        flowData = fullAgentData.flow || { nodes: [], edges: [] };
+        flowData = fullAgentData.flow as FlowData || { nodes: [], edges: [] };
       }
       
       // Get the first message from the flow data

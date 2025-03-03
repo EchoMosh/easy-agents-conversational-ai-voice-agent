@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import {
   Dialog,
@@ -233,7 +234,8 @@ export function AgentSettings({
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
         body: { 
           text: "Hello, this is a preview of my voice.",
-          voice_id: voice.id
+          voice_id: voice.id,
+          model_id: "eleven_multilingual_v2"  // Specify the model explicitly
         }
       });
       
@@ -260,15 +262,19 @@ export function AgentSettings({
         URL.revokeObjectURL(audioUrl);
       };
       
-      audioElement.play().catch((error) => {
-        console.error('Error playing audio:', error);
+      await audioElement.play();
+      
+      // Add error handling for play()
+      audioElement.onerror = (e) => {
+        console.error('Audio playback error:', e);
         setIsPreviewingVoice(false);
-      });
+      };
+      
     } catch (error) {
       console.error('Error previewing voice:', error);
       toast({
         title: "Error",
-        description: "Failed to preview voice",
+        description: "Failed to preview voice: " + (error instanceof Error ? error.message : String(error)),
         variant: "destructive",
       });
       setIsPreviewingVoice(false);
