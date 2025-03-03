@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import {
   Dialog,
@@ -155,38 +156,57 @@ export function AgentSettings({
       
       const fetchAgentData = async () => {
         try {
-          const { data, error } = await supabase
+          // Fetch agent settings
+          const { data: agentData, error: agentError } = await supabase
             .from('agents')
-            .select('knowledge_ids, voice_id, language, humor_level, training_examples')
+            .select('knowledge_ids, voice_id, language, humor_level')
             .eq('id', agentId)
             .maybeSingle();
             
-          if (error) throw error;
+          if (agentError) throw agentError;
           
-          if (data) {
-            if (data.voice_id) {
-              setSelectedVoice(data.voice_id);
+          if (agentData) {
+            if (agentData.voice_id) {
+              setSelectedVoice(agentData.voice_id);
             }
             
-            if (data.language) {
-              setLanguage(data.language);
+            if (agentData.language) {
+              setLanguage(agentData.language);
             }
             
-            if (data.humor_level !== undefined && data.humor_level !== null) {
-              setHumorLevel(data.humor_level);
+            if (agentData.humor_level !== undefined && agentData.humor_level !== null) {
+              setHumorLevel(agentData.humor_level);
             }
             
-            if (data.knowledge_ids && data.knowledge_ids.length > 0) {
-              setKnowledgeBase(data.knowledge_ids[0]);
+            if (agentData.knowledge_ids && agentData.knowledge_ids.length > 0) {
+              setKnowledgeBase(agentData.knowledge_ids[0]);
             } else {
               setKnowledgeBase("none");
             }
+          }
+          
+          // Fetch training examples from the dedicated table
+          const { data: examplesData, error: examplesError } = await supabase
+            .from('agent_training_examples')
+            .select('id, user_message, ai_response, corrected_response, created_at')
+            .eq('agent_id', agentId)
+            .order('created_at', { ascending: false });
             
-            if (data.training_examples && Array.isArray(data.training_examples)) {
-              setTrainingExamples(data.training_examples);
-            } else {
-              setTrainingExamples([]);
-            }
+          if (examplesError) throw examplesError;
+          
+          if (examplesData) {
+            // Convert to the TrainingExample format
+            const examples: TrainingExample[] = examplesData.map(ex => ({
+              id: ex.id,
+              user_message: ex.user_message,
+              ai_response: ex.ai_response,
+              corrected_response: ex.corrected_response,
+              created_at: ex.created_at
+            }));
+            
+            setTrainingExamples(examples);
+          } else {
+            setTrainingExamples([]);
           }
         } catch (error) {
           console.error("Error fetching agent data:", error);
@@ -234,31 +254,52 @@ export function AgentSettings({
     try {
       setIsLoading(true);
       
-      let updatedExamples: TrainingExample[];
-      const newExample: TrainingExample = {
-        user_message: userMessage,
-        ai_response: aiResponse,
-        corrected_response: correctedResponse,
-        created_at: new Date().toISOString(),
-        id: isAddingExample ? Date.now().toString() : currentExample?.id || Date.now().toString()
-      };
-      
       if (isAddingExample) {
-        updatedExamples = [...trainingExamples, newExample];
-      } else {
-        updatedExamples = trainingExamples.map(ex => 
-          ex.id === currentExample?.id ? newExample : ex
-        );
+        // Insert new example into the database
+        const { error: insertError } = await supabase
+          .from('agent_training_examples')
+          .insert({
+            agent_id: agentId,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_message: userMessage,
+            ai_response: aiResponse,
+            corrected_response: correctedResponse
+          });
+          
+        if (insertError) throw insertError;
+      } else if (currentExample?.id) {
+        // Update existing example
+        const { error: updateError } = await supabase
+          .from('agent_training_examples')
+          .update({
+            user_message: userMessage,
+            ai_response: aiResponse,
+            corrected_response: correctedResponse
+          })
+          .eq('id', currentExample.id);
+          
+        if (updateError) throw updateError;
       }
       
-      const { error } = await supabase
-        .from('agents')
-        .update({ training_examples: updatedExamples })
-        .eq('id', agentId);
+      // Refresh the training examples list
+      const { data: refreshedData, error: refreshError } = await supabase
+        .from('agent_training_examples')
+        .select('id, user_message, ai_response, corrected_response, created_at')
+        .eq('agent_id', agentId)
+        .order('created_at', { ascending: false });
+        
+      if (refreshError) throw refreshError;
       
-      if (error) throw error;
+      if (refreshedData) {
+        setTrainingExamples(refreshedData.map(ex => ({
+          id: ex.id,
+          user_message: ex.user_message,
+          ai_response: ex.ai_response,
+          corrected_response: ex.corrected_response,
+          created_at: ex.created_at
+        })));
+      }
       
-      setTrainingExamples(updatedExamples);
       setUserMessage("");
       setAiResponse("");
       setCorrectedResponse("");
@@ -286,16 +327,16 @@ export function AgentSettings({
     try {
       setIsLoading(true);
       
-      const updatedExamples = trainingExamples.filter(ex => ex.id !== exampleId);
+      // Delete the example from the database
+      const { error: deleteError } = await supabase
+        .from('agent_training_examples')
+        .delete()
+        .eq('id', exampleId);
+        
+      if (deleteError) throw deleteError;
       
-      const { error } = await supabase
-        .from('agents')
-        .update({ training_examples: updatedExamples })
-        .eq('id', agentId);
-      
-      if (error) throw error;
-      
-      setTrainingExamples(updatedExamples);
+      // Update the local state
+      setTrainingExamples(prev => prev.filter(ex => ex.id !== exampleId));
       
       toast({
         title: "Success",
