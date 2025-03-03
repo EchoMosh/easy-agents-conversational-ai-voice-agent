@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   AreaChart,
@@ -65,6 +64,7 @@ const conversionPieData = [
 ];
 
 export default function DashboardPage() {
+  // Ensure chartType defaults to "bar" instead of "area"
   const [chartType, setChartType] = useState<"bar" | "area">("bar");
 
   return (
