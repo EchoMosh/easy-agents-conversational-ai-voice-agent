@@ -268,7 +268,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         </div>
 
         {/* Right side with action buttons */}
-        <div className="flex items-center gap-3 relative">
+        <div className="flex items-center gap-3 relative ml-auto">
           {/* Settings button */}
           <AgentSettings
             agentId={agent.id}
@@ -296,7 +296,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             {isUpdatingAgent ? "Sending data..." : "Call Me"}
           </Button>
           
-          {/* Train Agent button (Updated text) */}
+          {/* Train Agent button */}
           <Button 
             className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
             onClick={() => setShowTrainingPopup(true)}
