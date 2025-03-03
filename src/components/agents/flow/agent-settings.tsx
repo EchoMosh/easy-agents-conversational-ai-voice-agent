@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   Dialog,
@@ -281,8 +280,12 @@ export function AgentSettings({
       console.log("Previewing voice:", selectedVoice);
       
       // Prepare the payload for the edge function
+      const previewText = selectedVoice === "UgBBYS2sOqTuMpoF3BR0" 
+        ? "Your garbage script, my professional voice—a goddamn miracle in action."
+        : "Hello, this is a preview of my voice.";
+      
       const payload = { 
-        text: "Hello, this is a preview of my voice.",
+        text: previewText,
         voice_id: selectedVoice,
         model_id: "eleven_multilingual_v2"
       };
