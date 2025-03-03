@@ -19,6 +19,7 @@ import ChatsPage from "@/pages/dashboard/chats";
 import { ChatPage } from "@/pages/dashboard/chat";
 import KnowledgePage from "@/pages/dashboard/knowledge";
 import AutomationsPage from "@/pages/dashboard/automations";
+import DashboardPage from "@/pages/dashboard/dashboard";
 import ProtectedRoute from "@/components/auth/protected-route";
 
 // Create a new QueryClient instance
@@ -38,6 +39,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route path="/dashboard/overview" element={<DashboardPage />} />
                 <Route path="/dashboard/agents" element={<AgentsPage />} />
                 <Route path="/dashboard/agents/flow/:id" element={<AgentFlowPage />} />
                 <Route path="/dashboard/leads" element={<LeadsPage />} />

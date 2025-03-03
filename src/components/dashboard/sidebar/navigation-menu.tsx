@@ -14,7 +14,8 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  LayoutDashboard
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -45,10 +46,16 @@ const iconComponents = {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  LayoutDashboard
 };
 
 export const mainMenuItems = [
+  {
+    title: "Dashboard",
+    icon: LayoutDashboard,
+    url: "/dashboard/overview",
+  },
   {
     title: "Agents",
     icon: Users,
@@ -103,7 +110,6 @@ export function NavigationMenu() {
   const [displayedItems, setDisplayedItems] = useState(mainMenuItems);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
-  // Toggle submenu expansion
   const toggleExpand = (title: string) => {
     setExpandedItems(prev => 
       prev.includes(title) 
@@ -112,10 +118,8 @@ export function NavigationMenu() {
     );
   };
 
-  // Handle item click - navigate and toggle submenu if it has subitems
   const handleItemClick = (item: any, event: React.MouseEvent) => {
     if (item.subItems && item.subItems.length > 0) {
-      // If clicking on the icon or text area (not on the chevron), navigate to the URL
       const target = event.target as HTMLElement;
       const isChevronClick = target.closest('.chevron-toggle');
       
@@ -123,15 +127,12 @@ export function NavigationMenu() {
         navigate(item.url);
       }
       
-      // Toggle the submenu regardless
       toggleExpand(item.title);
     } else {
-      // For items without subitems, just navigate
       navigate(item.url);
     }
   };
 
-  // Check if a menu item is active or has an active child
   const isActiveOrHasActiveChild = (item: any) => {
     const isActive = location.pathname === item.url;
     const hasActiveChild = item.subItems?.some((subItem: any) => 
@@ -140,7 +141,6 @@ export function NavigationMenu() {
     return isActive || hasActiveChild;
   };
 
-  // Load sidebar customization settings
   useEffect(() => {
     const loadSavedSettings = () => {
       const savedItems = localStorage.getItem('sidebar-settings');
@@ -149,10 +149,8 @@ export function NavigationMenu() {
       }
     };
 
-    // Initial load
     loadSavedSettings();
 
-    // Listen for changes from the settings page
     const handleSettingsChanged = (event: any) => {
       if (event.detail && event.detail.items) {
         setCustomizedItems(event.detail.items);
@@ -166,7 +164,6 @@ export function NavigationMenu() {
     };
   }, []);
 
-  // Auto-expand menu items that have active children
   useEffect(() => {
     const pathsToExpand = mainMenuItems
       .filter(item => item.subItems?.some(subItem => location.pathname === subItem.url))
@@ -185,23 +182,19 @@ export function NavigationMenu() {
     }
   }, [location.pathname]);
 
-  // Apply customization when settings change
   useEffect(() => {
     if (customizedItems.length === 0) return;
 
-    // Filter and reorder items based on customization
     const newDisplayedItems = [...mainMenuItems].map(menuItem => {
       const customItem = customizedItems.find(
         item => item.id === menuItem.title.toLowerCase()
       );
       
       if (customItem) {
-        // Use custom icon if available
         const IconComponent = customItem.icon && iconComponents[customItem.icon as keyof typeof iconComponents] 
           ? iconComponents[customItem.icon as keyof typeof iconComponents] 
           : menuItem.icon;
         
-        // Map subItems if they exist
         const mappedSubItems = menuItem.subItems?.map(subItem => {
           const customSubItem = customItem.subItems?.find(
             item => item.id === subItem.title.toLowerCase()
