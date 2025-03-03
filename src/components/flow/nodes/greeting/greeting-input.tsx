@@ -14,6 +14,9 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const editorRef = useRef<LexicalEditorType | null>(null);
 
+  // Remove excessive newlines before passing to the editor
+  const sanitizedValue = value ? value.replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '') : '';
+
   const handleChange = (newValue: string) => {
     console.log("GreetingInput change:", newValue);
     onChange(newValue);
@@ -49,7 +52,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
     <div className="flex flex-col gap-2 relative" style={containerStyle}>
       <div className="relative" style={editorContainerStyle}>
         <LexicalEditor
-          value={value}
+          value={sanitizedValue}
           onChange={handleChange}
           placeholder="Type @ to insert a variable..."
           className="text-sm resize-y min-h-[100px] bg-white/10 border-white/20 shadow-lg backdrop-blur-xl rounded-xl focus-visible:ring-white/30 focus-visible:border-white/30"
@@ -59,7 +62,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
       
       {showVariableSelector && (
         <VariableSelector
-          text={value}
+          text={sanitizedValue}
           onTextChange={(newText) => {
             // This is now handled by the Lexical Editor directly
           }}

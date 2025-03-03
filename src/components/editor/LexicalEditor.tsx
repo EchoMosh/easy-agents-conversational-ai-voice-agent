@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -12,6 +13,12 @@ import { VariableHighlightPlugin } from './VariableHighlightPlugin';
 import './editor.css';
 import { Variable } from '../flow/nodes/variable-mention/variable-selector';
 
+// Helper function to normalize text by removing excessive line breaks
+function normalizeText(text: string): string {
+  // Replace consecutive newlines with a single one and trim leading/trailing newlines
+  return text.replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '');
+}
+
 function InitialValuePlugin({ value }: { value: string }) {
   const [editor] = useLexicalComposerContext();
   
@@ -20,8 +27,10 @@ function InitialValuePlugin({ value }: { value: string }) {
       const root = $getRoot();
       if (root.getTextContent() === '') {
         if (value) {
+          // Normalize the value before setting it
+          const normalizedValue = normalizeText(value);
           const paragraph = $createParagraphNode();
-          paragraph.append($createTextNode(value));
+          paragraph.append($createTextNode(normalizedValue));
           root.append(paragraph);
         }
       }
@@ -51,6 +60,9 @@ export function LexicalEditor({
   variables = []
 }: LexicalEditorProps) {
   const editorRef = useRef<LexicalEditorType | null>(null);
+  
+  // Normalize the input value to remove excessive newlines
+  const normalizedValue = normalizeText(value);
 
   const initialConfig = {
     namespace: 'FlowNodeEditor',
@@ -73,7 +85,8 @@ export function LexicalEditor({
       const root = $getRoot();
       const textContent = root.getTextContent();
       if (onChange) {
-        onChange(textContent);
+        // Normalize output text to prevent excessive newlines
+        onChange(normalizeText(textContent));
       }
     });
   }
@@ -123,7 +136,7 @@ export function LexicalEditor({
         />
         <OnChangePlugin onChange={handleEditorChange} />
         <HistoryPlugin />
-        <InitialValuePlugin value={value} />
+        <InitialValuePlugin value={normalizedValue} />
         <VariablePlugin 
           onAtMention={onAtMention}
           variables={variables}
