@@ -35,7 +35,8 @@ import {
 // Available voices data
 const voices = [
   { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", gender: "female" },
-  { id: "UgBBYS2sOqTuMpoF3BR0", name: "Thomas", gender: "male" }
+  { id: "UgBBYS2sOqTuMpoF3BR0", name: "Thomas", gender: "male" },
+  { id: "pwMBn0SsmN1220Aorv15", name: "Michael", gender: "male" }
 ];
 
 // Languages data for the dropdown select
@@ -266,7 +267,9 @@ export function AgentSettings({
       
       const previewText = selectedVoice === "UgBBYS2sOqTuMpoF3BR0" 
         ? "Your garbage script, my professional voice—a goddamn miracle in action."
-        : "Hello, this is a preview of my voice.";
+        : (selectedVoice === "pwMBn0SsmN1220Aorv15"
+          ? "I'm Michael, your new AI voice assistant, ready to make your app sound amazing."
+          : "Hello, this is a preview of my voice.");
       
       const payload = { 
         text: previewText,
