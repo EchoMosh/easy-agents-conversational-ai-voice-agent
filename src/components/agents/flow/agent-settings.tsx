@@ -266,7 +266,7 @@ export function AgentSettings({
       console.log("Previewing voice:", selectedVoice);
       
       const previewText = selectedVoice === "UgBBYS2sOqTuMpoF3BR0" 
-        ? "Your garbage script, my professional voice—a goddamn miracle in action."
+        ? "Nice to meet you! I'm your new AI voice, here to perform CPR on whatever the heck died on this page you're calling a script."
         : (selectedVoice === "pwMBn0SsmN1220Aorv15"
           ? "I'm Michael, your new AI voice assistant, ready to make your app sound amazing."
           : "Hello, this is a preview of my voice.");
