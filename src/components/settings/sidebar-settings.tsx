@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { mainMenuItems } from "@/components/dashboard/sidebar/navigation-menu";
+import { mainMenuItems, NavigationMenuItem } from "@/components/dashboard/sidebar/navigation-menu";
 import { 
   GripVertical, 
   Users, 
@@ -216,7 +215,7 @@ export function SidebarSettings() {
         setSidebarItems(JSON.parse(savedItems));
       } else {
         // Initialize with default items from navigation menu
-        const defaultItems = mainMenuItems.map(item => ({
+        const defaultItems = mainMenuItems.map((item: NavigationMenuItem) => ({
           id: item.title.toLowerCase(),
           title: item.title,
           visible: true,

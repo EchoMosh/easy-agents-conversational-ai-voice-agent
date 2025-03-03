@@ -50,8 +50,19 @@ const iconComponents = {
   Grid
 };
 
+// Define the type for menu items
+export interface NavigationMenuItem {
+  title: string;
+  icon: typeof Users; // Using Users as an example of the Lucide icon component type
+  url: string;
+  category: string;
+  highlight?: boolean;
+  badge?: number;
+  subItems?: NavigationMenuItem[];
+}
+
 // Updated menu items to match the reference design
-export const mainMenuItems = [
+export const mainMenuItems: NavigationMenuItem[] = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,

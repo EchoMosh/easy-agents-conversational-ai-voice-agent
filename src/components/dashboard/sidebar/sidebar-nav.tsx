@@ -10,11 +10,19 @@ import {
   SettingsIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NavigationMenuItem } from "./navigation-menu";
+
+// Define the navigation item type
+interface NavItem {
+  icon: typeof HomeIcon;
+  path: string;
+  label: string;
+}
 
 export function SidebarNav() {
   const location = useLocation();
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       icon: HomeIcon,
       path: "/dashboard/overview",
