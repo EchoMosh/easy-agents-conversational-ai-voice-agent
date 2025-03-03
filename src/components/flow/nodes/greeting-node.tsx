@@ -1,10 +1,10 @@
+
 import React, { useState, useCallback } from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, useStoreApi } from '@xyflow/react';
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Trash } from "lucide-react"
-import { useStoreApi } from 'reactflow';
 
 interface GreetingNodeProps {
   id: string;
