@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -115,4 +114,38 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* ... keep existing code (React Flow Dark Mode Styles) */
+/* React Flow Dark Mode Styles */
+.react-flow__node-default.dark {
+  background-color: #1e1e1e;
+  color: #fff;
+  border-color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.react-flow__node-input.dark,
+.react-flow__node-output.dark {
+  background-color: #252525;
+  color: #fff;
+  border-color: #444;
+}
+
+.react-flow__edge.dark {
+  stroke: #bbb;
+}
+
+.react-flow__edge-path.dark {
+  stroke: #bbb;
+}
+
+.react-flow__handle.dark {
+  background: #444;
+  border-color: #555;
+}
+
+.react-flow__handle.dark:hover {
+  background: #666;
+}
+
+.react-flow__attribution.dark {
+  color: #999;
+}
