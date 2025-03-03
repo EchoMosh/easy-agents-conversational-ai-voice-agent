@@ -114,7 +114,7 @@ export default function CalendarPage() {
       </div>
       
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 shadow-sm border-slate-200">
+        <Card className="lg:col-span-2 shadow-sm border-slate-200 w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div className="flex items-center space-x-4">
               <CalendarDays className="h-6 w-6 text-slate-500" />
@@ -145,22 +145,32 @@ export default function CalendarPage() {
               Add Event
             </Button>
           </CardHeader>
-          <CardContent>
-            <CalendarComponent
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleSelect}
-              month={date}
-              showOutsideDays
-              className="rounded-md border-slate-200"
-              components={{
-                Day: ({ date }) => renderDay(date)
-              }}
-              classNames={{
-                day_today: "bg-blue-50 text-blue-600 font-medium",
-                day_selected: "bg-blue-100 text-blue-800 hover:bg-blue-100 hover:text-blue-800 focus:bg-blue-100 focus:text-blue-800",
-              }}
-            />
+          <CardContent className="w-full">
+            <div className="w-full">
+              <CalendarComponent
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleSelect}
+                month={date}
+                showOutsideDays
+                className="w-full rounded-md border-slate-200"
+                components={{
+                  Day: ({ date }) => renderDay(date)
+                }}
+                classNames={{
+                  day_today: "bg-blue-50 text-blue-600 font-medium",
+                  day_selected: "bg-blue-100 text-blue-800 hover:bg-blue-100 hover:text-blue-800 focus:bg-blue-100 focus:text-blue-800",
+                  months: "w-full flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                  month: "w-full space-y-4",
+                  table: "w-full border-collapse space-y-1",
+                  head_row: "flex w-full",
+                  head_cell: "text-muted-foreground rounded-md w-full font-normal text-[0.8rem] flex-1 flex justify-center",
+                  row: "flex w-full mt-2",
+                  cell: "relative h-9 w-full p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent",
+                  day: "h-9 w-full p-0 font-normal aria-selected:opacity-100 hover:bg-slate-50 rounded-full flex items-center justify-center",
+                }}
+              />
+            </div>
           </CardContent>
         </Card>
         
@@ -232,4 +242,3 @@ export default function CalendarPage() {
     </div>
   );
 }
-
