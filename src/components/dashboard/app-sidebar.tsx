@@ -6,7 +6,8 @@ import { useLocation } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
-import { GlowingEffect } from "@/components/ui/glowing-effect";
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -29,27 +30,24 @@ export function AppSidebar() {
       <ProfileSection />
       <NavigationMenu />
       
-      {/* Credit Usage Indicator */}
-      <div className="mt-auto px-3 py-2">
+      {/* Credit Usage Indicator with Upgrade Button */}
+      <div className="mt-auto px-3 py-2 border-t border-sidebar-border">
         <div className="flex justify-between items-center mb-1 text-xs">
           <span className="text-muted-foreground">Credits Used</span>
           <span className="font-medium">{creditUsage.used}/{creditUsage.total}</span>
         </div>
         <Progress value={creditUsage.percentage} className="h-1" />
-        <p className="text-[10px] text-muted-foreground mt-1">
-          Credits are used for AI generations and voice calls
-        </p>
-      </div>
-      
-      {/* Easy Agents Text (without hover effect) */}
-      <div className="relative px-3 py-3 text-center border-t border-sidebar-border">
-        <div className="relative">
-          <GlowingEffect glow={false} disabled={true} />
-          <div className="flex items-center justify-center">
-            <span className="font-bold text-base bg-gradient-to-r from-[#9b87f5] to-[#0EA5E9] bg-clip-text text-transparent">
-              Easy Agents
-            </span>
-          </div>
+        <div className="flex flex-col gap-2 mt-2">
+          <p className="text-[10px] text-muted-foreground">
+            Credits are used for AI generations and voice calls
+          </p>
+          <Button 
+            size="sm" 
+            className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+          >
+            <Sparkles size={14} className="mr-1" />
+            Upgrade Plan
+          </Button>
         </div>
       </div>
     </Sidebar>
