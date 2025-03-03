@@ -71,19 +71,19 @@ export function ProfileSection() {
   }, []);
 
   return (
-    <SidebarHeader className="p-5 border-b border-border/10 transition-all duration-300 hover:bg-white/5">
-      <div className="flex items-center gap-3.5">
+    <SidebarHeader className="p-4 border-b">
+      <div className="flex items-center gap-3">
         <div className="relative group">
-          <Avatar className="h-11 w-11 ring-2 ring-background/80 shadow-md border border-white/10 transition-all duration-300 group-hover:ring-indigo-500/30 group-hover:scale-105">
-            <AvatarImage src={avatarUrl} alt={username} className="object-cover" />
-            <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+          <Avatar className="h-10 w-10 ring-2 ring-background">
+            <AvatarImage src={avatarUrl} alt={username} />
+            <AvatarFallback className="bg-primary/10 text-primary">
               <User className="h-5 w-5" />
             </AvatarFallback>
           </Avatar>
           <Button
             size="icon"
             variant="ghost"
-            className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-background shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 border border-white/10 hover:border-white/20 hover:scale-110"
+            className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-background opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
             onClick={handleRandomizeAvatar}
             title="Randomize avatar"
           >
@@ -91,8 +91,8 @@ export function ProfileSection() {
           </Button>
         </div>
         <div className="flex flex-col">
-          <span className="font-medium text-sm tracking-wide text-white/90 transition-colors duration-300">{firstName || username}</span>
-          <span className="text-xs text-indigo-300/70 font-light transition-colors duration-300">
+          <span className="font-medium text-sm">{firstName || username}</span>
+          <span className="text-xs text-muted-foreground">
             Welcome back!
           </span>
         </div>

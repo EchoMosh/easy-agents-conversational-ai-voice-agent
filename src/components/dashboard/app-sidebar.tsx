@@ -8,7 +8,6 @@ import { useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
-import { GlowingEffect } from "@/components/ui/glowing-effect";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -27,41 +26,32 @@ export function AppSidebar() {
   }, [location.pathname, isAgentFlowPage, setOpen]);
 
   return (
-    <Sidebar className="z-50 border-r border-border/10 bg-background/95 backdrop-blur-sm transition-all duration-500 relative overflow-hidden group shadow-lg">
-      {/* Premium glow effect that animates on hover */}
-      <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-indigo-500/0 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-      
+    <Sidebar className="border-r">
       <ProfileSection />
       <NavigationMenu />
       
       {/* Credit Usage Indicator with Upgrade Button */}
-      <div className="mt-auto p-5 border-t border-border/10 transition-all duration-300 hover:bg-white/5">
+      <div className="mt-auto p-4 border-t">
         <div className="flex flex-col space-y-4">
-          <div className="animate-fade-in">
-            <div className="flex justify-between items-center mb-2.5">
+          <div>
+            <div className="flex justify-between items-center mb-2">
               <span className="text-xs font-medium text-muted-foreground">Credits</span>
-              <span className="text-xs font-semibold">{creditUsage.used}/{creditUsage.total}</span>
+              <span className="text-xs font-medium">{creditUsage.used}/{creditUsage.total}</span>
             </div>
-            <Progress 
-              value={creditUsage.percentage} 
-              className="h-1.5 bg-secondary/50 rounded-full overflow-hidden" 
-            />
+            <Progress value={creditUsage.percentage} className="h-1.5 bg-secondary/50" />
           </div>
           
-          <div className="animate-fade-in" style={{ animationDelay: "100ms" }}>
-            <p className="text-[11px] text-muted-foreground mb-3 font-light">
+          <div>
+            <p className="text-[10px] text-muted-foreground mb-2">
               Credits are used for AI generations and voice calls
             </p>
-            <div className="relative">
-              <GlowingEffect disabled={false} variant="default" glow={true} movementDuration={1.5} />
-              <Button 
-                size="sm" 
-                className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 hover:scale-[1.02] active:scale-[0.98] text-white font-medium shadow-md transition-all duration-300 rounded-md border border-white/5"
-              >
-                <Sparkles size={14} className="mr-1.5 animate-pulse" />
-                Upgrade Plan
-              </Button>
-            </div>
+            <Button 
+              size="sm" 
+              className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-medium shadow-sm"
+            >
+              <Sparkles size={14} className="mr-1.5" />
+              Upgrade Plan
+            </Button>
           </div>
         </div>
       </div>

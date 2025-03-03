@@ -9,11 +9,9 @@ export default function DashboardLayout() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-screen w-full bg-gradient-to-br from-background to-background/95">
-        <div className="relative z-30">
-          <AppSidebar />
-        </div>
-        <main className={`flex-1 overflow-auto w-full transition-all duration-300 ${isAgentFlowPage ? 'pl-0 pr-0 pt-0 pb-0' : 'p-6'}`}>
+      <div className="flex h-screen w-full bg-muted/10">
+        <AppSidebar />
+        <main className={`flex-1 overflow-auto w-full ${isAgentFlowPage ? 'pl-0 pr-0 pt-0 pb-0' : 'p-6'}`}>
           <Outlet />
         </main>
       </div>
