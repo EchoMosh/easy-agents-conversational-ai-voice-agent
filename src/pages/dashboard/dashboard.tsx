@@ -1,6 +1,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   XAxis,
@@ -8,15 +10,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
-  Area,
-  AreaChart,
 } from "recharts";
-import { CalendarDays, MessageSquare, Target, Users } from "lucide-react";
+import { ChevronUp, Target, Users, MessageSquare, ArrowUpRight } from "lucide-react";
 
 // Sample data for charts
 const activityData = [
@@ -48,121 +46,133 @@ const COLORS = ["#0088FE", "#FFBB28", "#FF8042"];
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-800">Dashboard</h2>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="mb-10">
+        <h2 className="text-3xl font-medium text-slate-900">Dashboard</h2>
         <p className="text-slate-500 mt-1">
-          Overview of your sales and agent performance
+          Overview of your performance metrics
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-white border-0 shadow-sm overflow-hidden">
+      <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+        {/* Simplified Metric Cards */}
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Total Leads</p>
-                <h3 className="text-2xl font-semibold mt-1 text-slate-800">1,248</h3>
-                <p className="text-xs text-emerald-600 mt-1 flex items-center">
-                  <span className="i-lucide-trending-up mr-1"></span>
-                  +18.2% from last month
-                </p>
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-500">Total Leads</span>
+                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <ChevronUp className="h-3 w-3 text-emerald-500" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                <Target className="h-5 w-5" />
+              <div className="flex items-end justify-between">
+                <h3 className="text-2xl font-medium text-slate-900">1,248</h3>
+                <div className="flex items-center text-xs text-emerald-500">
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                  18.2%
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white border-0 shadow-sm overflow-hidden">
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Active Agents</p>
-                <h3 className="text-2xl font-semibold mt-1 text-slate-800">12</h3>
-                <p className="text-xs text-emerald-600 mt-1 flex items-center">
-                  <span className="i-lucide-trending-up mr-1"></span>
-                  +2 new this week
-                </p>
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-500">Active Agents</span>
+                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <ChevronUp className="h-3 w-3 text-emerald-500" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                <Users className="h-5 w-5" />
+              <div className="flex items-end justify-between">
+                <h3 className="text-2xl font-medium text-slate-900">12</h3>
+                <div className="flex items-center text-xs text-emerald-500">
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                  +2 new
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white border-0 shadow-sm overflow-hidden">
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Conversations</p>
-                <h3 className="text-2xl font-semibold mt-1 text-slate-800">432</h3>
-                <p className="text-xs text-emerald-600 mt-1 flex items-center">
-                  <span className="i-lucide-trending-up mr-1"></span>
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-500">Conversations</span>
+                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <ChevronUp className="h-3 w-3 text-emerald-500" />
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                <h3 className="text-2xl font-medium text-slate-900">432</h3>
+                <div className="flex items-center text-xs text-emerald-500">
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
                   +57 today
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                <MessageSquare className="h-5 w-5" />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white border-0 shadow-sm overflow-hidden">
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Conversion Rate</p>
-                <h3 className="text-2xl font-semibold mt-1 text-slate-800">24.3%</h3>
-                <p className="text-xs text-emerald-600 mt-1 flex items-center">
-                  <span className="i-lucide-trending-up mr-1"></span>
-                  +5.2% from last week
-                </p>
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-500">Conversion Rate</span>
+                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <ChevronUp className="h-3 w-3 text-emerald-500" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                <CalendarDays className="h-5 w-5" />
+              <div className="flex items-end justify-between">
+                <h3 className="text-2xl font-medium text-slate-900">24.3%</h3>
+                <div className="flex items-center text-xs text-emerald-500">
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                  5.2%
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-7">
-        <Card className="md:col-span-4 bg-white border-0 shadow-sm overflow-hidden">
-          <CardHeader className="pt-6 px-6 pb-0 border-b border-slate-100">
-            <CardTitle className="text-slate-800 text-lg">Lead Acquisition</CardTitle>
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+        {/* Area Chart - Simplified */}
+        <Card className="col-span-2 bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+          <CardHeader className="pb-2 pt-6 px-6">
+            <CardTitle className="text-slate-900 text-base font-medium">Lead Acquisition</CardTitle>
             <CardDescription className="text-slate-500 text-xs">
-              Monthly lead generation trends
+              Monthly trends
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={leadData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <CardContent className="p-6 pt-4">
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={leadData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#f1f5f9" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#f1f5f9" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fill: '#94a3b8' }} axisLine={{ stroke: '#e2e8f0' }} />
-                <YAxis tick={{ fill: '#94a3b8' }} axisLine={{ stroke: '#e2e8f0' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
+                <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={{ stroke: '#f1f5f9' }} tickLine={false} />
+                <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#fff', 
                     border: 'none', 
                     borderRadius: '8px', 
-                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)'
+                    boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1)'
                   }}
+                  labelStyle={{ fontSize: 12, fontWeight: 500, color: '#333' }}
+                  itemStyle={{ fontSize: 12, color: '#666', padding: '2px 0' }}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="leads" 
-                  stroke="#3b82f6" 
-                  strokeWidth={2}
+                  stroke="#0f172a" 
+                  strokeWidth={1.5}
                   fillOpacity={1} 
                   fill="url(#colorLeads)" 
                 />
@@ -171,15 +181,16 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         
-        <Card className="md:col-span-3 bg-white border-0 shadow-sm overflow-hidden">
-          <CardHeader className="pt-6 px-6 pb-0 border-b border-slate-100">
-            <CardTitle className="text-slate-800 text-lg">Lead Status</CardTitle>
+        {/* Pie Chart - Simplified */}
+        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+          <CardHeader className="pb-2 pt-6 px-6">
+            <CardTitle className="text-slate-900 text-base font-medium">Conversion Status</CardTitle>
             <CardDescription className="text-slate-500 text-xs">
-              Current conversion metrics
+              Current metrics
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-6">
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="p-6 pt-2">
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={conversionData}
@@ -187,14 +198,14 @@ export default function DashboardPage() {
                   cy="50%"
                   innerRadius={60}
                   outerRadius={80}
-                  paddingAngle={2}
+                  paddingAngle={1}
                   dataKey="value"
+                  stroke="none"
                 >
                   {conversionData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
-                      fill={COLORS[index % COLORS.length]} 
-                      stroke="none"
+                      fill={COLORS[index % COLORS.length]}
                     />
                   ))}
                 </Pie>
@@ -204,17 +215,19 @@ export default function DashboardPage() {
                     backgroundColor: '#fff', 
                     border: 'none', 
                     borderRadius: '8px', 
-                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)'
+                    boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1)'
                   }}
+                  labelStyle={{ display: 'none' }}
+                  itemStyle={{ fontSize: 12, color: '#666', padding: '2px 0' }}
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="grid grid-cols-3 mt-2 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center -mt-2">
               {conversionData.map((entry, index) => (
                 <div key={`legend-${index}`} className="flex flex-col items-center">
                   <div className="flex items-center gap-1.5">
                     <div 
-                      className="w-3 h-3 rounded-full" 
+                      className="w-2 h-2 rounded-full" 
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
                     <span className="text-xs font-medium text-slate-700">{entry.name}</span>
@@ -227,36 +240,44 @@ export default function DashboardPage() {
         </Card>
       </div>
       
-      <Card className="bg-white border-0 shadow-sm overflow-hidden">
-        <CardHeader className="pt-6 px-6 pb-0 border-b border-slate-100">
-          <CardTitle className="text-slate-800 text-lg">Weekly Activity</CardTitle>
+      {/* Bar Chart - Weekly Activity */}
+      <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
+        <CardHeader className="pb-2 pt-6 px-6">
+          <CardTitle className="text-slate-900 text-base font-medium">Weekly Activity</CardTitle>
           <CardDescription className="text-slate-500 text-xs">
-            Agent interactions over the last 7 days
+            Last 7 days
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={activityData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="name" tick={{ fill: '#94a3b8' }} axisLine={{ stroke: '#e2e8f0' }} />
-              <YAxis tick={{ fill: '#94a3b8' }} axisLine={{ stroke: '#e2e8f0' }} />
+        <CardContent className="p-6 pt-4">
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={activityData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" vertical={false} />
+              <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={{ stroke: '#f1f5f9' }} tickLine={false} />
+              <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: '#fff', 
                   border: 'none', 
                   borderRadius: '8px', 
-                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)'
+                  boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1)'
                 }}
+                labelStyle={{ fontSize: 12, fontWeight: 500, color: '#333' }}
+                itemStyle={{ fontSize: 12, color: '#666', padding: '2px 0' }}
               />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ r: 4, fill: "#3b82f6", strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: "#3b82f6", strokeWidth: 0 }}
-              />
-            </LineChart>
+              <Bar 
+                dataKey="value" 
+                fill="#f1f5f9"
+                radius={[4, 4, 0, 0]}
+                barSize={30}
+              >
+                {activityData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`}
+                    fill={index === 4 ? "#0f172a" : "#f1f5f9"}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
