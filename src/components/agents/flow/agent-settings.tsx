@@ -83,19 +83,16 @@ export function AgentSettings({
   const [showVoiceInfo, setShowVoiceInfo] = React.useState(false);
   const { toast } = useToast();
   
-  // Get the currently selected voice object
   const currentVoiceObject = React.useMemo(() => 
     voices.find(v => v.id === selectedVoice) || voices[0],
   [selectedVoice]);
   
-  // Fetch knowledge documents with refetch capability
   const { data: knowledgeDocuments, isLoading: isLoadingDocuments, refetch } = useQuery({
     queryKey: ['knowledgeDocuments'],
     queryFn: fetchDocuments,
-    staleTime: 0, // Always consider data stale to ensure fresh fetches
+    staleTime: 0,
   });
   
-  // Initialize audio element for voice preview
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const audio = new Audio();
@@ -128,12 +125,10 @@ export function AgentSettings({
     };
   }, []);
   
-  // Refetch documents when dialog opens
   React.useEffect(() => {
     if (open) {
       refetch();
       
-      // Also fetch current agent data to get the currently selected knowledge base
       const fetchAgentData = async () => {
         try {
           const { data, error } = await supabase
@@ -145,22 +140,18 @@ export function AgentSettings({
           if (error) throw error;
           
           if (data) {
-            // Set voice if exists
             if (data.voice_id) {
               setSelectedVoice(data.voice_id);
             }
             
-            // Set language if exists
             if (data.language) {
               setLanguage(data.language);
             }
             
-            // Set humor level if exists
             if (data.humor_level !== undefined && data.humor_level !== null) {
               setHumorLevel(data.humor_level);
             }
             
-            // If the agent has a knowledge base, set it in the state
             if (data.knowledge_ids && data.knowledge_ids.length > 0) {
               setKnowledgeBase(data.knowledge_ids[0]);
             } else {
@@ -181,7 +172,6 @@ export function AgentSettings({
     }
   }, [open, agentId, refetch]);
   
-  // Format knowledge documents for dropdown
   const knowledgeBases = React.useMemo(() => {
     const documents = knowledgeDocuments || [];
     return [
@@ -201,7 +191,6 @@ export function AgentSettings({
         knowledgeBase
       });
       
-      // First update the agent in Supabase
       const updateData = {
         voice_id: selectedVoice,
         language: language,
@@ -224,7 +213,6 @@ export function AgentSettings({
       
       console.log("Supabase update result:", data);
       
-      // Call the onUpdateSettings prop to maintain component API compatibility
       try {
         await onUpdateSettings({
           voiceId: selectedVoice,
@@ -234,7 +222,6 @@ export function AgentSettings({
         });
       } catch (callbackError) {
         console.error("onUpdateSettings callback error:", callbackError);
-        // We don't throw here because we already updated the database successfully
       }
       
       toast({
@@ -254,7 +241,6 @@ export function AgentSettings({
     }
   };
 
-  // Preview voice function
   const previewVoice = async () => {
     if (!audioElement) {
       console.error('Audio element not initialized');
@@ -266,7 +252,6 @@ export function AgentSettings({
       return;
     }
     
-    // If the voice is already playing, stop it
     if (isPreviewingVoice) {
       audioElement.pause();
       audioElement.currentTime = 0;
@@ -279,7 +264,6 @@ export function AgentSettings({
       
       console.log("Previewing voice:", selectedVoice);
       
-      // Prepare the payload for the edge function
       const previewText = selectedVoice === "UgBBYS2sOqTuMpoF3BR0" 
         ? "Your garbage script, my professional voice—a goddamn miracle in action."
         : "Hello, this is a preview of my voice.";
@@ -292,7 +276,6 @@ export function AgentSettings({
       
       console.log("Sending text-to-speech request with payload:", payload);
       
-      // Call the text-to-speech edge function
       const response = await supabase.functions.invoke('text-to-speech', {
         method: 'POST',
         body: payload,
@@ -317,46 +300,37 @@ export function AgentSettings({
       
       console.log("Received audio content, length:", response.data.audio_content.length);
       
-      // Create a new audio source from the base64 audio content
-      try {
-        // Safe conversion of base64 to binary
-        const binaryData = atob(response.data.audio_content);
-        const bytes = new Uint8Array(binaryData.length);
-        for (let i = 0; i < binaryData.length; i++) {
-          bytes[i] = binaryData.charCodeAt(i);
-        }
-        
-        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        console.log("Created audio URL:", audioUrl);
-        
-        // Set the source and load the audio
-        audioElement.src = audioUrl;
-        audioElement.load();
-        
-        console.log("Starting audio playback");
-        
-        try {
-          await audioElement.play();
-          console.log("Audio playback started successfully");
-        } catch (playError) {
-          console.error('Error playing audio:', playError);
-          setIsPreviewingVoice(false);
-          URL.revokeObjectURL(audioUrl);
-          throw new Error(`Failed to play audio: ${playError.message}`);
-        }
-        
-        // Setup cleanup function
-        audioElement.onended = () => {
-          console.log("Audio playback ended");
-          setIsPreviewingVoice(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-      } catch (blobError) {
-        console.error('Error creating audio blob:', blobError);
-        throw new Error(`Failed to create audio: ${blobError instanceof Error ? blobError.message : String(blobError)}`);
+      const binaryData = atob(response.data.audio_content);
+      const bytes = new Uint8Array(binaryData.length);
+      for (let i = 0; i < binaryData.length; i++) {
+        bytes[i] = binaryData.charCodeAt(i);
       }
+      
+      const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      console.log("Created audio URL:", audioUrl);
+      
+      audioElement.src = audioUrl;
+      audioElement.load();
+      
+      console.log("Starting audio playback");
+      
+      try {
+        await audioElement.play();
+        console.log("Audio playback started successfully");
+      } catch (playError) {
+        console.error('Error playing audio:', playError);
+        setIsPreviewingVoice(false);
+        URL.revokeObjectURL(audioUrl);
+        throw new Error(`Failed to play audio: ${playError.message}`);
+      }
+      
+      audioElement.onended = () => {
+        console.log("Audio playback ended");
+        setIsPreviewingVoice(false);
+        URL.revokeObjectURL(audioUrl);
+      };
     } catch (error) {
       console.error('Error previewing voice:', error);
       toast({
@@ -374,7 +348,6 @@ export function AgentSettings({
         <DialogTrigger asChild>{children}</DialogTrigger>
         <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 border-0 shadow-xl">
           <div className="relative">
-            {/* Header with gradient background */}
             <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-6 text-white">
               <DialogTitle className="text-2xl font-bold tracking-tight mb-1">Agent Settings</DialogTitle>
               <DialogDescription className="text-white/90 text-sm">
@@ -382,9 +355,7 @@ export function AgentSettings({
               </DialogDescription>
             </div>
             
-            {/* Main content */}
             <div className="p-6 max-h-[calc(80vh-140px)] overflow-y-auto space-y-8">
-              {/* Voice Section */}
               <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
                 <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
                   <Volume2 className="h-5 w-5 text-purple-500" /> 
@@ -437,7 +408,6 @@ export function AgentSettings({
                 </div>
               </div>
                 
-              {/* Language and Humor Section */}
               <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
                 <div className="space-y-3">
                   <Label htmlFor="language" className="text-sm font-medium mb-1 block">Language</Label>
@@ -477,7 +447,6 @@ export function AgentSettings({
                 </div>
               </div>
                 
-              {/* Knowledge Base Section */}
               <div className="p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-3">
                 <h3 className="text-lg font-medium flex items-center gap-2 mb-4">
                   <Info className="h-5 w-5 text-blue-500" /> 
@@ -505,7 +474,6 @@ export function AgentSettings({
               </div>
             </div>
             
-            {/* Footer */}
             <DialogFooter className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-2">
               <Button variant="outline" onClick={() => setOpen(false)} className="border-gray-300 dark:border-gray-700">
                 Cancel
@@ -522,7 +490,6 @@ export function AgentSettings({
         </DialogContent>
       </Dialog>
       
-      {/* Voice Information Sheet */}
       <Sheet open={showVoiceInfo} onOpenChange={setShowVoiceInfo}>
         <SheetContent className="w-full sm:max-w-md bg-white dark:bg-gray-900 p-0">
           <SheetHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
