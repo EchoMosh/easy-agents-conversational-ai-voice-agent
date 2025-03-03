@@ -1,26 +1,22 @@
+
 import { useEffect, useState } from "react";
 import { 
   Users, 
   Target, 
-  Settings, 
   GitMerge, 
   MessageSquare, 
   Book, 
   Zap,
-  ChevronDown,
-  ChevronUp, 
-  ChevronLeft, 
-  ChevronRight,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight
+  Settings,
+  LayoutDashboard,
+  Phone
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -38,14 +34,8 @@ const iconComponents = {
   MessageSquare,
   Book,
   Zap,
-  ChevronDown,
-  ChevronUp, 
-  ChevronLeft, 
-  ChevronRight,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight
+  LayoutDashboard,
+  Phone
 };
 
 export const mainMenuItems = [
@@ -95,6 +85,13 @@ interface CustomizedMenuItem {
   icon?: string;
   subItems?: CustomizedMenuItem[];
 }
+
+// Helper function to render section label
+const SectionLabel = ({ label }: { label: string }) => (
+  <div className="px-4 py-2">
+    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">{label}</span>
+  </div>
+);
 
 export function NavigationMenu() {
   const location = useLocation();
@@ -236,81 +233,118 @@ export function NavigationMenu() {
     setDisplayedItems(newDisplayedItems);
   }, [customizedItems]);
 
+  // Group items by their position in the sidebar
+  const topItems = displayedItems.slice(0, 2);
+  const middleItems = displayedItems.slice(2, 4);
+  const bottomItems = displayedItems.slice(4);
+
   return (
     <SidebarContent className="py-2">
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
-            {displayedItems.map((item) => (
+            {/* First section */}
+            <SectionLabel label="Create" />
+            {topItems.map((item) => (
               <SidebarMenuItem key={item.title}>
-                {item.subItems && item.subItems.length > 0 ? (
-                  <>
-                    <SidebarMenuButton 
-                      onClick={(e) => handleItemClick(item, e)}
-                      isActive={isActiveOrHasActiveChild(item)}
-                      className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-md transition-colors ${
-                        isActiveOrHasActiveChild(item)
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </div>
-                      <div className="chevron-toggle">
-                        {expandedItems.includes(item.title) ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </div>
-                    </SidebarMenuButton>
-                    
-                    {expandedItems.includes(item.title) && (
-                      <SidebarMenuSub>
-                        {item.subItems.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={location.pathname === subItem.url}
-                            >
-                              <NavLink
-                                to={subItem.url}
-                                className={({ isActive }) =>
-                                  `flex items-center gap-3 ${
-                                    isActive
-                                      ? "text-primary font-medium"
-                                      : "text-foreground/70 hover:text-foreground"
-                                  }`
-                                }
-                              >
-                                <subItem.icon className="h-4 w-4" />
-                                <span>{subItem.title}</span>
-                              </NavLink>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    )}
-                  </>
-                ) : (
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors ${
-                          isActive
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                        }`
-                      }
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
+                <SidebarMenuButton 
+                  onClick={(e) => handleItemClick(item, e)}
+                  isActive={isActiveOrHasActiveChild(item)}
+                  className={`flex items-center gap-3 px-4 py-2 rounded-md mx-2 transition-colors text-gray-600 ${
+                    isActiveOrHasActiveChild(item)
+                      ? "bg-[#e6f7e6] text-green-600 font-medium"
+                      : "hover:bg-gray-100"
+                  }`}
+                  tooltip={item.title}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className={`h-4 w-4 ${isActiveOrHasActiveChild(item) ? "text-green-500" : "text-gray-400"}`} />
+                    <span className="text-sm">{item.title}</span>
+                  </div>
+                </SidebarMenuButton>
+                
+                {expandedItems.includes(item.title) && item.subItems && (
+                  <SidebarMenuSub>
+                    {item.subItems.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={location.pathname === subItem.url}
+                        >
+                          <NavLink
+                            to={subItem.url}
+                            className={({ isActive }) =>
+                              `flex items-center gap-3 ${
+                                isActive
+                                  ? "text-green-600 font-medium"
+                                  : "text-gray-600 hover:text-gray-900"
+                              }`
+                            }
+                          >
+                            <subItem.icon className={`h-4 w-4 ${
+                              location.pathname === subItem.url ? "text-green-500" : "text-gray-400"
+                            }`} />
+                            <span className="text-sm">{subItem.title}</span>
+                          </NavLink>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
                 )}
+              </SidebarMenuItem>
+            ))}
+
+            {/* Second section */}
+            <SectionLabel label="Connect" />
+            {middleItems.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton 
+                  asChild
+                  tooltip={item.title}
+                >
+                  <NavLink
+                    to={item.url}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-2 rounded-md mx-2 transition-colors text-gray-600 ${
+                        isActive
+                          ? "bg-[#e6f7e6] text-green-600 font-medium"
+                          : "hover:bg-gray-100"
+                      }`
+                    }
+                  >
+                    <item.icon className={({ isActive }: { isActive: boolean }) => 
+                      `h-4 w-4 ${isActive ? "text-green-500" : "text-gray-400"}`
+                    } />
+                    <span className="text-sm">{item.title}</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+
+            {/* Third section */}
+            <SectionLabel label="Deploy" />
+            {bottomItems.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton 
+                  asChild
+                  tooltip={item.title}
+                >
+                  <NavLink
+                    to={item.url}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-2 rounded-md mx-2 transition-colors text-gray-600 ${
+                        isActive
+                          ? "bg-[#e6f7e6] text-green-600 font-medium"
+                          : "hover:bg-gray-100"
+                      }`
+                    }
+                  >
+                    <item.icon className={({ isActive }: { isActive: boolean }) => 
+                      `h-4 w-4 ${isActive ? "text-green-500" : "text-gray-400"}`
+                    } />
+                    <span className="text-sm">{item.title}</span>
+                  </NavLink>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
