@@ -32,9 +32,14 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
 
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Status</h3>
-            <Badge variant="secondary" className={`${columns.find(s => s.id === lead.status)?.color} text-white px-4 py-1 text-sm`}>
-              {lead.status}
-            </Badge>
+            <div className="px-1">
+              <Badge 
+                variant="outline" 
+                className={`${columns.find(s => s.id === lead.status)?.color} text-background px-4 py-1 text-sm`}
+              >
+                {lead.status}
+              </Badge>
+            </div>
           </div>
 
           {lead.variables && lead.variables.length > 0 && (
@@ -53,7 +58,7 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
 
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Created</h3>
-            <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4">
+            <p className="text-sm text-foreground bg-muted/50 rounded-lg p-4">
               {format(new Date(lead.created_at), 'PPP')}
             </p>
           </div>
