@@ -8,7 +8,7 @@ export default function DashboardLayout() {
   const isAgentFlowPage = location.pathname.includes('/dashboard/agents/flow/');
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex h-screen w-full bg-white">
         <AppSidebar />
         <main className={`flex-1 overflow-auto w-full ${isAgentFlowPage ? 'pl-0 pr-0 pt-0 pb-0' : 'p-6'}`}>

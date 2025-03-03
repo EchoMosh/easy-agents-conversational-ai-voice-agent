@@ -10,14 +10,14 @@ import {
   Zap,
   ChevronDown,
   ChevronUp, 
-  ChevronLeft, 
-  ChevronRight,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
   LayoutDashboard,
-  CalendarDays
+  CalendarDays,
+  BarChart3,
+  FileText,
+  HelpCircle,
+  Mail,
+  FolderClosed,
+  Grid
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -25,11 +25,8 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
+  useSidebar
 } from "@/components/ui/sidebar";
 
 // Create an icons object for easy lookup
@@ -43,280 +40,148 @@ const iconComponents = {
   Zap,
   ChevronDown,
   ChevronUp, 
-  ChevronLeft, 
-  ChevronRight,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
   LayoutDashboard,
-  CalendarDays
+  CalendarDays,
+  BarChart3,
+  FileText,
+  HelpCircle,
+  Mail,
+  FolderClosed,
+  Grid
 };
 
+// Updated menu items to match the reference design
 export const mainMenuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
     url: "/dashboard/overview",
+    category: "Banking"
   },
   {
     title: "Calendar",
     icon: CalendarDays,
     url: "/dashboard/calendar",
+    category: "Banking"
   },
   {
-    title: "Agents",
-    icon: Users,
-    url: "/dashboard/agents",
-    subItems: [
-      {
-        title: "Knowledge",
-        url: "/dashboard/knowledge",
-        icon: Book,
-      }
-    ]
+    title: "Analysis",
+    icon: BarChart3,
+    url: "/dashboard/analytics",
+    category: "Banking"
   },
   {
-    title: "Leads",
-    icon: Target,
-    url: "/dashboard/leads",
-  },
-  {
-    title: "Pipelines",
-    icon: GitMerge,
-    url: "/dashboard/pipelines",
-  },
-  {
-    title: "Chats",
-    icon: MessageSquare,
-    url: "/dashboard/chats",
-  },
-  {
-    title: "Automations",
+    title: "Finances",
     icon: Zap,
     url: "/dashboard/automations",
+    category: "Banking",
+    highlight: true
+  },
+  {
+    title: "Messages",
+    icon: Mail,
+    url: "/dashboard/chats",
+    category: "Services",
+    badge: 2
+  },
+  {
+    title: "Documents",
+    icon: FolderClosed,
+    url: "/dashboard/knowledge",
+    category: "Services"
+  },
+  {
+    title: "Products",
+    icon: Grid,
+    url: "/dashboard/pipelines",
+    category: "Services",
+    highlight: true
+  },
+  {
+    title: "Help",
+    icon: HelpCircle,
+    url: "/dashboard/help",
+    category: "Other"
   },
   {
     title: "Settings",
     icon: Settings,
     url: "/dashboard/settings",
+    category: "Other"
   },
 ];
-
-interface CustomizedMenuItem {
-  id: string;
-  title: string;
-  visible: boolean;
-  icon?: string;
-  subItems?: CustomizedMenuItem[];
-}
 
 export function NavigationMenu() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [customizedItems, setCustomizedItems] = useState<CustomizedMenuItem[]>([]);
+  const { open } = useSidebar();
   const [displayedItems, setDisplayedItems] = useState(mainMenuItems);
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
-  const toggleExpand = (title: string) => {
-    setExpandedItems(prev => 
-      prev.includes(title) 
-        ? prev.filter(item => item !== title) 
-        : [...prev, title]
-    );
-  };
-
-  const handleItemClick = (item: any, event: React.MouseEvent) => {
-    if (item.subItems && item.subItems.length > 0) {
-      const target = event.target as HTMLElement;
-      const isChevronClick = target.closest('.chevron-toggle');
-      
-      if (!isChevronClick) {
-        navigate(item.url);
-      }
-      
-      toggleExpand(item.title);
-    } else {
-      navigate(item.url);
+  // Group menu items by category
+  const groupedItems = displayedItems.reduce((acc, item) => {
+    const category = item.category || "Other";
+    if (!acc[category]) {
+      acc[category] = [];
     }
-  };
+    acc[category].push(item);
+    return acc;
+  }, {} as Record<string, typeof mainMenuItems>);
 
-  const isActiveOrHasActiveChild = (item: any) => {
-    const isActive = location.pathname === item.url;
-    const hasActiveChild = item.subItems?.some((subItem: any) => 
-      location.pathname === subItem.url
-    );
-    return isActive || hasActiveChild;
-  };
-
-  useEffect(() => {
-    const loadSavedSettings = () => {
-      const savedItems = localStorage.getItem('sidebar-settings');
-      if (savedItems) {
-        setCustomizedItems(JSON.parse(savedItems));
-      }
-    };
-
-    loadSavedSettings();
-
-    const handleSettingsChanged = (event: any) => {
-      if (event.detail && event.detail.items) {
-        setCustomizedItems(event.detail.items);
-      }
-    };
-
-    window.addEventListener('sidebar-settings-changed', handleSettingsChanged);
-    
-    return () => {
-      window.removeEventListener('sidebar-settings-changed', handleSettingsChanged);
-    };
-  }, []);
-
-  useEffect(() => {
-    const pathsToExpand = mainMenuItems
-      .filter(item => item.subItems?.some(subItem => location.pathname === subItem.url))
-      .map(item => item.title);
-    
-    if (pathsToExpand.length > 0) {
-      setExpandedItems(prev => {
-        const newExpanded = [...prev];
-        pathsToExpand.forEach(path => {
-          if (!newExpanded.includes(path)) {
-            newExpanded.push(path);
-          }
-        });
-        return newExpanded;
-      });
-    }
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (customizedItems.length === 0) return;
-
-    const newDisplayedItems = [...mainMenuItems].map(menuItem => {
-      const customItem = customizedItems.find(
-        item => item.id === menuItem.title.toLowerCase()
-      );
-      
-      if (customItem) {
-        const IconComponent = customItem.icon && iconComponents[customItem.icon as keyof typeof iconComponents] 
-          ? iconComponents[customItem.icon as keyof typeof iconComponents] 
-          : menuItem.icon;
-        
-        const mappedSubItems = menuItem.subItems?.map(subItem => {
-          const customSubItem = customItem.subItems?.find(
-            item => item.id === subItem.title.toLowerCase()
-          );
-
-          return {
-            ...subItem,
-            visible: customSubItem ? customSubItem.visible : true
-          };
-        }).filter(subItem => subItem.visible);
-          
-        return {
-          ...menuItem,
-          icon: IconComponent,
-          visible: customItem.visible,
-          subItems: mappedSubItems
-        };
-      }
-      
-      return menuItem;
-    }).filter(item => {
-      const customItem = customizedItems.find(
-        custom => custom.id === item.title.toLowerCase()
-      );
-      return customItem ? customItem.visible : true;
-    }).sort((a, b) => {
-      const aIndex = customizedItems.findIndex(item => item.id === a.title.toLowerCase());
-      const bIndex = customizedItems.findIndex(item => item.id === b.title.toLowerCase());
-      return aIndex - bIndex;
-    });
-
-    setDisplayedItems(newDisplayedItems);
-  }, [customizedItems]);
+  // Order categories
+  const orderedCategories = ["Banking", "Services", "Other"];
 
   return (
-    <SidebarContent className="py-2">
-      <SidebarGroup>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {displayedItems.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                {item.subItems && item.subItems.length > 0 ? (
-                  <>
-                    <SidebarMenuButton 
-                      onClick={(e) => handleItemClick(item, e)}
-                      isActive={isActiveOrHasActiveChild(item)}
-                      className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-md transition-colors ${
-                        isActiveOrHasActiveChild(item)
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </div>
-                      <div className="chevron-toggle">
-                        {expandedItems.includes(item.title) ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </div>
-                    </SidebarMenuButton>
-                    
-                    {expandedItems.includes(item.title) && (
-                      <SidebarMenuSub>
-                        {item.subItems.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={location.pathname === subItem.url}
-                            >
-                              <NavLink
-                                to={subItem.url}
-                                className={({ isActive }) =>
-                                  `flex items-center gap-3 ${
-                                    isActive
-                                      ? "text-primary font-medium"
-                                      : "text-foreground/70 hover:text-foreground"
-                                  }`
-                                }
-                              >
-                                <subItem.icon className="h-4 w-4" />
-                                <span>{subItem.title}</span>
-                              </NavLink>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    )}
-                  </>
-                ) : (
-                  <SidebarMenuButton asChild>
+    <SidebarContent className="px-2 w-full">
+      {orderedCategories.map((category) => (
+        groupedItems[category] && (
+          <SidebarGroup key={category} className="mb-4">
+            {open && (
+              <div className="px-3 py-2 text-sm text-gray-500 font-normal">
+                {category}
+              </div>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {groupedItems[category].map((item) => (
+                  <SidebarMenuItem key={item.title}>
                     <NavLink
                       to={item.url}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors ${
-                          isActive
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                        }`
-                      }
+                      className={({ isActive }) => `
+                        flex items-center gap-3 px-3 py-3 rounded-xl transition-colors relative
+                        ${isActive 
+                          ? "bg-gray-100 text-gray-900 font-medium" 
+                          : "text-gray-600 hover:bg-gray-50"}
+                        ${item.highlight && !open ? "bg-black text-white" : ""}
+                        ${item.highlight && open ? "bg-gray-100" : ""}
+                      `}
+                      title={item.title}
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <div className={`
+                        flex items-center justify-center 
+                        ${item.highlight && !open ? "text-white" : "text-gray-500"}
+                      `}>
+                        <item.icon className="h-5 w-5" />
+                      </div>
+                      
+                      {open && (
+                        <>
+                          <span className="text-sm">{item.title}</span>
+                          
+                          {item.badge && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-red-500 text-white text-xs font-medium h-5 w-5 flex items-center justify-center rounded-full">
+                              {item.badge}
+                            </div>
+                          )}
+                        </>
+                      )}
                     </NavLink>
-                  </SidebarMenuButton>
-                )}
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )
+      ))}
     </SidebarContent>
   );
 }

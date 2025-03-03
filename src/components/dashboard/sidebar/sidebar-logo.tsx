@@ -8,10 +8,9 @@ export function SidebarLogo() {
       to="/dashboard/overview"
       className="flex flex-col items-center justify-center gap-1"
     >
-      <div className="flex items-center justify-center">
-        <HomeIcon className="h-5 w-5" />
+      <div className="flex items-center justify-center h-12 w-12 bg-rose-100 rounded-full">
+        <HomeIcon className="h-5 w-5 text-rose-600" />
       </div>
-      <span className="text-xs font-medium">Be.run</span>
     </Link>
   );
 }

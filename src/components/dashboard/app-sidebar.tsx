@@ -17,9 +17,9 @@ export function AppSidebar() {
   }, [location.pathname, isAgentFlowPage, setOpen]);
 
   return (
-    <Sidebar className="border-0 shadow-none bg-slate-50/80 p-0 w-[80px] flex flex-col items-center">
+    <Sidebar className="border-0 shadow-none bg-white p-0 w-[80px] flex flex-col items-center">
       <div className="flex flex-col items-center justify-between h-full py-6 w-full">
-        <div className="flex flex-col items-center gap-10 w-full">
+        <div className="flex flex-col items-center gap-8 w-full">
           <SidebarLogo />
           <SidebarNav />
         </div>
