@@ -38,11 +38,11 @@ export function AppSidebar() {
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Minutes Used</span>
               <span className="text-xs font-medium text-muted-foreground">{creditUsage.used}/{creditUsage.total}</span>
             </div>
-            <Progress value={creditUsage.percentage} className="h-1.5 bg-gray-200" indicatorClassName="bg-green-400" />
+            <Progress value={creditUsage.percentage} className="h-1.5 bg-gray-200" indicatorClassName="bg-blue-400" />
           </div>
           
           <div className="flex justify-center">
-            <p className="text-sm text-gray-400 font-light">thoughtly</p>
+            <p className="text-sm text-gray-400 font-light">Easy Agents</p>
           </div>
         </div>
       </div>

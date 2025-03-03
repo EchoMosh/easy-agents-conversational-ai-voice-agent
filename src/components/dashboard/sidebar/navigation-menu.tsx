@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { 
   Users, 
@@ -251,13 +252,13 @@ export function NavigationMenu() {
                   isActive={isActiveOrHasActiveChild(item)}
                   className={`flex items-center gap-3 px-4 py-2 rounded-md mx-2 transition-colors text-gray-600 ${
                     isActiveOrHasActiveChild(item)
-                      ? "bg-[#e6f7e6] text-green-600 font-medium"
+                      ? "bg-[#D3E4FD] text-blue-600 font-medium"
                       : "hover:bg-gray-100"
                   }`}
                   tooltip={item.title}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon className={`h-4 w-4 ${isActiveOrHasActiveChild(item) ? "text-green-500" : "text-gray-400"}`} />
+                    <item.icon className={`h-4 w-4 ${isActiveOrHasActiveChild(item) ? "text-blue-500" : "text-gray-400"}`} />
                     <span className="text-sm">{item.title}</span>
                   </div>
                 </SidebarMenuButton>
@@ -275,13 +276,13 @@ export function NavigationMenu() {
                             className={({ isActive }) =>
                               `flex items-center gap-3 ${
                                 isActive
-                                  ? "text-green-600 font-medium"
+                                  ? "text-blue-600 font-medium"
                                   : "text-gray-600 hover:text-gray-900"
                               }`
                             }
                           >
                             <subItem.icon className={`h-4 w-4 ${
-                              location.pathname === subItem.url ? "text-green-500" : "text-gray-400"
+                              location.pathname === subItem.url ? "text-blue-500" : "text-gray-400"
                             }`} />
                             <span className="text-sm">{subItem.title}</span>
                           </NavLink>
@@ -306,12 +307,12 @@ export function NavigationMenu() {
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-2 rounded-md mx-2 transition-colors text-gray-600 ${
                         isActive
-                          ? "bg-[#e6f7e6] text-green-600 font-medium"
+                          ? "bg-[#D3E4FD] text-blue-600 font-medium"
                           : "hover:bg-gray-100"
                       }`
                     }
                   >
-                    <item.icon className={`h-4 w-4 ${location.pathname === item.url ? "text-green-500" : "text-gray-400"}`} />
+                    <item.icon className={`h-4 w-4 ${location.pathname === item.url ? "text-blue-500" : "text-gray-400"}`} />
                     <span className="text-sm">{item.title}</span>
                   </NavLink>
                 </SidebarMenuButton>
@@ -331,12 +332,12 @@ export function NavigationMenu() {
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-2 rounded-md mx-2 transition-colors text-gray-600 ${
                         isActive
-                          ? "bg-[#e6f7e6] text-green-600 font-medium"
+                          ? "bg-[#D3E4FD] text-blue-600 font-medium"
                           : "hover:bg-gray-100"
                       }`
                     }
                   >
-                    <item.icon className={`h-4 w-4 ${location.pathname === item.url ? "text-green-500" : "text-gray-400"}`} />
+                    <item.icon className={`h-4 w-4 ${location.pathname === item.url ? "text-blue-500" : "text-gray-400"}`} />
                     <span className="text-sm">{item.title}</span>
                   </NavLink>
                 </SidebarMenuButton>
