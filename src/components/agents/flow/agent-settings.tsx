@@ -81,7 +81,11 @@ export function AgentSettings({
   // Initialize audio element for voice preview
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      setAudioElement(new Audio());
+      const audio = new Audio();
+      audio.onerror = (e) => {
+        console.error('Audio element error:', e);
+      };
+      setAudioElement(audio);
     }
     
     return () => {
@@ -215,7 +219,15 @@ export function AgentSettings({
 
   // Preview voice function
   const previewVoice = async () => {
-    if (!audioElement) return;
+    if (!audioElement) {
+      console.error('Audio element not initialized');
+      toast({
+        title: "Error",
+        description: "Audio player not initialized. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // If the voice is already playing, stop it
     if (isPreviewingVoice) {
@@ -240,36 +252,83 @@ export function AgentSettings({
       });
       
       if (error) {
-        console.error("Voice preview error:", error);
-        throw new Error('Failed to generate voice preview');
+        console.error("Voice preview edge function error:", error);
+        throw new Error(`Failed to generate voice preview: ${error.message}`);
       }
       
-      if (!data?.audio_content) {
-        console.error("Missing audio content in response:", data);
-        throw new Error('No audio content received');
+      if (!data) {
+        console.error("No data returned from edge function");
+        throw new Error('No data received from the text-to-speech function');
       }
+      
+      if (!data.audio_content) {
+        console.error("Missing audio content in response:", data);
+        throw new Error('No audio content received from the text-to-speech function');
+      }
+      
+      console.log("Received audio content, length:", data.audio_content.length);
       
       // Create a new audio source from the base64 audio content
-      const audioBlob = new Blob(
-        [Uint8Array.from(atob(data.audio_content), c => c.charCodeAt(0))], 
-        { type: 'audio/mp3' }
-      );
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      audioElement.src = audioUrl;
-      audioElement.onended = () => {
-        setIsPreviewingVoice(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-      
-      await audioElement.play();
-      
-      // Add error handling for play()
-      audioElement.onerror = (e) => {
-        console.error('Audio playback error:', e);
-        setIsPreviewingVoice(false);
-      };
-      
+      try {
+        const binaryData = atob(data.audio_content);
+        const bytes = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i);
+        }
+        
+        const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        console.log("Created audio URL:", audioUrl);
+        
+        // Set up event handlers before setting the source
+        audioElement.onended = () => {
+          console.log("Audio playback ended naturally");
+          setIsPreviewingVoice(false);
+          URL.revokeObjectURL(audioUrl);
+        };
+        
+        audioElement.onerror = (e) => {
+          console.error('Audio playback error:', e);
+          console.error('Audio error code:', audioElement.error?.code);
+          console.error('Audio error message:', audioElement.error?.message);
+          setIsPreviewingVoice(false);
+          URL.revokeObjectURL(audioUrl);
+          toast({
+            title: "Error",
+            description: `Audio playback failed: ${audioElement.error?.message || 'Unknown error'}`,
+            variant: "destructive",
+          });
+        };
+        
+        // Set the source and load the audio
+        audioElement.src = audioUrl;
+        audioElement.load();
+        
+        console.log("Starting audio playback");
+        const playPromise = audioElement.play();
+        
+        // Handle play promise correctly
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log("Audio playback started successfully");
+            })
+            .catch((error) => {
+              console.error('Error playing audio:', error);
+              setIsPreviewingVoice(false);
+              URL.revokeObjectURL(audioUrl);
+              toast({
+                title: "Error",
+                description: `Failed to play audio: ${error.message}`,
+                variant: "destructive",
+              });
+            });
+        }
+      } catch (blobError) {
+        console.error('Error creating audio blob:', blobError);
+        throw new Error(`Failed to create audio: ${blobError instanceof Error ? blobError.message : String(blobError)}`);
+      }
     } catch (error) {
       console.error('Error previewing voice:', error);
       toast({

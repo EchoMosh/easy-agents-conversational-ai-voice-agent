@@ -139,8 +139,11 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
           console.error('Failed to parse flow data:', e);
           flowData = { nodes: [], edges: [] };
         }
+      } else if (fullAgentData.flow) {
+        // Cast to unknown first, then to FlowData to satisfy TypeScript
+        flowData = (fullAgentData.flow as unknown) as FlowData;
       } else {
-        flowData = fullAgentData.flow as FlowData || { nodes: [], edges: [] };
+        flowData = { nodes: [], edges: [] };
       }
       
       // Get the first message from the flow data
