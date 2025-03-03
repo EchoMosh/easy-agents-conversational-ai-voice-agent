@@ -1,514 +1,277 @@
-import { useState } from 'react';
-import { Zap, Plus, ArrowRight, ArrowLeft, Power, Box, Settings, Sparkles } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { useState, useEffect } from 'react';
+import { Zap, Construction, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from "framer-motion";
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { motion } from "framer-motion";
 import { GlowingEffect } from '@/components/ui/glowing-effect';
 import { cn } from '@/lib/utils';
 
 export default function AutomationsPage() {
-  const { toast } = useToast();
-  const [showCreationDialog, setShowCreationDialog] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [automationName, setAutomationName] = useState('');
-  const [templateType, setTemplateType] = useState('scratch');
-  const totalSteps = 2;
+  const [visible, setVisible] = useState(false);
+  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; size: number; color: string; duration: number }>>([]);
 
-  // Mock automation data - this would typically come from an API or state management
-  const automations = [
-    { id: '1', name: 'Lead Follow-up', status: 'active', lastRun: '2 hours ago', type: 'Email sequence', icon: <Zap className="h-4 w-4 text-blue-500" /> },
-    { id: '2', name: 'Welcome Message', status: 'active', lastRun: '1 day ago', type: 'Chat response', icon: <Sparkles className="h-4 w-4 text-amber-500" /> },
-    { id: '3', name: 'Appointment Reminder', status: 'inactive', lastRun: 'Never', type: 'SMS notification', icon: <Settings className="h-4 w-4 text-gray-400" /> },
-  ];
+  useEffect(() => {
+    // Show content with a slight delay for a dramatic effect
+    const timer = setTimeout(() => {
+      setVisible(true);
+    }, 300);
 
-  const startNewAutomation = () => {
-    setShowCreationDialog(true);
-    setCurrentStep(1);
-    setAutomationName('');
-    setTemplateType('scratch');
-  };
+    // Generate random particles for the background
+    const particlesArray = Array.from({ length: 20 }).map((_, i) => ({
+      id: i,
+      x: Math.random() * 100, // random x position (percentage)
+      y: Math.random() * 100, // random y position (percentage)
+      size: Math.random() * 8 + 3, // random size between 3 and 11px
+      color: [
+        'bg-blue-500', 'bg-purple-500', 'bg-indigo-400', 
+        'bg-cyan-400', 'bg-violet-500', 'bg-fuchsia-400'
+      ][Math.floor(Math.random() * 6)], // random color
+      duration: (Math.random() * 15 + 10), // random duration between 10 and 25s
+    }));
+    setParticles(particlesArray);
 
-  const nextStep = () => {
-    setCurrentStep(prev => prev + 1);
-  };
+    return () => clearTimeout(timer);
+  }, []);
 
-  const prevStep = () => {
-    setCurrentStep(prev => Math.max(1, prev - 1));
-  };
-
-  const completeSetup = () => {
-    setShowCreationDialog(false);
-    toast({
-      title: "Automation Created",
-      description: `"${automationName}" automation has been created`,
-    });
-  };
-  
-  const handleRunNow = (automationId: string, automationName: string) => {
-    toast({
-      title: "Automation Triggered",
-      description: `"${automationName}" has been triggered manually`,
-    });
-  };
-  
-  // Progress bar component
-  const ProgressBar = () => (
-    <div className="w-full space-y-2">
-      <div className="flex justify-between text-sm text-muted-foreground">
-        <span>Step {currentStep} of {totalSteps}</span>
-        <span>{Math.round((currentStep / totalSteps) * 100)}%</span>
-      </div>
-      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+  return (
+    <div className="container relative mx-auto px-6 py-12 overflow-hidden min-h-[80vh]">
+      {/* Floating particles background */}
+      {particles.map((particle) => (
         <motion.div
-          className="h-full bg-gradient-to-r from-blue-500 to-purple-600"
-          initial={{ width: "0%" }}
-          animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
-          transition={{ 
-            duration: 0.5, 
+          key={particle.id}
+          className={cn("absolute rounded-full opacity-30 z-0", particle.color)}
+          style={{
+            top: `${particle.y}%`,
+            left: `${particle.x}%`,
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+          }}
+          animate={{
+            y: [0, -100, 0],
+            opacity: [0, 0.5, 0],
+          }}
+          transition={{
+            duration: particle.duration,
+            repeat: Infinity,
             ease: "easeInOut",
-            type: "tween"
           }}
         />
-      </div>
-    </div>
-  );
+      ))}
 
-  const AutomationCard = ({ automation }: { automation: typeof automations[0] }) => (
-    <motion.div
-      key={automation.id}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ 
-        scale: 1.02,
-        transition: { duration: 0.2 }
-      }}
-      className="group"
-    >
-      <div className="relative h-full rounded-2xl p-0.5">
-        {/* Glowing effect border */}
-        <GlowingEffect
-          spread={40}
-          glow={false}
-          disabled={false}
-          proximity={64}
-          inactiveZone={0.01}
-          variant={automation.status === 'active' ? "default" : "white"}
-        />
-        
-        <Card 
-          className={cn(
-            "h-full relative overflow-hidden rounded-2xl backdrop-blur-xl bg-white/10 dark:bg-slate-900/50 border-0",
-            automation.status === 'active' 
-              ? 'shadow-lg' 
-              : 'shadow'
-          )}
-        >
-          {/* Background gradient effect */}
-          <div className={`absolute inset-0 z-0 opacity-30 ${
-            automation.status === 'active' 
-              ? 'bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10' 
-              : 'bg-gradient-to-br from-gray-200/5 via-transparent to-gray-300/5 dark:from-gray-800/5 dark:to-gray-700/5'
-          }`} />
-          
-          {/* Mesh gradient background */}
-          {automation.status === 'active' && (
-            <div className="absolute inset-0 z-0">
-              <div className="absolute h-40 w-40 rounded-full blur-3xl bg-blue-500/20 -top-20 -left-20 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
-              <div className="absolute h-40 w-40 rounded-full blur-3xl bg-purple-500/20 -bottom-20 -right-20 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
-            </div>
-          )}
-          
-          {/* Card Header with animated border */}
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative border-b border-slate-200/10 dark:border-slate-700/10">
-            <div className="z-10">
-              <CardTitle className="text-xl font-semibold tracking-tight">{automation.name}</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground">{automation.type}</CardDescription>
-            </div>
-            
-            <div className="z-10 flex items-center">
-              <motion.div
-                className={`p-2 rounded-full ${
-                  automation.status === 'active' 
-                    ? 'bg-blue-500/10 dark:bg-blue-500/20' 
-                    : 'bg-gray-200/50 dark:bg-gray-800/50'
-                }`}
-                animate={automation.status === 'active' ? {
+      {/* Moving gradient background */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute -inset-[100px] opacity-30 z-0">
+          <motion.div 
+            className="absolute top-1/4 left-1/4 w-1/2 h-1/2 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 blur-3xl"
+            animate={{
+              x: [0, 100, 0],
+              y: [0, -50, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 25,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          <motion.div 
+            className="absolute bottom-1/4 right-1/4 w-1/2 h-1/2 rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500 blur-3xl"
+            animate={{
+              x: [0, -100, 0],
+              y: [0, 50, 0],
+              scale: [1, 1.3, 1],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Main content */}
+      <AnimatePresence>
+        {visible && (
+          <motion.div 
+            className="relative z-10 flex flex-col items-center justify-center text-center max-w-3xl mx-auto space-y-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            {/* Animated icon */}
+            <motion.div 
+              className="relative"
+              animate={{ y: [0, -10, 0] }}
+              transition={{ 
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <motion.div 
+                className="rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 w-32 h-32 flex items-center justify-center relative overflow-hidden"
+                animate={{
                   boxShadow: [
-                    '0 0 0 rgba(59, 130, 246, 0)',
-                    '0 0 15px rgba(59, 130, 246, 0.5)',
+                    '0 0 0 rgba(59, 130, 246, 0)', 
+                    '0 0 30px rgba(59, 130, 246, 0.5)', 
                     '0 0 0 rgba(59, 130, 246, 0)'
                   ],
-                } : {}}
+                }}
                 transition={{
-                  duration: 2,
+                  duration: 3,
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
               >
-                <div className="w-fit rounded-lg border border-gray-600/20 dark:border-gray-600/40 p-1">
-                  {automation.icon}
-                </div>
-              </motion.div>
-              <div className={`ml-2 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                automation.status === 'active' 
-                  ? 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
-                  : 'bg-gray-100/80 text-gray-800 dark:bg-gray-800/50 dark:text-gray-300'
-              }`}>
-                {automation.status}
-              </div>
-            </div>
-            
-            {/* Animated light beam effect for active automations */}
-            {automation.status === 'active' && (
-              <motion.div 
-                className="absolute top-0 left-1/2 w-px h-6 bg-gradient-to-b from-blue-400 to-transparent z-0"
-                animate={{
-                  opacity: [0, 1, 0],
-                  height: ['0%', '100%', '0%'],
-                  top: ['0%', '100%', '0%'],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: 'loop',
-                  ease: 'linear',
-                  delay: Math.random() * 2
-                }}
-              />
-            )}
-          </CardHeader>
-          
-          <CardContent className="relative z-10">
-            <div className="text-sm text-muted-foreground mb-6 pt-4">
-              Last run: {automation.lastRun}
-            </div>
-            
-            {/* Hover effects with animated borders */}
-            <div className="flex gap-2 mt-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="relative overflow-hidden group border-blue-200/20 dark:border-blue-900/20 transition-all hover:border-blue-400/30 hover:text-blue-600 dark:hover:border-blue-700/30 dark:hover:text-blue-400"
-              >
-                <span className="relative z-10">Edit</span>
-                <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Button>
-              
-              {automation.status === 'inactive' && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleRunNow(automation.id, automation.name)}
-                  className="relative overflow-hidden group border-blue-200/20 dark:border-blue-900/20 transition-all hover:text-blue-500 hover:border-blue-500/30 dark:hover:border-blue-700/30 dark:hover:text-blue-400"
-                >
-                  <span className="relative z-10 flex items-center">
-                    <Power className="h-4 w-4 mr-1" />
-                    Run now
-                  </span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </Button>
-              )}
-            </div>
-            
-            {/* Animated particles for active automations */}
-            {automation.status === 'active' && (
-              <>
+                <Zap className="h-16 w-16 text-blue-500 z-10" />
+                
+                {/* Pulsing effect */}
                 <motion.div 
-                  className="absolute w-1 h-1 rounded-full bg-blue-500 z-0"
-                  style={{ top: '20%', left: '10%' }}
+                  className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 z-0"
                   animate={{
-                    y: [0, -20, 0],
-                    opacity: [0, 1, 0],
+                    scale: [1, 1.2, 1],
+                    opacity: [0.2, 0.3, 0.2],
                   }}
                   transition={{
                     duration: 3,
                     repeat: Infinity,
-                    delay: Math.random() * 2
-                  }}
-                />
-                <motion.div 
-                  className="absolute w-1 h-1 rounded-full bg-purple-500 z-0"
-                  style={{ bottom: '30%', right: '20%' }}
-                  animate={{
-                    y: [0, -15, 0],
-                    opacity: [0, 1, 0],
-                  }}
-                  transition={{
-                    duration: 2.5,
-                    repeat: Infinity,
-                    delay: Math.random() * 2
-                  }}
-                />
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </motion.div>
-  );
-
-  return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Automations</h1>
-          <p className="text-muted-foreground">Create and manage your automated workflows</p>
-        </div>
-        <Button 
-          onClick={startNewAutomation} 
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-700/20 dark:shadow-blue-900/30 transition-all duration-300"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          New Automation
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {automations.length > 0 ? (
-          automations.map((automation) => (
-            <AutomationCard key={automation.id} automation={automation} />
-          ))
-        ) : (
-          <Card className="text-center py-12 col-span-full backdrop-blur-sm border-blue-200/20 dark:border-blue-900/20 bg-white/10 dark:bg-slate-900/50">
-            <CardContent>
-              <div className="space-y-4">
-                <motion.div 
-                  className="mx-auto bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full w-16 h-16 flex items-center justify-center relative overflow-hidden"
-                  animate={{
-                    boxShadow: [
-                      '0 0 0 rgba(59, 130, 246, 0)', 
-                      '0 0 20px rgba(59, 130, 246, 0.5)', 
-                      '0 0 0 rgba(59, 130, 246, 0)'
-                    ],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
                     ease: "easeInOut"
                   }}
+                />
+
+                {/* Orbiting sparkle */}
+                <motion.div 
+                  className="absolute h-3 w-3 rounded-full bg-white z-20 shadow-lg shadow-blue-500/50"
+                  animate={{
+                    rotate: [0, 360],
+                  }}
+                  transition={{
+                    duration: 5,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  style={{ 
+                    top: '10%',
+                    left: '50%',
+                    translateX: '-50%',
+                    transformOrigin: 'center 600%', 
+                  }}
                 >
-                  <Zap className="h-8 w-8 text-blue-500 relative z-10" />
-                  
-                  {/* Background pulse effect */}
-                  <motion.div 
-                    className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 z-0"
-                    animate={{
-                      scale: [1, 1.2, 1],
-                      opacity: [0.2, 0.3, 0.2],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
+                  <Sparkles className="h-full w-full text-yellow-300" />
                 </motion.div>
-                <h3 className="font-semibold text-lg">No automations yet</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Create your first automation to start automating your workflows.
-                </p>
-                <Button 
-                  onClick={startNewAutomation} 
-                  className="mt-2 relative overflow-hidden group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-700/20 dark:shadow-blue-900/30 transition-all duration-300"
+              </motion.div>
+            </motion.div>
+
+            {/* Coming soon text */}
+            <div className="space-y-6">
+              <motion.h1 
+                className="text-5xl md:text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+              >
+                Automations Coming Soon
+              </motion.h1>
+              
+              <motion.p 
+                className="text-lg text-muted-foreground max-w-xl mx-auto"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.3 }}
+              >
+                We're working on powerful automation features to help you streamline your workflows and boost productivity.
+                Stay tuned for updates!
+              </motion.p>
+            </div>
+
+            {/* Feature preview cards */}
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+            >
+              {[
+                { 
+                  title: "Workflow Automation", 
+                  description: "Create custom workflows that run automatically based on triggers and events.",
+                  icon: <Zap className="h-5 w-5 text-blue-500" />,
+                  delay: 0
+                },
+                { 
+                  title: "Smart Integrations", 
+                  description: "Connect with your favorite tools and services for seamless operations.",
+                  icon: <Sparkles className="h-5 w-5 text-purple-500" />,
+                  delay: 0.2
+                }
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 + feature.delay }}
+                  className="relative h-full rounded-2xl p-0.5 group"
                 >
-                  <span className="relative z-10 flex items-center">
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Automation
-                  </span>
-                  <motion.span 
-                    className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-white/10 to-blue-500/0"
-                    animate={{
-                      x: ['-100%', '100%'],
-                    }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      repeatDelay: 3,
-                      ease: "easeInOut"
-                    }}
+                  <GlowingEffect
+                    spread={30}
+                    glow={false}
+                    disabled={false}
+                    proximity={64}
+                    inactiveZone={0.01}
+                    variant="default"
                   />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                  
+                  <Card className="h-full relative overflow-hidden rounded-2xl backdrop-blur-xl bg-white/10 dark:bg-slate-900/50 border-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 z-0" />
+                    
+                    <div className="relative z-10 p-6 flex items-start space-x-4">
+                      <div className="p-2 rounded-full bg-blue-500/10 dark:bg-blue-500/20">
+                        {feature.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+                        <p className="text-muted-foreground text-sm">{feature.description}</p>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Get notified button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+              className="mt-8"
+            >
+              <Button 
+                className="relative overflow-hidden group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-700/20 dark:shadow-blue-900/30 transition-all duration-300"
+                size="lg"
+              >
+                <span className="relative z-10 flex items-center">
+                  <Construction className="mr-2 h-4 w-4" />
+                  Get Notified When It's Ready
+                </span>
+                <motion.span 
+                  className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-white/10 to-blue-500/0"
+                  animate={{
+                    x: ['-100%', '100%'],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    repeatDelay: 3,
+                    ease: "easeInOut"
+                  }}
+                />
+              </Button>
+            </motion.div>
+          </motion.div>
         )}
-      </div>
-
-      <Dialog open={showCreationDialog} onOpenChange={setShowCreationDialog}>
-        <DialogContent className="sm:max-w-[500px] backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border-blue-200/20 dark:border-blue-900/20">
-          <DialogHeader>
-            <DialogTitle>
-              {currentStep === 1 ? "Name Your Automation" : "Choose a Template"}
-            </DialogTitle>
-            <DialogDescription>
-              {currentStep === 1 ? "Give your automation a descriptive name" : 
-               "Select a template or start from scratch"}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <ProgressBar />
-
-          <div className="py-4">
-            {currentStep === 1 && (
-              <motion.div
-                key="step-1"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="automation-name">Automation Name</Label>
-                  <Input 
-                    id="automation-name" 
-                    placeholder="Enter a name for your automation"
-                    value={automationName}
-                    onChange={(e) => setAutomationName(e.target.value)}
-                    className="focus-visible:ring-blue-500 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50"
-                  />
-                </div>
-              </motion.div>
-            )}
-
-            {currentStep === 2 && (
-              <motion.div
-                key="step-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
-              >
-                <RadioGroup value={templateType} onValueChange={setTemplateType}>
-                  <motion.div 
-                    className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-accent transition-all relative overflow-hidden group bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50"
-                    whileHover={{ scale: 1.02, borderColor: 'rgba(59, 130, 246, 0.5)' }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <RadioGroupItem value="scratch" id="scratch" />
-                    <Label htmlFor="scratch" className="flex-1 cursor-pointer">
-                      <div className="font-medium">Start from scratch</div>
-                      <div className="text-sm text-muted-foreground">Build your automation from the ground up</div>
-                    </Label>
-                    <Zap className="h-5 w-5 text-muted-foreground relative z-10" />
-                    <motion.span 
-                      className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
-                    />
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-accent transition-all relative overflow-hidden group bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50"
-                    whileHover={{ scale: 1.02, borderColor: 'rgba(245, 158, 11, 0.5)' }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <RadioGroupItem value="lead-notify" id="lead-notify" />
-                    <Label htmlFor="lead-notify" className="flex-1 cursor-pointer">
-                      <div className="font-medium">Lead Notification</div>
-                      <div className="text-sm text-muted-foreground">Get notified when new leads come in</div>
-                    </Label>
-                    <Zap className="h-5 w-5 text-amber-500 relative z-10" />
-                    <motion.span 
-                      className="absolute inset-0 bg-gradient-to-r from-amber-50 to-amber-100/20 dark:from-amber-900/10 dark:to-amber-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
-                    />
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-accent transition-all relative overflow-hidden group bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50"
-                    whileHover={{ scale: 1.02, borderColor: 'rgba(59, 130, 246, 0.5)' }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <RadioGroupItem value="follow-up" id="follow-up" />
-                    <Label htmlFor="follow-up" className="flex-1 cursor-pointer">
-                      <div className="font-medium">Lead Follow-up</div>
-                      <div className="text-sm text-muted-foreground">Automatically follow up with leads</div>
-                    </Label>
-                    <Zap className="h-5 w-5 text-blue-500 relative z-10" />
-                    <motion.span 
-                      className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
-                    />
-                  </motion.div>
-                </RadioGroup>
-              </motion.div>
-            )}
-          </div>
-
-          <div className="flex justify-between mt-6">
-            {currentStep > 1 ? (
-              <Button 
-                variant="outline" 
-                onClick={prevStep}
-                className="relative overflow-hidden group border-blue-200/30 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm"
-              >
-                <span className="relative z-10 flex items-center">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </span>
-                <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Button>
-            ) : (
-              <Button 
-                variant="outline" 
-                onClick={() => setShowCreationDialog(false)}
-                className="relative overflow-hidden group border-blue-200/30 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm"
-              >
-                <span className="relative z-10">Cancel</span>
-                <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100/20 dark:from-blue-900/10 dark:to-blue-800/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Button>
-            )}
-
-            {currentStep < totalSteps ? (
-              <Button 
-                onClick={nextStep} 
-                disabled={currentStep === 1 && !automationName}
-                className="relative overflow-hidden group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md transition-all"
-              >
-                <span className="relative z-10 flex items-center">
-                  Next
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </span>
-                <motion.span 
-                  className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-white/10 to-blue-500/0"
-                  animate={{
-                    x: ['-100%', '100%'],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                    ease: "easeInOut"
-                  }}
-                />
-              </Button>
-            ) : (
-              <Button 
-                onClick={completeSetup}
-                className="relative overflow-hidden group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md transition-all"
-              >
-                <span className="relative z-10">Create Automation</span>
-                <motion.span 
-                  className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-white/10 to-blue-500/0"
-                  animate={{
-                    x: ['-100%', '100%'],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                    ease: "easeInOut"
-                  }}
-                />
-              </Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      </AnimatePresence>
     </div>
   );
 }
