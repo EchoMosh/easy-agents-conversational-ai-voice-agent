@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -8,6 +9,10 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent, FlowData, FlowNode, FlowEdge } from '@/types/agent-types';
 import { useToast } from '@/hooks/use-toast';
+import { TrainingButton } from '@/components/agents/table/training-button';
+import { AgentTrainingPopup } from '@/components/agents/training/agent-training-popup';
+import { Button } from '@/components/ui/button';
+import { BookOpen } from 'lucide-react';
 
 function generateMermaidFromFlow(flowData: FlowData): string {
   if (!flowData || !flowData.nodes || !flowData.edges) {
@@ -146,6 +151,7 @@ export default function AgentFlowPage() {
   const [mermaidChart, setMermaidChart] = useState<string>('');
   const [showMermaid, setShowMermaid] = useState<boolean>(true);
   const [flowState, setFlowState] = useState<FlowData>({ nodes: [], edges: [] });
+  const [showTraining, setShowTraining] = useState(false);
 
   const { data: agent, refetch, isError, isLoading } = useQuery({
     queryKey: ['agent', id],
@@ -371,11 +377,24 @@ export default function AgentFlowPage() {
   return (
     <DragProvider>
       <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-        <Header 
-          agent={agent}
-          onBack={() => navigate('/dashboard/agents')}
-          onUpdateSettings={handleUpdateSettings}
-        />
+        <div className="flex justify-between items-center">
+          <Header 
+            agent={agent}
+            onBack={() => navigate('/dashboard/agents')}
+            onUpdateSettings={handleUpdateSettings}
+          />
+          <div className="pr-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={() => setShowTraining(true)}
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>Train Agent</span>
+            </Button>
+          </div>
+        </div>
         
         <div className="flex flex-col flex-1">
           <ReactFlowProvider>
@@ -406,6 +425,14 @@ export default function AgentFlowPage() {
             </div>
           )}
         </div>
+        
+        {agent && (
+          <AgentTrainingPopup
+            agent={agent}
+            open={showTraining}
+            onOpenChange={setShowTraining}
+          />
+        )}
       </div>
     </DragProvider>
   );

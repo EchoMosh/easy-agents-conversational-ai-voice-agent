@@ -42,4 +42,9 @@ export interface Agent {
   mermaid_chart?: string;
   elevenlabs_agent_id?: string;
   knowledge_ids?: string[]; // Array of knowledge base IDs
+  
+  // Training related fields
+  training_status?: 'not_started' | 'in_progress' | 'completed';
+  last_trained_at?: string;
+  training_webhook_url?: string;
 }
