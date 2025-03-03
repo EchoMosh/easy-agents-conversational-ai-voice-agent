@@ -40,6 +40,14 @@ export async function sendUserMessage(agentId: string, message: string, conversa
     const data = await response.json();
     console.log('[TrainingAPI] Message webhook response:', data);
     
+    // Handle the new response format with "output" field
+    if (Array.isArray(data) && data.length > 0 && data[0].output) {
+      return {
+        message: data[0].output.trim(),
+        success: true
+      };
+    }
+    
     return {
       message: data.message || 'Default response message',
       success: true,
