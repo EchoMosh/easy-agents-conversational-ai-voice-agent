@@ -27,7 +27,7 @@ export function AppSidebar() {
   }, [location.pathname, isAgentFlowPage, setOpen]);
 
   return (
-    <Sidebar className="border-r border-border/10 bg-background/95 backdrop-blur-sm transition-all duration-500 relative overflow-hidden group">
+    <Sidebar className="z-50 border-r border-border/10 bg-background/95 backdrop-blur-sm transition-all duration-500 relative overflow-hidden group shadow-lg">
       {/* Premium glow effect that animates on hover */}
       <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-indigo-500/0 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
       
