@@ -24,7 +24,6 @@ export interface NodeData {
 }
 
 export interface TrainingExample {
-  id?: string;
   user_message: string;
   ai_response: string;
   corrected_response: string;
