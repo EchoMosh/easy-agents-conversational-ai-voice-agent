@@ -33,8 +33,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-// Single ElevenLabs voice
-const voice = { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" };
+// Available voices data
+const voices = [
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", gender: "female" },
+  { id: "UgBBYS2sOqTuMpoF3BR0", name: "Thomas", gender: "male" }
+];
 
 // Languages data for the dropdown select
 const languages = [
@@ -71,6 +74,7 @@ export function AgentSettings({
   onUpdateSettings,
 }: AgentSettingsProps) {
   const [open, setOpen] = React.useState(false);
+  const [selectedVoice, setSelectedVoice] = React.useState(currentVoice || voices[0].id);
   const [language, setLanguage] = React.useState(currentLanguage || "en-US");
   const [knowledgeBase, setKnowledgeBase] = React.useState("none");
   const [humorLevel, setHumorLevel] = React.useState(currentHumorLevel);
@@ -79,6 +83,11 @@ export function AgentSettings({
   const [audioElement, setAudioElement] = React.useState<HTMLAudioElement | null>(null);
   const [showVoiceInfo, setShowVoiceInfo] = React.useState(false);
   const { toast } = useToast();
+  
+  // Get the currently selected voice object
+  const currentVoiceObject = React.useMemo(() => 
+    voices.find(v => v.id === selectedVoice) || voices[0],
+  [selectedVoice]);
   
   // Fetch knowledge documents with refetch capability
   const { data: knowledgeDocuments, isLoading: isLoadingDocuments, refetch } = useQuery({
@@ -137,6 +146,11 @@ export function AgentSettings({
           if (error) throw error;
           
           if (data) {
+            // Set voice if exists
+            if (data.voice_id) {
+              setSelectedVoice(data.voice_id);
+            }
+            
             // Set language if exists
             if (data.language) {
               setLanguage(data.language);
@@ -182,7 +196,7 @@ export function AgentSettings({
     try {
       console.log("Saving agent settings:", {
         agentId,
-        voice: voice.id,
+        voice: selectedVoice,
         language,
         humorLevel,
         knowledgeBase
@@ -190,7 +204,7 @@ export function AgentSettings({
       
       // First update the agent in Supabase
       const updateData = {
-        voice_id: voice.id,
+        voice_id: selectedVoice,
         language: language,
         humor_level: humorLevel,
         knowledge_ids: knowledgeBase && knowledgeBase !== "none" ? [knowledgeBase] : []
@@ -214,7 +228,7 @@ export function AgentSettings({
       // Call the onUpdateSettings prop to maintain component API compatibility
       try {
         await onUpdateSettings({
-          voiceId: voice.id,
+          voiceId: selectedVoice,
           language,
           knowledgeBaseId: knowledgeBase === "none" ? null : knowledgeBase,
           humorLevel: humorLevel,
@@ -264,12 +278,12 @@ export function AgentSettings({
     try {
       setIsPreviewingVoice(true);
       
-      console.log("Previewing voice:", voice.id);
+      console.log("Previewing voice:", selectedVoice);
       
       // Prepare the payload for the edge function
       const payload = { 
         text: "Hello, this is a preview of my voice.",
-        voice_id: voice.id,
+        voice_id: selectedVoice,
         model_id: "eleven_multilingual_v2"
       };
       
@@ -378,9 +392,18 @@ export function AgentSettings({
                   <div>
                     <Label htmlFor="voice" className="text-sm font-medium mb-2 block">Voice</Label>
                     <div className="grid grid-cols-[1fr_auto_auto] gap-2">
-                      <div className="border rounded-lg px-4 py-2.5 bg-gray-50 dark:bg-gray-900 flex items-center">
-                        {voice.name}
-                      </div>
+                      <Select onValueChange={setSelectedVoice} value={selectedVoice}>
+                        <SelectTrigger className="w-full bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-lg">
+                          <SelectValue placeholder="Select voice" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-gray-900">
+                          {voices.map((voice) => (
+                            <SelectItem key={voice.id} value={voice.id} className="focus:bg-gray-100 dark:focus:bg-gray-800">
+                              {voice.name} ({voice.gender})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Button 
                         variant="outline" 
                         size="icon" 
@@ -507,9 +530,9 @@ export function AgentSettings({
           </SheetHeader>
           <div className="p-6 space-y-6">
             <div className="space-y-2">
-              <h3 className="font-medium">Voice: {voice.name}</h3>
+              <h3 className="font-medium">Voice: {currentVoiceObject.name}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                This is a premium voice from ElevenLabs designed to sound natural and expressive.
+                This is a premium {currentVoiceObject.gender} voice from ElevenLabs designed to sound natural and expressive.
               </p>
             </div>
             <div className="space-y-2">
