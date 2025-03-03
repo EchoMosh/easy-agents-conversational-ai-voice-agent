@@ -82,9 +82,24 @@ export function AgentSettings({
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const audio = new Audio();
-      audio.onerror = (e) => {
-        console.error('Audio element error:', e);
+      
+      audio.onended = () => {
+        console.log("Audio playback ended naturally");
+        setIsPreviewingVoice(false);
       };
+      
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        console.error('Audio error code:', audio.error?.code);
+        console.error('Audio error message:', audio.error?.message);
+        setIsPreviewingVoice(false);
+        toast({
+          title: "Error",
+          description: `Audio playback failed: ${audio.error?.message || 'Unknown error'}`,
+          variant: "destructive",
+        });
+      };
+      
       setAudioElement(audio);
     }
     
@@ -142,7 +157,7 @@ export function AgentSettings({
       
       fetchAgentData();
     }
-  }, [open, agentId, refetch, toast]);
+  }, [open, agentId, refetch]);
   
   // Format knowledge documents for dropdown
   const knowledgeBases = React.useMemo(() => {
@@ -242,18 +257,27 @@ export function AgentSettings({
       
       console.log("Previewing voice:", voice.id);
       
-      // Use the Supabase Edge Function to generate a voice preview
+      // Prepare the payload for the edge function
+      const payload = { 
+        text: "Hello, this is a preview of my voice.",
+        voice_id: voice.id,
+        model_id: "eleven_multilingual_v2"
+      };
+      
+      console.log("Sending text-to-speech request with payload:", payload);
+      
+      // Call the text-to-speech edge function
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
-        body: { 
-          text: "Hello, this is a preview of my voice.",
-          voice_id: voice.id,
-          model_id: "eleven_multilingual_v2"  // Specify the model explicitly
-        }
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
       
       if (error) {
-        console.error("Voice preview edge function error:", error);
-        throw new Error(`Failed to generate voice preview: ${error.message}`);
+        console.error("Edge function error:", error);
+        throw new Error(`Failed to generate voice preview: ${error.message || 'Unknown error'}`);
       }
       
       if (!data) {
@@ -263,6 +287,9 @@ export function AgentSettings({
       
       if (!data.audio_content) {
         console.error("Missing audio content in response:", data);
+        if (data.error) {
+          throw new Error(`ElevenLabs API error: ${data.error}`);
+        }
         throw new Error('No audio content received from the text-to-speech function');
       }
       
@@ -270,61 +297,40 @@ export function AgentSettings({
       
       // Create a new audio source from the base64 audio content
       try {
+        // Safe conversion of base64 to binary
         const binaryData = atob(data.audio_content);
         const bytes = new Uint8Array(binaryData.length);
         for (let i = 0; i < binaryData.length; i++) {
           bytes[i] = binaryData.charCodeAt(i);
         }
         
-        const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
+        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
         
         console.log("Created audio URL:", audioUrl);
-        
-        // Set up event handlers before setting the source
-        audioElement.onended = () => {
-          console.log("Audio playback ended naturally");
-          setIsPreviewingVoice(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-        
-        audioElement.onerror = (e) => {
-          console.error('Audio playback error:', e);
-          console.error('Audio error code:', audioElement.error?.code);
-          console.error('Audio error message:', audioElement.error?.message);
-          setIsPreviewingVoice(false);
-          URL.revokeObjectURL(audioUrl);
-          toast({
-            title: "Error",
-            description: `Audio playback failed: ${audioElement.error?.message || 'Unknown error'}`,
-            variant: "destructive",
-          });
-        };
         
         // Set the source and load the audio
         audioElement.src = audioUrl;
         audioElement.load();
         
         console.log("Starting audio playback");
-        const playPromise = audioElement.play();
         
-        // Handle play promise correctly
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log("Audio playback started successfully");
-            })
-            .catch((error) => {
-              console.error('Error playing audio:', error);
-              setIsPreviewingVoice(false);
-              URL.revokeObjectURL(audioUrl);
-              toast({
-                title: "Error",
-                description: `Failed to play audio: ${error.message}`,
-                variant: "destructive",
-              });
-            });
+        try {
+          await audioElement.play();
+          console.log("Audio playback started successfully");
+        } catch (playError) {
+          console.error('Error playing audio:', playError);
+          setIsPreviewingVoice(false);
+          URL.revokeObjectURL(audioUrl);
+          throw new Error(`Failed to play audio: ${playError.message}`);
         }
+        
+        // Setup cleanup function
+        audioElement.onended = () => {
+          console.log("Audio playback ended");
+          setIsPreviewingVoice(false);
+          URL.revokeObjectURL(audioUrl);
+        };
       } catch (blobError) {
         console.error('Error creating audio blob:', blobError);
         throw new Error(`Failed to create audio: ${blobError instanceof Error ? blobError.message : String(blobError)}`);
