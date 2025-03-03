@@ -45,6 +45,47 @@ export type Database = {
           },
         ]
       }
+      agent_training_examples: {
+        Row: {
+          agent_id: string
+          ai_response: string
+          corrected_response: string
+          created_at: string
+          id: string
+          is_processed: boolean
+          user_id: string
+          user_message: string
+        }
+        Insert: {
+          agent_id: string
+          ai_response: string
+          corrected_response: string
+          created_at?: string
+          id?: string
+          is_processed?: boolean
+          user_id: string
+          user_message: string
+        }
+        Update: {
+          agent_id?: string
+          ai_response?: string
+          corrected_response?: string
+          created_at?: string
+          id?: string
+          is_processed?: boolean
+          user_id?: string
+          user_message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_training_examples_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           created_at: string
