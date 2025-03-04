@@ -1,6 +1,5 @@
-
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
+import { ArrowLeft, Play, PhoneCall, Settings, Loader } from "lucide-react";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
 import { Agent } from "@/types/agent";
 import { useEffect, useState } from "react";
@@ -30,22 +29,19 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
   const findFirstMessage = (flowData: FlowData): string => {
     if (!flowData || !flowData.nodes || !Array.isArray(flowData.nodes) || flowData.nodes.length === 0) {
-      return "Hello, how can I help you today?"; // Default message if no nodes exist
+      return "Hello, how can I help you today?";
     }
 
-    // Look for greeting or speak nodes
     const greetingNodes = flowData.nodes.filter(
       (node: FlowNode) => node.type === 'greetingNode' || node.type === 'speakNode'
     );
 
     if (greetingNodes.length === 0) {
-      return "Hello, how can I help you today?"; // Default message if no greeting/speak nodes
+      return "Hello, how can I help you today?";
     }
 
-    // Get the first greeting/speak node's message
     const firstNode = greetingNodes[0];
     if (firstNode.data) {
-      // Check for message or greeting property
       if (firstNode.type === 'greetingNode' && firstNode.data.greeting) {
         return String(firstNode.data.greeting);
       } else if (firstNode.type === 'speakNode' && firstNode.data.message) {
@@ -53,13 +49,12 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       }
     }
 
-    return "Hello, how can I help you today?"; // Default fallback
+    return "Hello, how can I help you today?";
   };
 
   useEffect(() => {
     console.log('Setting up Supabase realtime connection...');
     
-    // Subscribe to the real-time channel
     const channel = supabase.channel('agent-flow')
       .on('presence', { event: 'sync' }, () => {
         console.log('Presence sync event received');
@@ -72,12 +67,10 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
     console.log('Channel created:', channel);
 
-    // Log connection state changes
     const subscription = supabase.getChannels().forEach(channel => {
       console.log('Current channel state:', channel.state);
     });
 
-    // Cleanup subscription
     return () => {
       console.log('Cleaning up Supabase channel...');
       supabase.removeChannel(channel);
@@ -88,7 +81,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     const fetchUserData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // Get profile data if available
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
@@ -222,7 +214,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         description: "Agent update request sent successfully",
       });
       
-      // Show call options after successful update
       setShowCallOptions(true);
       
     } catch (error) {
@@ -237,7 +228,6 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     }
   };
 
-  // Handle selecting desktop option
   const handleSelectDesktop = () => {
     setShowCallOptions(false);
     setShowVoiceCallDialog(true);
@@ -287,8 +277,17 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             onClick={handleUpdateAgent}
             disabled={isUpdatingAgent}
           >
-            <PhoneCall className="h-4 w-4 mr-2" />
-            {isUpdatingAgent ? "Processing..." : "Call Me"}
+            {isUpdatingAgent ? (
+              <>
+                <Loader className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <PhoneCall className="h-4 w-4 mr-2" />
+                Call Me
+              </>
+            )}
           </Button>
           
           <Button 
