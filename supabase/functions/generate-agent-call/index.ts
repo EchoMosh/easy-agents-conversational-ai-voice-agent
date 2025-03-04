@@ -31,6 +31,8 @@ serve(async (req) => {
     // Use the ElevenLabs agent ID if provided, otherwise use the local agent ID
     const targetAgentId = elevenLabsAgentId || agentId;
     
+    console.log(`Using agent ID for ElevenLabs: ${targetAgentId}`);
+    
     // Request signed URL from ElevenLabs API
     const response = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${targetAgentId}`,
@@ -38,6 +40,7 @@ serve(async (req) => {
         method: 'GET',
         headers: {
           'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
         },
       }
     );
@@ -53,7 +56,7 @@ serve(async (req) => {
       if (status === 401) {
         throw new Error('ElevenLabs API authentication failed: Invalid API key');
       } else if (status === 404) {
-        throw new Error('ElevenLabs API error: Agent not found or not configured for voice');
+        throw new Error(`ElevenLabs API error: Agent not found or not configured for voice (ID: ${targetAgentId})`);
       } else {
         throw new Error(`ElevenLabs API error: ${status} - ${responseText}`);
       }
@@ -69,7 +72,7 @@ serve(async (req) => {
     
     if (!data.signed_url) {
       console.error('ElevenLabs API response missing signed_url:', data);
-      throw new Error('Invalid response from ElevenLabs API');
+      throw new Error('Invalid response from ElevenLabs API: missing signed_url');
     }
     
     console.log('Successfully generated signed URL');

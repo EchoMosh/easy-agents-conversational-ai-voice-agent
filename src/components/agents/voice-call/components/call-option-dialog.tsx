@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Computer, Smartphone } from "lucide-react";
+import { Computer, Smartphone, X } from "lucide-react";
 import { Agent } from "@/types/agent";
 import { ElevenLabsWidget } from "./elevenlabs-widget";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +30,7 @@ export function CallOptionDialog({
 
   const handleSelectDesktop = () => {
     setShowWidget(true);
+    setWidgetError(null);
   };
 
   const handleCloseWidget = () => {
@@ -38,6 +39,7 @@ export function CallOptionDialog({
   };
 
   const handleWidgetError = (error: string) => {
+    console.error("Widget error:", error);
     setWidgetError(error);
     toast({
       variant: "destructive",
@@ -46,29 +48,28 @@ export function CallOptionDialog({
     });
   };
 
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      // Reset widget state when closing the dialog
+      setShowWidget(false);
+      setWidgetError(null);
+    }
+    onOpenChange(open);
+  };
+
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={(newOpen) => {
-        if (!newOpen) {
-          // Reset widget state when closing the dialog
-          setShowWidget(false);
-          setWidgetError(null);
-        }
-        onOpenChange(newOpen);
-      }}
-    >
-      <DialogContent className={`sm:max-w-${showWidget ? 'xl' : 'md'}`}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
+      <DialogContent className={`sm:max-w-${showWidget ? 'xl' : 'md'} p-0 gap-0`}>
         {!showWidget ? (
           <>
-            <DialogHeader>
+            <DialogHeader className="p-6 pb-2">
               <DialogTitle>Choose Call Method</DialogTitle>
               <DialogDescription>
                 Select how you would like to receive the call
               </DialogDescription>
             </DialogHeader>
             
-            <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4 p-6">
               <div className="flex flex-col items-center gap-2">
                 <Button 
                   onClick={handleSelectDesktop}
@@ -98,30 +99,32 @@ export function CallOptionDialog({
           </>
         ) : (
           <>
-            <DialogHeader>
-              <DialogTitle>Voice Call with {agent.name}</DialogTitle>
-              <DialogDescription>
-                Speak naturally with the agent using your microphone
-              </DialogDescription>
-            </DialogHeader>
+            <div className="flex justify-between items-center p-6 pb-2">
+              <div>
+                <DialogTitle className="mb-1">Voice Call with {agent.name}</DialogTitle>
+                <DialogDescription>
+                  Speak naturally with the agent using your microphone
+                </DialogDescription>
+              </div>
+              <Button
+                variant="ghost" 
+                size="icon" 
+                onClick={handleCloseWidget}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             
             {widgetError ? (
-              <div className="py-6 text-center">
+              <div className="p-6 text-center">
                 <p className="text-destructive mb-4">{widgetError}</p>
                 <Button onClick={handleCloseWidget}>Back to Call Options</Button>
               </div>
             ) : (
-              <>
-                <div className="py-4">
-                  <ElevenLabsWidget agent={agent} onError={handleWidgetError} />
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button variant="outline" onClick={handleCloseWidget}>
-                    Close Call
-                  </Button>
-                </div>
-              </>
+              <div className="p-6 pt-2">
+                <ElevenLabsWidget agent={agent} onError={handleWidgetError} />
+              </div>
             )}
           </>
         )}
