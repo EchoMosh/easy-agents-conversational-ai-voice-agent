@@ -39,16 +39,40 @@ const voices = [
   { id: "pwMBn0SsmN1220Aorv15", name: "Michael", gender: "male" }
 ];
 
-// Languages data for the dropdown select
+// Updated languages data with correct language codes
 const languages = [
-  { id: "en-US", name: "English (US)" },
-  { id: "en-GB", name: "English (UK)" },
-  { id: "es-ES", name: "Spanish" },
-  { id: "fr-FR", name: "French" },
-  { id: "de-DE", name: "German" },
-  { id: "it-IT", name: "Italian" },
-  { id: "pt-BR", name: "Portuguese (Brazil)" },
-  { id: "nl-NL", name: "Dutch" },
+  { id: "en", name: "English" },
+  { id: "zh", name: "Chinese" },
+  { id: "es", name: "Spanish" },
+  { id: "hi", name: "Hindi" },
+  { id: "pt", name: "Portuguese" },
+  { id: "fr", name: "French" },
+  { id: "de", name: "German" },
+  { id: "ja", name: "Japanese" },
+  { id: "ar", name: "Arabic" },
+  { id: "ko", name: "Korean" },
+  { id: "id", name: "Indonesian" },
+  { id: "it", name: "Italian" },
+  { id: "nl", name: "Dutch" },
+  { id: "tr", name: "Turkish" },
+  { id: "pl", name: "Polish" },
+  { id: "ru", name: "Russian" },
+  { id: "sv", name: "Swedish" },
+  { id: "ms", name: "Malay" },
+  { id: "ro", name: "Romanian" },
+  { id: "uk", name: "Ukrainian" },
+  { id: "el", name: "Greek" },
+  { id: "cs", name: "Czech" },
+  { id: "da", name: "Danish" },
+  { id: "fi", name: "Finnish" },
+  { id: "bg", name: "Bulgarian" },
+  { id: "hr", name: "Croatian" },
+  { id: "sk", name: "Slovak" },
+  { id: "ta", name: "Tamil" },
+  { id: "vi", name: "Vietnamese" },
+  { id: "no", name: "Norwegian" },
+  { id: "hu", name: "Hungarian" },
+  { id: "pt-br", name: "Portuguese (Brazil)" },
 ];
 
 interface AgentSettingsProps {
@@ -75,7 +99,7 @@ export function AgentSettings({
 }: AgentSettingsProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedVoice, setSelectedVoice] = React.useState(currentVoice || voices[0].id);
-  const [language, setLanguage] = React.useState(currentLanguage || "en-US");
+  const [language, setLanguage] = React.useState(currentLanguage || "en");
   const [knowledgeBase, setKnowledgeBase] = React.useState("none");
   const [humorLevel, setHumorLevel] = React.useState(currentHumorLevel);
   const [isLoading, setIsLoading] = React.useState(false);
