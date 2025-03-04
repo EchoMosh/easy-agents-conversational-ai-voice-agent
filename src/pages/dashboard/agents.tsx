@@ -56,6 +56,11 @@ const AgentsPage = () => {
               flowData = { nodes: [], edges: [] };
             }
 
+            // Set default language to "en" if not specified
+            if (!agent.language) {
+              agent.language = "en";
+            }
+
             if (flowData && (flowData.nodes || flowData.edges)) {
               console.log(`Valid flow data found for agent ${agent.id}:`, flowData);
               return {
@@ -88,6 +93,7 @@ const AgentsPage = () => {
             console.error(`Error parsing flow for agent ${agent.id}:`, e);
             return {
               ...agent,
+              language: agent.language || "en", // Ensure language default is "en"
               flow: {
                 nodes: [],
                 edges: []

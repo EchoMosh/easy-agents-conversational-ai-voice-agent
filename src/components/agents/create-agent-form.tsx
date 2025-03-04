@@ -87,7 +87,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           role: newAgent.role,
           tempAgentId: tempAgentId,
           createdAt: createdAt,
-          source: 'dashboard'
+          source: 'dashboard',
+          language: "en" // Setting default language to English
         }),
       });
       
@@ -133,7 +134,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          elevenlabs_agent_id: agentId
+          elevenlabs_agent_id: agentId,
+          language: "en" // Setting default language to English
         })
         .select()
         .single();
