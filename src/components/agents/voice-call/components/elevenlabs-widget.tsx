@@ -37,8 +37,8 @@ export function ElevenLabsWidget({ agent, onError }: ElevenLabsWidgetProps) {
         console.log("Agent data fetched:", agentData);
         
         // Use the ElevenLabs agent ID if available, otherwise use our agent ID
-        const elevenlabsAgentId = agentData.elevenlabs_agent_id || agent.id;
-        console.log("Using ElevenLabs agent ID:", elevenlabsAgentId);
+        const elevenlabsAgentId = agentData.elevenlabs_agent_id || null;
+        console.log("Using ElevenLabs agent ID:", elevenlabsAgentId || 'not available');
         
         if (!elevenlabsAgentId) {
           throw new Error('No ElevenLabs agent ID available. Please ensure the agent is properly configured.');
@@ -67,21 +67,28 @@ export function ElevenLabsWidget({ agent, onError }: ElevenLabsWidgetProps) {
         
         console.log("Signed URL obtained:", data.signedUrl);
         
-        // Create and append the ElevenLabs widget script
-        if (containerRef.current) {
+        // Create and append the ElevenLabs widget script with the exact implementation
+        if (containerRef.current && !scriptLoaded.current) {
           console.log("Creating ElevenLabs widget script...");
           
-          // Clean up any existing scripts
+          // Clean up any existing content
           containerRef.current.innerHTML = '';
           
           const script = document.createElement('script');
           script.src = 'https://cdn.elevenlabs.io/widget.js';
+          
+          // Set required attribute with the signed URL
           script.setAttribute('data-conversation-url', data.signedUrl);
+          
+          // Optionally, customize the widget
+          script.setAttribute('data-theme', 'light');
+          script.setAttribute('data-title', `Speaking with ${agent.name}`);
           
           // Add event listeners to track script loading
           script.onload = () => {
             console.log("ElevenLabs widget script loaded successfully");
             setIsLoading(false);
+            scriptLoaded.current = true;
           };
           
           script.onerror = (e) => {
@@ -92,7 +99,6 @@ export function ElevenLabsWidget({ agent, onError }: ElevenLabsWidgetProps) {
           };
           
           containerRef.current.appendChild(script);
-          scriptLoaded.current = true;
         }
       } catch (err) {
         console.error('Error loading ElevenLabs widget:', err);
