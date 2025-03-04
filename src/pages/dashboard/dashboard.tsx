@@ -14,9 +14,6 @@ import {
   Funnel,
   Cell,
   LabelList,
-  PieChart,
-  Pie,
-  Legend,
 } from "recharts";
 import { 
   ChevronUp, 
@@ -27,14 +24,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent, 
-  ChartLegend, 
-  ChartLegendContent,
-  type ChartConfig 
-} from "@/components/ui/chart";
 
 // Sample data for charts
 const activityData = [
@@ -56,63 +45,13 @@ const leadData = [
   { name: "Jun", leads: 290 },
 ];
 
-// Data for funnel chart
 const conversionData = [
-  { name: "Leads", value: 100, fill: "hsl(var(--chart-1))" },
-  { name: "Qualified", value: 80, fill: "hsl(var(--chart-2))" },
-  { name: "Meetings", value: 50, fill: "hsl(var(--chart-3))" },
-  { name: "Proposals", value: 30, fill: "hsl(var(--chart-4))" },
-  { name: "Converted", value: 20, fill: "hsl(var(--chart-5))" },
+  { name: "Leads", value: 100, fill: "#0088FE" },
+  { name: "Qualified", value: 80, fill: "#00C49F" },
+  { name: "Meetings", value: 50, fill: "#FFBB28" },
+  { name: "Proposals", value: 30, fill: "#FF8042" },
+  { name: "Converted", value: 20, fill: "#8884d8" },
 ];
-
-// Data for pie chart
-const conversionPieData = [
-  { name: "Converted", value: 68, fill: "hsl(var(--chart-1))" },
-  { name: "Pending", value: 22, fill: "hsl(var(--chart-2))" },
-  { name: "Lost", value: 10, fill: "hsl(var(--chart-3))" },
-];
-
-// Chart configs
-const leadChartConfig = {
-  leads: {
-    label: "Leads",
-    color: "hsl(var(--chart-1))",
-  },
-} satisfies ChartConfig;
-
-const activityChartConfig = {
-  value: {
-    label: "Activity",
-    color: "hsl(var(--chart-2))",
-  },
-  highlight: {
-    label: "Highlight",
-    color: "hsl(var(--chart-1))",
-  },
-} satisfies ChartConfig;
-
-const conversionChartConfig = {
-  Leads: {
-    label: "Leads",
-    color: "hsl(var(--chart-1))",
-  },
-  Qualified: {
-    label: "Qualified",
-    color: "hsl(var(--chart-2))",
-  },
-  Meetings: {
-    label: "Meetings",
-    color: "hsl(var(--chart-3))",
-  },
-  Proposals: {
-    label: "Proposals",
-    color: "hsl(var(--chart-4))",
-  },
-  Converted: {
-    label: "Converted",
-    color: "hsl(var(--chart-5))",
-  },
-} satisfies ChartConfig;
 
 export default function DashboardPage() {
   const [chartType, setChartType] = useState<"bar" | "area">("bar");
@@ -210,7 +149,7 @@ export default function DashboardPage() {
       </div>
       
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Lead Acquisition Chart - With Toggle - Using ShadCN Chart */}
+        {/* Lead Acquisition Chart - With Toggle */}
         <Card className="col-span-2 bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
           <CardHeader className="pb-2 pt-6 px-6">
             <div className="flex items-center justify-between">
@@ -241,67 +180,65 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="p-6 pt-4">
-            <ChartContainer config={leadChartConfig} className="min-h-[280px] w-full">
+            <ResponsiveContainer width="100%" height={280}>
               {chartType === 'area' ? (
-                <AreaChart data={leadData}>
+                <AreaChart data={leadData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#f1f5f9" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#f1f5f9" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f8fafc" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: '#94a3b8', fontSize: 12 }} 
-                    tickLine={false} 
-                    axisLine={{ stroke: '#f1f5f9' }}
-                    tickMargin={10}
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
+                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={{ stroke: '#f1f5f9' }} tickLine={false} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#fff', 
+                      border: 'none', 
+                      borderRadius: '8px', 
+                      boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1)'
+                    }}
+                    labelStyle={{ fontSize: 12, fontWeight: 500, color: '#333' }}
+                    itemStyle={{ fontSize: 12, color: '#666', padding: '2px 0' }}
                   />
-                  <YAxis 
-                    tick={{ fill: '#94a3b8', fontSize: 12 }} 
-                    axisLine={false} 
-                    tickLine={false}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
                   <Area 
                     type="monotone" 
                     dataKey="leads" 
-                    stroke="hsl(var(--chart-1))" 
+                    stroke="#0f172a" 
                     strokeWidth={1.5}
                     fillOpacity={1} 
                     fill="url(#colorLeads)" 
                   />
                 </AreaChart>
               ) : (
-                <BarChart data={leadData}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f8fafc" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: '#94a3b8', fontSize: 12 }} 
-                    tickLine={false} 
-                    axisLine={{ stroke: '#f1f5f9' }}
-                    tickMargin={10}
+                <BarChart data={leadData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={{ stroke: '#f1f5f9' }} tickLine={false} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#fff', 
+                      border: 'none', 
+                      borderRadius: '8px', 
+                      boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1)'
+                    }}
+                    labelStyle={{ fontSize: 12, fontWeight: 500, color: '#333' }}
+                    itemStyle={{ fontSize: 12, color: '#666', padding: '2px 0' }}
                   />
-                  <YAxis 
-                    tick={{ fill: '#94a3b8', fontSize: 12 }} 
-                    axisLine={false} 
-                    tickLine={false}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar 
                     dataKey="leads" 
-                    fill="var(--color-leads)"
+                    fill="#0f172a"
                     radius={[4, 4, 0, 0]} 
                     barSize={30}
                   />
                 </BarChart>
               )}
-            </ChartContainer>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
         
-        {/* Conversion Status as a Pie Chart using ShadCN Chart */}
+        {/* Funnel Chart - Replacing Pie Chart */}
         <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
           <CardHeader className="pb-2 pt-6 px-6">
             <CardTitle className="text-slate-900 text-base font-medium">Conversion Status</CardTitle>
@@ -310,31 +247,42 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 pt-2">
-            <ChartContainer config={conversionChartConfig} className="min-h-[250px] w-full">
-              <PieChart>
-                <Pie
-                  data={conversionPieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  innerRadius={40}
-                  fill="#8884d8"
+            <ResponsiveContainer width="100%" height={250}>
+              <FunnelChart>
+                <Tooltip 
+                  formatter={(value, name) => [`${value}`, name]}
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1)'
+                  }}
+                  labelStyle={{ fontSize: 12, fontWeight: 500, color: '#333' }}
+                  itemStyle={{ fontSize: 12, color: '#666', padding: '2px 0' }}
+                />
+                <Funnel
                   dataKey="value"
+                  data={conversionData}
+                  isAnimationActive
                 >
-                  {conversionPieData.map((entry, index) => (
+                  <LabelList 
+                    position="right" 
+                    fill="#666" 
+                    stroke="none" 
+                    dataKey="name" 
+                    fontSize={10} 
+                  />
+                  {conversionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
-                </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} verticalAlign="bottom" />
-              </PieChart>
-            </ChartContainer>
+                </Funnel>
+              </FunnelChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
       
-      {/* Bar Chart - Weekly Activity using ShadCN Chart */}
+      {/* Bar Chart - Weekly Activity */}
       <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
         <CardHeader className="pb-2 pt-6 px-6">
           <CardTitle className="text-slate-900 text-base font-medium">Weekly Activity</CardTitle>
@@ -343,37 +291,36 @@ export default function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6 pt-4">
-          <ChartContainer config={activityChartConfig} className="min-h-[240px] w-full">
-            <BarChart data={activityData}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f8fafc" />
-              <XAxis 
-                dataKey="name" 
-                tick={{ fill: '#94a3b8', fontSize: 12 }} 
-                tickLine={false} 
-                axisLine={{ stroke: '#f1f5f9' }}
-                tickMargin={10}
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={activityData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" vertical={false} />
+              <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={{ stroke: '#f1f5f9' }} tickLine={false} />
+              <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#fff', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1)'
+                }}
+                labelStyle={{ fontSize: 12, fontWeight: 500, color: '#333' }}
+                itemStyle={{ fontSize: 12, color: '#666', padding: '2px 0' }}
               />
-              <YAxis 
-                tick={{ fill: '#94a3b8', fontSize: 12 }} 
-                axisLine={false} 
-                tickLine={false}
-              />
-              <ChartTooltip content={<ChartTooltipContent />} />
               <Bar 
                 dataKey="value" 
-                fill="var(--color-value)"
-                radius={[4, 4, 0, 0]} 
+                fill="#f1f5f9"
+                radius={[4, 4, 0, 0]}
                 barSize={30}
               >
                 {activityData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`}
-                    fill={index === 4 ? "var(--color-highlight)" : "var(--color-value)"}
+                    fill={index === 4 ? "#0f172a" : "#f1f5f9"}
                   />
                 ))}
               </Bar>
             </BarChart>
-          </ChartContainer>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>

@@ -1,7 +1,7 @@
 
 import { Outlet, useLocation } from "react-router-dom";
+import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 
 export default function DashboardLayout() {
   const location = useLocation();
@@ -10,7 +10,7 @@ export default function DashboardLayout() {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen w-full bg-muted/10">
-        <DashboardSidebar />
+        <AppSidebar />
         <main className={`flex-1 overflow-auto w-full ${isAgentFlowPage ? 'pl-0 pr-0 pt-0 pb-0' : 'p-6'}`}>
           <Outlet />
         </main>
