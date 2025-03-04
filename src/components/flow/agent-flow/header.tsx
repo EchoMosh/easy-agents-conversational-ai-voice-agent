@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, PhoneCall, Settings } from "lucide-react";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
@@ -7,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
 import { VoiceCallDialog } from "@/components/agents/voice-call/voice-call-dialog";
+import { CallOptionDialog } from "@/components/agents/voice-call/components/call-option-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { FlowData, FlowNode } from "@/types/agent-types";
 
@@ -20,6 +22,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [showTrainingPopup, setShowTrainingPopup] = useState(false);
   const [showVoiceCallDialog, setShowVoiceCallDialog] = useState(false);
+  const [showCallOptions, setShowCallOptions] = useState(false);
   const [isUpdatingAgent, setIsUpdatingAgent] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
@@ -217,6 +220,10 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         title: "Success",
         description: "Agent update request sent successfully",
       });
+      
+      // Show call options after successful update
+      setShowCallOptions(true);
+      
     } catch (error) {
       console.error('Error updating agent:', error);
       toast({
@@ -227,6 +234,12 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     } finally {
       setIsUpdatingAgent(false);
     }
+  };
+
+  // Handle selecting desktop option
+  const handleSelectDesktop = () => {
+    setShowCallOptions(false);
+    setShowVoiceCallDialog(true);
   };
 
   return (
@@ -312,6 +325,12 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         agent={agent}
         open={showVoiceCallDialog}
         onOpenChange={setShowVoiceCallDialog}
+      />
+      
+      <CallOptionDialog
+        open={showCallOptions}
+        onOpenChange={setShowCallOptions}
+        onSelectDesktop={handleSelectDesktop}
       />
     </>
   );
