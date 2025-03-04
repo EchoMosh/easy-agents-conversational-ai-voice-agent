@@ -332,7 +332,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       <CallOptionDialog
         open={showCallOptions}
         onOpenChange={setShowCallOptions}
-        onSelectDesktop={handleSelectDesktop}
+        agent={agent}
       />
     </>
   );
