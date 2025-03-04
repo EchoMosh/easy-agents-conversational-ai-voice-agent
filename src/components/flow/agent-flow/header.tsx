@@ -11,6 +11,7 @@ import { VoiceCallDialog } from "@/components/agents/voice-call/voice-call-dialo
 import { CallOptionDialog } from "@/components/agents/voice-call/components/call-option-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { FlowData, FlowNode } from "@/types/agent-types";
+import { AIVoiceLoader } from "@/components/agents/ai-voice-loader";
 
 interface HeaderProps {
   agent: Agent;
@@ -244,6 +245,8 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
   return (
     <>
+      {isUpdatingAgent && <AIVoiceLoader />}
+      
       <div className="relative h-16 w-full bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl flex items-center px-8 z-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
         <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/30 to-white/60 dark:from-gray-900/60 dark:via-gray-800/30 dark:to-gray-900/60 pointer-events-none" />
         
@@ -285,7 +288,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             disabled={isUpdatingAgent}
           >
             <PhoneCall className="h-4 w-4 mr-2" />
-            {isUpdatingAgent ? "Sending data..." : "Call Me"}
+            {isUpdatingAgent ? "Processing..." : "Call Me"}
           </Button>
           
           <Button 
