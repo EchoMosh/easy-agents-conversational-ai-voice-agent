@@ -12,7 +12,8 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronUp,
-  Sparkles
+  Sparkles,
+  User
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { mainMenuItems } from "./sidebar/navigation-menu";
@@ -23,6 +24,7 @@ import {
   SidebarGroup, 
   SidebarGroupContent, 
   SidebarGroupLabel, 
+  SidebarHeader,
   SidebarMenu, 
   SidebarMenuButton, 
   SidebarMenuItem,
@@ -40,6 +42,10 @@ export function DashboardSidebar() {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const { setOpen } = useSidebar();
   const isAgentFlowPage = location.pathname.includes('/dashboard/agents/flow/');
+
+  // Get current page from path
+  const currentPath = location.pathname;
+  const currentPageTitle = getCurrentPageTitle(currentPath);
 
   // Credit usage data (would come from API in a real app)
   const creditUsage = {
@@ -94,15 +100,25 @@ export function DashboardSidebar() {
 
   return (
     <Sidebar className="border-r">
-      {/* Profile Section */}
-      <div className="flex items-center gap-3 px-4 py-3">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-          <AvatarFallback>JD</AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col">
-          <p className="text-sm font-medium">Jane Doe</p>
-          <p className="text-xs text-muted-foreground">Acme Corp</p>
+      {/* Page Title Header */}
+      <SidebarHeader className="p-4 border-b">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 rounded-md bg-primary text-primary-foreground">
+            <AvatarImage src="/lovable-uploads/9dbdc660-241b-43c5-beca-6e7b3153b4cc.png" alt="Acme Inc" />
+            <AvatarFallback className="rounded-md">AI</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <p className="text-sm font-semibold">Acme Inc</p>
+            <p className="text-xs text-muted-foreground">Enterprise</p>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      {/* Current Page Title Display */}
+      <div className="border-b px-4 py-2.5">
+        <div className="flex items-center text-sm font-medium text-muted-foreground">
+          <LayoutDashboard className="mr-2 h-4 w-4" />
+          Dashboard / {currentPageTitle}
         </div>
       </div>
 
@@ -195,4 +211,19 @@ export function DashboardSidebar() {
       </SidebarFooter>
     </Sidebar>
   );
+}
+
+// Helper function to get page title from path
+function getCurrentPageTitle(path: string): string {
+  // Extract the last part of the path
+  const segments = path.split('/').filter(Boolean);
+  const lastSegment = segments[segments.length - 1];
+  
+  // Capitalize and clean up the segment
+  if (!lastSegment) return 'Dashboard';
+  
+  return lastSegment
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
