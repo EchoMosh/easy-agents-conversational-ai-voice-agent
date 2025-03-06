@@ -90,6 +90,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       console.log('Sending webhook payload:', webhookPayload);
       
       // Send the data to the webhook with proper error handling
+      let webhookResult;
       try {
         const webhookResponse = await fetch('https://moshi.app.n8n.cloud/webhook-test/create-agent', {
           method: 'POST',
@@ -106,27 +107,32 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         }
         
         // Parse webhook response
-        const webhookResult = await webhookResponse.json();
+        webhookResult = await webhookResponse.json();
         console.log('Webhook response:', webhookResult);
         
-        // Extract any needed data from the webhook response
-        const vapiAgentId = webhookResult.vapiAgentId || tempAgentId;
-        
-        toast({
-          title: "Success",
-          description: "Agent created successfully. Redirecting to flow editor...",
-        });
       } catch (webhookError) {
         console.error('Webhook connection error:', webhookError);
+        const errorMessage = webhookError instanceof Error ? webhookError.message : String(webhookError);
+        setError(`Failed to connect to external service: ${errorMessage}`);
+        setIsCreating(false);
         
-        // If webhook fails, we'll proceed with creating the agent in the database anyway
-        // but log the webhook failure
         toast({
-          variant: "warning",
-          title: "Warning",
-          description: "Could not connect to external service, but creating agent anyway",
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create agent: Could not connect to external service",
         });
+        
+        // Critical failure - don't create the agent if webhook fails
+        return;
       }
+      
+      // Extract any needed data from the webhook response
+      const vapiAgentId = webhookResult?.vapiAgentId || tempAgentId;
+      
+      toast({
+        title: "Success",
+        description: "Agent created successfully. Redirecting to flow editor...",
+      });
       
       // Create the agent in our database
       const flow = getDefaultFlow();
@@ -141,7 +147,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          vapi_agent_id: tempAgentId, // We use the temp ID if the webhook didn't provide one
+          vapi_agent_id: vapiAgentId, // Use the ID from webhook response
           language: "en" // Setting default language to English
         })
         .select()
