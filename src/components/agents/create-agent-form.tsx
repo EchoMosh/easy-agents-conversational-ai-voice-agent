@@ -71,6 +71,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         .eq('id', session.user.id)
         .single();
         
+      console.log('Profile data retrieved:', profile);
+      
       // Unique tracking ID for this agent creation operation
       const tempAgentId = crypto.randomUUID();
       const createdAt = new Date().toISOString();
@@ -91,7 +93,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         language: "en" // Setting default language to English
       };
       
-      console.log('Sending webhook payload:', webhookPayload);
+      console.log('Prepared webhook payload:', JSON.stringify(webhookPayload));
       
       // Send the data to the webhook with proper error handling
       let webhookResult;
@@ -99,28 +101,85 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         setIsWebhookPending(true);
         console.log('Sending webhook request to: https://moshi.app.n8n.cloud/webhook-test/create-agent');
         
-        const webhookResponse = await fetch('https://moshi.app.n8n.cloud/webhook-test/create-agent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(webhookPayload),
+        // Add more detailed request information
+        console.log('Request method: POST');
+        console.log('Request headers:', {
+          'Content-Type': 'application/json',
         });
+        console.log('Request body size (bytes):', new Blob([JSON.stringify(webhookPayload)]).size);
+        
+        const startTime = performance.now();
+        let webhookResponse;
+        
+        try {
+          webhookResponse = await fetch('https://moshi.app.n8n.cloud/webhook-test/create-agent', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(webhookPayload),
+          });
+          
+          const endTime = performance.now();
+          console.log(`Webhook request completed in ${endTime - startTime}ms with status: ${webhookResponse.status}`);
+          
+        } catch (fetchError) {
+          console.error('Fetch operation failed:', fetchError);
+          console.error('Error type:', fetchError instanceof Error ? fetchError.constructor.name : typeof fetchError);
+          if (fetchError instanceof TypeError) {
+            console.error('This might be a CORS, network connectivity, or firewall issue');
+          }
+          throw fetchError;
+        }
         
         setIsWebhookPending(false);
         
         if (!webhookResponse.ok) {
-          const errorText = await webhookResponse.text();
+          const contentType = webhookResponse.headers.get('content-type');
+          console.error('Response content type:', contentType);
+          
+          let errorText;
+          try {
+            if (contentType && contentType.includes('application/json')) {
+              const errorJson = await webhookResponse.json();
+              errorText = JSON.stringify(errorJson);
+            } else {
+              errorText = await webhookResponse.text();
+            }
+          } catch (parseError) {
+            console.error('Error parsing response:', parseError);
+            errorText = `Failed to parse error response: ${parseError}`;
+          }
+          
           console.error('Webhook error:', errorText);
+          console.error('Response status:', webhookResponse.status);
+          console.error('Response status text:', webhookResponse.statusText);
           throw new Error(`Webhook failed with status ${webhookResponse.status}: ${errorText}`);
         }
         
         // Parse webhook response
-        webhookResult = await webhookResponse.json();
-        console.log('Webhook response:', webhookResult);
+        try {
+          webhookResult = await webhookResponse.json();
+          console.log('Webhook response successfully parsed:', webhookResult);
+        } catch (jsonError) {
+          console.error('Error parsing JSON response:', jsonError);
+          const responseText = await webhookResponse.text();
+          console.log('Raw response content:', responseText);
+          throw new Error(`Failed to parse webhook response: ${jsonError}`);
+        }
         
       } catch (webhookError) {
         console.error('Webhook connection error:', webhookError);
+        // Log all properties of the error object for debugging
+        if (webhookError instanceof Error) {
+          console.error('Error name:', webhookError.name);
+          console.error('Error message:', webhookError.message);
+          console.error('Error stack:', webhookError.stack);
+        } else {
+          console.error('Non-Error webhook error type:', typeof webhookError);
+          console.error('String representation:', String(webhookError));
+        }
+        
         const errorMessage = webhookError instanceof Error ? webhookError.message : String(webhookError);
         setError(`Failed to connect to external service: ${errorMessage}`);
         setIsCreating(false);
