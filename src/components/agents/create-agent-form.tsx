@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Agent } from "@/types/agent-types";
+import { Agent } from "@/types/agent";
 import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
 import { TemplateStep } from "./form-steps/template-step";
@@ -97,24 +97,33 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         throw new Error(`Failed to create agent: ${errorText}`);
       }
       
+      // Create VAPI agent using our new edge function
+      console.log('Creating VAPI agent...');
+      const vapiResponse = await supabase.functions.invoke('create-vapi-agent', {
+        body: {
+          name: newAgent.name,
+          role: newAgent.role,
+          objective: 'answer_calls',
+          language: "en"
+        }
+      });
+      
+      if (vapiResponse.error) {
+        console.error('Error creating VAPI agent:', vapiResponse.error);
+        throw new Error(`Failed to create VAPI agent: ${vapiResponse.error}`);
+      }
+      
+      console.log('VAPI agent creation response:', vapiResponse.data);
+      
+      const vapiAgentId = vapiResponse.data?.vapiAgentId;
+      if (!vapiAgentId) {
+        console.error('No VAPI agent ID found in response:', vapiResponse.data);
+        throw new Error("Could not retrieve VAPI agent ID from the response");
+      }
+      
+      // For backward compatibility, also check the previous webhook response
       const result = await response.json();
       console.log('Webhook response:', result);
-      
-      // More robust check for response - looking for agent_id in various possible formats
-      let agentId = null;
-      
-      if (Array.isArray(result) && result.length > 0) {
-        // Format: [{agent_id: "xxx"}]
-        agentId = result[0].agent_id;
-      } else if (result && typeof result === 'object') {
-        // Format: {agent_id: "xxx"} or other object structure
-        agentId = result.agent_id;
-      }
-      
-      if (!agentId) {
-        console.error('No agent_id found in response:', result);
-        throw new Error("Could not retrieve agent ID from the webhook response");
-      }
       
       toast({
         title: "Success",
@@ -134,7 +143,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          elevenlabs_agent_id: agentId,
+          vapi_agent_id: vapiAgentId, // Store VAPI agent ID instead of ElevenLabs
           language: "en" // Setting default language to English
         })
         .select()
