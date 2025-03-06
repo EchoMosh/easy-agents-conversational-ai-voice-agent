@@ -112,6 +112,9 @@ serve(async (req) => {
     console.log('Sending request to VAPI API...');
     let response;
     try {
+      // Log header information (without the actual API key)
+      console.log('Using Authorization header: Bearer [API_KEY_MASKED]');
+      
       response = await fetch(
         "https://api.vapi.ai/assistant",
         {
