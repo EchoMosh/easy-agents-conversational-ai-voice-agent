@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Wand2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import type { Agent } from "@/types/agent";
 
 interface TemplateStepProps {
@@ -20,10 +21,50 @@ export function TemplateStep({
   onBack,
   showOnlyScratch = false,
 }: TemplateStepProps) {
+  const { toast } = useToast();
+  
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (selectedTemplate || selectedTemplate === '')) {
       e.preventDefault();
       onNext();
+    }
+  };
+
+  const handleContinueClick = async () => {
+    try {
+      // Send a simple POST request to the n8n webhook
+      const response = await fetch('https://moshi.app.n8n.cloud/webhook/create-agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: "New Agent",
+          role: "virtual_assistant",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Webhook response:', data);
+      
+      toast({
+        title: "Success",
+        description: "Agent creation request sent successfully",
+      });
+      
+      // Call onTemplateSelect with the scratch template and virtual_assistant role
+      onTemplateSelect('', 'virtual_assistant');
+    } catch (error) {
+      console.error('Error sending webhook:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to send agent creation request",
+      });
     }
   };
 
@@ -72,7 +113,7 @@ export function TemplateStep({
         <Button 
           className="w-full relative"
           size="lg"
-          onClick={onNext}
+          onClick={handleContinueClick}
           disabled={selectedTemplate === undefined}
         >
           Continue
