@@ -79,7 +79,7 @@ serve(async (req) => {
       systemPrompt += ` Your primary objective is to ${objective}.`;
     }
     
-    // Create the payload for VAPI
+    // Create the payload for VAPI exactly matching the provided format
     const payload = {
       voice: {
         provider: "11labs",
@@ -108,7 +108,7 @@ serve(async (req) => {
     
     console.log('Payload to be sent to VAPI API:', JSON.stringify(payload, null, 2));
     
-    // Create a new agent in VAPI using the correct format
+    // Create a new agent in VAPI using the exact format provided
     console.log('Sending request to VAPI API...');
     let response;
     try {
@@ -121,8 +121,8 @@ serve(async (req) => {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
           },
           body: JSON.stringify(payload),
         }
