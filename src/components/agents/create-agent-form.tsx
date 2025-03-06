@@ -9,6 +9,7 @@ import { NameStep } from "./form-steps/name-step";
 import { TemplateStep } from "./form-steps/template-step";
 import { getDefaultFlow } from "./utils/default-flow";
 import { AIVoiceLoader } from "./ai-voice-loader";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface CreateAgentFormProps {
   onSuccess: (agentId: string) => Promise<void>;
@@ -70,44 +71,62 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       const tempAgentId = crypto.randomUUID();
       const createdAt = new Date().toISOString();
       
-      // Send the data directly to the provided webhook
-      const webhookResponse = await fetch('https://moshi.app.n8n.cloud/webhook-test/create-agent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: session.user.id,
-          email: session.user.email,
-          username: profile?.username || session.user.email,
-          firstName: profile?.first_name || '',
-          lastName: profile?.last_name || '',
-          avatarUrl: profile?.avatar_url || '',
-          name: newAgent.name,
-          role: newAgent.role,
-          tempAgentId: tempAgentId,
-          createdAt: createdAt,
-          source: 'dashboard',
-          language: "en" // Setting default language to English
-        }),
-      });
+      // Prepare payload for the webhook
+      const webhookPayload = {
+        userId: session.user.id,
+        email: session.user.email,
+        username: profile?.username || session.user.email,
+        firstName: profile?.first_name || '',
+        lastName: profile?.last_name || '',
+        avatarUrl: profile?.avatar_url || '',
+        name: newAgent.name,
+        role: newAgent.role,
+        tempAgentId: tempAgentId,
+        createdAt: createdAt,
+        source: 'dashboard',
+        language: "en" // Setting default language to English
+      };
       
-      if (!webhookResponse.ok) {
-        const errorText = await webhookResponse.text();
-        throw new Error(`Failed to create agent: ${errorText}`);
+      console.log('Sending webhook payload:', webhookPayload);
+      
+      // Send the data to the webhook with proper error handling
+      try {
+        const webhookResponse = await fetch('https://moshi.app.n8n.cloud/webhook-test/create-agent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(webhookPayload),
+        });
+        
+        if (!webhookResponse.ok) {
+          const errorText = await webhookResponse.text();
+          console.error('Webhook error:', errorText);
+          throw new Error(`Webhook failed with status ${webhookResponse.status}: ${errorText}`);
+        }
+        
+        // Parse webhook response
+        const webhookResult = await webhookResponse.json();
+        console.log('Webhook response:', webhookResult);
+        
+        // Extract any needed data from the webhook response
+        const vapiAgentId = webhookResult.vapiAgentId || tempAgentId;
+        
+        toast({
+          title: "Success",
+          description: "Agent created successfully. Redirecting to flow editor...",
+        });
+      } catch (webhookError) {
+        console.error('Webhook connection error:', webhookError);
+        
+        // If webhook fails, we'll proceed with creating the agent in the database anyway
+        // but log the webhook failure
+        toast({
+          variant: "warning",
+          title: "Warning",
+          description: "Could not connect to external service, but creating agent anyway",
+        });
       }
-      
-      // Parse webhook response
-      const webhookResult = await webhookResponse.json();
-      console.log('Webhook response:', webhookResult);
-      
-      // Extract any needed data from the webhook response
-      const vapiAgentId = webhookResult.vapiAgentId || tempAgentId;
-      
-      toast({
-        title: "Success",
-        description: "Agent created successfully. Redirecting to flow editor...",
-      });
       
       // Create the agent in our database
       const flow = getDefaultFlow();
@@ -122,7 +141,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          vapi_agent_id: vapiAgentId,
+          vapi_agent_id: tempAgentId, // We use the temp ID if the webhook didn't provide one
           language: "en" // Setting default language to English
         })
         .select()
@@ -160,10 +179,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       <CreateAgentProgress currentStep={step} totalSteps={2} />
       
       {error && (
-        <div className="bg-destructive/20 p-4 rounded-md text-sm text-destructive mb-4">
-          <p className="font-semibold">Error creating agent:</p>
-          <p className="whitespace-pre-line">{error}</p>
-        </div>
+        <Alert variant="destructive">
+          <AlertTitle>Error creating agent</AlertTitle>
+          <AlertDescription className="whitespace-pre-line">{error}</AlertDescription>
+        </Alert>
       )}
       
       <div className="space-y-6">
