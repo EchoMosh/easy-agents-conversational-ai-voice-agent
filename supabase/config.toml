@@ -4,4 +4,5 @@ project_id = "ahpmmgnkksrbpthniptg"
 verify_jwt = true
 [functions.create-elevenlabs-agent]
 verify_jwt = true
-
+[functions.webhook-relay]
+verify_jwt = true

@@ -66,37 +66,51 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       // Generate a unique ID for this new agent
       const tempAgentId = crypto.randomUUID();
       
-      setCreationStatus("Creating ElevenLabs voice agent...");
-      console.log("Calling Supabase Edge Function create-elevenlabs-agent...");
+      setCreationStatus("Sending request to webhook via relay...");
+      console.log("Calling Supabase Edge Function webhook-relay...");
       
-      // Call our Supabase Edge Function directly
-      const { data: elevenlabsData, error: elevenlabsError } = await supabase.functions.invoke(
-        'create-elevenlabs-agent',
+      // Call our webhook relay function
+      const { data: webhookData, error: webhookError } = await supabase.functions.invoke(
+        'webhook-relay',
         {
           body: JSON.stringify({
-            name: newAgent.name,
-            role: newAgent.role,
-            language: "en",
-            objective: "answer_calls"
+            // Include your n8n.io webhook URL here or configure it as an environment variable
+            // webhookUrl: "YOUR_N8N_WEBHOOK_URL", 
+            payload: {
+              name: newAgent.name,
+              role: newAgent.role,
+              language: "en",
+              objective: "answer_calls",
+              userId: session.user.id,
+              tempAgentId: tempAgentId
+            }
           })
         }
       );
       
-      if (elevenlabsError) {
-        console.error('Supabase function error:', elevenlabsError);
-        throw new Error(`Failed to create ElevenLabs agent: ${elevenlabsError.message || 'Unknown error'}`);
+      if (webhookError) {
+        console.error('Webhook relay error:', webhookError);
+        throw new Error(`Failed to relay webhook: ${webhookError.message || 'Unknown error'}`);
       }
       
-      console.log('ElevenLabs agent creation response:', elevenlabsData);
+      console.log('Webhook response:', webhookData);
       
-      if (!elevenlabsData || !elevenlabsData.success) {
-        const errorMsg = elevenlabsData?.error || 'Unknown error creating ElevenLabs agent';
-        console.error('ElevenLabs agent creation failed:', errorMsg);
-        throw new Error(`ElevenLabs agent creation failed: ${errorMsg}`);
+      if (!webhookData || !webhookData.success) {
+        const errorMsg = webhookData?.error || 'Unknown error calling webhook';
+        console.error('Webhook call failed:', errorMsg);
+        throw new Error(`Webhook call failed: ${errorMsg}`);
       }
       
-      const elevenlabsAgentId = elevenlabsData.elevenlabsAgentId;
-      console.log('Successfully created ElevenLabs agent with ID:', elevenlabsAgentId);
+      // Extract the agent ID from the webhook response
+      // Adjust this based on your actual webhook response structure
+      const externalAgentId = webhookData.response?.agentId;
+      
+      if (!externalAgentId) {
+        console.error('External agent ID not found in webhook response');
+        throw new Error('External agent ID not found in webhook response');
+      }
+      
+      console.log('Successfully received agent ID from webhook:', externalAgentId);
       
       setCreationStatus("Creating agent in database...");
       
@@ -118,7 +132,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          elevenlabs_agent_id: elevenlabsAgentId,
+          elevenlabs_agent_id: externalAgentId, // Store the external agent ID
           language: "en"
         })
         .select()
