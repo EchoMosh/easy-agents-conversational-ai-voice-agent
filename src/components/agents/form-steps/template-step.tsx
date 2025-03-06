@@ -32,7 +32,7 @@ export function TemplateStep({
 
   const handleContinueClick = async () => {
     try {
-      // Send a simple POST request to the n8n webhook
+      // Send a direct POST request to the n8n webhook
       const response = await fetch('https://moshi.app.n8n.cloud/webhook/create-agent', {
         method: 'POST',
         headers: {

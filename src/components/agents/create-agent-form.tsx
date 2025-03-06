@@ -66,58 +66,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       // Generate a unique ID for this new agent
       const tempAgentId = crypto.randomUUID();
       
-      setCreationStatus("Sending request to webhook via relay...");
-      console.log("Calling Supabase Edge Function webhook-relay...");
-      
-      // Call our webhook relay function
-      const { data: webhookData, error: webhookError } = await supabase.functions.invoke(
-        'webhook-relay',
-        {
-          body: JSON.stringify({
-            // Include your n8n.io webhook URL here or configure it as an environment variable
-            // webhookUrl: "YOUR_N8N_WEBHOOK_URL", 
-            payload: {
-              name: newAgent.name,
-              role: newAgent.role,
-              language: "en",
-              objective: "answer_calls",
-              userId: session.user.id,
-              tempAgentId: tempAgentId
-            }
-          })
-        }
-      );
-      
-      if (webhookError) {
-        console.error('Webhook relay error:', webhookError);
-        throw new Error(`Failed to relay webhook: ${webhookError.message || 'Unknown error'}`);
-      }
-      
-      console.log('Webhook response:', webhookData);
-      
-      if (!webhookData || !webhookData.success) {
-        const errorMsg = webhookData?.error || 'Unknown error calling webhook';
-        console.error('Webhook call failed:', errorMsg);
-        throw new Error(`Webhook call failed: ${errorMsg}`);
-      }
-      
-      // Extract the agent ID from the webhook response
-      // Adjust this based on your actual webhook response structure
-      const externalAgentId = webhookData.response?.agentId;
-      
-      if (!externalAgentId) {
-        console.error('External agent ID not found in webhook response');
-        throw new Error('External agent ID not found in webhook response');
-      }
-      
-      console.log('Successfully received agent ID from webhook:', externalAgentId);
-      
-      setCreationStatus("Creating agent in database...");
-      
-      toast({
-        title: "Success",
-        description: "Agent created successfully. Redirecting to flow editor...",
-      });
+      setCreationStatus("Creating agent...");
       
       // Create the agent in our database
       const flow = getDefaultFlow();
@@ -132,7 +81,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          elevenlabs_agent_id: externalAgentId, // Store the external agent ID
           language: "en"
         })
         .select()
@@ -145,6 +93,12 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       }
 
       setCreationStatus("Agent created successfully, redirecting...");
+      
+      toast({
+        title: "Success",
+        description: "Agent created successfully. Redirecting to flow editor...",
+      });
+      
       await onSuccess(data.id);
       navigate(`/dashboard/agents/flow/${data.id}`, { replace: true });
     } catch (error) {
