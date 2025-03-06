@@ -15,9 +15,14 @@ serve(async (req) => {
   console.log('Function started - new request received');
 
   try {
+    // Log request details
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    
     // Log the raw request body for debugging
     const rawBody = await req.text();
-    console.log('Raw request body:', rawBody);
+    console.log('Raw request body (length):', rawBody.length);
+    console.log('Raw request body sample:', rawBody.substring(0, 500) + (rawBody.length > 500 ? '...' : ''));
     
     // Parse the request body
     let requestData;
@@ -96,9 +101,10 @@ serve(async (req) => {
     console.log('Using ElevenLabs API endpoint: https://api.elevenlabs.io/v1/convai/agents/create-agent');
 
     // Create a new agent in ElevenLabs with the correct endpoint
-    console.log('Sending request to ElevenLabs API...');
+    console.log('Sending request to ElevenLabs API at:', new Date().toISOString());
     let response;
     try {
+      const fetchStartTime = Date.now();
       response = await fetch(
         "https://api.elevenlabs.io/v1/convai/agents/create-agent",
         {
@@ -112,14 +118,20 @@ serve(async (req) => {
         }
       );
       
+      const fetchEndTime = Date.now();
+      console.log(`ElevenLabs API response received in ${fetchEndTime - fetchStartTime}ms`);
       console.log(`ElevenLabs API response status: ${response.status}`);
+      console.log('ElevenLabs API response headers:', Object.fromEntries(response.headers.entries()));
     } catch (fetchError) {
       console.error('Network error while fetching from ElevenLabs API:', fetchError);
+      console.error('Error name:', fetchError.name);
+      console.error('Error message:', fetchError.message);
       throw new Error(`Network error connecting to ElevenLabs API: ${fetchError.message}`);
     }
 
     const responseText = await response.text();
-    console.log(`ElevenLabs API response body: ${responseText}`);
+    console.log(`ElevenLabs API response length: ${responseText.length}`);
+    console.log(`ElevenLabs API response body sample: ${responseText.substring(0, 500)}${responseText.length > 500 ? '...' : ''}`);
 
     if (!response.ok) {
       console.error(`ElevenLabs API error (${response.status}):`, responseText);
@@ -140,6 +152,7 @@ serve(async (req) => {
       console.log('Parsed response from ElevenLabs:', JSON.stringify(data, null, 2));
     } catch (e) {
       console.error('Failed to parse ElevenLabs API response as JSON:', e);
+      console.error('Response text causing parse error:', responseText);
       throw new Error('Invalid response format from ElevenLabs API');
     }
     

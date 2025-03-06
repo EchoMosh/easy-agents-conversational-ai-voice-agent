@@ -24,6 +24,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [isWebhookPending, setIsWebhookPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [webhookDetails, setWebhookDetails] = useState<string | null>(null);
   const [newAgent, setNewAgent] = useState<{
     name: string;
     role: Agent["role"];
@@ -47,6 +48,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     setIsCreating(true);
     setIsWebhookPending(true);
     setError(null);
+    setWebhookDetails(null);
 
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -94,11 +96,14 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       };
       
       console.log('Prepared webhook payload:', JSON.stringify(webhookPayload));
+      console.log('Network status: ', navigator.onLine ? 'Online' : 'Offline');
+      console.log('Starting webhook call to n8n at:', new Date().toISOString());
       
       // Send the data to the webhook with proper error handling
       let webhookResult;
       try {
         setIsWebhookPending(true);
+        setWebhookDetails("Connecting to n8n webhook...");
         console.log('Sending webhook request to: https://moshi.app.n8n.cloud/webhook-test/create-agent');
         
         // Add more detailed request information
@@ -106,36 +111,92 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         console.log('Request headers:', {
           'Content-Type': 'application/json',
         });
-        console.log('Request body size (bytes):', new Blob([JSON.stringify(webhookPayload)]).size);
+        
+        const payloadSize = new Blob([JSON.stringify(webhookPayload)]).size;
+        console.log('Request payload size (bytes):', payloadSize);
+        console.log('Full request payload for debugging:', JSON.stringify(webhookPayload, null, 2));
         
         const startTime = performance.now();
+        setWebhookDetails("Initializing request to n8n webhook...");
+        
         let webhookResponse;
+        const webhookUrl = 'https://moshi.app.n8n.cloud/webhook-test/create-agent';
         
         try {
-          webhookResponse = await fetch('https://moshi.app.n8n.cloud/webhook-test/create-agent', {
+          setWebhookDetails("Sending request to n8n webhook...");
+          console.log(`DNS prefetch attempt for: ${new URL(webhookUrl).hostname}`);
+          
+          // Try to prefetch the DNS to see if there's any resolution issues
+          if ('preconnect' in document.createElement('link')) {
+            const link = document.createElement('link');
+            link.rel = 'preconnect';
+            link.href = webhookUrl;
+            document.head.appendChild(link);
+            console.log('Preconnect link added');
+            
+            // Remove after 2 seconds
+            setTimeout(() => {
+              document.head.removeChild(link);
+            }, 2000);
+          }
+          
+          // Add timeout to the fetch request
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+          
+          console.log('Initiating fetch with timeout at:', new Date().toISOString());
+          webhookResponse = await fetch(webhookUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(webhookPayload),
+            signal: controller.signal,
           });
+          
+          clearTimeout(timeoutId);
           
           const endTime = performance.now();
           console.log(`Webhook request completed in ${endTime - startTime}ms with status: ${webhookResponse.status}`);
+          console.log('Response headers:', [...webhookResponse.headers.entries()]);
           
         } catch (fetchError) {
-          console.error('Fetch operation failed:', fetchError);
+          const endTime = performance.now();
+          console.error(`Fetch operation failed after ${endTime - startTime}ms:`, fetchError);
           console.error('Error type:', fetchError instanceof Error ? fetchError.constructor.name : typeof fetchError);
+          console.error('Error message:', fetchError instanceof Error ? fetchError.message : String(fetchError));
+          
+          if (fetchError.name === 'AbortError') {
+            console.error('Request was aborted due to timeout');
+            throw new Error('Request timed out after 30 seconds');
+          }
+          
           if (fetchError instanceof TypeError) {
             console.error('This might be a CORS, network connectivity, or firewall issue');
+            
+            // Try to ping the domain to check connectivity
+            console.log('Attempting to check if domain is reachable...');
+            try {
+              const pingImg = new Image();
+              pingImg.onload = () => console.log('Domain appears to be reachable');
+              pingImg.onerror = () => console.log('Domain appears to be unreachable');
+              pingImg.src = `https://${new URL(webhookUrl).hostname}/favicon.ico?${new Date().getTime()}`;
+            } catch (pingError) {
+              console.error('Error while pinging domain:', pingError);
+            }
           }
-          throw fetchError;
+          
+          setWebhookDetails("Connection to external service failed");
+          throw new Error(`Connection failed: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`);
         }
         
         setIsWebhookPending(false);
+        setWebhookDetails("Webhook request completed, processing response...");
         
         if (!webhookResponse.ok) {
           const contentType = webhookResponse.headers.get('content-type');
+          console.error('Response status:', webhookResponse.status);
+          console.error('Response status text:', webhookResponse.statusText);
           console.error('Response content type:', contentType);
           
           let errorText;
@@ -143,29 +204,39 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             if (contentType && contentType.includes('application/json')) {
               const errorJson = await webhookResponse.json();
               errorText = JSON.stringify(errorJson);
+              console.error('JSON error response:', errorJson);
             } else {
               errorText = await webhookResponse.text();
+              console.error('Text error response:', errorText);
             }
           } catch (parseError) {
             console.error('Error parsing response:', parseError);
             errorText = `Failed to parse error response: ${parseError}`;
           }
           
-          console.error('Webhook error:', errorText);
-          console.error('Response status:', webhookResponse.status);
-          console.error('Response status text:', webhookResponse.statusText);
+          setWebhookDetails(null);
           throw new Error(`Webhook failed with status ${webhookResponse.status}: ${errorText}`);
         }
         
         // Parse webhook response
         try {
-          webhookResult = await webhookResponse.json();
-          console.log('Webhook response successfully parsed:', webhookResult);
-        } catch (jsonError) {
-          console.error('Error parsing JSON response:', jsonError);
+          setWebhookDetails("Parsing webhook response...");
+          console.log('Attempting to parse response as JSON');
           const responseText = await webhookResponse.text();
-          console.log('Raw response content:', responseText);
-          throw new Error(`Failed to parse webhook response: ${jsonError}`);
+          console.log('Raw response text:', responseText);
+          
+          try {
+            webhookResult = responseText ? JSON.parse(responseText) : {};
+            console.log('Webhook response successfully parsed:', webhookResult);
+          } catch (jsonParseError) {
+            console.error('JSON parse error:', jsonParseError);
+            console.error('Response text causing parse error:', responseText);
+            throw new Error(`Failed to parse webhook response as JSON: ${jsonParseError.message}`);
+          }
+        } catch (responseError) {
+          console.error('Error processing response:', responseError);
+          setWebhookDetails(null);
+          throw new Error(`Failed to process webhook response: ${responseError.message}`);
         }
         
       } catch (webhookError) {
@@ -184,6 +255,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         setError(`Failed to connect to external service: ${errorMessage}`);
         setIsCreating(false);
         setIsWebhookPending(false);
+        setWebhookDetails(null);
         
         toast({
           variant: "destructive",
@@ -195,7 +267,18 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         return;
       }
       
+      // Only proceed with agent creation if webhook was successful
+      if (!webhookResult) {
+        console.error('Webhook did not return a result');
+        setError('External service did not return a valid response');
+        setIsCreating(false);
+        setIsWebhookPending(false);
+        setWebhookDetails(null);
+        return;
+      }
+      
       // Extract any needed data from the webhook response
+      setWebhookDetails("Webhook successful. Creating agent in database...");
       const vapiAgentId = webhookResult?.vapiAgentId || tempAgentId;
       
       toast({
@@ -225,9 +308,11 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       if (error) {
         console.error('Error creating agent in database:', error);
         setError(`Failed to create agent in database: ${error.message}`);
+        setWebhookDetails(null);
         throw error;
       }
 
+      setWebhookDetails("Agent created successfully, redirecting...");
       await onSuccess(data.id);
       navigate(`/dashboard/agents/flow/${data.id}`, { replace: true });
     } catch (error) {
@@ -243,6 +328,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       });
       setIsCreating(false);
       setIsWebhookPending(false);
+      setWebhookDetails(null);
     }
   };
 
@@ -258,6 +344,11 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
               <p className="text-muted-foreground text-center">
                 Please wait while we connect to the external service...
               </p>
+              {webhookDetails && (
+                <div className="w-full mt-4 p-2 bg-muted rounded-md">
+                  <p className="text-sm text-muted-foreground">{webhookDetails}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
