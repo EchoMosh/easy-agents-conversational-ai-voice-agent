@@ -39,7 +39,7 @@ serve(async (req) => {
     console.log(`Creating VAPI agent: ${name}, role: ${role}, language: ${language}`);
     
     // Check if API key is configured
-    const apiKey = Deno.env.get('VAPI_API_KEY');
+    const apiKey = "f2095119-4151-4fea-9235-73b45b984788"; // Hardcoded API key as requested
     if (!apiKey) {
       console.error('VAPI_API_KEY environment variable is not set');
       throw new Error('VAPI API key not configured');
