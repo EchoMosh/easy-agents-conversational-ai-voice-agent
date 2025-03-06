@@ -108,7 +108,7 @@ serve(async (req) => {
     
     console.log('Payload to be sent to VAPI API:', JSON.stringify(payload, null, 2));
     
-    // Create a new agent in VAPI - using explicit string for the API key header
+    // Create a new agent in VAPI using the correct format
     console.log('Sending request to VAPI API...');
     let response;
     try {
@@ -121,7 +121,7 @@ serve(async (req) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`,
+            "Authorization": `Bearer ${apiKey}`
           },
           body: JSON.stringify(payload),
         }
