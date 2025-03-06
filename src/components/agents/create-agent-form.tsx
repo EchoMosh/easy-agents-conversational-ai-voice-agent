@@ -10,6 +10,7 @@ import { TemplateStep } from "./form-steps/template-step";
 import { getDefaultFlow } from "./utils/default-flow";
 import { AIVoiceLoader } from "./ai-voice-loader";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface CreateAgentFormProps {
   onSuccess: (agentId: string) => Promise<void>;
@@ -21,6 +22,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
+  const [isWebhookPending, setIsWebhookPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newAgent, setNewAgent] = useState<{
     name: string;
@@ -43,6 +45,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     setIsCreating(true);
+    setIsWebhookPending(true);
     setError(null);
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -54,6 +57,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         description: "You must be logged in to create an agent",
       });
       setIsCreating(false);
+      setIsWebhookPending(false);
       return;
     }
 
@@ -92,6 +96,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       // Send the data to the webhook with proper error handling
       let webhookResult;
       try {
+        setIsWebhookPending(true);
+        console.log('Sending webhook request to: https://moshi.app.n8n.cloud/webhook-test/create-agent');
+        
         const webhookResponse = await fetch('https://moshi.app.n8n.cloud/webhook-test/create-agent', {
           method: 'POST',
           headers: {
@@ -99,6 +106,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           },
           body: JSON.stringify(webhookPayload),
         });
+        
+        setIsWebhookPending(false);
         
         if (!webhookResponse.ok) {
           const errorText = await webhookResponse.text();
@@ -115,6 +124,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         const errorMessage = webhookError instanceof Error ? webhookError.message : String(webhookError);
         setError(`Failed to connect to external service: ${errorMessage}`);
         setIsCreating(false);
+        setIsWebhookPending(false);
         
         toast({
           variant: "destructive",
@@ -173,11 +183,27 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         description: errorMessage,
       });
       setIsCreating(false);
+      setIsWebhookPending(false);
     }
   };
 
   if (isCreating) {
-    return <AIVoiceLoader />;
+    return (
+      <div className="space-y-6 py-6">
+        <AIVoiceLoader />
+        {isWebhookPending && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+            <div className="bg-background border border-border rounded-lg shadow-lg p-8 max-w-md w-full mx-auto flex flex-col items-center space-y-4">
+              <LoadingSpinner className="h-10 w-10" />
+              <h3 className="text-xl font-medium text-foreground">Connecting to service</h3>
+              <p className="text-muted-foreground text-center">
+                Please wait while we connect to the external service...
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
