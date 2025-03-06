@@ -70,8 +70,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       const tempAgentId = crypto.randomUUID();
       const createdAt = new Date().toISOString();
       
-      // Make POST request to the webhook with expanded user information
-      const response = await fetch('https://moshi.app.n8n.cloud/webhook/create-agent', {
+      // Send the data directly to the provided webhook
+      const webhookResponse = await fetch('https://moshi.app.n8n.cloud/webhook-test/create-agent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,45 +92,24 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         }),
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
+      if (!webhookResponse.ok) {
+        const errorText = await webhookResponse.text();
         throw new Error(`Failed to create agent: ${errorText}`);
       }
       
-      // Create VAPI agent using our new edge function
-      console.log('Creating VAPI agent...');
-      const vapiResponse = await supabase.functions.invoke('create-vapi-agent', {
-        body: {
-          name: newAgent.name,
-          role: newAgent.role,
-          objective: 'answer_calls',
-          language: "en"
-        }
-      });
+      // Parse webhook response
+      const webhookResult = await webhookResponse.json();
+      console.log('Webhook response:', webhookResult);
       
-      if (vapiResponse.error) {
-        console.error('Error creating VAPI agent:', vapiResponse.error);
-        throw new Error(`Failed to create VAPI agent: ${vapiResponse.error}`);
-      }
-      
-      console.log('VAPI agent creation response:', vapiResponse.data);
-      
-      const vapiAgentId = vapiResponse.data?.vapiAgentId;
-      if (!vapiAgentId) {
-        console.error('No VAPI agent ID found in response:', vapiResponse.data);
-        throw new Error("Could not retrieve VAPI agent ID from the response");
-      }
-      
-      // For backward compatibility, also check the previous webhook response
-      const result = await response.json();
-      console.log('Webhook response:', result);
+      // Extract any needed data from the webhook response
+      const vapiAgentId = webhookResult.vapiAgentId || tempAgentId;
       
       toast({
         title: "Success",
         description: "Agent created successfully. Redirecting to flow editor...",
       });
       
-      // Create or save the agent in our database
+      // Create the agent in our database
       const flow = getDefaultFlow();
       
       const { data, error } = await supabase
@@ -143,7 +122,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          vapi_agent_id: vapiAgentId, // Store VAPI agent ID instead of ElevenLabs
+          vapi_agent_id: vapiAgentId,
           language: "en" // Setting default language to English
         })
         .select()
