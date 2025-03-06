@@ -1,5 +1,7 @@
 
 project_id = "ahpmmgnkksrbpthniptg"
+[functions.create-vapi-agent]
+verify_jwt = true
 [functions.generate-agent-call]
 verify_jwt = true
 [functions.create-elevenlabs-agent]
