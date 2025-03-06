@@ -44,7 +44,7 @@ serve(async (req) => {
       console.error('VAPI_API_KEY environment variable is not set');
       throw new Error('VAPI API key not configured');
     } else {
-      console.log('VAPI_API_KEY is set (masked for security)');
+      console.log('VAPI_API_KEY is set and will be used for API calls');
     }
     
     // Map our role to a system prompt for VAPI
@@ -108,7 +108,7 @@ serve(async (req) => {
     
     console.log('Payload to be sent to VAPI API:', JSON.stringify(payload, null, 2));
     
-    // Create a new agent in VAPI
+    // Create a new agent in VAPI - using explicit string for the API key header
     console.log('Sending request to VAPI API...');
     let response;
     try {
