@@ -24,7 +24,7 @@ export function TemplateStep({
   const { toast } = useToast();
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (selectedTemplate || selectedTemplate === '')) {
+    if (e.key === 'Enter' && selectedTemplate) {
       e.preventDefault();
       onNext();
     }
@@ -40,7 +40,8 @@ export function TemplateStep({
   };
 
   const handleContinueClick = async () => {
-    if (selectedTemplate === undefined) {
+    // Validate that a template is selected before proceeding
+    if (!selectedTemplate) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -133,7 +134,7 @@ export function TemplateStep({
           className="w-full relative"
           size="lg"
           onClick={handleContinueClick}
-          disabled={selectedTemplate === undefined}
+          disabled={!selectedTemplate}
         >
           Continue
           <ArrowRight className="ml-2 h-4 w-4" />
