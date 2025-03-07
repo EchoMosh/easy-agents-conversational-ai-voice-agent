@@ -93,7 +93,9 @@ export function TemplateStep({
       <div className="grid grid-cols-1 gap-4">
         <Card 
           className={`cursor-pointer transition-all h-[140px] flex flex-col justify-center ${
-            selectedTemplate === '' ? 'ring-2 ring-primary' : 'hover:border-primary'
+            selectedTemplate === '' ? 
+              'ring-4 ring-primary bg-primary/5 transform scale-[1.02] shadow-lg' : 
+              'hover:border-primary hover:shadow-md'
           }`}
           onClick={() => onTemplateSelect('', 'virtual_assistant')}
         >
