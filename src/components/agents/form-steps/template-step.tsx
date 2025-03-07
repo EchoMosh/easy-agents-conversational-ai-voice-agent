@@ -30,6 +30,15 @@ export function TemplateStep({
     }
   };
 
+  const handleTemplateClick = () => {
+    // Toggle selection - if already selected, deselect it, otherwise select it
+    if (selectedTemplate === '') {
+      onTemplateSelect('not_selected', 'virtual_assistant');
+    } else {
+      onTemplateSelect('', 'virtual_assistant');
+    }
+  };
+
   const handleContinueClick = async () => {
     if (selectedTemplate === undefined) {
       toast({
@@ -92,12 +101,12 @@ export function TemplateStep({
 
       <div className="grid grid-cols-1 gap-4">
         <Card 
-          className={`cursor-pointer transition-all h-[140px] flex flex-col justify-center ${
+          className={`cursor-pointer transition-all duration-200 h-[140px] flex flex-col justify-center ${
             selectedTemplate === '' ? 
-              'ring-4 ring-primary bg-primary/5 transform scale-[1.02] shadow-lg' : 
-              'hover:border-primary hover:shadow-md'
+              'ring-4 ring-blue-500 bg-blue-50 dark:bg-blue-950/30 transform scale-[1.02] shadow-lg' : 
+              'hover:border-blue-400 hover:shadow-md'
           }`}
-          onClick={() => onTemplateSelect('', 'virtual_assistant')}
+          onClick={handleTemplateClick}
         >
           <CardHeader className="p-4">
             <CardTitle className="flex items-center gap-2 text-lg">
