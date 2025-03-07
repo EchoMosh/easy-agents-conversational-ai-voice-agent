@@ -161,9 +161,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             selectedTemplate={newAgent.template}
             onTemplateSelect={(templateId, role) => {
               setNewAgent(prev => ({ ...prev, template: templateId, role }));
-              handleCreateAgent();
             }}
-            onNext={() => {}} // Added to satisfy type requirement
+            onNext={handleCreateAgent}
             onBack={() => setStep(1)}
             showOnlyScratch={true}
           />

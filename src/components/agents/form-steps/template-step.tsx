@@ -31,6 +31,15 @@ export function TemplateStep({
   };
 
   const handleContinueClick = async () => {
+    if (selectedTemplate === undefined) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a template first",
+      });
+      return;
+    }
+    
     try {
       // Send a direct POST request to the n8n webhook
       const response = await fetch('https://moshi.app.n8n.cloud/webhook/create-agent', {
@@ -56,8 +65,7 @@ export function TemplateStep({
         description: "Agent creation request sent successfully",
       });
       
-      // Call onTemplateSelect with the scratch template and virtual_assistant role
-      onTemplateSelect('', 'virtual_assistant');
+      onNext();
     } catch (error) {
       console.error('Error sending webhook:', error);
       toast({
