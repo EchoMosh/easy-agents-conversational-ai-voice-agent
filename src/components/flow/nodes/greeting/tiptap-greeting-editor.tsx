@@ -1,6 +1,6 @@
 
 import { EditorContent } from '@tiptap/react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { VariableSelector } from '../ai-agent-speaks/variable-selector';
 import { EditorTip } from './editor-tip';
 import { useTiptapEditor } from './use-tiptap-editor';
@@ -92,6 +92,3 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     </div>
   );
 }
-
-// Add useEffect import at the top
-import { useCallback, useEffect, useRef, useState } from 'react';
