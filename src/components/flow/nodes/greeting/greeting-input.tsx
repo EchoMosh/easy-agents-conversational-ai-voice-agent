@@ -142,7 +142,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
 
   return (
     <div className="flex flex-col gap-2 relative">
-      <div className="relative">
+      <div className="relative nodrag" onMouseDown={(e) => e.stopPropagation()}>
         {displayValue.length > 0 && (
           <div 
             className={cn(
@@ -171,11 +171,12 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
           onKeyDown={handleKeyDown}
           placeholder="Type @ to insert a variable..."
           className={cn(
-            "w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 resize-y min-h-[100px]",
-            displayValue.length > 0 ? "bg-transparent text-transparent caret-black dark:caret-white" : ""
+            "w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 resize-y min-h-[100px] nodrag",
+            displayValue.length > 0 ? "bg-transparent" : ""
           )}
           style={{
-            caretColor: "currentColor",
+            caretColor: "black",
+            color: displayValue.length > 0 ? "transparent" : "inherit",
             position: "relative",
             zIndex: 1
           }}
