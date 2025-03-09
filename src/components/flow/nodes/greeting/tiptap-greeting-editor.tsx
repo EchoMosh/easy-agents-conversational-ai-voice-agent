@@ -32,6 +32,10 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   const handleClick = useCallback(() => {
     if (editor && !editor.isFocused) {
       editor.commands.focus('end');
+      // Clear the content if it's the default text
+      if (editor.getHTML().includes('Enter your message here...')) {
+        editor.commands.selectAll();
+      }
     }
   }, [editor]);
 
@@ -43,6 +47,10 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     const focusEditor = () => {
       if (editor && !editor.isFocused) {
         editor.commands.focus('end');
+        // Clear the content if it's the default text
+        if (editor.getHTML().includes('Enter your message here...')) {
+          editor.commands.selectAll();
+        }
       }
     };
 
@@ -50,6 +58,17 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     return () => {
       container.removeEventListener('click', focusEditor);
     };
+  }, [editor]);
+
+  // Auto-focus when the component mounts
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (editor) {
+        editor.commands.focus('end');
+      }
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [editor]);
 
   if (!editor) {
