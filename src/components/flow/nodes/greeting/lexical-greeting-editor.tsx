@@ -6,10 +6,11 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $createParagraphNode, $getRoot, $insertNodes, TextNode } from 'lexical';
+import { $getRoot } from 'lexical';
 import { VariableSelector } from '../variable-mention/variable-selector';
 import { $createTextNode } from 'lexical';
 import { cn } from '@/lib/utils';
+import { TextNode } from 'lexical';
 
 interface VariableNodeProps {
   id: string;
@@ -95,14 +96,16 @@ function VariablePlugin({ showVariableSelector, setShowVariableSelector, onSelec
       }
     };
 
-    editor.registerCommand(
-      'keydown',
-      (event: any) => {
-        handleKeyDown(event);
-        return false;
-      },
-      1
-    );
+    // Use a proper Lexical command for keydown
+    return editor.registerRootListener((rootElement: HTMLElement | null) => {
+      if (rootElement) {
+        rootElement.addEventListener('keydown', handleKeyDown);
+        return () => {
+          rootElement.removeEventListener('keydown', handleKeyDown);
+        };
+      }
+      return () => {};
+    });
   }, [editor, setShowVariableSelector, showVariableSelector]);
 
   return showVariableSelector ? (
@@ -168,10 +171,6 @@ function EditorValuePlugin({ value }: { value: string }) {
         // Clear editor content
         root.clear();
         
-        // Create a paragraph node
-        const paragraph = $createParagraphNode();
-        root.append(paragraph);
-        
         // Parse the value string to extract variables
         const regex = /\{\{([^}]+)\}\}/g;
         let lastIndex = 0;
@@ -182,13 +181,13 @@ function EditorValuePlugin({ value }: { value: string }) {
           if (match.index > lastIndex) {
             const textBefore = value.substring(lastIndex, match.index);
             const textNode = $createTextNode(textBefore);
-            paragraph.append(textNode);
+            root.append(textNode);
           }
           
           const variableId = match[1];
           const variableText = match[0]; // {{variableId}}
           const variableNode = new VariableNode(variableId, variableText);
-          paragraph.append(variableNode);
+          root.append(variableNode);
           
           lastIndex = match.index + match[0].length;
         }
@@ -197,7 +196,7 @@ function EditorValuePlugin({ value }: { value: string }) {
         if (lastIndex < value.length) {
           const textAfter = value.substring(lastIndex);
           const textNode = $createTextNode(textAfter);
-          paragraph.append(textNode);
+          root.append(textNode);
         }
       });
       
@@ -255,7 +254,8 @@ export function LexicalGreetingEditor({ value, onChange }: EditorProps) {
         </div>
       </LexicalComposer>
 
-      <style jsx global>{`
+      <style jsx global>
+        {`
         .greeting-paragraph {
           margin: 0;
           position: relative;
@@ -275,7 +275,8 @@ export function LexicalGreetingEditor({ value, onChange }: EditorProps) {
           background-color: rgba(99, 102, 241, 0.2);
           color: #818cf8;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 }
