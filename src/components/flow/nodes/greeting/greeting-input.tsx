@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { LexicalGreetingEditor } from './lexical-greeting-editor';
+import { SlateGreetingEditor } from './slate-greeting-editor';
 
 interface GreetingInputProps {
   value: string;
@@ -21,7 +21,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
   };
 
   return (
-    <LexicalGreetingEditor 
+    <SlateGreetingEditor 
       value={currentValue}
       onChange={handleChange}
     />
