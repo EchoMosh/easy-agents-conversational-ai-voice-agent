@@ -43,23 +43,44 @@ export const editorStyles = `
 }
 
 /* Explicit prevention of variable marks across nodes */
-.ProseMirror p + p .editor-variable {
-  background-color: transparent;
-  color: inherit;
-  font-weight: normal;
-  box-shadow: none;
-  white-space: normal;
-}
-
-/* Handle return key (enter) inside variables */
+.ProseMirror p + p .editor-variable,
 .ProseMirror br + .editor-variable,
 .ProseMirror .editor-variable + br {
-  display: inline;
   background-color: transparent !important;
   color: inherit !important;
   font-weight: normal !important;
   box-shadow: none !important;
   white-space: normal !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+/* Broken variable styling - applies immediately when content changes */
+.editor-variable:has(br),
+.editor-variable:has(p),
+.editor-variable:has(div),
+.editor-variable[style],
+.editor-variable[contenteditable] {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-weight: normal !important;
+  box-shadow: none !important;
+  white-space: normal !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+/* Monitor keystrokes inside variables and immediately break styling */
+.prose-variable-aware {
+  position: relative;
+}
+
+/* Any edits to variable content instantly breaks styling */
+.editor-variable:focus-within {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-weight: normal !important;
+  box-shadow: none !important;
   border-radius: 0 !important;
   padding: 0 !important;
 }
