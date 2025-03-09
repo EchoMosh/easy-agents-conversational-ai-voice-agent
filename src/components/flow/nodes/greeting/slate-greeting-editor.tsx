@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useMemo } from 'react';
 import { createEditor, Descendant, Element as SlateElement, Text, Editor, Range } from 'slate';
 import { Slate, Editable, withReact, ReactEditor } from 'slate-react';
@@ -10,7 +9,7 @@ import { cn } from '@/lib/utils';
 type CustomElement = { type: 'paragraph' | 'variable'; children: (CustomText)[]; variableId?: string };
 type CustomText = { text: string; bold?: boolean; italic?: boolean };
 
-// Fix the circular type reference by using a different approach
+// Fix the circular type reference issues
 declare module 'slate' {
   interface CustomTypes {
     Editor: BaseEditor & ReactEditor;
@@ -19,8 +18,8 @@ declare module 'slate' {
   }
 }
 
-// Use the imported type directly
-type BaseEditor = Editor;
+// Define BaseEditor type independently to avoid circular reference
+type BaseEditor = Omit<Editor, 'children'>;
 
 // Element renderer
 const Element = (props: any) => {
