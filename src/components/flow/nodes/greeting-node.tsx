@@ -1,3 +1,4 @@
+
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -287,9 +288,9 @@ export function GreetingNode({
         )}
       </div>
 
-      {/* Floating Actions Button - Positioned outside and below the main container */}
-      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 flex gap-2">
-        {/* Action button - now always visible regardless of actions.length */}
+      {/* Floating Actions Button - Modified to only show on hover */}
+      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        {/* Action button */}
         <Button 
           onClick={openActionsListDialog}
           className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
