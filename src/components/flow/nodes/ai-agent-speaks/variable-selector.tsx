@@ -4,13 +4,16 @@ import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Variable } from "lucide-react";
+import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 interface VariableSelectorProps {
   onSelectVariable: (variable: string) => void;
   triggerChar?: '#' | '@';
+  isFullScreen?: boolean;
 }
 
-export function VariableSelector({ onSelectVariable, triggerChar }: VariableSelectorProps) {
+export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen = false }: VariableSelectorProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const commandRef = useRef<HTMLDivElement>(null);
@@ -53,7 +56,57 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
       }
     }, []);
 
-    // Create a portal for the variable selector dropdown
+    // When isFullScreen is true, use Dialog for a full-screen modal
+    if (isFullScreen) {
+      return (
+        <Dialog open={true} onOpenChange={() => onSelectVariable('')}>
+          <DialogOverlay className="bg-black/80" />
+          <DialogContent className="max-w-md mx-auto border-none bg-transparent shadow-none">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+              <Command className="rounded-lg">
+                <div className="flex items-center border-b px-3">
+                  <CommandInput 
+                    placeholder="Search variable..." 
+                    value={searchTerm} 
+                    onValueChange={setSearchTerm}
+                    className="h-9 w-full"
+                  />
+                </div>
+                
+                <CommandList className="max-h-[300px] overflow-y-auto">
+                  <CommandEmpty>No variable found.</CommandEmpty>
+                  
+                  {Object.keys(groupedVariables).length > 0 ? (
+                    Object.entries(groupedVariables).map(([category, variables]) => (
+                      <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
+                        {variables.map((variable) => (
+                          <CommandItem
+                            key={variable.id}
+                            onSelect={() => onSelectVariable(variable.value)}
+                            className="cursor-pointer flex items-center gap-2 py-2"
+                          >
+                            <span className="flex items-center justify-center h-5 w-5">
+                              <Variable className="h-4 w-4" />
+                            </span>
+                            {variable.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ))
+                  ) : (
+                    <CommandGroup>
+                      <CommandItem disabled>No variables found</CommandItem>
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    }
+
+    // Original node-specific dropdown (non-full-screen)
     return (
       <>
         {/* Semi-transparent backdrop */}

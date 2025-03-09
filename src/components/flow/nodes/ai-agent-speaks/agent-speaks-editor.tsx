@@ -35,20 +35,9 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
         );
         
         if (textBefore === '#' || textBefore === '@') {
-          // Get position for the variable selector popup
-          if (editorContainerRef.current) {
-            const view = editor.view;
-            const { left, top } = view.coordsAtPos(position);
-            const editorBounds = editorContainerRef.current.getBoundingClientRect();
-            
-            setVariableSelectorPosition({
-              x: left - editorBounds.left,
-              y: top - editorBounds.top + 20
-            });
-            
-            setTriggerChar(textBefore as '#' | '@');
-            setShowVariableSelector(true);
-          }
+          // Show the full-screen variable selector
+          setTriggerChar(textBefore as '#' | '@');
+          setShowVariableSelector(true);
         }
       }
     },
@@ -103,22 +92,6 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
     return () => clearTimeout(timeoutId);
   }, [editor]);
 
-  // Event handler for closing the variable selector when clicked outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showVariableSelector && 
-          editorContainerRef.current && 
-          !editorContainerRef.current.contains(event.target as Node)) {
-        setShowVariableSelector(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showVariableSelector]);
-
   const handleInsertVariable = useCallback((variable: string) => {
     if (editor) {
       // Remove the trigger character
@@ -157,19 +130,11 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
         <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text" />
         
         {showVariableSelector && (
-          <div 
-            style={{ 
-              position: 'absolute', 
-              left: `${variableSelectorPosition.x}px`, 
-              top: `${variableSelectorPosition.y}px`,
-              zIndex: 50
-            }}
-          >
-            <VariableSelector 
-              onSelectVariable={handleInsertVariable} 
-              triggerChar={triggerChar || '#'} 
-            />
-          </div>
+          <VariableSelector 
+            onSelectVariable={handleInsertVariable} 
+            triggerChar={triggerChar || '#'} 
+            isFullScreen={true}
+          />
         )}
         
         <style>
