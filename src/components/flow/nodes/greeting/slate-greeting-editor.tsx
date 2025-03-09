@@ -32,6 +32,7 @@ const Element = (props: any) => {
           className="inline-block px-1 py-0.5 rounded text-indigo-700 bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-900/30 font-medium text-sm variable-node mx-0.5"
         >
           {children}
+          {!ReactEditor.isFocused(props.editor) && props.editor.isInline(element) && <span contentEditable={false}>&nbsp;</span>}
         </span>
       );
     default:
@@ -237,17 +238,49 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     console.log('Focus requested on editor');
   }, [editor]);
   
-  // Updated click handler with focus functionality
+  // Add cursor visibility function
+  const ensureCursorVisible = useCallback(() => {
+    // First focus the editor
+    ReactEditor.focus(editor);
+    
+    // Then if there's no selection, create one at the end of the document
+    if (!editor.selection) {
+      try {
+        // Get the last text node's path
+        const lastPath = Editor.end(editor, []);
+        
+        // Set selection at the end of the content
+        const newSelection = {
+          anchor: lastPath,
+          focus: lastPath
+        };
+        
+        // Apply the selection
+        editor.selection = newSelection;
+        editor.onChange();
+        
+        console.log('Set cursor position at end:', lastPath);
+      } catch (err) {
+        console.error('Error setting cursor position:', err);
+      }
+    }
+  }, [editor]);
+  
+  // Updated click handler with focus and cursor functionality
   const handleEditorClick = () => {
     console.log('Editable clicked');
     focusEditor();
+    ensureCursorVisible();
   };
   
   return (
     <div 
       className="flex flex-col gap-2 greeting-editor" 
       style={{ pointerEvents: 'auto' }}
-      onClick={() => focusEditor()}
+      onClick={() => {
+        focusEditor();
+        ensureCursorVisible();
+      }}
     >
       <div className={cn(
         "w-full border border-gray-200 dark:border-gray-700 rounded-lg min-h-[100px] break-words focus-within:ring-1 focus-within:ring-blue-400 dark:focus-within:ring-blue-600 focus-within:border-blue-400 dark:focus-within:border-blue-600",
