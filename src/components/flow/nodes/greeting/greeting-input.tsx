@@ -125,7 +125,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
           key={match.index} 
           className="inline-block px-1 py-0.5 rounded text-indigo-700 bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-900/30 font-medium text-sm"
         >
-          {{variableName}}
+          {`{{${variableName}}}`}
         </span>
       );
 
