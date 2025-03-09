@@ -17,7 +17,10 @@ export const processInvalidVariables = (editor: any) => {
       
       // Check if the content is a valid variable format
       // Also check for newlines or whitespace which would make it invalid
-      const isValidVariable = VALID_VARIABLE_REGEX.test(text) && !text.includes('\n') && !text.includes('\r');
+      const isValidVariable = VALID_VARIABLE_REGEX.test(text) && 
+                            !text.includes('\n') && 
+                            !text.includes('\r') &&
+                            !text.includes(' ');
       
       if (!isValidVariable) {
         try {
@@ -71,13 +74,51 @@ export const validateOnInput = (editor: any) => {
     processInvalidVariables(editor);
   });
   
-  // Observe all changes to the editor DOM
+  // Observe all changes to the editor DOM with more detailed options
   observer.observe(editorDOM, {
     childList: true,
     subtree: true,
     characterData: true,
-    attributes: true
+    attributes: true,
+    characterDataOldValue: true
   });
   
   return () => observer.disconnect();
+};
+
+// Extra validations for variable-specific events like line breaks
+export const setupVariableValidationListeners = (editor: any) => {
+  if (!editor?.view?.dom) return;
+  
+  const editorDOM = editor.view.dom;
+  
+  // Specific handler for events that frequently break variables
+  const handleVariableBreakingEvents = () => {
+    setTimeout(() => {
+      const variableSpans = editorDOM.querySelectorAll('.editor-variable');
+      variableSpans.forEach((span: Element) => {
+        const text = span.textContent || '';
+        // Immediately remove styling from any variable with break characters
+        if (text.includes('\n') || text.includes('\r') || text.includes(' ')) {
+          editor.chain().selectNode(span).unsetMark('variable').run();
+        }
+      });
+    }, 0);
+  };
+  
+  // Listen for specific events that might break variables
+  editorDOM.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      handleVariableBreakingEvents();
+    }
+  });
+  
+  editorDOM.addEventListener('paste', handleVariableBreakingEvents);
+  editorDOM.addEventListener('input', handleVariableBreakingEvents);
+  
+  return () => {
+    editorDOM.removeEventListener('keydown', handleVariableBreakingEvents);
+    editorDOM.removeEventListener('paste', handleVariableBreakingEvents);
+    editorDOM.removeEventListener('input', handleVariableBreakingEvents);
+  };
 };

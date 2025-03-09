@@ -2,7 +2,7 @@
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useCallback, useEffect, useState } from 'react';
-import { processInvalidVariables, validateOnInput } from './variable-utils';
+import { processInvalidVariables, validateOnInput, setupVariableValidationListeners } from './variable-utils';
 import VariableMark from './variable-mark';
 
 interface UseTiptapEditorProps {
@@ -16,7 +16,14 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Configure paragraph to better handle variables
+        paragraph: {
+          HTMLAttributes: {
+            class: 'editor-paragraph',
+          },
+        },
+      }),
       VariableMark,
     ],
     content: value || '<p></p>',
@@ -50,7 +57,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       // Process invalid variables after any update
       setTimeout(() => {
         processInvalidVariables(editor);
-      }, 10);
+      }, 0);
     },
     autofocus: false,
     // Improve HTML parsing to correctly handle variable spans
@@ -65,7 +72,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
     
     // Set up listeners for events that might affect variables
     const handleKeyInput = () => {
-      setTimeout(() => processInvalidVariables(editor), 10);
+      setTimeout(() => processInvalidVariables(editor), 0);
     };
     
     const editorDOM = editor.view.dom;
@@ -75,14 +82,31 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
     editorDOM.addEventListener('mouseup', handleKeyInput);
     
     // Set up mutation observer for DOM changes
-    const cleanup = validateOnInput(editor);
+    const cleanupObserver = validateOnInput(editor);
+    
+    // Set up variable-specific validation
+    const cleanupVariableListeners = setupVariableValidationListeners(editor);
+    
+    // Additional handler for Enter key which often causes issues
+    const handleEnterKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        // Force check for broken variables
+        setTimeout(() => {
+          processInvalidVariables(editor);
+        }, 0);
+      }
+    };
+    
+    editorDOM.addEventListener('keydown', handleEnterKey);
     
     return () => {
       editorDOM.removeEventListener('keydown', handleKeyInput);
       editorDOM.removeEventListener('input', handleKeyInput);
       editorDOM.removeEventListener('paste', handleKeyInput);
       editorDOM.removeEventListener('mouseup', handleKeyInput);
-      if (cleanup) cleanup();
+      editorDOM.removeEventListener('keydown', handleEnterKey);
+      if (cleanupObserver) cleanupObserver();
+      if (cleanupVariableListeners) cleanupVariableListeners();
     };
   }, [editor]);
 
@@ -102,16 +126,16 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
         if (editor.isEditable) {
           processInvalidVariables(editor);
         }
-      }, 10);
+      }, 0);
     }
   }, [value, editor]);
 
-  // Regular validation check
+  // More aggressive validation check
   useEffect(() => {
     if (editor) {
       const checkTimer = setInterval(() => {
         processInvalidVariables(editor);
-      }, 300);
+      }, 100); // Check more frequently
       
       return () => clearInterval(checkTimer);
     }
@@ -152,7 +176,13 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
         .unsetMark('variable') // Important: Unset the variable mark after insertion
         .run();
       
+      // Ensure focus is maintained and cursor is positioned correctly
       editor.commands.focus('end');
+      
+      // Force validation of variables right after insertion
+      setTimeout(() => {
+        processInvalidVariables(editor);
+      }, 0);
     }
   }, [editor]);
 

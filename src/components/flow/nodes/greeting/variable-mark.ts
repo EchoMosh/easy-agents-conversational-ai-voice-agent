@@ -37,9 +37,10 @@ const VariableMark = Mark.create({
     return ['span', mergeAttributes(HTMLAttributes), 0];
   },
   
-  // Prevent the mark from spanning across paragraphs
+  // Prevent the mark from spanning across paragraphs and exclude other marks
   inclusive: false,
-  excludes: '_'
+  excludes: '_', // Exclude all other marks
+  spanning: false // Explicitly prevent spanning across nodes
 });
 
 export default VariableMark;
