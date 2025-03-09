@@ -28,7 +28,7 @@ export function ActionConfig({ action, onChange }: ActionConfigProps) {
           <div>
             <Label className="text-xs">Phone Number</Label>
             <Input 
-              className="text-xs" 
+              className="text-xs cursor-text" 
               placeholder="+1234567890"
               value={action.config.phoneNumber || ''}
               onChange={(e) => handleConfigChange('phoneNumber', e.target.value)}
@@ -37,7 +37,7 @@ export function ActionConfig({ action, onChange }: ActionConfigProps) {
           <div>
             <Label className="text-xs">Message</Label>
             <Textarea 
-              className="text-xs min-h-[80px]" 
+              className="text-xs min-h-[80px] cursor-text" 
               placeholder="Enter SMS message"
               value={action.config.message || ''}
               onChange={(e) => handleConfigChange('message', e.target.value)}
@@ -52,7 +52,7 @@ export function ActionConfig({ action, onChange }: ActionConfigProps) {
           <div>
             <Label className="text-xs">URL</Label>
             <Input 
-              className="text-xs" 
+              className="text-xs cursor-text" 
               placeholder="https://example.com/webhook"
               value={action.config.url || ''}
               onChange={(e) => handleConfigChange('url', e.target.value)}
@@ -61,7 +61,7 @@ export function ActionConfig({ action, onChange }: ActionConfigProps) {
           <div>
             <Label className="text-xs">Method</Label>
             <select 
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
               value={action.config.method || 'POST'}
               onChange={(e) => handleConfigChange('method', e.target.value)}
             >
@@ -74,7 +74,7 @@ export function ActionConfig({ action, onChange }: ActionConfigProps) {
           <div>
             <Label className="text-xs">Payload (JSON)</Label>
             <Textarea 
-              className="text-xs min-h-[80px] font-mono" 
+              className="text-xs min-h-[80px] font-mono cursor-text" 
               placeholder='{"key": "value"}'
               value={action.config.payload || ''}
               onChange={(e) => handleConfigChange('payload', e.target.value)}
@@ -89,7 +89,7 @@ export function ActionConfig({ action, onChange }: ActionConfigProps) {
           <div>
             <Label className="text-xs">To</Label>
             <Input 
-              className="text-xs" 
+              className="text-xs cursor-text" 
               placeholder="recipient@example.com"
               value={action.config.to || ''}
               onChange={(e) => handleConfigChange('to', e.target.value)}
@@ -98,7 +98,7 @@ export function ActionConfig({ action, onChange }: ActionConfigProps) {
           <div>
             <Label className="text-xs">Subject</Label>
             <Input 
-              className="text-xs" 
+              className="text-xs cursor-text" 
               placeholder="Email subject"
               value={action.config.subject || ''}
               onChange={(e) => handleConfigChange('subject', e.target.value)}
@@ -107,7 +107,7 @@ export function ActionConfig({ action, onChange }: ActionConfigProps) {
           <div>
             <Label className="text-xs">Message</Label>
             <Textarea 
-              className="text-xs min-h-[80px]" 
+              className="text-xs min-h-[80px] cursor-text" 
               placeholder="Email content"
               value={action.config.message || ''}
               onChange={(e) => handleConfigChange('message', e.target.value)}

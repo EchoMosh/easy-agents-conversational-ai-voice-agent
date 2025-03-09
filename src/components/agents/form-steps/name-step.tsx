@@ -39,7 +39,7 @@ export function NameStep({ name, onNameChange, onNext }: NameStepProps) {
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="text-lg py-6"
+          className="text-lg py-6 cursor-text"
         />
       </div>
       <Button 

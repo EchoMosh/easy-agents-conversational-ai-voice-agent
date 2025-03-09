@@ -48,7 +48,7 @@ export function EndNode({ id, data }: { id: string; data: { message?: string } }
             value={message}
             onChange={handleMessageChange}
             placeholder="Enter message to say before ending the call..."
-            className="w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 focus:ring-1 focus:ring-rose-400 dark:focus:ring-rose-600 focus:border-rose-400 dark:focus:border-rose-600 resize-none h-20"
+            className="w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 focus:ring-1 focus:ring-rose-400 dark:focus:ring-rose-600 focus:border-rose-400 dark:focus:border-rose-600 resize-none h-20 cursor-text"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Assistant will say this message before ending the call

@@ -8,6 +8,7 @@
   max-width: 100%;
   width: 100%;
   overflow: hidden; /* Prevent overflow */
+  cursor: text;
 }
 
 .editor-input {
@@ -24,6 +25,7 @@
   word-break: break-word;
   max-width: 100%;
   white-space: pre-wrap;
+  cursor: text;
 }
 
 .editor-placeholder {
@@ -57,6 +59,7 @@
   overflow-wrap: break-word;
   max-width: 100%;
   overflow: hidden;
+  cursor: text;
 }
 
 .editor-text {
@@ -65,4 +68,5 @@
   word-break: break-word;
   overflow: hidden;
   max-width: 100%;
+  cursor: text;
 }
