@@ -1,4 +1,3 @@
-
 import { Node as ReactFlowNode, Edge } from '@xyflow/react';
 
 // Rename to avoid conflict with the imported type
@@ -21,6 +20,7 @@ export interface NodeAction {
 export interface NodeData {
   [key: string]: any;
   actions?: NodeAction[];
+  content?: string; // For AI Agent Speaks Node
 }
 
 export interface TrainingExample {

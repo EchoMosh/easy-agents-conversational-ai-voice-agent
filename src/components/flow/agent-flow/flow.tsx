@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
-import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
+import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X, Tv2 } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
@@ -8,6 +8,7 @@ import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
 import { TransferNode } from '@/components/flow/nodes/transfer-node';
 import { WebhookNode } from '@/components/flow/nodes/webhook-node';
+import { AiAgentSpeaksNode } from '@/components/flow/nodes/ai-agent-speaks-node';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import React from 'react';
@@ -23,10 +24,10 @@ const nodeTypes: NodeTypes = {
   endNode: EndNode,
   triggerNode: TriggerNode,
   transferNode: TransferNode,
-  webhookNode: WebhookNode
+  webhookNode: WebhookNode,
+  aiAgentSpeaksNode: AiAgentSpeaksNode
 };
 
-// Custom edge with animated line
 const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd }: any) => {
   const [isHovered, setIsHovered] = useState(false);
   
@@ -69,7 +70,6 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
   );
 };
 
-// Define edge types
 const edgeTypes = {
   buttonEdge: ButtonEdge
 };
@@ -109,6 +109,13 @@ const widgets = [
     icon: Webhook, 
     color: '#d946ef',
     description: 'Make HTTP requests to external services'
+  },
+  { 
+    type: 'aiAgentSpeaksNode', 
+    label: 'AI Agent Speaks', 
+    icon: Tv2, 
+    color: '#3b82f6',
+    description: 'Agent responds with rich text content'
   }
 ];
 
@@ -174,7 +181,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
       let nodesChanged = false;
       let edgesChanged = false;
       
-      // Process selected nodes deletion
       if (selectedNodes.length > 0) {
         console.log('[Flow] Selected nodes to delete:', selectedNodes);
         
@@ -193,7 +199,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         onNodesChange(newNodes);
         onEdgesChange(newEdges);
         
-        // Call onNodeDeletion if provided
         if (onNodeDeletion) {
           onNodeDeletion(selectedNodes, newNodes, newEdges);
         }
@@ -202,7 +207,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         edgesChanged = true;
       }
       
-      // Process selected edges deletion
       if (selectedEdges.length > 0 && !nodesChanged) {
         console.log('[Flow] Selected edges to delete:', selectedEdges);
         
@@ -322,22 +326,17 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     console.log('[Flow] handleEdgesChange called with changes:', changes);
     onEdgesChangeInternal(changes);
     
-    // Check if there are any remove changes (which indicate edge deletion)
     const hasRemoveChanges = changes.some((change: any) => change.type === 'remove');
     
     setTimeout(() => {
       console.log('[Flow] Notifying parent after edge changes, current edges:', edges);
-      // Make sure we're sending the most current state
       const updatedEdges = edges.map(edge => ({ ...edge }));
       onEdgesChange(updatedEdges);
     }, 0);
   }, [edges, onEdgesChange, onEdgesChangeInternal]);
 
-  // Update the onEdgeClick handler to avoid deleting edges on click
   const onEdgeClick: EdgeMouseHandler = useCallback((event, edge) => {
-    // Do nothing or add custom selection logic here if needed
     console.log('[Flow] Edge clicked:', edge);
-    // Not deleting the edge anymore, just logging it was clicked
   }, []);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -380,6 +379,9 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           break;
         case 'webhookNode':
           newNodeData = { url: '', method: 'GET' };
+          break;
+        case 'aiAgentSpeaksNode':
+          newNodeData = { content: '<p>Enter what the AI agent should say...</p>' };
           break;
       }
 
@@ -504,6 +506,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                     return '#10b981';
                   case 'webhookNode':
                     return '#d946ef';
+                  case 'aiAgentSpeaksNode':
+                    return '#3b82f6';
                   default:
                     return '#60a5fa';
                 }
