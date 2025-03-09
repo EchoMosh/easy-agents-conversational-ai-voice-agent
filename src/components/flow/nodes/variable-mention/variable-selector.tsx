@@ -92,6 +92,14 @@ export function VariableSelector({
     if (!open && onClose) onClose();
   };
 
+  // Handle keyboard events in the command input
+  const handleKeyDown = (e: React.KeyboardEvent, variable: Variable) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      insertVariable(variable);
+    }
+  };
+
   return (
     <Dialog open={showVariables} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px] p-0">
@@ -113,6 +121,7 @@ export function VariableSelector({
                 <CommandItem
                   key={variable.id}
                   onSelect={() => insertVariable(variable)}
+                  onKeyDown={(e) => handleKeyDown(e, variable)}
                   className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <div className="font-medium">{variable.name}</div>
