@@ -1,5 +1,6 @@
+
 import { useState, useCallback, useMemo } from 'react';
-import { createEditor, Descendant, Element as SlateElement, Text, Editor, Range } from 'slate';
+import { createEditor, Descendant, Element as SlateElement, Text, Range } from 'slate';
 import { Slate, Editable, withReact, ReactEditor } from 'slate-react';
 import { withHistory } from 'slate-history';
 import { VariableSelector } from '../variable-mention/variable-selector';
@@ -9,17 +10,17 @@ import { cn } from '@/lib/utils';
 type CustomElement = { type: 'paragraph' | 'variable'; children: (CustomText)[]; variableId?: string };
 type CustomText = { text: string; bold?: boolean; italic?: boolean };
 
-// Fix the circular type reference issues
+// Import Editor directly from slate to avoid circular references
+import { Editor } from 'slate';
+
+// Fix the circular type reference issues by separating the augmentation
 declare module 'slate' {
   interface CustomTypes {
-    Editor: BaseEditor & ReactEditor;
+    Editor: Editor & ReactEditor;
     Element: CustomElement;
     Text: CustomText;
   }
 }
-
-// Define BaseEditor type independently to avoid circular reference
-type BaseEditor = Omit<Editor, 'children'>;
 
 // Element renderer
 const Element = (props: any) => {
@@ -260,7 +261,6 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
         />
       )}
       
-      {/* Fix the style element by removing JSX and global props */}
       <style>
         {`
         .greeting-paragraph {
