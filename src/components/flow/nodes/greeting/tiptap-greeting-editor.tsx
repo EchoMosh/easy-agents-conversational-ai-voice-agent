@@ -74,6 +74,46 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     },
   });
 
+  // Add an input handler to detect backspace and check if variable format is broken
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        // We'll check the variable styling after the key event is processed
+        setTimeout(() => {
+          // Find all variable spans in the editor
+          const domNodes = editor.view.dom.querySelectorAll('.editor-variable');
+          
+          domNodes.forEach(node => {
+            const text = node.textContent || '';
+            
+            // Check if the content is a valid variable format with both curly braces
+            const isValidVariable = /^\{[a-zA-Z0-9_]+\}$/.test(text);
+            
+            if (!isValidVariable) {
+              // Get the position of this node in the editor
+              const nodePos = editor.view.posAtDOM(node, 0);
+              if (nodePos !== null) {
+                // Remove the variable mark from this text
+                editor.commands.setTextSelection({ from: nodePos, to: nodePos + text.length });
+                editor.commands.unsetMark('variable');
+              }
+            }
+          });
+        }, 10);
+      }
+    };
+
+    // Add the event listener to the editor DOM
+    const editorDOM = editor.view.dom;
+    editorDOM.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      editorDOM.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [editor]);
+
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
       // Fix: Better handle parsing of HTML with variable spans
