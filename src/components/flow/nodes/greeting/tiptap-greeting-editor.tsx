@@ -137,8 +137,10 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         });
       }
       
-      // Use only one pair of curly braces for the variable
+      // Fixed: Use only one pair of curly braces for the variable
       const variableText = `{${variable}}`;
+      
+      console.log("Inserting variable:", variableText); // Debug log
       
       editor.chain()
         .focus()

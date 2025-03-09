@@ -19,12 +19,13 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
   const [searchTerm, setSearchTerm] = useState('');
   const commandRef = useRef<HTMLDivElement>(null);
   
+  // Fix: Change the variable format to use single curly braces
   const availableVariables = [
-    { id: 'name', label: 'Name', value: '{{name}}', category: 'contact' },
-    { id: 'email', label: 'Email', value: '{{email}}', category: 'contact' },
-    { id: 'phone', label: 'Phone', value: '{{phone}}', category: 'contact' },
-    { id: 'company', label: 'Company', value: '{{company}}', category: 'organization' },
-    { id: 'position', label: 'Position', value: '{{position}}', category: 'organization' },
+    { id: 'name', label: 'Name', value: 'name', category: 'contact' },
+    { id: 'email', label: 'Email', value: 'email', category: 'contact' },
+    { id: 'phone', label: 'Phone', value: 'phone', category: 'contact' },
+    { id: 'company', label: 'Company', value: 'company', category: 'organization' },
+    { id: 'position', label: 'Position', value: 'position', category: 'organization' },
   ];
 
   const filteredVariables = availableVariables.filter(variable => 
