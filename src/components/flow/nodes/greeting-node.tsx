@@ -1,4 +1,3 @@
-
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -43,15 +42,12 @@ export function GreetingNode({
   const [editingAction, setEditingAction] = useState<NodeAction | null>(null);
   const [actionsOpen, setActionsOpen] = useState(false);
 
-  // Sync with data when it changes from the parent
   useEffect(() => {
     setOutcomes(data.outcomes || []);
     setActions(data.actions || []);
   }, [data.outcomes, data.actions]);
 
-  // Send update event when greeting changes
   useEffect(() => {
-    // Only trigger update if the greeting has actually changed from the initial data
     if (greeting !== data.greeting) {
       console.log("Emitting node update for greeting change:", greeting);
       updateNodeData(id, {
@@ -69,7 +65,6 @@ export function GreetingNode({
     setNewOutcome('');
     setShowOutcomeDialog(false);
 
-    // Send update event with new outcomes
     updateNodeData(id, {
       ...data,
       outcomes: newOutcomes
@@ -80,7 +75,6 @@ export function GreetingNode({
     const newOutcomes = outcomes.filter((_, i) => i !== index);
     setOutcomes(newOutcomes);
 
-    // Send update event with remaining outcomes
     updateNodeData(id, {
       ...data,
       outcomes: newOutcomes
@@ -102,7 +96,6 @@ export function GreetingNode({
     setNewOutcome('');
     setShowOutcomeDialog(false);
 
-    // Send update event with updated outcomes
     updateNodeData(id, {
       ...data,
       outcomes: updatedOutcomes
@@ -125,7 +118,6 @@ export function GreetingNode({
     setGreeting(value);
   };
 
-  // Action handling
   const openActionTypeDialog = () => {
     setShowActionTypeDialog(true);
   };
@@ -144,7 +136,6 @@ export function GreetingNode({
       config: {}
     };
 
-    // Default configs based on action type
     if (type === 'sms') {
       newAction.config = {
         phoneNumber: '',
@@ -178,7 +169,6 @@ export function GreetingNode({
     setEditingAction(null);
     setShowActionDialog(false);
 
-    // Update node data
     updateNodeData(id, {
       ...data,
       actions: updatedActions
@@ -196,7 +186,6 @@ export function GreetingNode({
     const newActions = actions.filter(a => a.id !== actionId);
     setActions(newActions);
 
-    // Update node data
     updateNodeData(id, {
       ...data,
       actions: newActions
@@ -229,13 +218,21 @@ export function GreetingNode({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (editingIndex !== null) {
+        saveEdit();
+      } else {
+        addOutcome();
+      }
+    }
+  };
+
   return <div className="group relative">
-      {/* Glowing background effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-sky-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       
-      {/* Main container */}
       <div className="relative backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 rounded-2xl border border-blue-200/50 dark:border-blue-800/50 shadow-[0_8px_16px_-6px_rgba(59,130,246,0.2)] dark:shadow-[0_8px_16px_-6px_rgba(59,130,246,0.3)] p-5 min-w-[320px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(59,130,246,0.4)] dark:hover:shadow-[0_20px_40px_-12px_rgba(59,130,246,0.5)]">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <span className="relative flex h-8 w-8 items-center justify-center">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-blue-400 opacity-20" />
@@ -246,7 +243,6 @@ export function GreetingNode({
           <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-sky-500">Speak</span>
         </div>
 
-        {/* Message input */}
         <div className="space-y-2 mb-6">
           <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
             Message
@@ -254,7 +250,6 @@ export function GreetingNode({
           <GreetingInput value={greeting} onChange={handleGreetingChange} />
         </div>
 
-        {/* Outcomes section - only render if there are outcomes */}
         {outcomes.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -288,9 +283,7 @@ export function GreetingNode({
         )}
       </div>
 
-      {/* Floating Actions Button - Modified to only show on hover */}
       <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        {/* Action button */}
         <Button 
           onClick={openActionsListDialog}
           className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
@@ -301,7 +294,6 @@ export function GreetingNode({
           </span>
         </Button>
         
-        {/* New Outcome/Objection button */}
         <Button 
           onClick={openNewOutcomeDialog}
           className="flex items-center justify-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 transition-colors shadow-md rounded-full border border-purple-200/50 dark:border-purple-800/50 my-[9px]"
@@ -313,13 +305,10 @@ export function GreetingNode({
         </Button>
       </div>
 
-      {/* Input handle */}
       <Handle type="target" position={Position.Left} className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !left-[-8px] transition-all duration-300 hover:!bg-blue-500" />
       
-      {/* Default output handle */}
       {(!outcomes || outcomes.length === 0) && <Handle type="source" position={Position.Right} id="default" className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-blue-500" />}
 
-      {/* Outcome Dialog */}
       <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -358,6 +347,7 @@ export function GreetingNode({
                 onChange={e => setNewOutcome(e.target.value)} 
                 placeholder="Enter a detailed potential response..." 
                 className="text-sm" 
+                onKeyDown={handleKeyDown}
               />
             </div>
             <div className="flex justify-end gap-3">
@@ -376,7 +366,6 @@ export function GreetingNode({
         </DialogContent>
       </Dialog>
 
-      {/* Actions List Dialog */}
       <Dialog open={showActionsListDialog} onOpenChange={setShowActionsListDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -461,7 +450,6 @@ export function GreetingNode({
         </DialogContent>
       </Dialog>
 
-      {/* Action Type Selection Dialog */}
       <Dialog open={showActionTypeDialog} onOpenChange={setShowActionTypeDialog}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
@@ -512,7 +500,6 @@ export function GreetingNode({
         </DialogContent>
       </Dialog>
 
-      {/* Action Dialog */}
       <Dialog open={showActionDialog} onOpenChange={open => {
       setShowActionDialog(open);
       if (!open) setEditingAction(null);
