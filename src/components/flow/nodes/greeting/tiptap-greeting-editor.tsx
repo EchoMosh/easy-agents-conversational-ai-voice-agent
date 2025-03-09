@@ -1,4 +1,3 @@
-
 import { useEditor, EditorContent, Mark, mergeAttributes } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -137,8 +136,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         });
       }
       
-      // Fixed: Insert the variable with proper variable mark and simplified format
-      // Use only one pair of curly braces for the variable
+      // Simplified format: Use exactly one pair of curly braces for the variable
       const variableText = `{${variable}}`;
       
       editor.chain()
