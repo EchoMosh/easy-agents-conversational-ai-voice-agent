@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useMemo } from 'react';
 import { createEditor, Descendant, Element as SlateElement, Text, Range, Editor } from 'slate';
 import { Slate, Editable, withReact, ReactEditor } from 'slate-react';
@@ -155,9 +156,9 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     
     if (selection && Range.isCollapsed(selection)) {
       const [start] = Range.edges(selection);
-      const charBeforeSelection = editor.before(editor, start, { unit: 'character' });
-      const beforeRange = charBeforeSelection && editor.range(editor, charBeforeSelection, start);
-      const beforeText = beforeRange && editor.string(editor, beforeRange);
+      const charBeforeSelection = Editor.before(editor, start, { unit: 'character' });
+      const beforeRange = charBeforeSelection && Editor.range(editor, charBeforeSelection, start);
+      const beforeText = beforeRange && Editor.string(editor, beforeRange);
       
       // If user types @, show variable selector
       if (beforeText === '@') {
@@ -198,7 +199,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     
     if (selection && !Range.isCollapsed(selection)) {
       // Check if selection contains a variable node
-      const [node] = editor.node(editor, selection);
+      const [node] = Editor.node(editor, selection);
       
       if (SlateElement.isElement(node) && node.type === 'variable') {
         // Allow deletion with backspace or delete keys
@@ -210,7 +211,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     } else if (e.key === 'Backspace' && selection) {
       // Check if the previous node is a variable
       const [start] = Range.edges(selection);
-      const prevNodeEntry = editor.previous(editor, { at: start });
+      const prevNodeEntry = Editor.previous(editor, { at: start });
       
       if (prevNodeEntry) {
         const [prevNode] = prevNodeEntry;
