@@ -85,18 +85,24 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
         const variablePlaceholder = `{{${variableId}}}`;
         const newText = `${textBeforeAt}${variablePlaceholder}${textAfterCursor}`;
         
+        // Update state and notify parent about the change
         setCurrentValue(newText);
         onChange(newText);
         
-        // Focus back on textarea after selection
+        // Ensure the textarea is focused and cursor is positioned correctly AFTER the variable
         setTimeout(() => {
           if (textareaRef.current) {
             textareaRef.current.focus();
-            // Set cursor position after the variable (textBeforeAt.length + variablePlaceholder.length)
+            
+            // Calculate exact position after the variable
             const newCursorPos = textBeforeAt.length + variablePlaceholder.length;
             textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+            
+            // Ensure the caret is visible by forcing a repaint
+            const currentScrollTop = textareaRef.current.scrollTop;
+            textareaRef.current.scrollTop = currentScrollTop;
           }
-        }, 0);
+        }, 10); // Slight delay to ensure DOM updates are complete
       }
     }
     setShowVariableSelector(false);
