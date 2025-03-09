@@ -30,7 +30,13 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   
   // Process only nodes that actually exist in the current flow
   flowData.nodes.forEach((node: FlowNode) => {
-    const baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
+    // Change greetingNode to speakNode in the ID for display purposes
+    let baseNodeType = node.type?.replace(/([A-Za-z]+).*/, '$1') || 'node';
+    
+    // Map greetingNode to speakNode for consistency in the chart
+    if (baseNodeType === 'greetingNode') {
+      baseNodeType = 'speakNode';
+    }
     
     if (!nodeTypeCounter[baseNodeType]) {
       nodeTypeCounter[baseNodeType] = 1;
