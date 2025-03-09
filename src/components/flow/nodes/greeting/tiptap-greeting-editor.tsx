@@ -1,251 +1,47 @@
 
-import { useEditor, EditorContent, Mark, mergeAttributes } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { EditorContent } from '@tiptap/react';
+import { useCallback, useRef, useState } from 'react';
 import { VariableSelector } from '../ai-agent-speaks/variable-selector';
-
-// Create a custom mark for variables
-const VariableMark = Mark.create({
-  name: 'variable',
-  
-  addAttributes() {
-    return {
-      class: {
-        default: 'editor-variable'
-      },
-      'data-variable': {
-        default: null
-      }
-    };
-  },
-  
-  parseHTML() {
-    return [
-      {
-        tag: 'span.editor-variable',
-      },
-    ];
-  },
-  
-  renderHTML({ HTMLAttributes }) {
-    return ['span', mergeAttributes(HTMLAttributes), 0];
-  }
-});
+import { EditorTip } from './editor-tip';
+import { useTiptapEditor } from './use-tiptap-editor';
+import { editorStyles } from './editor-styles';
 
 interface TipTapGreetingEditorProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-// Valid variable format: {variableName} - alphanumeric and underscore only
-// Only shorter variable names between 2-20 characters are allowed
-const VALID_VARIABLE_REGEX = /^\{[a-zA-Z][a-zA-Z0-9_]{1,19}\}$/;
-
 export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorProps) {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const [showVariableSelector, setShowVariableSelector] = useState(false);
-  const [variableSelectorPosition, setVariableSelectorPosition] = useState({ x: 0, y: 0 });
   const [triggerChar, setTriggerChar] = useState<'#' | null>(null);
-  const [showTip, setShowTip] = useState(true);
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      VariableMark,
-    ],
-    content: value || '<p></p>',
-    onUpdate: ({ editor }) => {
-      const htmlContent = editor.getHTML();
-      onChange(htmlContent);
-      
-      // Hide the tip when user starts typing
-      if (editor.getText().trim() !== '') {
-        setShowTip(false);
-      } else {
-        setShowTip(true);
-      }
-      
-      // Check if # was just typed
-      const selection = editor.view.state.selection;
-      if (selection.empty) {
-        const position = selection.$from.pos;
-        const textBefore = editor.view.state.doc.textBetween(
-          Math.max(0, position - 1),
-          position,
-          ''
-        );
-        
-        if (textBefore === '#') {
-          // Show the full-screen variable selector
-          setTriggerChar('#');
-          setShowVariableSelector(true);
-        }
-      }
-      
-      // Immediately check for invalid variables after any update
-      setTimeout(() => {
-        processInvalidVariables(editor);
-      }, 0);
-    },
-    autofocus: false,
-    // Improve HTML parsing to correctly handle variable spans
-    parseOptions: {
-      preserveWhitespace: 'full',
-    },
-  });
-
-  // Function to check for invalid variables and remove styling
-  const processInvalidVariables = useCallback((editor: any) => {
-    if (!editor || !editor.view || !editor.view.dom) return;
-    
-    try {
-      // Find all variable spans in the editor
-      const variableSpans = editor.view.dom.querySelectorAll('.editor-variable');
-      
-      for (let i = 0; i < variableSpans.length; i++) {
-        const node = variableSpans[i];
-        const text = node.textContent || '';
-        
-        // Check if the content is a valid variable format
-        const isValidVariable = VALID_VARIABLE_REGEX.test(text);
-        
-        if (!isValidVariable) {
-          try {
-            // Create a range around this node
-            const range = document.createRange();
-            range.selectNode(node);
-            
-            // Get the selection
-            const selection = window.getSelection();
-            if (selection) {
-              // Clear any existing selection
-              selection.removeAllRanges();
-              // Add our new range
-              selection.addRange(range);
-              
-              // Use the editor commands to remove the variable mark
-              editor.chain()
-                .unsetMark('variable')
-                .run();
-              
-              // Restore previous selection if needed
-              selection.removeAllRanges();
-            }
-          } catch (innerError) {
-            console.error('Error processing variable node:', innerError);
-          }
-        }
-      }
-      
-    } catch (error) {
-      console.error('Error in processInvalidVariables:', error);
-    }
+  const handleVariableTrigger = useCallback((char: '#') => {
+    setTriggerChar(char);
+    setShowVariableSelector(true);
   }, []);
 
-  // Use mutation observer to detect DOM changes that might affect variables
-  useEffect(() => {
-    if (!editor?.view?.dom) return;
-    
-    const observer = new MutationObserver(() => {
-      setTimeout(() => {
-        processInvalidVariables(editor);
-      }, 0);
-    });
-    
-    observer.observe(editor.view.dom, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true
-    });
-    
-    return () => {
-      observer.disconnect();
-    };
-  }, [editor, processInvalidVariables]);
-
-  // Add key input handlers to detect when a variable is being edited
-  useEffect(() => {
-    if (!editor?.view?.dom) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Run check immediately for any key press
-      setTimeout(() => {
-        processInvalidVariables(editor);
-      }, 0);
-    };
-
-    const handleInput = () => {
-      setTimeout(() => {
-        processInvalidVariables(editor);
-      }, 0);
-    };
-
-    // Add the event listeners to the editor DOM
-    const editorDOM = editor.view.dom;
-    editorDOM.addEventListener('keydown', handleKeyDown);
-    editorDOM.addEventListener('input', handleInput);
-    
-    return () => {
-      editorDOM.removeEventListener('keydown', handleKeyDown);
-      editorDOM.removeEventListener('input', handleInput);
-    };
-  }, [editor, processInvalidVariables]);
-
-  // Also check for invalid variables on mouse clicks which could place cursor inside variables
-  useEffect(() => {
-    if (!editor?.view?.dom) return;
-    
-    const handleMouseUp = () => {
-      setTimeout(() => {
-        processInvalidVariables(editor);
-      }, 0);
-    };
-    
-    const editorDOM = editor.view.dom;
-    editorDOM.addEventListener('mouseup', handleMouseUp);
-    
-    return () => {
-      editorDOM.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [editor, processInvalidVariables]);
-
-  // Check for invalid variables when content is set from outside
-  useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '<p></p>');
-      
-      // Show/hide tip based on content
-      if (editor.getText().trim() === '') {
-        setShowTip(true);
-      } else {
-        setShowTip(false);
-      }
-      
-      // Check for invalid variables immediately after content is set
-      setTimeout(() => {
-        if (editor.isEditable) {
-          processInvalidVariables(editor);
-        }
-      }, 10);
-    }
-  }, [value, editor, processInvalidVariables]);
-
-  // Direct manual check - call this when needed
-  useEffect(() => {
-    if (editor) {
-      const checkTimer = setInterval(() => {
-        processInvalidVariables(editor);
-      }, 500);
-      
-      return () => clearInterval(checkTimer);
-    }
-  }, [editor, processInvalidVariables]);
+  const { editor, showTip, insertVariable } = useTiptapEditor({
+    value,
+    onChange,
+    onVariableTrigger: handleVariableTrigger
+  });
 
   const handleClick = useCallback(() => {
     if (editor && !editor.isFocused) {
       editor.commands.focus('end');
     }
+  }, [editor]);
+
+  // Auto-focus when the component mounts
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (editor) {
+        editor.commands.focus('end');
+      }
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [editor]);
 
   // Enhanced click handling to ensure focus
@@ -265,59 +61,10 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     };
   }, [editor]);
 
-  // Auto-focus when the component mounts
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (editor) {
-        editor.commands.focus('end');
-      }
-    }, 100);
-    
-    return () => clearTimeout(timeoutId);
-  }, [editor]);
-
   const handleInsertVariable = useCallback((variable: string) => {
-    if (editor) {
-      // Remove the trigger character
-      if (triggerChar) {
-        editor.commands.command(({ tr, dispatch }) => {
-          if (dispatch) {
-            const position = editor.view.state.selection.$from.pos;
-            tr.delete(position - 1, position);
-            dispatch(tr);
-          }
-          return true;
-        });
-      }
-      
-      // Fixed: Use only one pair of curly braces for the variable
-      const variableText = `{${variable}}`;
-      
-      console.log("Inserting variable:", variableText); // Debug log
-      
-      editor.chain()
-        .focus()
-        .insertContent({
-          type: 'text',
-          text: variableText,
-          marks: [
-            {
-              type: 'variable',
-              attrs: {
-                class: 'editor-variable',
-                'data-variable': variable
-              }
-            }
-          ]
-        })
-        .unsetMark('variable') // Important: Unset the variable mark after insertion
-        .run();
-      
-      editor.commands.focus('end');
-      setShowVariableSelector(false);
-      setShowTip(false); // Hide tip after inserting a variable
-    }
-  }, [editor, triggerChar]);
+    insertVariable(variable, triggerChar);
+    setShowVariableSelector(false);
+  }, [insertVariable, triggerChar]);
 
   if (!editor) {
     return <div className="p-2 text-sm text-gray-500">Loading editor...</div>;
@@ -329,11 +76,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       className="border rounded-md p-2 bg-white dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative nodrag"
       onClick={handleClick}
     >
-      {showTip && (
-        <div className="absolute top-2 left-2 text-sm text-gray-400 dark:text-gray-500 pointer-events-none">
-          Tip: Type <kbd className="px-1 rounded bg-gray-100 dark:bg-gray-700">#</kbd> to insert a variable
-        </div>
-      )}
+      <EditorTip show={showTip} />
       
       <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text nodrag" />
       
@@ -345,38 +88,10 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         />
       )}
       
-      <style>
-        {`
-        .ProseMirror {
-          outline: none;
-          min-height: 80px;
-          cursor: text;
-        }
-
-        .ProseMirror p.is-editor-empty:first-child::before {
-          content: attr(data-placeholder);
-          float: left;
-          color: #adb5bd;
-          pointer-events: none;
-          height: 0;
-        }
-        
-        .editor-variable {
-          display: inline-block;
-          background-color: rgba(99, 102, 241, 0.1);
-          color: #6366f1;
-          border-radius: 0.25rem;
-          padding: 0 0.25rem;
-          font-weight: 500;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-        
-        .dark .editor-variable {
-          background-color: rgba(99, 102, 241, 0.2);
-          color: #818cf8;
-        }
-        `}
-      </style>
+      <style>{editorStyles}</style>
     </div>
   );
 }
+
+// Add useEffect import at the top
+import { useCallback, useEffect, useRef, useState } from 'react';
