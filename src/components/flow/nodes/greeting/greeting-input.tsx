@@ -143,15 +143,27 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
   return (
     <div className="flex flex-col gap-2 relative">
       <div className="relative">
-        <div 
-          className={cn(
-            "w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 min-h-[100px] break-words whitespace-pre-wrap",
-            showVariableSelector ? "opacity-50" : "" 
-          )}
-          style={{ display: displayValue.length > 0 ? "block" : "none" }}
-        >
-          {displayValue}
-        </div>
+        {displayValue.length > 0 && (
+          <div 
+            className={cn(
+              "w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg min-h-[100px] break-words whitespace-pre-wrap",
+              showVariableSelector ? "opacity-50" : ""
+            )}
+            style={{ 
+              position: "absolute", 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              pointerEvents: "none",
+              backgroundColor: "transparent", 
+              zIndex: 2,
+              padding: "0.5rem"
+            }}
+          >
+            {displayValue}
+          </div>
+        )}
         <Textarea
           ref={textareaRef}
           value={currentValue}
@@ -160,8 +172,13 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
           placeholder="Type @ to insert a variable..."
           className={cn(
             "w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 resize-y min-h-[100px]",
-            displayValue.length > 0 ? "absolute inset-0 opacity-0" : ""
+            displayValue.length > 0 ? "bg-transparent text-transparent caret-black dark:caret-white" : ""
           )}
+          style={{
+            caretColor: "currentColor",
+            position: "relative",
+            zIndex: 1
+          }}
           disabled={showVariableSelector}
         />
       </div>
