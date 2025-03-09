@@ -2,7 +2,7 @@
 import { useEditor, EditorContent, Mark, mergeAttributes } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { VariableSelector, VariableDisplayStyle } from '../ai-agent-speaks/variable-selector';
+import { VariableSelector } from '../ai-agent-speaks/variable-selector';
 
 // Create a custom mark for variables
 const VariableMark = Mark.create({
@@ -118,25 +118,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     return () => clearTimeout(timeoutId);
   }, [editor]);
 
-  const formatVariableBasedOnStyle = (variable: string, style: VariableDisplayStyle = 'default'): string => {
-    // Extract the variable name without braces
-    const variableName = variable.replace(/[{}]/g, '');
-    
-    // Format based on the selected style
-    switch (style) {
-      case 'badge':
-        return `[${variableName}]`;
-      case 'code':
-        return `$(${variableName})`;
-      case 'tag':
-        return `#${variableName}`;
-      case 'default':
-      default:
-        return variable;
-    }
-  };
-
-  const handleInsertVariable = useCallback((variable: string, style: VariableDisplayStyle = 'default') => {
+  const handleInsertVariable = useCallback((variable: string) => {
     if (editor) {
       // Remove the trigger character
       if (triggerChar) {
@@ -149,27 +131,18 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           return true;
         });
       }
-
-      // Format the variable based on style
-      const formattedVariable = formatVariableBasedOnStyle(variable, style);
       
-      // Create appropriate class based on style
-      let className = 'editor-variable';
-      if (style === 'badge') className += ' editor-variable-badge';
-      if (style === 'code') className += ' editor-variable-code';
-      if (style === 'tag') className += ' editor-variable-tag';
-      
-      // Insert the variable with the custom mark
+      // Insert the variable with the custom mark (always using default style)
       editor.chain()
         .focus()
         .insertContent({
           type: 'text',
-          text: formattedVariable,
+          text: variable,
           marks: [
             {
               type: 'variable',
               attrs: {
-                class: className
+                class: 'editor-variable'
               }
             }
           ]
@@ -234,43 +207,6 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         .dark .editor-variable {
           background-color: rgba(99, 102, 241, 0.2);
           color: #818cf8;
-        }
-        
-        .editor-variable-badge {
-          background-color: rgba(37, 99, 235, 0.1);
-          color: #3b82f6;
-          border-radius: 9999px;
-          padding: 0.125rem 0.375rem;
-        }
-        
-        .dark .editor-variable-badge {
-          background-color: rgba(37, 99, 235, 0.2);
-          color: #60a5fa;
-        }
-        
-        .editor-variable-code {
-          font-family: monospace;
-          background-color: rgba(55, 65, 81, 0.1);
-          color: #374151;
-          border-radius: 0.25rem;
-          padding: 0.125rem 0.25rem;
-        }
-        
-        .dark .editor-variable-code {
-          background-color: rgba(209, 213, 219, 0.1);
-          color: #d1d5db;
-        }
-        
-        .editor-variable-tag {
-          background-color: transparent;
-          color: #3b82f6;
-          font-weight: 600;
-          box-shadow: none;
-          padding: 0;
-        }
-        
-        .dark .editor-variable-tag {
-          color: #60a5fa;
         }
         `}
       </style>

@@ -3,11 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Check, PlusCircle, Variable } from "lucide-react";
+import { PlusCircle, Variable } from "lucide-react";
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 
 export type VariableDisplayStyle = 'default' | 'badge' | 'code' | 'tag';
 
@@ -20,9 +17,6 @@ interface VariableSelectorProps {
 export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen = false }: VariableSelectorProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedVariable, setSelectedVariable] = useState<string | null>(null);
-  const [displayStyle, setDisplayStyle] = useState<VariableDisplayStyle>('default');
-  const [showStyleOptions, setShowStyleOptions] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
   
   const availableVariables = [
@@ -51,25 +45,6 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
     return groupedVariables;
   };
 
-  const handleVariableSelect = (value: string) => {
-    setSelectedVariable(value);
-    setShowStyleOptions(true);
-  };
-
-  const handleConfirmVariableSelection = () => {
-    if (selectedVariable) {
-      onSelectVariable(selectedVariable, displayStyle);
-      setSelectedVariable(null);
-      setShowStyleOptions(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setSelectedVariable(null);
-    setShowStyleOptions(false);
-    onSelectVariable('');
-  };
-
   if (triggerChar) {
     const groupedVariables = groupVariablesByCategory();
     
@@ -84,59 +59,6 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
 
     // When isFullScreen is true, use Dialog for a full-screen modal
     if (isFullScreen) {
-      // Show variable style selection if a variable has been selected
-      if (showStyleOptions && selectedVariable) {
-        return (
-          <Dialog open={true} onOpenChange={handleCancel}>
-            <DialogOverlay className="bg-black/80" />
-            <DialogContent className="max-w-md mx-auto border-none bg-transparent shadow-none">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden p-4">
-                <h3 className="text-lg font-medium mb-4">Variable Display Options</h3>
-                
-                <RadioGroup value={displayStyle} onValueChange={(value) => setDisplayStyle(value as VariableDisplayStyle)} className="space-y-3 mb-4">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="default" id="default" />
-                    <Label htmlFor="default" className="cursor-pointer flex items-center">
-                      <span className="editor-variable">{'{{name}}'}</span>
-                      <span className="ml-2">Default Style</span>
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="badge" id="badge" />
-                    <Label htmlFor="badge" className="cursor-pointer flex items-center">
-                      <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">[name]</span>
-                      <span className="ml-2">Badge Style</span>
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="code" id="code" />
-                    <Label htmlFor="code" className="cursor-pointer flex items-center">
-                      <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded text-sm">$(name)</span>
-                      <span className="ml-2">Code Style</span>
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="tag" id="tag" />
-                    <Label htmlFor="tag" className="cursor-pointer flex items-center">
-                      <span className="text-blue-500 font-medium">#name</span>
-                      <span className="ml-2">Tag Style</span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-                
-                <div className="flex justify-end space-x-2 mt-4">
-                  <Button variant="outline" onClick={handleCancel}>Cancel</Button>
-                  <Button onClick={handleConfirmVariableSelection}>Insert Variable</Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        );
-      }
-      
       return (
         <Dialog open={true} onOpenChange={() => onSelectVariable('')}>
           <DialogOverlay className="bg-black/80" />
@@ -161,7 +83,7 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
                         {variables.map((variable) => (
                           <CommandItem
                             key={variable.id}
-                            onSelect={() => handleVariableSelect(variable.value)}
+                            onSelect={() => onSelectVariable(variable.value, 'default')}
                             className="cursor-pointer flex items-center gap-2 py-2"
                           >
                             <span className="flex items-center justify-center h-5 w-5">
@@ -212,7 +134,7 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
                     {variables.map((variable) => (
                       <CommandItem
                         key={variable.id}
-                        onSelect={() => onSelectVariable(variable.value)}
+                        onSelect={() => onSelectVariable(variable.value, 'default')}
                         className="cursor-pointer flex items-center gap-2 py-2"
                       >
                         <span className="flex items-center justify-center h-5 w-5">
@@ -262,7 +184,7 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
                   <CommandItem
                     key={variable.id}
                     onSelect={() => {
-                      onSelectVariable(variable.value);
+                      onSelectVariable(variable.value, 'default');
                       setOpen(false);
                     }}
                     className="cursor-pointer flex items-center gap-2"
