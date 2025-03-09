@@ -99,14 +99,14 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     // Format based on the selected style
     switch (style) {
       case 'badge':
-        return `<span class="editor-variable editor-variable-badge">[${variableName}]</span>`;
+        return `[${variableName}]`;
       case 'code':
-        return `<span class="editor-variable editor-variable-code">$(${variableName})</span>`;
+        return `$(${variableName})`;
       case 'tag':
-        return `<span class="editor-variable editor-variable-tag">#${variableName}</span>`;
+        return `#${variableName}`;
       case 'default':
       default:
-        return `<span class="editor-variable">${variable}</span>`;
+        return variable;
     }
   };
 
@@ -124,8 +124,31 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         });
       }
 
+      // Format the variable based on style
       const formattedVariable = formatVariableBasedOnStyle(variable, style);
-      editor.commands.insertContent(formattedVariable);
+      
+      // Create a span element with appropriate class based on style
+      let className = 'editor-variable';
+      if (style === 'badge') className += ' editor-variable-badge';
+      if (style === 'code') className += ' editor-variable-code';
+      if (style === 'tag') className += ' editor-variable-tag';
+      
+      // Insert content as a properly formatted node
+      editor.chain().focus()
+        .insertContent({
+          type: 'text',
+          text: formattedVariable,
+          marks: [
+            {
+              type: 'span',
+              attrs: {
+                class: className
+              }
+            }
+          ]
+        })
+        .run();
+      
       editor.commands.focus('end');
       setShowVariableSelector(false);
     }
