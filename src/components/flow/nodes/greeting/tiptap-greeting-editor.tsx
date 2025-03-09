@@ -68,10 +68,15 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       }
     },
     autofocus: false,
+    // Improve HTML parsing to correctly handle variable spans
+    parseOptions: {
+      preserveWhitespace: 'full',
+    },
   });
 
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
+      // Fix: Better handle parsing of HTML with variable spans
       editor.commands.setContent(value || '<p>Enter your message here...</p>');
     }
   }, [value, editor]);
@@ -132,12 +137,14 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         });
       }
       
-      // Insert the variable with the custom mark (always using default style)
+      // Fixed: Insert the variable with proper variable mark consistently
+      const variableText = `{{${variable}}}`;
+      
       editor.chain()
         .focus()
         .insertContent({
           type: 'text',
-          text: variable,
+          text: variableText,
           marks: [
             {
               type: 'variable',
