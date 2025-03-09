@@ -7,7 +7,7 @@ interface GreetingInputProps {
 }
 
 export function GreetingInput({ value, onChange }: GreetingInputProps) {
-  const sanitizedValue = value ? value : '<p>Enter your message here...</p>';
+  const sanitizedValue = value && value !== '<p>Enter your message here...</p>' ? value : '<p></p>';
   
   const handleChange = (newValue: string) => {
     console.log("GreetingInput change:", newValue);

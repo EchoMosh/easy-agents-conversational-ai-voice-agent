@@ -39,16 +39,24 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const [variableSelectorPosition, setVariableSelectorPosition] = useState({ x: 0, y: 0 });
   const [triggerChar, setTriggerChar] = useState<'#' | null>(null);
+  const [showTip, setShowTip] = useState(true);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       VariableMark,
     ],
-    content: value || '<p>Enter your message here...</p>',
+    content: value || '<p></p>',
     onUpdate: ({ editor }) => {
       const htmlContent = editor.getHTML();
       onChange(htmlContent);
+      
+      // Hide the tip when user starts typing
+      if (editor.getText().trim() !== '') {
+        setShowTip(false);
+      } else {
+        setShowTip(true);
+      }
       
       // Check if # was just typed
       const selection = editor.view.state.selection;
@@ -117,17 +125,20 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
       // Fix: Better handle parsing of HTML with variable spans
-      editor.commands.setContent(value || '<p>Enter your message here...</p>');
+      editor.commands.setContent(value || '<p></p>');
+      
+      // Show/hide tip based on content
+      if (editor.getText().trim() === '') {
+        setShowTip(true);
+      } else {
+        setShowTip(false);
+      }
     }
   }, [value, editor]);
 
   const handleClick = useCallback(() => {
     if (editor && !editor.isFocused) {
       editor.commands.focus('end');
-      // Clear the content if it's the default text
-      if (editor.getHTML().includes('Enter your message here...')) {
-        editor.commands.selectAll();
-      }
     }
   }, [editor]);
 
@@ -139,10 +150,6 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     const focusEditor = () => {
       if (editor && !editor.isFocused) {
         editor.commands.focus('end');
-        // Clear the content if it's the default text
-        if (editor.getHTML().includes('Enter your message here...')) {
-          editor.commands.selectAll();
-        }
       }
     };
 
@@ -201,6 +208,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       
       editor.commands.focus('end');
       setShowVariableSelector(false);
+      setShowTip(false); // Hide tip after inserting a variable
     }
   }, [editor, triggerChar]);
 
@@ -214,9 +222,11 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       className="border rounded-md p-2 bg-white dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative nodrag"
       onClick={handleClick}
     >
-      <div className="text-xs text-muted-foreground mb-1">
-        Tip: Type <kbd className="px-1 rounded bg-muted">#</kbd> to insert a variable
-      </div>
+      {showTip && (
+        <div className="absolute top-4 left-2 text-sm text-gray-400 dark:text-gray-500 pointer-events-none">
+          Tip: Type <kbd className="px-1 rounded bg-gray-100 dark:bg-gray-700">#</kbd> to insert a variable
+        </div>
+      )}
       
       <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text nodrag" />
       
@@ -234,6 +244,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           outline: none;
           min-height: 80px;
           cursor: text;
+          padding-top: ${showTip ? '1.5rem' : '0'};
         }
 
         .ProseMirror p.is-editor-empty:first-child::before {
