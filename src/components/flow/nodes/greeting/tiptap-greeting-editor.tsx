@@ -34,6 +34,9 @@ interface TipTapGreetingEditorProps {
   onChange: (value: string) => void;
 }
 
+// Valid variable format: {variableName} - alphanumeric and underscore only
+const VALID_VARIABLE_REGEX = /^\{[a-zA-Z0-9_]+\}$/;
+
 export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorProps) {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const [showVariableSelector, setShowVariableSelector] = useState(false);
@@ -82,13 +85,56 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     },
   });
 
-  // Add an input handler to detect backspace and check if variable format is broken
+  // Validate all variable spans after any change
+  useEffect(() => {
+    if (!editor) return;
+
+    const validateVariables = () => {
+      // Find all variable spans in the editor
+      const variableSpans = editor.view.dom.querySelectorAll('.editor-variable');
+      
+      variableSpans.forEach(node => {
+        const text = node.textContent || '';
+        
+        // Check if the content is a valid variable format
+        const isValidVariable = VALID_VARIABLE_REGEX.test(text);
+        
+        if (!isValidVariable) {
+          // Get the position of this node in the editor
+          const nodePos = editor.view.posAtDOM(node, 0);
+          
+          if (nodePos !== null) {
+            // Remove the variable styling from this invalid variable
+            editor.chain()
+              .setTextSelection({ from: nodePos, to: nodePos + text.length })
+              .unsetMark('variable')
+              .run();
+          }
+        }
+      });
+    };
+
+    // Check all variables after any content change
+    const handleUpdate = () => {
+      setTimeout(validateVariables, 10);
+    };
+
+    // Attach update event listener
+    editor.on('update', handleUpdate);
+    
+    return () => {
+      editor.off('update', handleUpdate);
+    };
+  }, [editor]);
+
+  // Add key input handlers to detect when a variable is being edited
   useEffect(() => {
     if (!editor) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Backspace' || event.key === 'Delete') {
-        // We'll check the variable styling after the key event is processed
+      if (event.key === 'Backspace' || event.key === 'Delete' || 
+          /^[a-zA-Z0-9_{}]$/.test(event.key)) {
+        // Delay to let the editor update the DOM first
         setTimeout(() => {
           // Find all variable spans in the editor
           const domNodes = editor.view.dom.querySelectorAll('.editor-variable');
@@ -97,15 +143,17 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
             const text = node.textContent || '';
             
             // Check if the content is a valid variable format with both curly braces
-            const isValidVariable = /^\{[a-zA-Z0-9_]+\}$/.test(text);
+            const isValidVariable = VALID_VARIABLE_REGEX.test(text);
             
             if (!isValidVariable) {
               // Get the position of this node in the editor
               const nodePos = editor.view.posAtDOM(node, 0);
               if (nodePos !== null) {
                 // Remove the variable mark from this text
-                editor.commands.setTextSelection({ from: nodePos, to: nodePos + text.length });
-                editor.commands.unsetMark('variable');
+                editor.chain()
+                  .setTextSelection({ from: nodePos, to: nodePos + text.length })
+                  .unsetMark('variable')
+                  .run();
               }
             }
           });
