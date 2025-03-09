@@ -20,12 +20,21 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    // Don't allow changes when variable selector is open
+    if (showVariableSelector) return;
+    
     const newValue = e.target.value;
     setCurrentValue(newValue);
     onChange(newValue);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Don't allow keyboard input when variable selector is open
+    if (showVariableSelector) {
+      e.stopPropagation();
+      return;
+    }
+    
     // Check for @ key press
     if (e.key === '@') {
       e.preventDefault(); // Prevent default behavior
@@ -94,6 +103,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
           onKeyDown={handleKeyDown}
           placeholder="Type @ to insert a variable..."
           className="w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 resize-y min-h-[100px]"
+          disabled={showVariableSelector}
         />
       </div>
       

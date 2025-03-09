@@ -42,6 +42,23 @@ export function VariableSelector({
   useEffect(() => {
     dialogOpenedRef.current = true;
   }, []);
+  
+  // Prevent background interactions when dialog is open
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (showVariables) {
+        // Allow only tab navigation within the dialog
+        if (e.key !== 'Tab') {
+          e.stopPropagation();
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [showVariables]);
 
   // Handle legacy textarea approach
   useEffect(() => {
@@ -96,13 +113,24 @@ export function VariableSelector({
   const handleKeyDown = (e: React.KeyboardEvent, variable: Variable) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      e.stopPropagation();
       insertVariable(variable);
     }
   };
 
   return (
-    <Dialog open={showVariables} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0">
+    <Dialog open={showVariables} onOpenChange={handleOpenChange} modal={true}>
+      <DialogContent 
+        className="sm:max-w-[500px] p-0"
+        onPointerDownOutside={(e) => {
+          // Prevent clicks outside dialog from reaching nodes
+          e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          // Prevent any interaction outside dialog
+          e.preventDefault();
+        }}
+      >
         <Command className="rounded-lg">
           <CommandInput 
             placeholder="Search variables..." 
@@ -110,6 +138,12 @@ export function VariableSelector({
             onValueChange={setSearchTerm}
             className="border-none focus:ring-0"
             autoFocus
+            onKeyDown={(e) => {
+              // Prevent Enter key from bubbling and activating nodes
+              if (e.key === 'Enter') {
+                e.stopPropagation();
+              }
+            }}
           />
           <CommandList>
             <CommandEmpty>No variables found.</CommandEmpty>
