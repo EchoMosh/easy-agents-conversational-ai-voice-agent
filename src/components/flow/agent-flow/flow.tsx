@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
@@ -368,7 +367,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
       
       switch (nodeType) {
         case 'greetingNode':
-          newNodeData = { greeting: 'Enter your greeting here', outcomes: [], actions: [] };
+          newNodeData = { greeting: '', outcomes: [], actions: [] };
           break;
         case 'endNode':
           newNodeData = { message: 'Enter your message here' };
