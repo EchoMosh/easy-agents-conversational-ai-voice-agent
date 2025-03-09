@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -34,7 +35,17 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     
     // Map greetingNode to speakNode for consistency in the chart
     if (baseNodeType === 'greetingNode') {
-      baseNodeType = 'speakNode';
+      baseNodeType = 'speak';
+    } else if (baseNodeType === 'speakNode') {
+      baseNodeType = 'speak';
+    } else if (baseNodeType === 'endNode') {
+      baseNodeType = 'end';
+    } else if (baseNodeType === 'triggerNode') {
+      baseNodeType = 'trigger';
+    } else if (baseNodeType === 'webhookNode') {
+      baseNodeType = 'webhook';
+    } else if (baseNodeType === 'transferNode') {
+      baseNodeType = 'transfer';
     }
     
     if (!nodeTypeCounter[baseNodeType]) {
@@ -49,7 +60,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
   
   // Add nodes to mermaid chart
   flowData.nodes.forEach((node: FlowNode) => {
-    let nodeLabel = 'Node';
+    let nodeLabel = '';
     let outcomeLabels: string[] = [];
     
     if (node.data) {
@@ -71,8 +82,6 @@ function generateMermaidFromFlow(flowData: FlowData): string {
         nodeLabel = String(node.data.platform);
       } else if (node.type === 'webhookNode') {
         nodeLabel = node.data.url ? `Webhook: ${node.data.url}` : 'Webhook';
-      } else if (node.type) {
-        nodeLabel = node.type;
       }
     }
     
@@ -82,7 +91,12 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     
     const simpleId = nodeIdMap.get(node.id) || `unknown-${node.id}`;
     
-    mermaidString += `  ${simpleId}["${cleanLabel}"]\n`;
+    // Use empty brackets for empty labels
+    if (cleanLabel) {
+      mermaidString += `  ${simpleId}["${cleanLabel}"]\n`;
+    } else {
+      mermaidString += `  ${simpleId}[]\n`;
+    }
     
     if (outcomeLabels.length > 0) {
       mermaidString += `  %% Node ${simpleId} has outcomes: ${outcomeLabels.join(', ')}\n`;
