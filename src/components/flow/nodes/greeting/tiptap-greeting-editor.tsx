@@ -137,8 +137,9 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         });
       }
       
-      // Fixed: Insert the variable with proper variable mark consistently
-      const variableText = `{{${variable}}}`;
+      // Fixed: Insert the variable with proper variable mark and simplified format
+      // Use only one pair of curly braces for the variable
+      const variableText = `{${variable}}`;
       
       editor.chain()
         .focus()
@@ -169,7 +170,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   return (
     <div 
       ref={editorContainerRef}
-      className="border rounded-md p-2 bg-white dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative"
+      className="border rounded-md p-2 bg-white dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative nodrag"
       onClick={handleClick}
     >
       <div className="text-xs text-muted-foreground mb-1">
