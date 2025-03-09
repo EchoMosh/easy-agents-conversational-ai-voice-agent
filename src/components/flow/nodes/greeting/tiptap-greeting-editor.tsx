@@ -78,15 +78,16 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   return (
     <div 
       ref={editorContainerRef}
-      className="border rounded-md p-2 bg-white/50 dark:bg-gray-800/50 min-h-[100px] text-sm"
+      className="border rounded-md p-2 bg-white/50 dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text"
       onClick={handleClick}
     >
-      <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none" />
+      <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text" />
       <style>
         {`
         .ProseMirror {
           outline: none;
           min-height: 80px;
+          cursor: text;
         }
 
         .ProseMirror p.is-editor-empty:first-child::before {
@@ -95,6 +96,21 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           color: #adb5bd;
           pointer-events: none;
           height: 0;
+        }
+        
+        .editor-variable {
+          display: inline-block;
+          background-color: rgba(99, 102, 241, 0.1);
+          color: #6366f1;
+          border-radius: 0.25rem;
+          padding: 0 0.25rem;
+          font-weight: 500;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .dark .editor-variable {
+          background-color: rgba(99, 102, 241, 0.2);
+          color: #818cf8;
         }
         `}
       </style>
