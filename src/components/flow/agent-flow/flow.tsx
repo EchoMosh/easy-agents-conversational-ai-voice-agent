@@ -131,6 +131,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
   const [showWidgets, setShowWidgets] = useState(false);
+  const [processingDeletion, setProcessingDeletion] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
@@ -172,8 +173,10 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                           target.tagName === 'TEXTAREA' || 
                           target.isContentEditable;
     
-    if ((event.key === 'Delete' || event.key === 'Backspace') && !isEditingText) {
+    if ((event.key === 'Delete' || event.key === 'Backspace') && !isEditingText && !processingDeletion) {
       console.log('[Flow] Delete/Backspace key pressed, checking for selected nodes');
+      
+      setProcessingDeletion(true);
       
       const selectedNodes = nodes.filter(node => node.selected);
       const selectedEdges = edges.filter(edge => edge.selected);
@@ -192,22 +195,32 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         
         const newNodes = nodes.filter(node => !nodeIdsToDelete.has(node.id));
         
-        setNodes(newNodes);
-        setEdges(newEdges);
-        
-        console.log('[Flow] Notifying parent about deleted nodes and related edges');
-        onNodesChange(newNodes);
-        onEdgesChange(newEdges);
-        
-        if (onNodeDeletion) {
-          onNodeDeletion(selectedNodes, newNodes, newEdges);
-        }
+        Promise.all([
+          new Promise<void>(resolve => {
+            setNodes(newNodes);
+            resolve();
+          }),
+          new Promise<void>(resolve => {
+            setEdges(newEdges);
+            resolve();
+          })
+        ]).then(() => {
+          console.log('[Flow] Notifying parent about deleted nodes and related edges');
+          onNodesChange(newNodes);
+          onEdgesChange(newEdges);
+          
+          if (onNodeDeletion) {
+            onNodeDeletion(selectedNodes, newNodes, newEdges);
+          }
+          
+          setTimeout(() => {
+            setProcessingDeletion(false);
+          }, 200);
+        });
         
         nodesChanged = true;
         edgesChanged = true;
-      }
-      
-      if (selectedEdges.length > 0 && !nodesChanged) {
+      } else if (selectedEdges.length > 0 && !nodesChanged) {
         console.log('[Flow] Selected edges to delete:', selectedEdges);
         
         const newEdges = edges.filter(edge => !edge.selected);
@@ -218,13 +231,19 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         onEdgesChange(newEdges);
         
         edgesChanged = true;
+        
+        setTimeout(() => {
+          setProcessingDeletion(false);
+        }, 200);
+      } else {
+        setProcessingDeletion(false);
       }
       
       if (nodesChanged || edgesChanged) {
         event.preventDefault();
       }
     }
-  }, [nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion]);
+  }, [nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion, processingDeletion]);
 
   useEffect(() => {
     if (JSON.stringify(initialNodes) !== JSON.stringify(nodes)) {
@@ -313,14 +332,27 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
 
   const handleNodesChange = useCallback((changes: any) => {
     console.log('[Flow] handleNodesChange called with changes:', changes);
+    
+    const removeChanges = changes.filter(change => change.type === 'remove');
+    if (removeChanges.length > 0) {
+      console.log('[Flow] Remove changes detected:', removeChanges);
+      if (processingDeletion) {
+        console.log('[Flow] Skipping additional remove processing as deletion already in progress');
+        onNodesChangeInternal(changes);
+        return;
+      }
+    }
+    
     onNodesChangeInternal(changes);
     
-    setTimeout(() => {
-      console.log('[Flow] Notifying parent after node changes, current nodes:', getNodes());
-      const currentNodes = getNodes();
-      onNodesChange(currentNodes);
-    }, 0);
-  }, [onNodesChange, onNodesChangeInternal, getNodes]);
+    if (removeChanges.length === 0) {
+      setTimeout(() => {
+        console.log('[Flow] Notifying parent after node changes, current nodes:', getNodes());
+        const currentNodes = getNodes();
+        onNodesChange(currentNodes);
+      }, 0);
+    }
+  }, [onNodesChange, onNodesChangeInternal, getNodes, processingDeletion]);
 
   const handleEdgesChange = useCallback((changes: any) => {
     console.log('[Flow] handleEdgesChange called with changes:', changes);
