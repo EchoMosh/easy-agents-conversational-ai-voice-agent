@@ -42,7 +42,8 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
       onClick={handleClick}
     >
       <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none" />
-      <style jsx>{`
+      <style>
+        {`
         .ProseMirror {
           outline: none;
           min-height: 80px;
@@ -55,7 +56,8 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
           pointer-events: none;
           height: 0;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 }
