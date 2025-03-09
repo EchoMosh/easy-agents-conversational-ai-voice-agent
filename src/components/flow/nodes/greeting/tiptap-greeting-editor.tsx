@@ -176,7 +176,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         Tip: Type <kbd className="px-1 rounded bg-muted">#</kbd> to insert a variable
       </div>
       
-      <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text" />
+      <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text nodrag" />
       
       {showVariableSelector && (
         <VariableSelector 

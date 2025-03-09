@@ -23,7 +23,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
   };
 
   return (
-    <div className="relative" style={containerStyle}>
+    <div className="relative nodrag" style={containerStyle}>
       <TipTapGreetingEditor
         value={sanitizedValue}
         onChange={handleChange}
