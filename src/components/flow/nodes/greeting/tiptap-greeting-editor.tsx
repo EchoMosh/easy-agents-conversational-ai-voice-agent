@@ -83,7 +83,9 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       }
       
       // Immediately check for invalid variables after any update
-      checkInvalidVariables(editor);
+      setTimeout(() => {
+        processInvalidVariables(editor);
+      }, 0);
     },
     autofocus: false,
     // Improve HTML parsing to correctly handle variable spans
@@ -93,37 +95,51 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   });
 
   // Function to check for invalid variables and remove styling
-  const checkInvalidVariables = useCallback((editor: any) => {
+  const processInvalidVariables = useCallback((editor: any) => {
     if (!editor || !editor.view || !editor.view.dom) return;
     
-    // Find all variable spans in the editor
-    const variableSpans = editor.view.dom.querySelectorAll('.editor-variable');
-    
-    variableSpans.forEach((node: Element) => {
-      const text = node.textContent || '';
+    try {
+      // Find all variable spans in the editor
+      const variableSpans = editor.view.dom.querySelectorAll('.editor-variable');
       
-      // Check if the content is a valid variable format
-      const isValidVariable = VALID_VARIABLE_REGEX.test(text);
-      
-      if (!isValidVariable) {
-        try {
-          // Get the position of this node in the editor
-          const nodePos = editor.view.posAtDOM(node, 0);
-          
-          if (nodePos !== null && nodePos !== undefined) {
-            // Remove the variable styling from this invalid variable
-            editor.chain()
-              .setTextSelection({ from: nodePos, to: nodePos + text.length })
-              .unsetMark('variable')
-              .run();
+      for (let i = 0; i < variableSpans.length; i++) {
+        const node = variableSpans[i];
+        const text = node.textContent || '';
+        
+        // Check if the content is a valid variable format
+        const isValidVariable = VALID_VARIABLE_REGEX.test(text);
+        
+        if (!isValidVariable) {
+          try {
+            // Create a range around this node
+            const range = document.createRange();
+            range.selectNode(node);
             
-            console.log('Removed styling from invalid variable:', text);
+            // Get the selection
+            const selection = window.getSelection();
+            if (selection) {
+              // Clear any existing selection
+              selection.removeAllRanges();
+              // Add our new range
+              selection.addRange(range);
+              
+              // Use the editor commands to remove the variable mark
+              editor.chain()
+                .unsetMark('variable')
+                .run();
+              
+              // Restore previous selection if needed
+              selection.removeAllRanges();
+            }
+          } catch (innerError) {
+            console.error('Error processing variable node:', innerError);
           }
-        } catch (error) {
-          console.error('Error processing variable node:', error);
         }
       }
-    });
+      
+    } catch (error) {
+      console.error('Error in processInvalidVariables:', error);
+    }
   }, []);
 
   // Use mutation observer to detect DOM changes that might affect variables
@@ -131,7 +147,9 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     if (!editor?.view?.dom) return;
     
     const observer = new MutationObserver(() => {
-      checkInvalidVariables(editor);
+      setTimeout(() => {
+        processInvalidVariables(editor);
+      }, 0);
     });
     
     observer.observe(editor.view.dom, {
@@ -144,7 +162,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     return () => {
       observer.disconnect();
     };
-  }, [editor, checkInvalidVariables]);
+  }, [editor, processInvalidVariables]);
 
   // Add key input handlers to detect when a variable is being edited
   useEffect(() => {
@@ -153,18 +171,26 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     const handleKeyDown = (event: KeyboardEvent) => {
       // Run check immediately for any key press
       setTimeout(() => {
-        checkInvalidVariables(editor);
+        processInvalidVariables(editor);
       }, 0);
     };
 
-    // Add the event listener to the editor DOM
+    const handleInput = () => {
+      setTimeout(() => {
+        processInvalidVariables(editor);
+      }, 0);
+    };
+
+    // Add the event listeners to the editor DOM
     const editorDOM = editor.view.dom;
     editorDOM.addEventListener('keydown', handleKeyDown);
+    editorDOM.addEventListener('input', handleInput);
     
     return () => {
       editorDOM.removeEventListener('keydown', handleKeyDown);
+      editorDOM.removeEventListener('input', handleInput);
     };
-  }, [editor, checkInvalidVariables]);
+  }, [editor, processInvalidVariables]);
 
   // Also check for invalid variables on mouse clicks which could place cursor inside variables
   useEffect(() => {
@@ -172,7 +198,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     
     const handleMouseUp = () => {
       setTimeout(() => {
-        checkInvalidVariables(editor);
+        processInvalidVariables(editor);
       }, 0);
     };
     
@@ -182,7 +208,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     return () => {
       editorDOM.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [editor, checkInvalidVariables]);
+  }, [editor, processInvalidVariables]);
 
   // Check for invalid variables when content is set from outside
   useEffect(() => {
@@ -199,11 +225,22 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       // Check for invalid variables immediately after content is set
       setTimeout(() => {
         if (editor.isEditable) {
-          checkInvalidVariables(editor);
+          processInvalidVariables(editor);
         }
       }, 10);
     }
-  }, [value, editor, checkInvalidVariables]);
+  }, [value, editor, processInvalidVariables]);
+
+  // Direct manual check - call this when needed
+  useEffect(() => {
+    if (editor) {
+      const checkTimer = setInterval(() => {
+        processInvalidVariables(editor);
+      }, 500);
+      
+      return () => clearInterval(checkTimer);
+    }
+  }, [editor, processInvalidVariables]);
 
   const handleClick = useCallback(() => {
     if (editor && !editor.isFocused) {
