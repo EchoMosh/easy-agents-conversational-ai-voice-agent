@@ -36,6 +36,12 @@ export function VariableSelector({
   const [showVariables, setShowVariables] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const lastAtIndex = useRef(-1);
+  const dialogOpenedRef = useRef(false);
+
+  // Set initial dialog state to open when component mounts
+  useEffect(() => {
+    dialogOpenedRef.current = true;
+  }, []);
 
   // Handle legacy textarea approach
   useEffect(() => {
@@ -76,6 +82,12 @@ export function VariableSelector({
   };
 
   const handleOpenChange = (open: boolean) => {
+    // Prevent auto-closing on first render
+    if (dialogOpenedRef.current && !open) {
+      dialogOpenedRef.current = false;
+      return;
+    }
+    
     setShowVariables(open);
     if (!open && onClose) onClose();
   };
@@ -89,6 +101,7 @@ export function VariableSelector({
             value={searchTerm}
             onValueChange={setSearchTerm}
             className="border-none focus:ring-0"
+            autoFocus
           />
           <CommandList>
             <CommandEmpty>No variables found.</CommandEmpty>

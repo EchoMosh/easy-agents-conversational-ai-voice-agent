@@ -28,6 +28,25 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Check for @ key press
     if (e.key === '@') {
+      e.preventDefault(); // Prevent default behavior
+      
+      // Insert the @ character manually since we're preventing default
+      const start = e.currentTarget.selectionStart;
+      const end = e.currentTarget.selectionEnd;
+      const newText = currentValue.substring(0, start) + '@' + currentValue.substring(end);
+      
+      setCurrentValue(newText);
+      onChange(newText);
+      
+      // Update cursor position after adding @
+      setTimeout(() => {
+        if (textareaRef.current) {
+          const newPosition = start + 1;
+          textareaRef.current.selectionStart = newPosition;
+          textareaRef.current.selectionEnd = newPosition;
+        }
+      }, 0);
+      
       setShowVariableSelector(true);
     }
   };
@@ -37,24 +56,30 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
       const startPos = textareaRef.current.selectionStart;
       const endPos = textareaRef.current.selectionEnd;
       
-      // Remove the @ that triggered the selector
-      const textBeforeCursor = currentValue.substring(0, startPos - 1);
-      const textAfterCursor = currentValue.substring(endPos);
+      // Find the position of the last @ character
+      const textBeforeCursor = currentValue.substring(0, startPos);
+      const lastAtIndex = textBeforeCursor.lastIndexOf('@');
       
-      // Insert the variable placeholder
-      const newText = `${textBeforeCursor}{{${variableId}}}${textAfterCursor}`;
-      
-      setCurrentValue(newText);
-      onChange(newText);
-      
-      // Focus back on textarea after selection
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          const newCursorPos = textBeforeCursor.length + variableId.length + 4; // +4 for the {{}}
-          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-        }
-      }, 0);
+      if (lastAtIndex !== -1) {
+        // Remove the @ that triggered the selector
+        const textBeforeAt = currentValue.substring(0, lastAtIndex);
+        const textAfterCursor = currentValue.substring(endPos);
+        
+        // Insert the variable placeholder
+        const newText = `${textBeforeAt}{{${variableId}}}${textAfterCursor}`;
+        
+        setCurrentValue(newText);
+        onChange(newText);
+        
+        // Focus back on textarea after selection
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+            const newCursorPos = textBeforeAt.length + variableId.length + 4; // +4 for the {{}}
+            textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+          }
+        }, 0);
+      }
     }
     setShowVariableSelector(false);
   };
