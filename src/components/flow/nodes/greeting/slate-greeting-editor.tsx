@@ -7,15 +7,13 @@ import { VariableSelector } from '../variable-mention/variable-selector';
 import { cn } from '@/lib/utils';
 
 // Define custom element types
-type CustomElement = { type: 'paragraph' | 'variable'; children: CustomText[]; variableId?: string };
+type CustomElement = { type: 'paragraph' | 'variable'; children: (CustomText)[]; variableId?: string };
 type CustomText = { text: string; bold?: boolean; italic?: boolean };
 
-// Define custom editor type
-type CustomEditor = Editor & ReactEditor;
-
+// Correctly define the custom editor type without circular references
 declare module 'slate' {
   interface CustomTypes {
-    Editor: CustomEditor;
+    Editor: Editor & ReactEditor;
     Element: CustomElement;
     Text: CustomText;
   }
@@ -73,7 +71,8 @@ const parseTextWithVariables = (text: string): Descendant[] => {
   let lastIndex = 0;
   let match;
   
-  const paragraphChildren: (CustomText | CustomElement)[] = [];
+  // Create an array of text and variable nodes
+  const paragraphChildren: (CustomText | { type: 'variable', variableId: string, children: CustomText[] })[] = [];
   
   while ((match = regex.exec(text)) !== null) {
     // Add text before variable
@@ -101,7 +100,11 @@ const parseTextWithVariables = (text: string): Descendant[] => {
   
   // If we have parts, add them to a paragraph
   if (paragraphChildren.length > 0) {
-    nodes.push({ type: 'paragraph', children: paragraphChildren });
+    // Type assertion to satisfy TypeScript
+    nodes.push({ 
+      type: 'paragraph', 
+      children: paragraphChildren as any 
+    });
   } else {
     // Empty document
     nodes.push({ type: 'paragraph', children: [{ text: '' }] });
@@ -122,7 +125,22 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
   const [targetRange, setTargetRange] = useState<Range | null>(null);
   
   // Create a Slate editor
-  const editor = useMemo(() => withHistory(withReact(createEditor())), []);
+  const editor = useMemo(() => {
+    const slateEditor = withHistory(withReact(createEditor()));
+    
+    // Override the isVoid function to handle variable nodes
+    const { isVoid, isInline } = slateEditor;
+    
+    slateEditor.isVoid = element => {
+      return element.type === 'variable' ? false : isVoid(element);
+    };
+    
+    slateEditor.isInline = element => {
+      return element.type === 'variable' ? true : isInline(element);
+    };
+    
+    return slateEditor;
+  }, []);
   
   // Initialize with the current value
   const initialValue = useMemo(() => parseTextWithVariables(value), [value]);
@@ -157,11 +175,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
   const handleSelectVariable = useCallback((variableId: string) => {
     if (targetRange) {
       // Delete the @ character
-      editor.deleteFragment({
-        distance: 1,
-        unit: 'character',
-        reverse: true
-      });
+      editor.deleteBackward('character');
       
       // Insert the variable node
       const variableNode: CustomElement = {
@@ -177,6 +191,37 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     
     setShowVariableSelector(false);
   }, [editor, targetRange]);
+
+  // Handle keydown events for variable deletion
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Get the current selection
+    const { selection } = editor;
+    
+    if (selection && !Range.isCollapsed(selection)) {
+      // Check if selection contains a variable node
+      const [node] = Editor.node(editor, selection);
+      
+      if (SlateElement.isElement(node) && node.type === 'variable') {
+        // Allow deletion with backspace or delete keys
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+          editor.deleteFragment();
+          e.preventDefault();
+        }
+      }
+    } else if (e.key === 'Backspace' && selection) {
+      // Check if the previous node is a variable
+      const [start] = Range.edges(selection);
+      const prevNodeEntry = Editor.previous(editor, { at: start });
+      
+      if (prevNodeEntry) {
+        const [prevNode] = prevNodeEntry;
+        if (SlateElement.isElement(prevNode) && prevNode.type === 'variable') {
+          editor.deleteBackward('character');
+          e.preventDefault();
+        }
+      }
+    }
+  };
   
   return (
     <div className="flex flex-col gap-2 greeting-editor">
@@ -194,6 +239,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
             renderElement={Element}
             renderLeaf={Leaf}
             placeholder="Type @ to insert a variable..."
+            onKeyDown={handleKeyDown}
             style={{
               fontWeight: 500, // Medium font weight
               color: '#333', // Darker text color
@@ -216,10 +262,14 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
         .greeting-paragraph {
           margin: 0;
           position: relative;
+          line-height: 1.5;
         }
         
         .variable-node {
           user-select: all;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
         }
       `}</style>
     </div>
