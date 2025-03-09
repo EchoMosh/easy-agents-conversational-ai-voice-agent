@@ -104,8 +104,8 @@ export function TemplateStep({
         <Card 
           className={`cursor-pointer transition-all duration-200 h-[140px] flex flex-col justify-center ${
             selectedTemplate === '' ? 
-              'ring-4 ring-blue-500 bg-blue-50 dark:bg-blue-950/30 transform scale-[1.02] shadow-lg' : 
-              'hover:border-blue-400 hover:shadow-md'
+              'hover:border-blue-400 hover:shadow-md' : 
+              'ring-4 ring-blue-500 bg-blue-50 dark:bg-blue-950/30 transform scale-[1.02] shadow-lg'
           }`}
           onClick={handleTemplateClick}
         >
