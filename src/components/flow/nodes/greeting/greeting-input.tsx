@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { SlateGreetingEditor } from './slate-greeting-editor';
 
@@ -8,22 +7,27 @@ interface GreetingInputProps {
 }
 
 export function GreetingInput({ value, onChange }: GreetingInputProps) {
-  const [currentValue, setCurrentValue] = useState(value);
-
-  // Update local value when prop value changes
-  useEffect(() => {
-    setCurrentValue(value);
-  }, [value]);
-
+  const sanitizedValue = value ? value.replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '') : '';
+  
   const handleChange = (newValue: string) => {
-    setCurrentValue(newValue);
+    console.log("GreetingInput change:", newValue);
     onChange(newValue);
   };
 
+  const containerStyle = {
+    maxWidth: '250px',
+    width: '250px',
+    minWidth: '0',
+    overflow: 'hidden',
+    flex: '1 1 auto'
+  };
+
   return (
-    <SlateGreetingEditor 
-      value={currentValue}
-      onChange={handleChange}
-    />
+    <div className="relative" style={containerStyle}>
+      <SlateGreetingEditor
+        value={sanitizedValue}
+        onChange={handleChange}
+      />
+    </div>
   );
 }

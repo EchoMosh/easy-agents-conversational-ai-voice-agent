@@ -224,11 +224,11 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
   };
   
   return (
-    <div className="flex flex-col gap-2 greeting-editor">
+    <div className="flex flex-col gap-2 greeting-editor" style={{ pointerEvents: 'auto' }}>
       <div className={cn(
         "w-full border border-gray-200 dark:border-gray-700 rounded-lg min-h-[100px] break-words focus-within:ring-1 focus-within:ring-blue-400 dark:focus-within:ring-blue-600 focus-within:border-blue-400 dark:focus-within:border-blue-600",
         showVariableSelector ? "opacity-50" : ""
-      )}>
+      )} style={{ position: 'relative', zIndex: 10 }}>
         <Slate 
           editor={editor} 
           initialValue={initialValue}
@@ -243,6 +243,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
             style={{
               fontWeight: 500, // Medium font weight
               color: '#333', // Darker text color
+              pointerEvents: 'auto',
             }}
           />
         </Slate>
