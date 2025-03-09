@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useMemo } from 'react';
 import { createEditor, Descendant, Element as SlateElement, Text, Range, Editor } from 'slate';
 import { Slate, Editable, withReact, ReactEditor } from 'slate-react';
@@ -223,6 +222,11 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     }
   };
   
+  // Click handler for diagnostic purposes
+  const handleEditorClick = () => {
+    console.log('Editable clicked');
+  };
+  
   return (
     <div className="flex flex-col gap-2 greeting-editor" style={{ pointerEvents: 'auto' }}>
       <div className={cn(
@@ -240,6 +244,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
             renderLeaf={Leaf}
             placeholder="Type @ to insert a variable..."
             onKeyDown={handleKeyDown}
+            onClick={handleEditorClick}
             style={{
               fontWeight: 500, // Medium font weight
               color: '#333', // Darker text color
