@@ -120,7 +120,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   return (
     <div 
       ref={editorContainerRef}
-      className="border rounded-md p-2 bg-white/50 dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative"
+      className="border rounded-md p-2 bg-white dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative"
       onClick={handleClick}
     >
       <div className="text-xs text-muted-foreground mb-1">
