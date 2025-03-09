@@ -223,7 +223,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       onClick={handleClick}
     >
       {showTip && (
-        <div className="absolute top-4 left-2 text-sm text-gray-400 dark:text-gray-500 pointer-events-none">
+        <div className="absolute top-2 left-2 text-sm text-gray-400 dark:text-gray-500 pointer-events-none">
           Tip: Type <kbd className="px-1 rounded bg-gray-100 dark:bg-gray-700">#</kbd> to insert a variable
         </div>
       )}
@@ -244,7 +244,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           outline: none;
           min-height: 80px;
           cursor: text;
-          padding-top: ${showTip ? '1.5rem' : '0'};
+          padding-top: ${showTip ? '0' : '0'};
         }
 
         .ProseMirror p.is-editor-empty:first-child::before {
