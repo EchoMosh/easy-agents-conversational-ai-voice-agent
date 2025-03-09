@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { SlateGreetingEditor } from './slate-greeting-editor';
+
+import { TipTapGreetingEditor } from './tiptap-greeting-editor';
 
 interface GreetingInputProps {
   value: string;
@@ -7,7 +7,7 @@ interface GreetingInputProps {
 }
 
 export function GreetingInput({ value, onChange }: GreetingInputProps) {
-  const sanitizedValue = value ? value.replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '') : '';
+  const sanitizedValue = value ? value : '<p>Enter your message here...</p>';
   
   const handleChange = (newValue: string) => {
     console.log("GreetingInput change:", newValue);
@@ -24,7 +24,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
 
   return (
     <div className="relative" style={containerStyle}>
-      <SlateGreetingEditor
+      <TipTapGreetingEditor
         value={sanitizedValue}
         onChange={handleChange}
       />
