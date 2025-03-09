@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { createEditor, Descendant, Element as SlateElement, Text, Range, Editor } from 'slate';
 import { Slate, Editable, withReact, ReactEditor } from 'slate-react';
@@ -124,11 +125,11 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
   // Track @ trigger position for variable insertion
   const [targetRange, setTargetRange] = useState<Range | null>(null);
   
-  // Create a Slate editor
+  // Update the editor useMemo to be more robust
   const editor = useMemo(() => {
-    const slateEditor = withHistory(withReact(createEditor()));
+    const slateEditor = withReact(withHistory(createEditor()));
     
-    // Override the isVoid function to handle variable nodes
+    // Override functions as before
     const { isVoid, isInline } = slateEditor;
     
     slateEditor.isVoid = element => {
@@ -142,19 +143,21 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     return slateEditor;
   }, []);
   
-  // Initialize with the current value
-  const initialValue = useMemo(() => parseTextWithVariables(value), [value]);
+  // Add a state for editor content
+  const [editorContent, setEditorContent] = useState<Descendant[]>(() => 
+    parseTextWithVariables(value)
+  );
   
-  // Add this effect to synchronize editor state with external value changes
+  // Replace the initialValue useMemo with this useEffect
   useEffect(() => {
-    // This ensures the editor content is reset when the value prop changes externally
-    const parsed = parseTextWithVariables(value);
-    editor.children = parsed;
-    // No need to call onChange here as it would cause a loop
-  }, [value, editor]);
+    const parsedValue = parseTextWithVariables(value);
+    setEditorContent(parsedValue);
+  }, [value]);
   
-  // Handle value changes
-  const handleChange = (newValue: Descendant[]) => {
+  // Handle editor changes
+  const handleEditorChange = (newValue: Descendant[]) => {
+    setEditorContent(newValue);
+    
     // Convert Slate document to plain text with variables
     const plainText = slateToPlainText(newValue);
     onChange(plainText);
@@ -238,49 +241,54 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     console.log('Focus requested on editor');
   }, [editor]);
   
-  // Add cursor visibility function
-  const ensureCursorVisible = useCallback(() => {
-    // First focus the editor
+  // Improve click handling to ensure the cursor is properly set
+  const handleEditorClick = (e: React.MouseEvent) => {
+    // Stop propagation to prevent parent handlers from interfering
+    e.stopPropagation();
+    
+    // Log for debugging
+    console.log('Editable clicked at', e.clientX, e.clientY);
+    
+    // Force focus
     ReactEditor.focus(editor);
     
-    // Then if there's no selection, create one at the end of the document
-    if (!editor.selection) {
-      try {
-        // Get the last text node's path
-        const lastPath = Editor.end(editor, []);
-        
-        // Set selection at the end of the content
-        const newSelection = {
-          anchor: lastPath,
-          focus: lastPath
-        };
-        
-        // Apply the selection
-        editor.selection = newSelection;
+    // Try to place cursor at click position
+    try {
+      // If there's no selection, set one at the end
+      if (!editor.selection) {
+        const point = Editor.end(editor, []);
+        editor.selection = { anchor: point, focus: point };
         editor.onChange();
-        
-        console.log('Set cursor position at end:', lastPath);
-      } catch (err) {
-        console.error('Error setting cursor position:', err);
       }
+    } catch (err) {
+      console.error('Error setting cursor:', err);
     }
-  }, [editor]);
+  };
   
-  // Updated click handler with focus and cursor functionality
-  const handleEditorClick = () => {
-    console.log('Editable clicked');
+  // Container click handler
+  const handleContainerClick = (e: React.MouseEvent) => {
+    // Prevent the default behavior
+    e.preventDefault();
+    
+    // Focus editor and ensure cursor is visible
     focusEditor();
-    ensureCursorVisible();
+    
+    // Try to place cursor at the end of the document
+    try {
+      const point = Editor.end(editor, []);
+      editor.selection = { anchor: point, focus: point };
+      editor.onChange();
+      console.log('Set cursor position at end from container click');
+    } catch (err) {
+      console.error('Error setting cursor position from container click:', err);
+    }
   };
   
   return (
     <div 
       className="flex flex-col gap-2 greeting-editor" 
       style={{ pointerEvents: 'auto' }}
-      onClick={() => {
-        focusEditor();
-        ensureCursorVisible();
-      }}
+      onClick={handleContainerClick}
     >
       <div className={cn(
         "w-full border border-gray-200 dark:border-gray-700 rounded-lg min-h-[100px] break-words focus-within:ring-1 focus-within:ring-blue-400 dark:focus-within:ring-blue-600 focus-within:border-blue-400 dark:focus-within:border-blue-600",
@@ -288,8 +296,8 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
       )} style={{ position: 'relative', zIndex: 10 }}>
         <Slate 
           editor={editor} 
-          initialValue={initialValue}
-          onChange={handleChange}
+          value={editorContent}
+          onChange={handleEditorChange}
         >
           <Editable
             className="w-full p-2 text-sm bg-white/50 dark:bg-gray-800/50 resize-y min-h-[100px] outline-none focus:outline-none"
@@ -336,3 +344,4 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     </div>
   );
 }
+
