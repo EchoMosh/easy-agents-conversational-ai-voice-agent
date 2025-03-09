@@ -31,9 +31,8 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
     variable.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // For inline variable selector (triggered by # or @)
-  if (triggerChar) {
-    // Group variables by category for better organization
+  // Group variables by category for better organization
+  const groupVariablesByCategory = () => {
     const groupedVariables: Record<string, typeof availableVariables> = {};
     
     filteredVariables.forEach(variable => {
@@ -42,7 +41,15 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
       }
       groupedVariables[variable.category].push(variable);
     });
+    
+    return groupedVariables;
+  };
 
+  // For inline variable selector (triggered by # or @)
+  if (triggerChar) {
+    // Group variables by category for better organization
+    const groupedVariables = groupVariablesByCategory();
+    
     // Focus input when opened
     useEffect(() => {
       const inputElement = commandRef.current?.querySelector('input');
@@ -52,7 +59,7 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
     }, []);
 
     return (
-      <div className="w-[200px] bg-popover border rounded-md shadow-md overflow-hidden" ref={commandRef}>
+      <div className="w-[200px] bg-popover border rounded-md shadow-md overflow-hidden z-50" ref={commandRef}>
         <Command className="rounded-t-none">
           <CommandInput 
             placeholder="Search variable..." 
@@ -61,20 +68,26 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
           />
           <CommandEmpty>No variable found.</CommandEmpty>
           
-          {Object.entries(groupedVariables).map(([category, variables]) => (
-            <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
-              {variables.map((variable) => (
-                <CommandItem
-                  key={variable.id}
-                  onSelect={() => onSelectVariable(variable.value)}
-                  className="cursor-pointer"
-                >
-                  <Variable className="mr-2 h-4 w-4" />
-                  {variable.label}
-                </CommandItem>
-              ))}
+          {Object.keys(groupedVariables).length > 0 ? (
+            Object.entries(groupedVariables).map(([category, variables]) => (
+              <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
+                {variables.map((variable) => (
+                  <CommandItem
+                    key={variable.id}
+                    onSelect={() => onSelectVariable(variable.value)}
+                    className="cursor-pointer"
+                  >
+                    <Variable className="mr-2 h-4 w-4" />
+                    {variable.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))
+          ) : (
+            <CommandGroup>
+              <CommandItem disabled>No variables found</CommandItem>
             </CommandGroup>
-          ))}
+          )}
         </Command>
       </div>
     );
@@ -102,19 +115,23 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
           />
           <CommandEmpty>No variable found.</CommandEmpty>
           <CommandGroup heading="Available Variables">
-            {filteredVariables.map((variable) => (
-              <CommandItem
-                key={variable.id}
-                onSelect={() => {
-                  onSelectVariable(variable.value);
-                  setOpen(false);
-                }}
-                className="cursor-pointer"
-              >
-                <Variable className="mr-2 h-4 w-4" />
-                {variable.label}
-              </CommandItem>
-            ))}
+            {filteredVariables.length > 0 ? (
+              filteredVariables.map((variable) => (
+                <CommandItem
+                  key={variable.id}
+                  onSelect={() => {
+                    onSelectVariable(variable.value);
+                    setOpen(false);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Variable className="mr-2 h-4 w-4" />
+                  {variable.label}
+                </CommandItem>
+              ))
+            ) : (
+              <CommandItem disabled>No variables found</CommandItem>
+            )}
           </CommandGroup>
         </Command>
       </PopoverContent>
