@@ -16,7 +16,8 @@ export const processInvalidVariables = (editor: any) => {
       const text = node.textContent || '';
       
       // Check if the content is a valid variable format
-      const isValidVariable = VALID_VARIABLE_REGEX.test(text);
+      // Also check for newlines or whitespace which would make it invalid
+      const isValidVariable = VALID_VARIABLE_REGEX.test(text) && !text.includes('\n') && !text.includes('\r');
       
       if (!isValidVariable) {
         try {
@@ -27,6 +28,12 @@ export const processInvalidVariables = (editor: any) => {
           // Get the selection
           const selection = window.getSelection();
           if (selection) {
+            // Save current selection
+            const savedRanges = [];
+            for (let j = 0; j < selection.rangeCount; j++) {
+              savedRanges.push(selection.getRangeAt(j).cloneRange());
+            }
+            
             // Clear any existing selection
             selection.removeAllRanges();
             // Add our new range
@@ -37,8 +44,11 @@ export const processInvalidVariables = (editor: any) => {
               .unsetMark('variable')
               .run();
             
-            // Restore previous selection if needed
+            // Restore previous selection
             selection.removeAllRanges();
+            for (const savedRange of savedRanges) {
+              selection.addRange(savedRange);
+            }
           }
         } catch (innerError) {
           console.error('Error processing variable node:', innerError);
@@ -49,4 +59,25 @@ export const processInvalidVariables = (editor: any) => {
   } catch (error) {
     console.error('Error in processInvalidVariables:', error);
   }
+};
+
+// Function to handle real-time validation during typing
+export const validateOnInput = (editor: any) => {
+  if (!editor) return;
+  
+  // Set up a MutationObserver to watch for DOM changes
+  const editorDOM = editor.view.dom;
+  const observer = new MutationObserver(() => {
+    processInvalidVariables(editor);
+  });
+  
+  // Observe all changes to the editor DOM
+  observer.observe(editorDOM, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true
+  });
+  
+  return () => observer.disconnect();
 };

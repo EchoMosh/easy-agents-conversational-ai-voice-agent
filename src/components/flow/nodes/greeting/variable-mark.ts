@@ -20,13 +20,26 @@ const VariableMark = Mark.create({
     return [
       {
         tag: 'span.editor-variable',
+        getAttrs: (node) => {
+          // Only parse as variable if it doesn't contain newlines
+          const element = node as HTMLElement;
+          const text = element.textContent || '';
+          if (text.includes('\n') || text.includes('\r')) {
+            return false;
+          }
+          return {};
+        }
       },
     ];
   },
   
   renderHTML({ HTMLAttributes }) {
     return ['span', mergeAttributes(HTMLAttributes), 0];
-  }
+  },
+  
+  // Prevent the mark from spanning across paragraphs
+  inclusive: false,
+  excludes: '_'
 });
 
 export default VariableMark;
