@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
-import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X, ListChecks } from 'lucide-react';
+import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
@@ -8,7 +8,6 @@ import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
 import { TransferNode } from '@/components/flow/nodes/transfer-node';
 import { WebhookNode } from '@/components/flow/nodes/webhook-node';
-import { OutcomesNode } from '@/components/flow/nodes/outcomes-node';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import React from 'react';
@@ -24,8 +23,7 @@ const nodeTypes: NodeTypes = {
   endNode: EndNode,
   triggerNode: TriggerNode,
   transferNode: TransferNode,
-  webhookNode: WebhookNode,
-  outcomesNode: OutcomesNode
+  webhookNode: WebhookNode
 };
 
 // Custom edge with animated line
@@ -111,13 +109,6 @@ const widgets = [
     icon: Webhook, 
     color: '#d946ef',
     description: 'Make HTTP requests to external services'
-  },
-  { 
-    type: 'outcomesNode', 
-    label: 'Outcomes', 
-    icon: ListChecks, 
-    color: '#8b5cf6',
-    description: 'Define possible user responses'
   }
 ];
 
@@ -342,8 +333,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     }, 0);
   }, [edges, onEdgesChange, onEdgesChangeInternal]);
 
+  // Update the onEdgeClick handler to avoid deleting edges on click
   const onEdgeClick: EdgeMouseHandler = useCallback((event, edge) => {
+    // Do nothing or add custom selection logic here if needed
     console.log('[Flow] Edge clicked:', edge);
+    // Not deleting the edge anymore, just logging it was clicked
   }, []);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -386,9 +380,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           break;
         case 'webhookNode':
           newNodeData = { url: '', method: 'GET' };
-          break;
-        case 'outcomesNode':
-          newNodeData = { title: 'User Outcomes', outcomes: [] };
           break;
       }
 
@@ -513,8 +504,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                     return '#10b981';
                   case 'webhookNode':
                     return '#d946ef';
-                  case 'outcomesNode':
-                    return '#8b5cf6';
                   default:
                     return '#60a5fa';
                 }
