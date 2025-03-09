@@ -157,7 +157,7 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
               bottom: 0, 
               pointerEvents: "none",
               backgroundColor: "transparent", 
-              zIndex: 2,
+              zIndex: 1, // Changed from 2 to 1 so it's BEHIND the caret
               padding: "0.5rem"
             }}
           >
@@ -172,13 +172,13 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
           placeholder="Type @ to insert a variable..."
           className={cn(
             "w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 resize-y min-h-[100px] nodrag",
-            displayValue.length > 0 ? "bg-transparent" : ""
+            displayValue.length > 0 ? "relative" : ""
           )}
           style={{
-            caretColor: "black",
+            caretColor: "black", // Ensure caret is black for visibility
             color: displayValue.length > 0 ? "transparent" : "inherit",
             position: "relative",
-            zIndex: 1
+            zIndex: 2 // Changed from 1 to 2 so it's ON TOP of the highlighted variables
           }}
           disabled={showVariableSelector}
         />
