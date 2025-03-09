@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -97,7 +96,7 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="default" id="default" />
                     <Label htmlFor="default" className="cursor-pointer flex items-center">
-                      <span className="editor-variable">{{name}}</span>
+                      <span className="editor-variable">{'{{name}}'}</span>
                       <span className="ml-2">Default Style</span>
                     </Label>
                   </div>
