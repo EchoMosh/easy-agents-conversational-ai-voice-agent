@@ -5,6 +5,12 @@ import { Mark, mergeAttributes } from '@tiptap/react';
 const VariableMark = Mark.create({
   name: 'variable',
   
+  addOptions() {
+    return {
+      HTMLAttributes: {},
+    };
+  },
+  
   addAttributes() {
     return {
       class: {
@@ -21,10 +27,12 @@ const VariableMark = Mark.create({
       {
         tag: 'span.editor-variable',
         getAttrs: (node) => {
-          // Only parse as variable if it doesn't contain newlines
+          // Only parse as variable if it's a clean variable format
           const element = node as HTMLElement;
           const text = element.textContent || '';
-          if (text.includes('\n') || text.includes('\r')) {
+          
+          // Reject any variable with newlines, spaces, or non-variable format
+          if (text.includes('\n') || text.includes('\r') || text.includes(' ') || !text.match(/^\{[a-zA-Z][a-zA-Z0-9_]{1,19}\}$/)) {
             return false;
           }
           return {};
@@ -37,10 +45,13 @@ const VariableMark = Mark.create({
     return ['span', mergeAttributes(HTMLAttributes), 0];
   },
   
-  // Prevent the mark from spanning across paragraphs and exclude other marks
+  // Critical settings to prevent variables spanning across nodes
   inclusive: false,
   excludes: '_', // Exclude all other marks
-  spanning: false // Explicitly prevent spanning across nodes
+  spanning: false, // Prevent spanning across nodes
+
+  // New method to actively prevent splitting behavior
+  keepOnSplit: false
 });
 
 export default VariableMark;

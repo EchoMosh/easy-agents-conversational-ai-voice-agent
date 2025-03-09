@@ -2,7 +2,7 @@
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useCallback, useEffect, useState } from 'react';
-import { processInvalidVariables, validateOnInput, setupVariableValidationListeners } from './variable-utils';
+import { processInvalidVariables, validateOnInput, setupVariableValidationListeners, cleanVariablesOnEnter } from './variable-utils';
 import VariableMark from './variable-mark';
 
 interface UseTiptapEditorProps {
@@ -64,49 +64,80 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
     parseOptions: {
       preserveWhitespace: 'full',
     },
+    editorProps: {
+      // Add custom handlers for keydown to watch for Enter
+      handleKeyDown: (view, event) => {
+        if (event.key === 'Enter') {
+          // This event will fire before the actual Enter is processed
+          // Force check and clean variables near cursor
+          setTimeout(() => {
+            processInvalidVariables(editor);
+          }, 0);
+          
+          // Let the default handler continue
+          return false;
+        }
+        return false;
+      },
+    },
   });
 
-  // Enhanced variable validation that watches for key input events
+  // Variable validation with multiple strategies
   useEffect(() => {
     if (!editor?.view?.dom) return;
     
-    // Set up listeners for events that might affect variables
-    const handleKeyInput = () => {
-      setTimeout(() => processInvalidVariables(editor), 0);
-    };
+    // First strategy: Standard input validation
+    const inputValidationCleanup = validateOnInput(editor);
     
-    const editorDOM = editor.view.dom;
-    editorDOM.addEventListener('keydown', handleKeyInput);
-    editorDOM.addEventListener('input', handleKeyInput);
-    editorDOM.addEventListener('paste', handleKeyInput);
-    editorDOM.addEventListener('mouseup', handleKeyInput);
+    // Second strategy: Event-based validation
+    const eventValidationCleanup = setupVariableValidationListeners(editor);
     
-    // Set up mutation observer for DOM changes
-    const cleanupObserver = validateOnInput(editor);
+    // Third strategy: Enter key specific cleanup
+    const enterKeyCleanup = cleanVariablesOnEnter(editor);
     
-    // Set up variable-specific validation
-    const cleanupVariableListeners = setupVariableValidationListeners(editor);
+    // Fourth strategy: Interval checking for persistent cases
+    const validationInterval = setInterval(() => {
+      processInvalidVariables(editor);
+    }, 200);
     
-    // Additional handler for Enter key which often causes issues
-    const handleEnterKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        // Force check for broken variables
-        setTimeout(() => {
-          processInvalidVariables(editor);
-        }, 0);
+    // Apply a MutationObserver specifically watching for line breaks near variables
+    const lineBreakObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          const addedNodes = Array.from(mutation.addedNodes);
+          // Check if any added node is a BR or contains a BR
+          const hasBR = addedNodes.some(node => {
+            if (node.nodeName === 'BR') return true;
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              return (node as Element).querySelector('br') !== null;
+            }
+            return false;
+          });
+          
+          if (hasBR) {
+            // If a BR was added, aggressively clean variables
+            processInvalidVariables(editor);
+            
+            // Run several delayed cleaning attempts to catch post-render issues
+            for (let i = 1; i <= 5; i++) {
+              setTimeout(() => processInvalidVariables(editor), i * 50);
+            }
+          }
+        }
       }
-    };
+    });
     
-    editorDOM.addEventListener('keydown', handleEnterKey);
+    lineBreakObserver.observe(editor.view.dom, {
+      childList: true,
+      subtree: true,
+    });
     
     return () => {
-      editorDOM.removeEventListener('keydown', handleKeyInput);
-      editorDOM.removeEventListener('input', handleKeyInput);
-      editorDOM.removeEventListener('paste', handleKeyInput);
-      editorDOM.removeEventListener('mouseup', handleKeyInput);
-      editorDOM.removeEventListener('keydown', handleEnterKey);
-      if (cleanupObserver) cleanupObserver();
-      if (cleanupVariableListeners) cleanupVariableListeners();
+      if (inputValidationCleanup) inputValidationCleanup();
+      if (eventValidationCleanup) eventValidationCleanup();
+      if (enterKeyCleanup) enterKeyCleanup();
+      clearInterval(validationInterval);
+      lineBreakObserver.disconnect();
     };
   }, [editor]);
 
@@ -129,17 +160,6 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       }, 0);
     }
   }, [value, editor]);
-
-  // More aggressive validation check
-  useEffect(() => {
-    if (editor) {
-      const checkTimer = setInterval(() => {
-        processInvalidVariables(editor);
-      }, 100); // Check more frequently
-      
-      return () => clearInterval(checkTimer);
-    }
-  }, [editor]);
 
   const insertVariable = useCallback((variable: string, triggerChar: string | null = null) => {
     if (editor) {
