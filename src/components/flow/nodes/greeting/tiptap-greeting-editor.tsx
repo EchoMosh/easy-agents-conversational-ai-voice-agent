@@ -77,6 +77,11 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           setShowVariableSelector(true);
         }
       }
+      
+      // Check for invalid variables immediately after an update
+      setTimeout(() => {
+        checkInvalidVariables(editor);
+      }, 0);
     },
     autofocus: false,
     // Improve HTML parsing to correctly handle variable spans
@@ -85,79 +90,44 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     },
   });
 
-  // Validate all variable spans after any change
-  useEffect(() => {
-    if (!editor) return;
-
-    const validateVariables = () => {
-      // Find all variable spans in the editor
-      const variableSpans = editor.view.dom.querySelectorAll('.editor-variable');
-      
-      variableSpans.forEach(node => {
-        const text = node.textContent || '';
-        
-        // Check if the content is a valid variable format
-        const isValidVariable = VALID_VARIABLE_REGEX.test(text);
-        
-        if (!isValidVariable) {
-          // Get the position of this node in the editor
-          const nodePos = editor.view.posAtDOM(node, 0);
-          
-          if (nodePos !== null) {
-            // Remove the variable styling from this invalid variable
-            editor.chain()
-              .setTextSelection({ from: nodePos, to: nodePos + text.length })
-              .unsetMark('variable')
-              .run();
-          }
-        }
-      });
-    };
-
-    // Check all variables after any content change
-    const handleUpdate = () => {
-      setTimeout(validateVariables, 10);
-    };
-
-    // Attach update event listener
-    editor.on('update', handleUpdate);
+  // Function to check for invalid variables
+  const checkInvalidVariables = (editor: any) => {
+    // Find all variable spans in the editor
+    const variableSpans = editor.view.dom.querySelectorAll('.editor-variable');
     
-    return () => {
-      editor.off('update', handleUpdate);
-    };
-  }, [editor]);
+    variableSpans.forEach((node: Element) => {
+      const text = node.textContent || '';
+      
+      // Check if the content is a valid variable format
+      const isValidVariable = VALID_VARIABLE_REGEX.test(text);
+      
+      if (!isValidVariable) {
+        // Get the position of this node in the editor
+        const nodePos = editor.view.posAtDOM(node, 0);
+        
+        if (nodePos !== null) {
+          // Remove the variable styling from this invalid variable
+          editor.chain()
+            .setTextSelection({ from: nodePos, to: nodePos + text.length })
+            .unsetMark('variable')
+            .run();
+        }
+      }
+    });
+  };
 
   // Add key input handlers to detect when a variable is being edited
   useEffect(() => {
     if (!editor) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // For any key that could modify variable content
       if (event.key === 'Backspace' || event.key === 'Delete' || 
           /^[a-zA-Z0-9_{}]$/.test(event.key)) {
-        // Delay to let the editor update the DOM first
+        // Run check immediately after key event
         setTimeout(() => {
-          // Find all variable spans in the editor
-          const domNodes = editor.view.dom.querySelectorAll('.editor-variable');
-          
-          domNodes.forEach(node => {
-            const text = node.textContent || '';
-            
-            // Check if the content is a valid variable format with both curly braces
-            const isValidVariable = VALID_VARIABLE_REGEX.test(text);
-            
-            if (!isValidVariable) {
-              // Get the position of this node in the editor
-              const nodePos = editor.view.posAtDOM(node, 0);
-              if (nodePos !== null) {
-                // Remove the variable mark from this text
-                editor.chain()
-                  .setTextSelection({ from: nodePos, to: nodePos + text.length })
-                  .unsetMark('variable')
-                  .run();
-              }
-            }
-          });
-        }, 10);
+          checkInvalidVariables(editor);
+        }, 0);
       }
     };
 
@@ -167,6 +137,24 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     
     return () => {
       editorDOM.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [editor]);
+
+  // Also check for invalid variables on mouse clicks which could place cursor inside variables
+  useEffect(() => {
+    if (!editor) return;
+    
+    const handleMouseUp = () => {
+      setTimeout(() => {
+        checkInvalidVariables(editor);
+      }, 0);
+    };
+    
+    const editorDOM = editor.view.dom;
+    editorDOM.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      editorDOM.removeEventListener('mouseup', handleMouseUp);
     };
   }, [editor]);
 
@@ -181,6 +169,13 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       } else {
         setShowTip(false);
       }
+      
+      // Check for invalid variables after content is set
+      setTimeout(() => {
+        if (editor.isEditable) {
+          checkInvalidVariables(editor);
+        }
+      }, 10);
     }
   }, [value, editor]);
 
