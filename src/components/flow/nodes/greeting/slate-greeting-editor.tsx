@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { createEditor, Descendant, Element as SlateElement, Text, Range, Editor } from 'slate';
 import { Slate, Editable, withReact, ReactEditor } from 'slate-react';
 import { withHistory } from 'slate-history';
@@ -143,6 +143,14 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
   
   // Initialize with the current value
   const initialValue = useMemo(() => parseTextWithVariables(value), [value]);
+  
+  // Add this effect to synchronize editor state with external value changes
+  useEffect(() => {
+    // This ensures the editor content is reset when the value prop changes externally
+    const parsed = parseTextWithVariables(value);
+    editor.children = parsed;
+    // No need to call onChange here as it would cause a loop
+  }, [value, editor]);
   
   // Handle value changes
   const handleChange = (newValue: Descendant[]) => {
