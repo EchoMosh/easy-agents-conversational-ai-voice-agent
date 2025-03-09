@@ -10,13 +10,13 @@ import { cn } from '@/lib/utils';
 type CustomElement = { type: 'paragraph' | 'variable'; children: (CustomText)[]; variableId?: string };
 type CustomText = { text: string; bold?: boolean; italic?: boolean };
 
-// Import Editor directly from slate to avoid circular references
-import { Editor } from 'slate';
+// Import Editor directly from slate
+import { BaseEditor } from 'slate';
 
-// Fix the circular type reference issues by separating the augmentation
+// Fix the circular type reference issues by properly extending types
 declare module 'slate' {
   interface CustomTypes {
-    Editor: Editor & ReactEditor;
+    Editor: BaseEditor & ReactEditor;
     Element: CustomElement;
     Text: CustomText;
   }
