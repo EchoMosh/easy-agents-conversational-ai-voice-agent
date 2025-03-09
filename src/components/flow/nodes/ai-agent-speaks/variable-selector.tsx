@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -52,40 +53,53 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
       }
     }, []);
 
+    // Create a portal for the variable selector dropdown
     return (
-      <div className="w-[200px] bg-popover border rounded-md shadow-md overflow-hidden z-50" ref={commandRef}>
-        <Command className="rounded-t-none">
-          <CommandInput 
-            placeholder="Search variable..." 
-            value={searchTerm} 
-            onValueChange={setSearchTerm}
-          />
-          <CommandEmpty>No variable found.</CommandEmpty>
-          
-          <CommandList>
-            {Object.keys(groupedVariables).length > 0 ? (
-              Object.entries(groupedVariables).map(([category, variables]) => (
-                <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
-                  {variables.map((variable) => (
-                    <CommandItem
-                      key={variable.id}
-                      onSelect={() => onSelectVariable(variable.value)}
-                      className="cursor-pointer"
-                    >
-                      <Variable className="mr-2 h-4 w-4" />
-                      {variable.label}
-                    </CommandItem>
-                  ))}
+      <>
+        {/* Semi-transparent backdrop */}
+        <div className="fixed inset-0 bg-black/30 z-40" onClick={() => onSelectVariable('')} />
+        
+        {/* Variable selector dropdown */}
+        <div className="absolute z-50 w-[250px] bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden border border-border" ref={commandRef}>
+          <Command className="rounded-none">
+            <div className="flex items-center border-b px-3">
+              <CommandInput 
+                placeholder="Search variable..." 
+                value={searchTerm} 
+                onValueChange={setSearchTerm}
+                className="h-9 w-full"
+              />
+            </div>
+            
+            <CommandList>
+              <CommandEmpty>No variable found.</CommandEmpty>
+              
+              {Object.keys(groupedVariables).length > 0 ? (
+                Object.entries(groupedVariables).map(([category, variables]) => (
+                  <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
+                    {variables.map((variable) => (
+                      <CommandItem
+                        key={variable.id}
+                        onSelect={() => onSelectVariable(variable.value)}
+                        className="cursor-pointer flex items-center gap-2 py-2"
+                      >
+                        <span className="flex items-center justify-center h-5 w-5">
+                          <Variable className="h-4 w-4" />
+                        </span>
+                        {variable.label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ))
+              ) : (
+                <CommandGroup>
+                  <CommandItem disabled>No variables found</CommandItem>
                 </CommandGroup>
-              ))
-            ) : (
-              <CommandGroup>
-                <CommandItem disabled>No variables found</CommandItem>
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
-      </div>
+              )}
+            </CommandList>
+          </Command>
+        </div>
+      </>
     );
   }
 
@@ -101,15 +115,15 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
           <span>Variable</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent className="w-[250px] p-0" align="start">
         <Command>
           <CommandInput 
             placeholder="Search variable..." 
             value={searchTerm} 
             onValueChange={setSearchTerm}
           />
-          <CommandEmpty>No variable found.</CommandEmpty>
           <CommandList>
+            <CommandEmpty>No variable found.</CommandEmpty>
             <CommandGroup heading="Available Variables">
               {filteredVariables.length > 0 ? (
                 filteredVariables.map((variable) => (
@@ -119,9 +133,9 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
                       onSelectVariable(variable.value);
                       setOpen(false);
                     }}
-                    className="cursor-pointer"
+                    className="cursor-pointer flex items-center gap-2"
                   >
-                    <Variable className="mr-2 h-4 w-4" />
+                    <Variable className="h-4 w-4" />
                     {variable.label}
                   </CommandItem>
                 ))
