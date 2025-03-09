@@ -1,7 +1,7 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 interface AgentSpeaksEditorProps {
   content: string;
@@ -9,6 +9,8 @@ interface AgentSpeaksEditorProps {
 }
 
 export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps) {
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -18,6 +20,7 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
       const htmlContent = editor.getHTML();
       onChange(htmlContent);
     },
+    autofocus: false,
   });
 
   useEffect(() => {
@@ -28,8 +31,25 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
 
   const handleClick = useCallback(() => {
     if (editor && !editor.isFocused) {
-      editor.commands.focus();
+      editor.commands.focus('end');
     }
+  }, [editor]);
+
+  // Enhanced click handling to ensure focus
+  useEffect(() => {
+    const container = editorContainerRef.current;
+    if (!container) return;
+
+    const focusEditor = () => {
+      if (editor && !editor.isFocused) {
+        editor.commands.focus('end');
+      }
+    };
+
+    container.addEventListener('click', focusEditor);
+    return () => {
+      container.removeEventListener('click', focusEditor);
+    };
   }, [editor]);
 
   if (!editor) {
@@ -38,6 +58,7 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
 
   return (
     <div 
+      ref={editorContainerRef}
       className="border rounded-md p-2 bg-white/50 dark:bg-gray-800/50 min-h-[100px] text-sm"
       onClick={handleClick}
     >
