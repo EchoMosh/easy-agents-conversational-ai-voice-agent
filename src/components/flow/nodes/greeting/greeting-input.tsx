@@ -82,7 +82,8 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
         const textAfterCursor = currentValue.substring(endPos);
         
         // Insert the variable placeholder
-        const newText = `${textBeforeAt}{{${variableId}}}${textAfterCursor}`;
+        const variablePlaceholder = `{{${variableId}}}`;
+        const newText = `${textBeforeAt}${variablePlaceholder}${textAfterCursor}`;
         
         setCurrentValue(newText);
         onChange(newText);
@@ -91,7 +92,8 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
         setTimeout(() => {
           if (textareaRef.current) {
             textareaRef.current.focus();
-            const newCursorPos = textBeforeAt.length + variableId.length + 4; // +4 for the {{}}
+            // Set cursor position after the variable (textBeforeAt.length + variablePlaceholder.length)
+            const newCursorPos = textBeforeAt.length + variablePlaceholder.length;
             textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
           }
         }, 0);
@@ -157,8 +159,10 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
               bottom: 0, 
               pointerEvents: "none",
               backgroundColor: "transparent", 
-              zIndex: 1, // Changed from 2 to 1 so it's BEHIND the caret
-              padding: "0.5rem"
+              zIndex: 1, // Behind the caret
+              padding: "0.5rem",
+              color: "#333", // Darker text color for better visibility
+              fontWeight: "500" // Medium font weight for better visibility
             }}
           >
             {displayValue}
@@ -175,10 +179,11 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
             displayValue.length > 0 ? "relative" : ""
           )}
           style={{
-            caretColor: "black", // Ensure caret is black for visibility
-            color: displayValue.length > 0 ? "transparent" : "inherit",
+            caretColor: "#000", // Darker caret color for better visibility
+            color: displayValue.length > 0 ? "transparent" : "#333", // Darker default text color
             position: "relative",
-            zIndex: 2 // Changed from 1 to 2 so it's ON TOP of the highlighted variables
+            zIndex: 2, // On top of the highlighted variables
+            fontWeight: "500" // Medium font weight for better visibility
           }}
           disabled={showVariableSelector}
         />
