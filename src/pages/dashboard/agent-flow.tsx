@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -83,7 +84,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
         mermaidString += ' (Speak)';
         break;
       case 'greetingNode':
-        mermaidString += ' (Speak)'; // Changed from (Greeting) to (Speak)
+        mermaidString += ' (SpeakNode)'; // Changed from (Speak) to (SpeakNode)
         break;
       case 'endNode':
         mermaidString += ' (End)';
