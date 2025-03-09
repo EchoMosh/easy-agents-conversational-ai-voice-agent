@@ -1,7 +1,8 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { VariableSelector } from '../ai-agent-speaks/variable-selector';
 
 interface TipTapGreetingEditorProps {
   value: string;
@@ -10,6 +11,9 @@ interface TipTapGreetingEditorProps {
 
 export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorProps) {
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const [showVariableSelector, setShowVariableSelector] = useState(false);
+  const [variableSelectorPosition, setVariableSelectorPosition] = useState({ x: 0, y: 0 });
+  const [triggerChar, setTriggerChar] = useState<'#' | '@' | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -19,6 +23,34 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     onUpdate: ({ editor }) => {
       const htmlContent = editor.getHTML();
       onChange(htmlContent);
+      
+      // Check if # or @ was just typed
+      const selection = editor.view.state.selection;
+      if (selection.empty) {
+        const position = selection.$from.pos;
+        const textBefore = editor.view.state.doc.textBetween(
+          Math.max(0, position - 1),
+          position,
+          ''
+        );
+        
+        if (textBefore === '#' || textBefore === '@') {
+          // Get position for the variable selector popup
+          if (editorContainerRef.current) {
+            const view = editor.view;
+            const { left, top } = view.coordsAtPos(position);
+            const editorBounds = editorContainerRef.current.getBoundingClientRect();
+            
+            setVariableSelectorPosition({
+              x: left - editorBounds.left,
+              y: top - editorBounds.top + 20
+            });
+            
+            setTriggerChar(textBefore as '#' | '@');
+            setShowVariableSelector(true);
+          }
+        }
+      }
     },
     autofocus: false,
   });
@@ -71,6 +103,43 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     return () => clearTimeout(timeoutId);
   }, [editor]);
 
+  // Event handler for closing the variable selector when clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showVariableSelector && 
+          editorContainerRef.current && 
+          !editorContainerRef.current.contains(event.target as Node)) {
+        setShowVariableSelector(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showVariableSelector]);
+
+  const handleInsertVariable = useCallback((variable: string) => {
+    if (editor) {
+      // Remove the trigger character
+      if (triggerChar) {
+        editor.commands.command(({ tr, dispatch }) => {
+          if (dispatch) {
+            const position = editor.view.state.selection.$from.pos;
+            tr.delete(position - 1, position);
+            dispatch(tr);
+          }
+          return true;
+        });
+      }
+
+      const htmlVariable = `<span class="editor-variable">${variable}</span>`;
+      editor.commands.insertContent(htmlVariable);
+      editor.commands.focus('end');
+      setShowVariableSelector(false);
+    }
+  }, [editor, triggerChar]);
+
   if (!editor) {
     return <div className="p-2 text-sm text-gray-500">Loading editor...</div>;
   }
@@ -78,10 +147,31 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   return (
     <div 
       ref={editorContainerRef}
-      className="border rounded-md p-2 bg-white/50 dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text"
+      className="border rounded-md p-2 bg-white/50 dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative"
       onClick={handleClick}
     >
+      <div className="text-xs text-muted-foreground mb-1">
+        Tip: Type <kbd className="px-1 rounded bg-muted">#</kbd> or <kbd className="px-1 rounded bg-muted">@</kbd> to insert a variable
+      </div>
+      
       <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text" />
+      
+      {showVariableSelector && (
+        <div 
+          style={{ 
+            position: 'absolute', 
+            left: `${variableSelectorPosition.x}px`, 
+            top: `${variableSelectorPosition.y}px`,
+            zIndex: 50
+          }}
+        >
+          <VariableSelector 
+            onSelectVariable={handleInsertVariable} 
+            triggerChar={triggerChar || '#'} 
+          />
+        </div>
+      )}
+      
       <style>
         {`
         .ProseMirror {
