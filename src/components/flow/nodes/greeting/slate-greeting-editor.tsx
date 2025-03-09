@@ -125,7 +125,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
   // Track @ trigger position for variable insertion
   const [targetRange, setTargetRange] = useState<Range | null>(null);
   
-  // Update the editor useMemo to be more robust
+  // Create editor instance
   const editor = useMemo(() => {
     const slateEditor = withReact(withHistory(createEditor()));
     
@@ -143,21 +143,22 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     return slateEditor;
   }, []);
   
-  // Add a state for editor content
-  const [editorContent, setEditorContent] = useState<Descendant[]>(() => 
-    parseTextWithVariables(value)
-  );
+  // Generate initial value from the input value
+  const initialValue = useMemo(() => parseTextWithVariables(value), [value]);
   
-  // Replace the initialValue useMemo with this useEffect
+  // Synchronize the editor's content with external value changes
   useEffect(() => {
-    const parsedValue = parseTextWithVariables(value);
-    setEditorContent(parsedValue);
-  }, [value]);
+    // Only update editor if it's different than the current content
+    const currentPlainText = slateToPlainText(editor.children);
+    if (value !== currentPlainText) {
+      editor.children = parseTextWithVariables(value);
+      // Important: deselect first to avoid selection errors
+      editor.selection = null;
+    }
+  }, [value, editor]);
   
   // Handle editor changes
   const handleEditorChange = (newValue: Descendant[]) => {
-    setEditorContent(newValue);
-    
     // Convert Slate document to plain text with variables
     const plainText = slateToPlainText(newValue);
     onChange(plainText);
@@ -241,29 +242,61 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     console.log('Focus requested on editor');
   }, [editor]);
   
-  // Improve click handling to ensure the cursor is properly set
-  const handleEditorClick = (e: React.MouseEvent) => {
+  // Ensure cursor is visible
+  const ensureCursorVisible = useCallback(() => {
+    // First focus the editor
+    ReactEditor.focus(editor);
+    
+    // Then if there's no selection, create one at the end of the document
+    if (!editor.selection) {
+      try {
+        // Get the last text node's path
+        const point = Editor.end(editor, []);
+        
+        // Set selection at the end of the content
+        const newSelection = {
+          anchor: point,
+          focus: point
+        };
+        
+        // Apply the selection
+        editor.selection = newSelection;
+        editor.onChange();
+        
+        console.log('Set cursor position at end:', point);
+      } catch (err) {
+        console.error('Error setting cursor position:', err);
+      }
+    }
+  }, [editor]);
+  
+  // Improve the editor click handler
+  const handleEditorClick = useCallback((e: React.MouseEvent) => {
     // Stop propagation to prevent parent handlers from interfering
     e.stopPropagation();
+    e.preventDefault();
     
     // Log for debugging
     console.log('Editable clicked at', e.clientX, e.clientY);
     
-    // Force focus
-    ReactEditor.focus(editor);
-    
-    // Try to place cursor at click position
-    try {
-      // If there's no selection, set one at the end
-      if (!editor.selection) {
-        const point = Editor.end(editor, []);
-        editor.selection = { anchor: point, focus: point };
-        editor.onChange();
+    // Wait a tiny bit before focusing to let any other handlers complete
+    setTimeout(() => {
+      if (!ReactEditor.isFocused(editor)) {
+        ReactEditor.focus(editor);
+        // Create a selection at the end if needed
+        if (!editor.selection) {
+          try {
+            const end = Editor.end(editor, []);
+            editor.selection = { anchor: end, focus: end };
+            editor.onChange();
+          } catch (err) {
+            console.error('Error setting selection:', err);
+          }
+        }
+        console.log('Editor focused and selection set');
       }
-    } catch (err) {
-      console.error('Error setting cursor:', err);
-    }
-  };
+    }, 10);
+  }, [editor]);
   
   // Container click handler
   const handleContainerClick = (e: React.MouseEvent) => {
@@ -272,6 +305,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     
     // Focus editor and ensure cursor is visible
     focusEditor();
+    ensureCursorVisible();
     
     // Try to place cursor at the end of the document
     try {
@@ -296,7 +330,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
       )} style={{ position: 'relative', zIndex: 10 }}>
         <Slate 
           editor={editor} 
-          value={editorContent}
+          initialValue={initialValue}
           onChange={handleEditorChange}
         >
           <Editable
@@ -344,4 +378,3 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     </div>
   );
 }
-
