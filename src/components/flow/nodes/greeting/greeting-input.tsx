@@ -1,9 +1,8 @@
 
 import { Label } from '@/components/ui/label';
 import { VariableSelector } from '../variable-mention/variable-selector';
-import { useRef, useState } from 'react';
-import { LexicalEditor, INSERT_VARIABLE_COMMAND } from '@/components/editor/LexicalEditor';
-import { LexicalEditor as LexicalEditorType } from 'lexical';
+import { useRef, useState, useEffect } from 'react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface GreetingInputProps {
   value: string;
@@ -12,62 +11,76 @@ interface GreetingInputProps {
 
 export function GreetingInput({ value, onChange }: GreetingInputProps) {
   const [showVariableSelector, setShowVariableSelector] = useState(false);
-  const editorRef = useRef<LexicalEditorType | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [currentValue, setCurrentValue] = useState(value);
 
-  // Remove excessive newlines before passing to the editor
-  const sanitizedValue = value ? value.replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '') : '';
+  // Update local value when prop value changes
+  useEffect(() => {
+    setCurrentValue(value);
+  }, [value]);
 
-  const handleChange = (newValue: string) => {
-    console.log("GreetingInput change:", newValue);
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setCurrentValue(newValue);
     onChange(newValue);
   };
 
-  const handleAtMention = () => {
-    setShowVariableSelector(true);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Check for @ key press
+    if (e.key === '@') {
+      setShowVariableSelector(true);
+    }
   };
 
   const handleVariableSelect = (variableId: string) => {
-    if (editorRef.current) {
-      editorRef.current.dispatchCommand(INSERT_VARIABLE_COMMAND, variableId);
+    if (textareaRef.current) {
+      const startPos = textareaRef.current.selectionStart;
+      const endPos = textareaRef.current.selectionEnd;
+      
+      // Remove the @ that triggered the selector
+      const textBeforeCursor = currentValue.substring(0, startPos - 1);
+      const textAfterCursor = currentValue.substring(endPos);
+      
+      // Insert the variable placeholder
+      const newText = `${textBeforeCursor}{{${variableId}}}${textAfterCursor}`;
+      
+      setCurrentValue(newText);
+      onChange(newText);
+      
+      // Focus back on textarea after selection
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          const newCursorPos = textBeforeCursor.length + variableId.length + 4; // +4 for the {{}}
+          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        }
+      }, 0);
     }
     setShowVariableSelector(false);
   };
 
-  const containerStyle = {
-    maxWidth: '250px', // Fixed width constraint
-    width: '250px',
-    minWidth: '0',
-    overflow: 'hidden',
-    flex: '1 1 auto'
-  };
-
-  const editorContainerStyle = {
-    maxWidth: '100%', 
-    width: '100%',
-    minWidth: '0',
-    overflow: 'hidden'
-  };
-
   return (
-    <div className="flex flex-col gap-2 relative" style={containerStyle}>
-      <div className="relative" style={editorContainerStyle}>
-        <LexicalEditor
-          value={sanitizedValue}
+    <div className="flex flex-col gap-2 relative">
+      <div className="relative">
+        <Textarea
+          ref={textareaRef}
+          value={currentValue}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
           placeholder="Type @ to insert a variable..."
-          className="text-sm resize-y min-h-[100px] bg-white/10 border-white/20 shadow-lg backdrop-blur-xl rounded-xl focus-visible:ring-white/30 focus-visible:border-white/30"
-          onAtMention={handleAtMention}
+          className="w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 resize-y min-h-[100px]"
         />
       </div>
       
       {showVariableSelector && (
         <VariableSelector
-          text={sanitizedValue}
+          text={currentValue}
           onTextChange={(newText) => {
-            // This is now handled by the Lexical Editor directly
+            setCurrentValue(newText);
+            onChange(newText);
           }}
           onSelectVariable={handleVariableSelect}
-          textareaRef={null} // We don't need this ref anymore
+          textareaRef={textareaRef}
           onClose={() => setShowVariableSelector(false)}
         />
       )}

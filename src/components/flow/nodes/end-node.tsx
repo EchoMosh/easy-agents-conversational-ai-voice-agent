@@ -1,12 +1,20 @@
 
 import { Handle, Position } from '@xyflow/react';
 import { X } from 'lucide-react';
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
+import { Textarea } from '@/components/ui/textarea';
 
 export function EndNode({ id, data }: { id: string; data: { message?: string } }) {
   const [message, setMessage] = useState(data?.message || '');
   const { updateNodeData } = useContext(NodeUpdateContext);
+
+  // Sync with incoming data changes
+  useEffect(() => {
+    if (data?.message !== undefined && data.message !== message) {
+      setMessage(data.message);
+    }
+  }, [data, message]);
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newMessage = e.target.value;
@@ -36,7 +44,7 @@ export function EndNode({ id, data }: { id: string; data: { message?: string } }
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
             End Call Message
           </label>
-          <textarea
+          <Textarea
             value={message}
             onChange={handleMessageChange}
             placeholder="Enter message to say before ending the call..."

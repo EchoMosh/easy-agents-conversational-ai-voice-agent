@@ -57,6 +57,10 @@ function generateMermaidFromFlow(flowData: FlowData): string {
         if (node.data.outcomes && Array.isArray(node.data.outcomes)) {
           outcomeLabels = node.data.outcomes;
         }
+      } else if (node.type === 'endNode' && node.data.message) {
+        nodeLabel = `End: ${String(node.data.message)}`;
+      } else if (node.type === 'endNode') {
+        nodeLabel = 'End Call';
       } else if (node.type === 'triggerNode' && node.data.platform) {
         nodeLabel = String(node.data.platform);
       } else if (node.type === 'webhookNode') {
