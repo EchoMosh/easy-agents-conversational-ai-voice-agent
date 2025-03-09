@@ -13,6 +13,12 @@ import { AgentTrainingPopup } from '@/components/agents/training/agent-training-
 import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 
+// Helper function to strip HTML tags from content
+function stripHtmlTags(html: string): string {
+  if (!html) return '';
+  return html.replace(/<\/?[^>]+(>|$)/g, '');
+}
+
 function generateMermaidFromFlow(flowData: FlowData): string {
   if (!flowData || !flowData.nodes || !flowData.edges) {
     return 'graph TD\n  EmptyFlow[Empty Flow]';
@@ -46,6 +52,8 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       baseNodeType = 'webhook';
     } else if (baseNodeType === 'transferNode') {
       baseNodeType = 'transfer';
+    } else if (baseNodeType === 'aiAgentSpeaksNode') {
+      baseNodeType = 'aiSpeak';
     }
     
     if (!nodeTypeCounter[baseNodeType]) {
@@ -82,6 +90,9 @@ function generateMermaidFromFlow(flowData: FlowData): string {
         nodeLabel = String(node.data.platform);
       } else if (node.type === 'webhookNode') {
         nodeLabel = node.data.url ? `Webhook: ${node.data.url}` : 'Webhook';
+      } else if (node.type === 'aiAgentSpeaksNode' && node.data.content) {
+        // Strip HTML tags from AI agent speaks content
+        nodeLabel = `AI Speaks: ${stripHtmlTags(String(node.data.content))}`;
       }
     }
     
