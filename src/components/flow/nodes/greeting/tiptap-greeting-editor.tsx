@@ -154,6 +154,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
             }
           ]
         })
+        .unsetMark('variable') // Important: Unset the variable mark after insertion
         .run();
       
       editor.commands.focus('end');
