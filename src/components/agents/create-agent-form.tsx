@@ -165,6 +165,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             onNext={handleCreateAgent}
             onBack={() => setStep(1)}
             showOnlyScratch={true}
+            agentName={newAgent.name} // Pass the agent name to TemplateStep
           />
         )}
       </div>

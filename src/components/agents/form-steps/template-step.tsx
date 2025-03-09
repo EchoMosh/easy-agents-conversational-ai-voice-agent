@@ -12,6 +12,7 @@ interface TemplateStepProps {
   onNext: () => void;
   onBack: () => void;
   showOnlyScratch?: boolean;
+  agentName?: string; // Add agentName prop
 }
 
 export function TemplateStep({ 
@@ -20,6 +21,7 @@ export function TemplateStep({
   onNext, 
   onBack,
   showOnlyScratch = false,
+  agentName = "New Agent", // Default to "New Agent" if not provided
 }: TemplateStepProps) {
   const { toast } = useToast();
   
@@ -58,7 +60,7 @@ export function TemplateStep({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: "New Agent",
+          name: agentName, // Use the passed agent name
           role: "virtual_assistant",
         }),
       });
