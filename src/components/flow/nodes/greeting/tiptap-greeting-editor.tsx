@@ -12,6 +12,9 @@ const VariableMark = Mark.create({
     return {
       class: {
         default: 'editor-variable'
+      },
+      'data-variable': {
+        default: null
       }
     };
   },
@@ -35,7 +38,8 @@ interface TipTapGreetingEditorProps {
 }
 
 // Valid variable format: {variableName} - alphanumeric and underscore only
-const VALID_VARIABLE_REGEX = /^\{[a-zA-Z0-9_]+\}$/;
+// Only shorter variable names between 2-20 characters are allowed
+const VALID_VARIABLE_REGEX = /^\{[a-zA-Z][a-zA-Z0-9_]{1,19}\}$/;
 
 export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorProps) {
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -78,10 +82,8 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         }
       }
       
-      // Check for invalid variables immediately after an update
-      setTimeout(() => {
-        checkInvalidVariables(editor);
-      }, 0);
+      // Immediately check for invalid variables after any update
+      checkInvalidVariables(editor);
     },
     autofocus: false,
     // Improve HTML parsing to correctly handle variable spans
@@ -90,8 +92,10 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     },
   });
 
-  // Function to check for invalid variables
-  const checkInvalidVariables = (editor: any) => {
+  // Function to check for invalid variables and remove styling
+  const checkInvalidVariables = useCallback((editor: any) => {
+    if (!editor || !editor.view || !editor.view.dom) return;
+    
     // Find all variable spans in the editor
     const variableSpans = editor.view.dom.querySelectorAll('.editor-variable');
     
@@ -102,33 +106,55 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       const isValidVariable = VALID_VARIABLE_REGEX.test(text);
       
       if (!isValidVariable) {
-        // Get the position of this node in the editor
-        const nodePos = editor.view.posAtDOM(node, 0);
-        
-        if (nodePos !== null) {
-          // Remove the variable styling from this invalid variable
-          editor.chain()
-            .setTextSelection({ from: nodePos, to: nodePos + text.length })
-            .unsetMark('variable')
-            .run();
+        try {
+          // Get the position of this node in the editor
+          const nodePos = editor.view.posAtDOM(node, 0);
+          
+          if (nodePos !== null && nodePos !== undefined) {
+            // Remove the variable styling from this invalid variable
+            editor.chain()
+              .setTextSelection({ from: nodePos, to: nodePos + text.length })
+              .unsetMark('variable')
+              .run();
+            
+            console.log('Removed styling from invalid variable:', text);
+          }
+        } catch (error) {
+          console.error('Error processing variable node:', error);
         }
       }
     });
-  };
+  }, []);
+
+  // Use mutation observer to detect DOM changes that might affect variables
+  useEffect(() => {
+    if (!editor?.view?.dom) return;
+    
+    const observer = new MutationObserver(() => {
+      checkInvalidVariables(editor);
+    });
+    
+    observer.observe(editor.view.dom, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true
+    });
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, [editor, checkInvalidVariables]);
 
   // Add key input handlers to detect when a variable is being edited
   useEffect(() => {
-    if (!editor) return;
+    if (!editor?.view?.dom) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // For any key that could modify variable content
-      if (event.key === 'Backspace' || event.key === 'Delete' || 
-          /^[a-zA-Z0-9_{}]$/.test(event.key)) {
-        // Run check immediately after key event
-        setTimeout(() => {
-          checkInvalidVariables(editor);
-        }, 0);
-      }
+      // Run check immediately for any key press
+      setTimeout(() => {
+        checkInvalidVariables(editor);
+      }, 0);
     };
 
     // Add the event listener to the editor DOM
@@ -138,11 +164,11 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     return () => {
       editorDOM.removeEventListener('keydown', handleKeyDown);
     };
-  }, [editor]);
+  }, [editor, checkInvalidVariables]);
 
   // Also check for invalid variables on mouse clicks which could place cursor inside variables
   useEffect(() => {
-    if (!editor) return;
+    if (!editor?.view?.dom) return;
     
     const handleMouseUp = () => {
       setTimeout(() => {
@@ -156,11 +182,11 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     return () => {
       editorDOM.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [editor]);
+  }, [editor, checkInvalidVariables]);
 
+  // Check for invalid variables when content is set from outside
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
-      // Fix: Better handle parsing of HTML with variable spans
       editor.commands.setContent(value || '<p></p>');
       
       // Show/hide tip based on content
@@ -170,14 +196,14 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         setShowTip(false);
       }
       
-      // Check for invalid variables after content is set
+      // Check for invalid variables immediately after content is set
       setTimeout(() => {
         if (editor.isEditable) {
           checkInvalidVariables(editor);
         }
       }, 10);
     }
-  }, [value, editor]);
+  }, [value, editor, checkInvalidVariables]);
 
   const handleClick = useCallback(() => {
     if (editor && !editor.isFocused) {
@@ -241,7 +267,8 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
             {
               type: 'variable',
               attrs: {
-                class: 'editor-variable'
+                class: 'editor-variable',
+                'data-variable': variable
               }
             }
           ]
@@ -287,7 +314,6 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           outline: none;
           min-height: 80px;
           cursor: text;
-          padding-top: ${showTip ? '0' : '0'};
         }
 
         .ProseMirror p.is-editor-empty:first-child::before {
