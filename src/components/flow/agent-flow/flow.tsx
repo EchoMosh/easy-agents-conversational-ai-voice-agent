@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
-import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X, Tv2 } from 'lucide-react';
+import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
@@ -8,7 +8,6 @@ import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
 import { TransferNode } from '@/components/flow/nodes/transfer-node';
 import { WebhookNode } from '@/components/flow/nodes/webhook-node';
-import { AiAgentSpeaksNode } from '@/components/flow/nodes/ai-agent-speaks-node';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import React from 'react';
@@ -24,8 +23,7 @@ const nodeTypes: NodeTypes = {
   endNode: EndNode,
   triggerNode: TriggerNode,
   transferNode: TransferNode,
-  webhookNode: WebhookNode,
-  aiAgentSpeaksNode: AiAgentSpeaksNode
+  webhookNode: WebhookNode
 };
 
 const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd }: any) => {
@@ -109,13 +107,6 @@ const widgets = [
     icon: Webhook, 
     color: '#d946ef',
     description: 'Make HTTP requests to external services'
-  },
-  { 
-    type: 'aiAgentSpeaksNode', 
-    label: 'AI Agent Speaks', 
-    icon: Tv2, 
-    color: '#3b82f6',
-    description: 'Agent responds with rich text content'
   }
 ];
 
@@ -412,9 +403,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         case 'webhookNode':
           newNodeData = { url: '', method: 'GET' };
           break;
-        case 'aiAgentSpeaksNode':
-          newNodeData = { content: '<p>Enter what the AI agent should say...</p>' };
-          break;
       }
 
       const newNode: Node = {
@@ -538,8 +526,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                     return '#10b981';
                   case 'webhookNode':
                     return '#d946ef';
-                  case 'aiAgentSpeaksNode':
-                    return '#3b82f6';
                   default:
                     return '#60a5fa';
                 }

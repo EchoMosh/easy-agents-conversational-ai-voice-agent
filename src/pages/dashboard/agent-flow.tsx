@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -52,8 +51,6 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       baseNodeType = 'webhook';
     } else if (baseNodeType === 'transferNode') {
       baseNodeType = 'transfer';
-    } else if (baseNodeType === 'aiAgentSpeaksNode') {
-      baseNodeType = 'aiSpeak';
     }
     
     if (!nodeTypeCounter[baseNodeType]) {
@@ -90,9 +87,6 @@ function generateMermaidFromFlow(flowData: FlowData): string {
         nodeLabel = String(node.data.platform);
       } else if (node.type === 'webhookNode') {
         nodeLabel = node.data.url ? `Webhook: ${node.data.url}` : 'Webhook';
-      } else if (node.type === 'aiAgentSpeaksNode' && node.data.content) {
-        // Strip HTML tags from AI agent speaks content
-        nodeLabel = `AI Speaks: ${stripHtmlTags(String(node.data.content))}`;
       }
     }
     
