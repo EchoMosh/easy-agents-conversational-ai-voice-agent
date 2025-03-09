@@ -2,7 +2,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { VariableSelector } from './variable-selector';
+import { VariableSelector, VariableDisplayStyle } from './variable-selector';
 
 interface AgentSpeaksEditorProps {
   content: string;
@@ -92,7 +92,25 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
     return () => clearTimeout(timeoutId);
   }, [editor]);
 
-  const handleInsertVariable = useCallback((variable: string) => {
+  const formatVariableBasedOnStyle = (variable: string, style: VariableDisplayStyle = 'default'): string => {
+    // Extract the variable name without braces
+    const variableName = variable.replace(/[{}]/g, '');
+    
+    // Format based on the selected style
+    switch (style) {
+      case 'badge':
+        return `<span class="editor-variable editor-variable-badge">[${variableName}]</span>`;
+      case 'code':
+        return `<span class="editor-variable editor-variable-code">$(${variableName})</span>`;
+      case 'tag':
+        return `<span class="editor-variable editor-variable-tag">#${variableName}</span>`;
+      case 'default':
+      default:
+        return `<span class="editor-variable">${variable}</span>`;
+    }
+  };
+
+  const handleInsertVariable = useCallback((variable: string, style: VariableDisplayStyle = 'default') => {
     if (editor) {
       // Remove the trigger character
       if (triggerChar) {
@@ -106,8 +124,8 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
         });
       }
 
-      const htmlVariable = `<span class="editor-variable">${variable}</span>`;
-      editor.commands.insertContent(htmlVariable);
+      const formattedVariable = formatVariableBasedOnStyle(variable, style);
+      editor.commands.insertContent(formattedVariable);
       editor.commands.focus('end');
       setShowVariableSelector(false);
     }
@@ -124,7 +142,7 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
       </div>
       <div 
         ref={editorContainerRef}
-        className="border rounded-md p-2 bg-white/50 dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative"
+        className="border rounded-md p-2 bg-white dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative"
         onClick={handleClick}
       >
         <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text" />
@@ -166,6 +184,43 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
           .dark .editor-variable {
             background-color: rgba(99, 102, 241, 0.2);
             color: #818cf8;
+          }
+          
+          .editor-variable-badge {
+            background-color: rgba(37, 99, 235, 0.1);
+            color: #3b82f6;
+            border-radius: 9999px;
+            padding: 0.125rem 0.375rem;
+          }
+          
+          .dark .editor-variable-badge {
+            background-color: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+          }
+          
+          .editor-variable-code {
+            font-family: monospace;
+            background-color: rgba(55, 65, 81, 0.1);
+            color: #374151;
+            border-radius: 0.25rem;
+            padding: 0.125rem 0.25rem;
+          }
+          
+          .dark .editor-variable-code {
+            background-color: rgba(209, 213, 219, 0.1);
+            color: #d1d5db;
+          }
+          
+          .editor-variable-tag {
+            background-color: transparent;
+            color: #3b82f6;
+            font-weight: 600;
+            box-shadow: none;
+            padding: 0;
+          }
+          
+          .dark .editor-variable-tag {
+            color: #60a5fa;
           }
           `}
         </style>
