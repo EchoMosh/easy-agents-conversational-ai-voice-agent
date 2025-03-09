@@ -344,6 +344,7 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
               fontWeight: 500, // Medium font weight
               color: '#333', // Darker text color
               pointerEvents: 'auto',
+              caretColor: 'black', // Explicit cursor color for light mode
             }}
           />
         </Slate>
@@ -372,6 +373,24 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
           cursor: pointer;
           display: inline-flex;
           align-items: center;
+        }
+        
+        .greeting-paragraph:focus {
+          outline: none;
+          caret-color: black; /* Make cursor visible in light mode */
+        }
+        
+        @media (prefers-color-scheme: dark) {
+          .greeting-paragraph:focus,
+          .editable {
+            caret-color: white; /* Make cursor visible in dark mode */
+          }
+        }
+        
+        /* Support for class-based dark mode */
+        .dark .greeting-paragraph:focus,
+        .dark .editable {
+          caret-color: white;
         }
         `}
       </style>
