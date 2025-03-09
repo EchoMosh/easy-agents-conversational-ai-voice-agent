@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useRef } from 'react';
-import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Variable } from "lucide-react";
@@ -15,8 +14,6 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
   const [searchTerm, setSearchTerm] = useState('');
   const commandRef = useRef<HTMLDivElement>(null);
   
-  // In a real implementation, these would come from the backend
-  // This is a placeholder for the available variables
   const availableVariables = [
     { id: 'name', label: 'Name', value: '{{name}}', category: 'contact' },
     { id: 'email', label: 'Email', value: '{{email}}', category: 'contact' },
@@ -25,13 +22,11 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
     { id: 'position', label: 'Position', value: '{{position}}', category: 'organization' },
   ];
 
-  // Filter variables based on search term
   const filteredVariables = availableVariables.filter(variable => 
     variable.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
     variable.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Group variables by category for better organization
   const groupVariablesByCategory = () => {
     const groupedVariables: Record<string, typeof availableVariables> = {};
     
@@ -45,12 +40,9 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
     return groupedVariables;
   };
 
-  // For inline variable selector (triggered by # or @)
   if (triggerChar) {
-    // Group variables by category for better organization
     const groupedVariables = groupVariablesByCategory();
     
-    // Focus input when opened
     useEffect(() => {
       if (commandRef.current) {
         const inputElement = commandRef.current.querySelector('input');
@@ -97,7 +89,6 @@ export function VariableSelector({ onSelectVariable, triggerChar }: VariableSele
     );
   }
 
-  // For button-triggered variable selector (original implementation)
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
