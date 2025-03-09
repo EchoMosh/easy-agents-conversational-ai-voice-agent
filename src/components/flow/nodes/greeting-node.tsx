@@ -1,3 +1,4 @@
+
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useReactFlow } from '@xyflow/react';
 
 type GreetingNodeData = {
   greeting: string;
@@ -41,6 +43,7 @@ export function GreetingNode({
   const [selectedActionType, setSelectedActionType] = useState<'sms' | 'webhook' | 'email'>('sms');
   const [editingAction, setEditingAction] = useState<NodeAction | null>(null);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const { getEdges, setEdges } = useReactFlow();
 
   useEffect(() => {
     setOutcomes(data.outcomes || []);
@@ -60,6 +63,12 @@ export function GreetingNode({
   const addOutcome = () => {
     if (outcomes.length >= 5) return;
     if (!newOutcome.trim()) return;
+    
+    // First outcome is being added - remove any default edge
+    if (outcomes.length === 0) {
+      removeDefaultEdge();
+    }
+    
     const newOutcomes = [...outcomes, newOutcome];
     setOutcomes(newOutcomes);
     setNewOutcome('');
@@ -69,6 +78,22 @@ export function GreetingNode({
       ...data,
       outcomes: newOutcomes
     });
+  };
+  
+  // Function to remove the default edge when outcomes are added
+  const removeDefaultEdge = () => {
+    const edges = getEdges();
+    const defaultEdges = edges.filter(edge => 
+      edge.source === id && edge.sourceHandle === 'default'
+    );
+    
+    if (defaultEdges.length > 0) {
+      console.log(`Removing default edge(s) from node ${id} as outcomes are being added`);
+      const remainingEdges = edges.filter(edge => 
+        !(edge.source === id && edge.sourceHandle === 'default')
+      );
+      setEdges(remainingEdges);
+    }
   };
   
   const removeOutcome = (index: number) => {
