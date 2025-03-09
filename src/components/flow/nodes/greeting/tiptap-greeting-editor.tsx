@@ -1,8 +1,33 @@
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, Mark, mergeAttributes } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { VariableSelector, VariableDisplayStyle } from '../ai-agent-speaks/variable-selector';
+
+// Create a custom mark for variables
+const VariableMark = Mark.create({
+  name: 'variable',
+  
+  addAttributes() {
+    return {
+      class: {
+        default: 'editor-variable'
+      }
+    };
+  },
+  
+  parseHTML() {
+    return [
+      {
+        tag: 'span.editor-variable',
+      },
+    ];
+  },
+  
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes), 0];
+  }
+});
 
 interface TipTapGreetingEditorProps {
   value: string;
@@ -18,6 +43,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   const editor = useEditor({
     extensions: [
       StarterKit,
+      VariableMark,
     ],
     content: value || '<p>Enter your message here...</p>',
     onUpdate: ({ editor }) => {
@@ -127,20 +153,21 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       // Format the variable based on style
       const formattedVariable = formatVariableBasedOnStyle(variable, style);
       
-      // Create a span element with appropriate class based on style
+      // Create appropriate class based on style
       let className = 'editor-variable';
       if (style === 'badge') className += ' editor-variable-badge';
       if (style === 'code') className += ' editor-variable-code';
       if (style === 'tag') className += ' editor-variable-tag';
       
-      // Insert content as a properly formatted node
-      editor.chain().focus()
+      // Insert the variable with the custom mark
+      editor.chain()
+        .focus()
         .insertContent({
           type: 'text',
           text: formattedVariable,
           marks: [
             {
-              type: 'span',
+              type: 'variable',
               attrs: {
                 class: className
               }
