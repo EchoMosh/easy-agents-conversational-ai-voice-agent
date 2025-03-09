@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -83,30 +82,7 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     
     const simpleId = nodeIdMap.get(node.id) || `unknown-${node.id}`;
     
-    mermaidString += `  ${simpleId}["${cleanLabel}`;
-    
-    switch (node.type) {
-      case 'speakNode':
-        mermaidString += ' (Speak)';
-        break;
-      case 'greetingNode':
-        mermaidString += ' (SpeakNode)'; // Changed from (Speak) to (SpeakNode)
-        break;
-      case 'endNode':
-        mermaidString += ' (End)';
-        break;
-      case 'triggerNode':
-        mermaidString += ' (Trigger)';
-        break;
-      case 'transferNode':
-        mermaidString += ' (Transfer)';
-        break;
-      case 'webhookNode':
-        mermaidString += ' (Webhook)';
-        break;
-    }
-    
-    mermaidString += '"]\n';
+    mermaidString += `  ${simpleId}["${cleanLabel}"]\n`;
     
     if (outcomeLabels.length > 0) {
       mermaidString += `  %% Node ${simpleId} has outcomes: ${outcomeLabels.join(', ')}\n`;
