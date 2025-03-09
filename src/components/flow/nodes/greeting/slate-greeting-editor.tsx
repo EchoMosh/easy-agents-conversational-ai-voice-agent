@@ -10,14 +10,17 @@ import { cn } from '@/lib/utils';
 type CustomElement = { type: 'paragraph' | 'variable'; children: (CustomText)[]; variableId?: string };
 type CustomText = { text: string; bold?: boolean; italic?: boolean };
 
-// Correctly define the custom editor type without circular references
+// Fix the circular type reference by using a different approach
 declare module 'slate' {
   interface CustomTypes {
-    Editor: Editor & ReactEditor;
+    Editor: BaseEditor & ReactEditor;
     Element: CustomElement;
     Text: CustomText;
   }
 }
+
+// Use the imported type directly
+type BaseEditor = Editor;
 
 // Element renderer
 const Element = (props: any) => {
@@ -258,7 +261,9 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
         />
       )}
       
-      <style jsx global>{`
+      {/* Fix the style element by removing JSX and global props */}
+      <style>
+        {`
         .greeting-paragraph {
           margin: 0;
           position: relative;
@@ -271,7 +276,8 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
           display: inline-flex;
           align-items: center;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 }
