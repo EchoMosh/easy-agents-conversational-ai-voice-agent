@@ -230,13 +230,25 @@ export function SlateGreetingEditor({ value, onChange }: EditorProps) {
     }
   };
   
-  // Click handler for diagnostic purposes
+  // Add explicit focus handling function
+  const focusEditor = useCallback(() => {
+    ReactEditor.focus(editor);
+    // Log for debugging
+    console.log('Focus requested on editor');
+  }, [editor]);
+  
+  // Updated click handler with focus functionality
   const handleEditorClick = () => {
     console.log('Editable clicked');
+    focusEditor();
   };
   
   return (
-    <div className="flex flex-col gap-2 greeting-editor" style={{ pointerEvents: 'auto' }}>
+    <div 
+      className="flex flex-col gap-2 greeting-editor" 
+      style={{ pointerEvents: 'auto' }}
+      onClick={() => focusEditor()}
+    >
       <div className={cn(
         "w-full border border-gray-200 dark:border-gray-700 rounded-lg min-h-[100px] break-words focus-within:ring-1 focus-within:ring-blue-400 dark:focus-within:ring-blue-600 focus-within:border-blue-400 dark:focus-within:border-blue-600",
         showVariableSelector ? "opacity-50" : ""
