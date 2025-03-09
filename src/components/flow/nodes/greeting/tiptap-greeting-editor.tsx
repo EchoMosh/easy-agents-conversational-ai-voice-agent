@@ -13,7 +13,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const [variableSelectorPosition, setVariableSelectorPosition] = useState({ x: 0, y: 0 });
-  const [triggerChar, setTriggerChar] = useState<'#' | '@' | null>(null);
+  const [triggerChar, setTriggerChar] = useState<'#' | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -24,7 +24,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       const htmlContent = editor.getHTML();
       onChange(htmlContent);
       
-      // Check if # or @ was just typed
+      // Check if # was just typed
       const selection = editor.view.state.selection;
       if (selection.empty) {
         const position = selection.$from.pos;
@@ -34,9 +34,9 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           ''
         );
         
-        if (textBefore === '#' || textBefore === '@') {
+        if (textBefore === '#') {
           // Show the full-screen variable selector
-          setTriggerChar(textBefore as '#' | '@');
+          setTriggerChar('#');
           setShowVariableSelector(true);
         }
       }
@@ -142,7 +142,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       onClick={handleClick}
     >
       <div className="text-xs text-muted-foreground mb-1">
-        Tip: Type <kbd className="px-1 rounded bg-muted">#</kbd> or <kbd className="px-1 rounded bg-muted">@</kbd> to insert a variable
+        Tip: Type <kbd className="px-1 rounded bg-muted">#</kbd> to insert a variable
       </div>
       
       <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text" />
@@ -150,7 +150,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       {showVariableSelector && (
         <VariableSelector 
           onSelectVariable={handleInsertVariable} 
-          triggerChar={triggerChar || '#'} 
+          triggerChar="#" 
           isFullScreen={true}
         />
       )}
@@ -227,4 +227,3 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     </div>
   );
 }
-

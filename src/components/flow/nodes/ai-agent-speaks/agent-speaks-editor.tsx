@@ -13,7 +13,7 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const [variableSelectorPosition, setVariableSelectorPosition] = useState({ x: 0, y: 0 });
-  const [triggerChar, setTriggerChar] = useState<'#' | '@' | null>(null);
+  const [triggerChar, setTriggerChar] = useState<'#' | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -24,7 +24,7 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
       const htmlContent = editor.getHTML();
       onChange(htmlContent);
       
-      // Check if # or @ was just typed
+      // Check if # was just typed
       const selection = editor.view.state.selection;
       if (selection.empty) {
         const position = selection.$from.pos;
@@ -34,9 +34,9 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
           ''
         );
         
-        if (textBefore === '#' || textBefore === '@') {
+        if (textBefore === '#') {
           // Show the full-screen variable selector
-          setTriggerChar(textBefore as '#' | '@');
+          setTriggerChar('#');
           setShowVariableSelector(true);
         }
       }
@@ -138,7 +138,7 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
   return (
     <div className="space-y-2">
       <div className="flex items-center space-x-2 text-sm">
-        <span className="text-muted-foreground">Tip: Type <kbd className="px-1 rounded bg-muted">#</kbd> or <kbd className="px-1 rounded bg-muted">@</kbd> to insert a variable</span>
+        <span className="text-muted-foreground">Tip: Type <kbd className="px-1 rounded bg-muted">#</kbd> to insert a variable</span>
       </div>
       <div 
         ref={editorContainerRef}
@@ -150,7 +150,7 @@ export function AgentSpeaksEditor({ content, onChange }: AgentSpeaksEditorProps)
         {showVariableSelector && (
           <VariableSelector 
             onSelectVariable={handleInsertVariable} 
-            triggerChar={triggerChar || '#'} 
+            triggerChar="#" 
             isFullScreen={true}
           />
         )}
