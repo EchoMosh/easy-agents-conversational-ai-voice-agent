@@ -1,4 +1,3 @@
-
 // Valid variable format: {variableName} - alphanumeric and underscore only
 // Only shorter variable names between 2-20 characters are allowed
 export const VALID_VARIABLE_REGEX = /^\{[a-zA-Z][a-zA-Z0-9_]{1,19}\}$/;
@@ -287,29 +286,44 @@ export const setupVariableValidationListeners = (editor: any) => {
   const characterDataMonitor = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === 'characterData') {
-        const node = mutation.target;
-        // Add type check for node before accessing properties
-        if (node && typeof node === 'object' && 'nodeType' in node && node.nodeType === Node.TEXT_NODE) {
-          // Get the parent node which should be the span
-          // We need to ensure parentElement exists and has the right properties
-          const parentElement = 'parentElement' in node ? node.parentElement : null;
-          if (parentElement && parentElement.classList && parentElement.classList.contains('editor-variable')) {
-            // Direct text change inside a variable - check validity immediately
-            // Ensure textContent exists on node
-            const text = 'textContent' in node ? node.textContent || '' : '';
-            if (!isValidVariable(text)) {
-              // Break variable styling immediately
-              parentElement.classList.remove('editor-variable');
-              parentElement.removeAttribute('data-variable');
-              parentElement.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
+        const target = mutation.target;
+        
+        // Add proper type checking for DOM nodes
+        if (target && typeof target === 'object') {
+          // First check if it's a node with nodeType property
+          if ('nodeType' in target && target.nodeType === Node.TEXT_NODE) {
+            // Check if it has textContent property
+            if ('textContent' in target) {
+              const textContent = target.textContent || '';
+              
+              // Now check for parent element
+              if ('parentElement' in target && target.parentElement) {
+                const parentElement = target.parentElement;
+                
+                // Make sure parent has the required properties
+                if (parentElement && 
+                    'classList' in parentElement && 
+                    typeof parentElement.classList?.contains === 'function' &&
+                    parentElement.classList.contains('editor-variable')) {
+                  
+                  // Now it's safe to check the variable validity
+                  if (!isValidVariable(textContent)) {
+                    // Break variable styling immediately
+                    parentElement.classList.remove('editor-variable');
+                    parentElement.removeAttribute('data-variable');
+                    parentElement.setAttribute('style', 
+                      'background-color: transparent !important; ' + 
+                      'color: inherit !important; ' + 
+                      'font-weight: normal !important;'
+                    );
+                  }
+                }
+              }
             }
           }
         }
       }
     }
-    
-    // Also run standard processing
-    processInvalidVariables(editor);
   });
   
   characterDataMonitor.observe(editorDOM, {
