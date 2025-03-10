@@ -288,12 +288,15 @@ export const setupVariableValidationListeners = (editor: any) => {
     for (const mutation of mutations) {
       if (mutation.type === 'characterData') {
         const node = mutation.target;
-        if (node && node.nodeType === Node.TEXT_NODE) {
+        // Add type check for node before accessing properties
+        if (node && typeof node === 'object' && 'nodeType' in node && node.nodeType === Node.TEXT_NODE) {
           // Get the parent node which should be the span
-          const parentElement = node.parentElement;
-          if (parentElement && parentElement.classList.contains('editor-variable')) {
+          // We need to ensure parentElement exists and has the right properties
+          const parentElement = 'parentElement' in node ? node.parentElement : null;
+          if (parentElement && parentElement.classList && parentElement.classList.contains('editor-variable')) {
             // Direct text change inside a variable - check validity immediately
-            const text = node.textContent || '';
+            // Ensure textContent exists on node
+            const text = 'textContent' in node ? node.textContent || '' : '';
             if (!isValidVariable(text)) {
               // Break variable styling immediately
               parentElement.classList.remove('editor-variable');

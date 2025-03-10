@@ -120,7 +120,12 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
               setTimeout(() => processInvalidVariables(editor), 0);
               break;
             }
-            current = current.parentNode;
+            // TypeScript check for parentNode property
+            if (current && 'parentNode' in current) {
+              current = current.parentNode as Node;
+            } else {
+              break;
+            }
           }
         }
         
@@ -160,7 +165,13 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
         if (mutation.type === 'characterData') {
           // Text changed inside a node
           const node = mutation.target;
-          if (node.parentElement && node.parentElement.classList.contains('editor-variable')) {
+          // Add type checking for node and parentElement
+          if (node && 
+              typeof node === 'object' && 
+              'parentElement' in node && 
+              node.parentElement && 
+              node.parentElement.classList && 
+              node.parentElement.classList.contains('editor-variable')) {
             // Text changed inside a variable span
             needsProcessing = true;
             break;
@@ -274,6 +285,18 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
             if (!v.classList.contains('editor-variable')) {
               v.classList.add('editor-variable');
             }
+            
+            // Ensure styling is applied
+            v.setAttribute('style', 
+              'display: inline; ' +
+              'background-color: rgba(99, 102, 241, 0.1) !important; ' +
+              'color: #6366f1 !important; ' +
+              'border-radius: 0.25rem !important; ' +
+              'padding: 0 0.25rem !important; ' +
+              'font-weight: 500 !important; ' +
+              'box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; ' +
+              'white-space: nowrap !important;'
+            );
           });
         }
         processInvalidVariables(editor);
