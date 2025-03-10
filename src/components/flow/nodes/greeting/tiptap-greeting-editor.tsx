@@ -21,17 +21,13 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   const handleVariableTrigger = useCallback((char: '#', position?: { top: number, left: number }) => {
     setTriggerChar(char);
     setShowVariableSelector(true);
+    
     if (position) {
-      // Get absolute position instead of relative
-      const rect = editorContainerRef.current?.getBoundingClientRect();
-      if (rect) {
-        // Calculate position relative to viewport
-        const absoluteTop = rect.top + position.top + window.scrollY;
-        const absoluteLeft = rect.left + position.left + window.scrollX;
-        setSelectorPosition({ top: absoluteTop, left: absoluteLeft });
-      } else {
-        setSelectorPosition(position);
-      }
+      // Calculate position relative to viewport for fixed positioning
+      setSelectorPosition({
+        top: position.top, 
+        left: position.left
+      });
     }
   }, []);
 

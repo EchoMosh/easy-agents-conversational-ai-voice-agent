@@ -4,7 +4,6 @@ import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Variable } from "lucide-react";
-import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 
 export type VariableDisplayStyle = 'default' | 'badge' | 'code' | 'tag';
 
@@ -58,61 +57,12 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
       }
     }, []);
 
-    // When isFullScreen is true, use a more accessible and visually distinct approach
-    if (isFullScreen) {
-      return (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center pointer-events-none">
-          <div className="w-full max-w-md mx-auto pointer-events-auto">
-            <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-border">
-              <Command className="rounded-lg">
-                <div className="flex items-center border-b px-3">
-                  <CommandInput 
-                    placeholder="Search variable..." 
-                    value={searchTerm} 
-                    onValueChange={setSearchTerm}
-                    className="h-9 w-full"
-                  />
-                </div>
-                
-                <CommandList className="max-h-[300px] overflow-y-auto">
-                  <CommandEmpty>No variable found.</CommandEmpty>
-                  
-                  {Object.keys(groupedVariables).length > 0 ? (
-                    Object.entries(groupedVariables).map(([category, variables]) => (
-                      <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
-                        {variables.map((variable) => (
-                          <CommandItem
-                            key={variable.id}
-                            onSelect={() => onSelectVariable(variable.value, 'default')}
-                            className="cursor-pointer flex items-center gap-2 py-2"
-                          >
-                            <span className="flex items-center justify-center h-5 w-5">
-                              <Variable className="h-4 w-4" />
-                            </span>
-                            {variable.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    ))
-                  ) : (
-                    <CommandGroup>
-                      <CommandItem disabled>No variables found</CommandItem>
-                    </CommandGroup>
-                  )}
-                </CommandList>
-              </Command>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Inline variable selector (non-full-screen) - fixed positioning to prevent background darkening
+    // Inline variable selector - prevent the black overlay
     return (
       <div 
-        className="absolute z-[1000] w-[250px] bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden border border-border" 
+        className="absolute z-[9999] w-[250px] bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden border border-border" 
         ref={commandRef}
-        style={{ top: '100%', left: '0' }}
+        style={{ maxWidth: '250px' }}
       >
         <Command className="rounded-none">
           <div className="flex items-center border-b px-3">
@@ -124,7 +74,7 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
             />
           </div>
           
-          <CommandList>
+          <CommandList className="max-h-[200px] overflow-y-auto">
             <CommandEmpty>No variable found.</CommandEmpty>
             
             {Object.keys(groupedVariables).length > 0 ? (
@@ -155,7 +105,7 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
     );
   }
 
-  
+  // Default popover selector (when not triggered by #)
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

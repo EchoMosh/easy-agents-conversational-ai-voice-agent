@@ -45,7 +45,6 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
                 });
               }, 10);
             }
-            return false;
           }
           return false;
         },
