@@ -48,14 +48,17 @@ const VariableMark = Mark.create({
             return false;
           }
           
-          return {};
+          return {
+            'class': 'editor-variable',
+            'data-variable': text.substring(1, text.length - 1) // Extract the variable name
+          };
         }
       },
     ];
   },
   
   renderHTML({ HTMLAttributes }) {
-    return ['span', mergeAttributes(HTMLAttributes), 0];
+    return ['span', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
   },
   
   // Prevent spanning across nodes with these critical settings

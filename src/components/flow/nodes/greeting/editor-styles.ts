@@ -42,6 +42,23 @@ export const editorStyles = `
   word-break: break-word;
 }
 
+/* Explicit handling for variables - important to override any existing styles */
+span[data-variable] {
+  display: inline;
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  color: #6366f1 !important;
+  border-radius: 0.25rem !important;
+  padding: 0 0.25rem !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  white-space: nowrap !important;
+}
+
+.dark span[data-variable] {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+  color: #818cf8 !important;
+}
+
 /* Explicit prevention of variable marks across nodes */
 .ProseMirror p + p .editor-variable,
 .ProseMirror br + .editor-variable,

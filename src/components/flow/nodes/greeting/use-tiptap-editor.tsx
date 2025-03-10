@@ -230,7 +230,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
 
   const insertVariable = useCallback((variable: string, triggerChar: string | null = null) => {
     if (editor) {
-      // Remove the trigger character
+      // Remove the trigger character if it exists
       if (triggerChar) {
         editor.commands.command(({ tr, dispatch }) => {
           if (dispatch) {
@@ -245,31 +245,39 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       // Fixed: Use only one pair of curly braces for the variable
       const variableText = `{${variable}}`;
       
-      editor.chain()
-        .focus()
-        .insertContent({
-          type: 'text',
-          text: variableText,
-          marks: [
-            {
-              type: 'variable',
-              attrs: {
-                class: 'editor-variable',
-                'data-variable': variable
-              }
-            }
-          ]
-        })
-        .unsetMark('variable') // Important: Unset the variable mark after insertion
-        .run();
+      // First insert the plain text
+      editor.commands.insertContent(variableText);
       
-      // Ensure focus is maintained and cursor is positioned correctly
+      // Then select the inserted text
+      const currentPosition = editor.view.state.selection.$from.pos;
+      const from = currentPosition - variableText.length;
+      const to = currentPosition;
+      
+      // Set selection to the variable text we just inserted
+      editor.commands.setTextSelection({ from, to });
+      
+      // Apply the variable mark to the selected text
+      editor.commands.setMark('variable', { 
+        'class': 'editor-variable',
+        'data-variable': variable 
+      });
+      
+      // Unset mark and move cursor to end
+      editor.commands.unsetMark('variable');
       editor.commands.focus('end');
       
-      // Force validation of variables right after insertion
+      // Force validation to correctly style the variable
       setTimeout(() => {
+        if (editor.view && editor.view.dom) {
+          const variables = editor.view.dom.querySelectorAll(`span[data-variable="${variable}"]`);
+          variables.forEach(v => {
+            if (!v.classList.contains('editor-variable')) {
+              v.classList.add('editor-variable');
+            }
+          });
+        }
         processInvalidVariables(editor);
-      }, 0);
+      }, 10);
     }
   }, [editor]);
 

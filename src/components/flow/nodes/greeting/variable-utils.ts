@@ -11,6 +11,41 @@ export const isValidVariable = (text: string) => {
          !text.includes(' ');
 };
 
+// Function to ensure a span has correct variable styling
+export const ensureVariableStyling = (node: Element, variable: string) => {
+  if (!node.classList.contains('editor-variable')) {
+    node.classList.add('editor-variable');
+  }
+  
+  node.setAttribute('data-variable', variable);
+  
+  // Ensure styling is applied directly
+  node.setAttribute('style', 
+    'display: inline; ' +
+    'background-color: rgba(99, 102, 241, 0.1) !important; ' +
+    'color: #6366f1 !important; ' +
+    'border-radius: 0.25rem !important; ' +
+    'padding: 0 0.25rem !important; ' +
+    'font-weight: 500 !important; ' +
+    'box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; ' +
+    'white-space: nowrap !important;'
+  );
+  
+  // Special handling for dark mode if needed
+  if (document.documentElement.classList.contains('dark')) {
+    node.setAttribute('style', 
+      'display: inline; ' +
+      'background-color: rgba(99, 102, 241, 0.2) !important; ' +
+      'color: #818cf8 !important; ' +
+      'border-radius: 0.25rem !important; ' +
+      'padding: 0 0.25rem !important; ' +
+      'font-weight: 500 !important; ' +
+      'box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; ' +
+      'white-space: nowrap !important;'
+    );
+  }
+};
+
 // Process and clean up invalid variables - this runs very frequently
 export const processInvalidVariables = (editor: any) => {
   if (!editor || !editor.view) return;
@@ -20,10 +55,28 @@ export const processInvalidVariables = (editor: any) => {
     const editorDOM = editor.view.dom;
     if (!editorDOM) return;
     
-    const variableSpans = editorDOM.querySelectorAll('.editor-variable');
+    // First, check all spans with data-variable attribute to ensure proper styling
+    const variableSpans = editorDOM.querySelectorAll('span[data-variable]');
     
-    for (let i = 0; i < variableSpans.length; i++) {
-      const node = variableSpans[i];
+    variableSpans.forEach(node => {
+      const text = node.textContent || '';
+      const variableName = node.getAttribute('data-variable');
+      
+      // If it's a valid variable, ensure styling is applied
+      if (isValidVariable(text) && variableName) {
+        ensureVariableStyling(node, variableName);
+      } else {
+        // If invalid, remove variable styling
+        node.classList.remove('editor-variable');
+        node.removeAttribute('data-variable');
+        node.removeAttribute('style');
+      }
+    });
+    
+    // Also check for spans with editor-variable class
+    const styledVars = editorDOM.querySelectorAll('.editor-variable');
+    
+    styledVars.forEach(node => {
       const text = node.textContent || '';
       
       // Break styling immediately if the variable no longer matches expected format
@@ -59,10 +112,49 @@ export const processInvalidVariables = (editor: any) => {
           console.error('Error processing variable node:', innerError);
         }
       }
-    }
+    });
     
-    // Also check for any P tag that contains a BR and a variable - this indicates a line break
+    // Also look for text that matches variable pattern but doesn't have styling
     const paragraphs = editorDOM.querySelectorAll('p');
+    paragraphs.forEach(p => {
+      const textNodes = Array.from(p.childNodes).filter(node => 
+        node.nodeType === Node.TEXT_NODE && 
+        VALID_VARIABLE_REGEX.test(node.textContent || '')
+      );
+      
+      // If we find any such text nodes, we need to apply variable styling
+      textNodes.forEach(textNode => {
+        const text = textNode.textContent || '';
+        if (isValidVariable(text)) {
+          // Extract the variable name
+          const variableName = text.substring(1, text.length - 1);
+          
+          // Use a range to select this text
+          const range = document.createRange();
+          range.selectNode(textNode);
+          
+          const selection = window.getSelection();
+          if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // Apply variable mark
+            editor.chain()
+              .focus()
+              .setMark('variable', { 
+                'class': 'editor-variable',
+                'data-variable': variableName 
+              })
+              .run();
+            
+            // Clear selection
+            selection.removeAllRanges();
+          }
+        }
+      });
+    });
+    
+    // Check for any P tag that contains a BR and a variable - this indicates a line break
     paragraphs.forEach((p) => {
       if (p.querySelector('br') && p.querySelector('.editor-variable')) {
         // This paragraph has both a line break and a variable - need to split and clean
