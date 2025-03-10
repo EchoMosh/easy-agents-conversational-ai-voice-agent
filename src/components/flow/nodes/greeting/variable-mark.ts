@@ -36,8 +36,15 @@ const VariableMark = Mark.create({
             return false;
           }
           
-          // Reject if it contains line breaks or spaces
-          if (text.includes('\n') || text.includes('\r') || text.includes(' ')) {
+          // Reject if it contains line breaks, spaces, or other special characters
+          if (text.includes('\n') || text.includes('\r') || text.includes(' ') || 
+              text.includes('\t') || text.includes('\u00A0')) {
+            return false;
+          }
+          
+          // Also check for any DOM nesting - variables should be flat text
+          if (element.querySelector('br') || element.querySelector('p') || 
+              element.querySelector('div') || element.children.length > 0) {
             return false;
           }
           
@@ -55,7 +62,12 @@ const VariableMark = Mark.create({
   inclusive: false,
   excludes: '_', // Exclude all other marks
   spanning: false, // Prevent spanning across nodes
-  keepOnSplit: false
+  keepOnSplit: false, // Do not keep marks when splitting nodes
+  
+  // Additional method to handle splitting - remove marks
+  onSplit() {
+    return null; // Return null to indicate the mark should not be preserved
+  }
 });
 
 export default VariableMark;

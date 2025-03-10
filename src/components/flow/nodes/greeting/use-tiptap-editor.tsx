@@ -74,17 +74,28 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       },
       // Intercept all key events for variable validation
       handleKeyDown: (view, event) => {
-        // Process variable validation on every keypress
-        processInvalidVariables(editor);
-        
-        // Special handling for Enter key
+        // Specially handle the Enter key to prevent freezing
         if (event.key === 'Enter') {
-          // Additional aggressive check
-          processInvalidVariables(editor);
+          // Process all variables immediately
+          const dom = view.dom;
+          const variables = dom.querySelectorAll('.editor-variable');
           
-          // Let the default handler continue
+          variables.forEach(variable => {
+            // Immediately remove styling from all variables
+            variable.classList.remove('editor-variable');
+            variable.removeAttribute('data-variable');
+            variable.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
+          });
+          
+          // Let default handling continue after removing variable styling
+          setTimeout(() => processInvalidVariables(editor), 0);
+          
+          // We don't want to stop propagation completely as that would prevent the Enter from working
           return false;
         }
+        
+        // Process variable validation on every keypress
+        processInvalidVariables(editor);
         
         // Run validation again after a very short delay
         setTimeout(() => processInvalidVariables(editor), 0);

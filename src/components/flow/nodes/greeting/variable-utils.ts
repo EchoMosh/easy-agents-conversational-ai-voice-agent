@@ -139,6 +139,21 @@ export const setupVariableValidationListeners = (editor: any) => {
   
   // Special handler for key events that might modify variable content
   const handleKeyEvents = (e: KeyboardEvent) => {
+    // If Enter key was pressed, immediately strip variable formatting from all variables
+    if (e.key === 'Enter') {
+      const variableElements = editorDOM.querySelectorAll('.editor-variable');
+      variableElements.forEach(el => {
+        // Immediately break styling on ENTER key anywhere in editor
+        el.classList.remove('editor-variable');
+        el.removeAttribute('data-variable');
+        el.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
+      });
+      
+      // Stop event propagation to prevent freezing
+      e.stopPropagation();
+      return;
+    }
+    
     // Specifically check if we're typing inside or near a variable
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
@@ -236,14 +251,14 @@ export const cleanVariablesOnEnter = (editor: any) => {
       const variables = editor.view.dom.querySelectorAll('.editor-variable');
       
       for (const variable of variables) {
-        const text = variable.textContent || '';
-        if (!isValidVariable(text)) {
-          // Remove styling immediately
-          variable.classList.remove('editor-variable');
-          variable.removeAttribute('data-variable');
-          variable.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
-        }
+        // Remove styling immediately
+        variable.classList.remove('editor-variable');
+        variable.removeAttribute('data-variable');
+        variable.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
       }
+      
+      // Stop event propagation to prevent freezing
+      event.stopImmediatePropagation();
       
       // Also run multiple cleaning passes
       setTimeout(() => processInvalidVariables(editor), 0);

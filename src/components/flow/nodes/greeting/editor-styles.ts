@@ -84,4 +84,24 @@ export const editorStyles = `
   border-radius: 0 !important;
   padding: 0 !important;
 }
+
+/* Handle variables with Enter key better */
+.editor-variable:has(br) {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-weight: normal !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+/* Prevent variable styling from persisting across line breaks */
+.ProseMirror p:has(br) .editor-variable {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-weight: normal !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
 `;
