@@ -42,82 +42,24 @@ export const editorStyles = `
   word-break: break-word;
 }
 
-/* Explicit handling for variables - important to override any existing styles */
-span[data-variable] {
-  display: inline;
-  background-color: rgba(99, 102, 241, 0.1) !important;
-  color: #6366f1 !important;
-  border-radius: 0.25rem !important;
-  padding: 0 0.25rem !important;
-  font-weight: 500 !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  white-space: nowrap !important;
-}
-
-.dark span[data-variable] {
-  background-color: rgba(99, 102, 241, 0.2) !important;
-  color: #818cf8 !important;
-}
-
 /* Explicit prevention of variable marks across nodes */
-.ProseMirror p + p .editor-variable,
+.ProseMirror p + p .editor-variable {
+  background-color: transparent;
+  color: inherit;
+  font-weight: normal;
+  box-shadow: none;
+  white-space: normal;
+}
+
+/* Handle return key (enter) inside variables */
 .ProseMirror br + .editor-variable,
 .ProseMirror .editor-variable + br {
+  display: inline;
   background-color: transparent !important;
   color: inherit !important;
   font-weight: normal !important;
   box-shadow: none !important;
   white-space: normal !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-/* Broken variable styling - applies immediately when content changes */
-.editor-variable:has(br),
-.editor-variable:has(p),
-.editor-variable:has(div),
-.editor-variable[style],
-.editor-variable[contenteditable] {
-  background-color: transparent !important;
-  color: inherit !important;
-  font-weight: normal !important;
-  box-shadow: none !important;
-  white-space: normal !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-/* Monitor keystrokes inside variables and immediately break styling */
-.prose-variable-aware {
-  position: relative;
-}
-
-/* Any edits to variable content instantly breaks styling */
-.editor-variable:focus-within {
-  background-color: transparent !important;
-  color: inherit !important;
-  font-weight: normal !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-/* Handle variables with Enter key better */
-.editor-variable:has(br) {
-  background-color: transparent !important;
-  color: inherit !important;
-  font-weight: normal !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-/* Prevent variable styling from persisting across line breaks */
-.ProseMirror p:has(br) .editor-variable {
-  background-color: transparent !important;
-  color: inherit !important;
-  font-weight: normal !important;
-  box-shadow: none !important;
   border-radius: 0 !important;
   padding: 0 !important;
 }

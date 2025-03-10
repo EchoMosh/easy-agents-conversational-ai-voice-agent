@@ -18,9 +18,6 @@ const VariableMark = Mark.create({
       },
       'data-variable': {
         default: null
-      },
-      style: {
-        default: 'display: inline; background-color: rgba(99, 102, 241, 0.1) !important; color: #6366f1 !important; border-radius: 0.25rem !important; padding: 0 0.25rem !important; font-weight: 500 !important; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; white-space: nowrap !important;'
       }
     };
   },
@@ -34,54 +31,27 @@ const VariableMark = Mark.create({
           const element = node as HTMLElement;
           const text = element.textContent || '';
           
-          // Immediately reject any variable that doesn't match the exact pattern
-          if (!text.match(/^\{[a-zA-Z][a-zA-Z0-9_]{1,19}\}$/)) {
+          // Reject any variable with newlines, spaces, or non-variable format
+          if (text.includes('\n') || text.includes('\r') || text.includes(' ') || !text.match(/^\{[a-zA-Z][a-zA-Z0-9_]{1,19}\}$/)) {
             return false;
           }
-          
-          // Reject if it contains line breaks, spaces, or other special characters
-          if (text.includes('\n') || text.includes('\r') || text.includes(' ') || 
-              text.includes('\t') || text.includes('\u00A0')) {
-            return false;
-          }
-          
-          // Also check for any DOM nesting - variables should be flat text
-          if (element.querySelector('br') || element.querySelector('p') || 
-              element.querySelector('div') || element.children.length > 0) {
-            return false;
-          }
-          
-          return {
-            'class': 'editor-variable',
-            'data-variable': text.substring(1, text.length - 1), // Extract the variable name
-            'style': 'display: inline; background-color: rgba(99, 102, 241, 0.1) !important; color: #6366f1 !important; border-radius: 0.25rem !important; padding: 0 0.25rem !important; font-weight: 500 !important; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; white-space: nowrap !important;'
-          };
+          return {};
         }
       },
     ];
   },
   
   renderHTML({ HTMLAttributes }) {
-    // Make sure to include the style attribute in the rendered output
-    const attributes = {
-      ...this.options.HTMLAttributes,
-      ...HTMLAttributes,
-      style: HTMLAttributes.style || 'display: inline; background-color: rgba(99, 102, 241, 0.1) !important; color: #6366f1 !important; border-radius: 0.25rem !important; padding: 0 0.25rem !important; font-weight: 500 !important; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; white-space: nowrap !important;'
-    };
-    
-    return ['span', mergeAttributes(attributes), 0];
+    return ['span', mergeAttributes(HTMLAttributes), 0];
   },
   
-  // Prevent spanning across nodes with these critical settings
+  // Critical settings to prevent variables spanning across nodes
   inclusive: false,
   excludes: '_', // Exclude all other marks
   spanning: false, // Prevent spanning across nodes
-  keepOnSplit: false, // Do not keep marks when splitting nodes
-  
-  // Additional method to handle splitting - remove marks
-  onSplit() {
-    return null; // Return null to indicate the mark should not be preserved
-  }
+
+  // New method to actively prevent splitting behavior
+  keepOnSplit: false
 });
 
 export default VariableMark;

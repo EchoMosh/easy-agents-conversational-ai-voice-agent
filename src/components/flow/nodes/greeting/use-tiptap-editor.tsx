@@ -2,13 +2,7 @@
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useCallback, useEffect, useState } from 'react';
-import { 
-  processInvalidVariables, 
-  validateOnInput, 
-  setupVariableValidationListeners, 
-  cleanVariablesOnEnter,
-  watchVariableContent
-} from './variable-utils';
+import { processInvalidVariables, validateOnInput, setupVariableValidationListeners, cleanVariablesOnEnter } from './variable-utils';
 import VariableMark from './variable-mark';
 
 interface UseTiptapEditorProps {
@@ -60,8 +54,10 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
         }
       }
       
-      // Immediately process variable validity on any edit
-      processInvalidVariables(editor);
+      // Process invalid variables after any update
+      setTimeout(() => {
+        processInvalidVariables(editor);
+      }, 0);
     },
     autofocus: false,
     // Improve HTML parsing to correctly handle variable spans
@@ -69,74 +65,24 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       preserveWhitespace: 'full',
     },
     editorProps: {
-      attributes: {
-        class: 'prose-variable-aware',
-      },
-      // Intercept all key events for variable validation
+      // Add custom handlers for keydown to watch for Enter
       handleKeyDown: (view, event) => {
-        // Specially handle the Enter key to prevent freezing
         if (event.key === 'Enter') {
-          // Process all variables immediately
-          const dom = view.dom;
-          const variables = dom.querySelectorAll('.editor-variable');
+          // This event will fire before the actual Enter is processed
+          // Force check and clean variables near cursor
+          setTimeout(() => {
+            processInvalidVariables(editor);
+          }, 0);
           
-          variables.forEach(variable => {
-            // Immediately remove styling from all variables
-            variable.classList.remove('editor-variable');
-            variable.removeAttribute('data-variable');
-            variable.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
-          });
-          
-          // Let default handling continue after removing variable styling
-          setTimeout(() => processInvalidVariables(editor), 0);
-          
-          // We don't want to stop propagation completely as that would prevent the Enter from working
+          // Let the default handler continue
           return false;
         }
-        
-        // Process variable validation on every keypress
-        processInvalidVariables(editor);
-        
-        // Run validation again after a very short delay
-        setTimeout(() => processInvalidVariables(editor), 0);
-        return false;
-      },
-      // Handle input events directly for immediate feedback
-      handleTextInput: (view, from, to, text) => {
-        // Check if we're inside or near a variable
-        const doc = view.state.doc;
-        const $from = doc.resolve(from);
-        
-        // Get the node at current position
-        const fromNode = view.domAtPos(from);
-        
-        if (fromNode && fromNode.node) {
-          // Check if we're editing inside a variable
-          let current = fromNode.node;
-          while (current && current !== view.dom) {
-            if (current.nodeType === Node.ELEMENT_NODE && 
-                (current as Element).classList.contains('editor-variable')) {
-              // We're inside a variable and changing text - must validate
-              setTimeout(() => processInvalidVariables(editor), 0);
-              break;
-            }
-            // TypeScript check for parentNode property
-            if (current && 'parentNode' in current) {
-              current = current.parentNode as Node;
-            } else {
-              break;
-            }
-          }
-        }
-        
-        // Let default handler run and validate variables after
-        setTimeout(() => processInvalidVariables(editor), 0);
         return false;
       },
     },
   });
 
-  // Variable validation with multiple aggressive strategies
+  // Variable validation with multiple strategies
   useEffect(() => {
     if (!editor?.view?.dom) return;
     
@@ -149,73 +95,49 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
     // Third strategy: Enter key specific cleanup
     const enterKeyCleanup = cleanVariablesOnEnter(editor);
     
-    // Fourth strategy: Content monitoring
-    const contentMonitorCleanup = watchVariableContent(editor);
-    
-    // Fifth strategy: Interval checking
+    // Fourth strategy: Interval checking for persistent cases
     const validationInterval = setInterval(() => {
       processInvalidVariables(editor);
-    }, 100);
+    }, 200);
     
-    // Mutation observer to watch span elements directly
-    const spanObserver = new MutationObserver((mutations) => {
-      let needsProcessing = false;
-      
+    // Apply a MutationObserver specifically watching for line breaks near variables
+    const lineBreakObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        if (mutation.type === 'characterData') {
-          // Text changed inside a node
-          const node = mutation.target;
-          // Add type checking for node and parentElement
-          if (node && 
-              typeof node === 'object' && 
-              'parentElement' in node && 
-              node.parentElement && 
-              node.parentElement.classList && 
-              node.parentElement.classList.contains('editor-variable')) {
-            // Text changed inside a variable span
-            needsProcessing = true;
-            break;
-          }
-        } else if (mutation.type === 'childList') {
-          // DOM structure changed
+        if (mutation.type === 'childList') {
           const addedNodes = Array.from(mutation.addedNodes);
-          const hasVariableSpan = addedNodes.some(node => {
-            return node.nodeType === Node.ELEMENT_NODE && 
-                   ((node as Element).classList.contains('editor-variable') ||
-                   (node as Element).querySelector('.editor-variable') !== null);
+          // Check if any added node is a BR or contains a BR
+          const hasBR = addedNodes.some(node => {
+            if (node.nodeName === 'BR') return true;
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              return (node as Element).querySelector('br') !== null;
+            }
+            return false;
           });
           
-          if (hasVariableSpan) {
-            needsProcessing = true;
-            break;
+          if (hasBR) {
+            // If a BR was added, aggressively clean variables
+            processInvalidVariables(editor);
+            
+            // Run several delayed cleaning attempts to catch post-render issues
+            for (let i = 1; i <= 5; i++) {
+              setTimeout(() => processInvalidVariables(editor), i * 50);
+            }
           }
         }
       }
-      
-      if (needsProcessing) {
-        // Process immediately
-        processInvalidVariables(editor);
-        
-        // And again after a short delay to catch render updates
-        setTimeout(() => processInvalidVariables(editor), 10);
-        setTimeout(() => processInvalidVariables(editor), 50);
-      }
     });
     
-    spanObserver.observe(editor.view.dom, {
+    lineBreakObserver.observe(editor.view.dom, {
       childList: true,
       subtree: true,
-      characterData: true,
-      attributes: true
     });
     
     return () => {
       if (inputValidationCleanup) inputValidationCleanup();
       if (eventValidationCleanup) eventValidationCleanup();
       if (enterKeyCleanup) enterKeyCleanup();
-      if (contentMonitorCleanup) contentMonitorCleanup();
       clearInterval(validationInterval);
-      spanObserver.disconnect();
+      lineBreakObserver.disconnect();
     };
   }, [editor]);
 
@@ -241,7 +163,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
 
   const insertVariable = useCallback((variable: string, triggerChar: string | null = null) => {
     if (editor) {
-      // Remove the trigger character if it exists
+      // Remove the trigger character
       if (triggerChar) {
         editor.commands.command(({ tr, dispatch }) => {
           if (dispatch) {
@@ -256,51 +178,31 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       // Fixed: Use only one pair of curly braces for the variable
       const variableText = `{${variable}}`;
       
-      // First insert the plain text
-      editor.commands.insertContent(variableText);
+      editor.chain()
+        .focus()
+        .insertContent({
+          type: 'text',
+          text: variableText,
+          marks: [
+            {
+              type: 'variable',
+              attrs: {
+                class: 'editor-variable',
+                'data-variable': variable
+              }
+            }
+          ]
+        })
+        .unsetMark('variable') // Important: Unset the variable mark after insertion
+        .run();
       
-      // Then select the inserted text
-      const currentPosition = editor.view.state.selection.$from.pos;
-      const from = currentPosition - variableText.length;
-      const to = currentPosition;
-      
-      // Set selection to the variable text we just inserted
-      editor.commands.setTextSelection({ from, to });
-      
-      // Apply the variable mark to the selected text
-      editor.commands.setMark('variable', { 
-        'class': 'editor-variable',
-        'data-variable': variable 
-      });
-      
-      // Unset mark and move cursor to end
-      editor.commands.unsetMark('variable');
+      // Ensure focus is maintained and cursor is positioned correctly
       editor.commands.focus('end');
       
-      // Force validation to correctly style the variable
+      // Force validation of variables right after insertion
       setTimeout(() => {
-        if (editor.view && editor.view.dom) {
-          const variables = editor.view.dom.querySelectorAll(`span[data-variable="${variable}"]`);
-          variables.forEach(v => {
-            if (!v.classList.contains('editor-variable')) {
-              v.classList.add('editor-variable');
-            }
-            
-            // Ensure styling is applied
-            v.setAttribute('style', 
-              'display: inline; ' +
-              'background-color: rgba(99, 102, 241, 0.1) !important; ' +
-              'color: #6366f1 !important; ' +
-              'border-radius: 0.25rem !important; ' +
-              'padding: 0 0.25rem !important; ' +
-              'font-weight: 500 !important; ' +
-              'box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; ' +
-              'white-space: nowrap !important;'
-            );
-          });
-        }
         processInvalidVariables(editor);
-      }, 10);
+      }, 0);
     }
   }, [editor]);
 

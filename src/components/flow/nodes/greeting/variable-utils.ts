@@ -3,50 +3,7 @@
 // Only shorter variable names between 2-20 characters are allowed
 export const VALID_VARIABLE_REGEX = /^\{[a-zA-Z][a-zA-Z0-9_]{1,19}\}$/;
 
-// Function to check if a text string is a valid variable format
-export const isValidVariable = (text: string) => {
-  return VALID_VARIABLE_REGEX.test(text) && 
-         !text.includes('\n') && 
-         !text.includes('\r') && 
-         !text.includes(' ');
-};
-
-// Function to ensure a span has correct variable styling
-export const ensureVariableStyling = (node: Element, variable: string) => {
-  if (!node.classList.contains('editor-variable')) {
-    node.classList.add('editor-variable');
-  }
-  
-  node.setAttribute('data-variable', variable);
-  
-  // Ensure styling is applied directly
-  node.setAttribute('style', 
-    'display: inline; ' +
-    'background-color: rgba(99, 102, 241, 0.1) !important; ' +
-    'color: #6366f1 !important; ' +
-    'border-radius: 0.25rem !important; ' +
-    'padding: 0 0.25rem !important; ' +
-    'font-weight: 500 !important; ' +
-    'box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; ' +
-    'white-space: nowrap !important;'
-  );
-  
-  // Special handling for dark mode if needed
-  if (document.documentElement.classList.contains('dark')) {
-    node.setAttribute('style', 
-      'display: inline; ' +
-      'background-color: rgba(99, 102, 241, 0.2) !important; ' +
-      'color: #818cf8 !important; ' +
-      'border-radius: 0.25rem !important; ' +
-      'padding: 0 0.25rem !important; ' +
-      'font-weight: 500 !important; ' +
-      'box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; ' +
-      'white-space: nowrap !important;'
-    );
-  }
-};
-
-// Process and clean up invalid variables - this runs very frequently
+// Process and clean up invalid variables
 export const processInvalidVariables = (editor: any) => {
   if (!editor || !editor.view) return;
   
@@ -55,44 +12,33 @@ export const processInvalidVariables = (editor: any) => {
     const editorDOM = editor.view.dom;
     if (!editorDOM) return;
     
-    // First, check all spans with data-variable attribute to ensure proper styling
-    const variableSpans = editorDOM.querySelectorAll('span[data-variable]');
+    const variableSpans = editorDOM.querySelectorAll('.editor-variable');
     
-    variableSpans.forEach(node => {
-      const text = node.textContent || '';
-      const variableName = node.getAttribute('data-variable');
-      
-      // If it's a valid variable, ensure styling is applied
-      if (isValidVariable(text) && variableName) {
-        ensureVariableStyling(node, variableName);
-      } else {
-        // If invalid, remove variable styling
-        node.classList.remove('editor-variable');
-        node.removeAttribute('data-variable');
-        node.removeAttribute('style');
-      }
-    });
-    
-    // Also check for spans with editor-variable class
-    const styledVars = editorDOM.querySelectorAll('.editor-variable');
-    
-    styledVars.forEach(node => {
+    for (let i = 0; i < variableSpans.length; i++) {
+      const node = variableSpans[i];
       const text = node.textContent || '';
       
-      // Break styling immediately if the variable no longer matches expected format
-      if (!isValidVariable(text)) {
+      // Check if the variable contains invalid characters or structure
+      const isValidVariable = 
+        VALID_VARIABLE_REGEX.test(text) && 
+        !text.includes('\n') && 
+        !text.includes('\r') && 
+        !text.includes(' ');
+      
+      if (!isValidVariable) {
         // Force remove styling on invalid variable node
-        node.classList.remove('editor-variable');
-        node.removeAttribute('data-variable');
-        
-        // Apply clear styling overrides
-        node.setAttribute('style', 'background-color: transparent !important; color: inherit !important; ' + 
-                                  'font-weight: normal !important; border-radius: 0 !important; ' +
-                                  'padding: 0 !important; box-shadow: none !important; ' +
-                                  'white-space: normal !important;');
-        
-        // Use editor commands to completely remove the mark if we can
         try {
+          // First direct style removal to visually update immediately
+          node.classList.remove('editor-variable');
+          node.style.backgroundColor = 'transparent';
+          node.style.color = 'inherit';
+          node.style.fontWeight = 'normal';
+          node.style.whiteSpace = 'normal';
+          node.style.padding = '0';
+          node.style.borderRadius = '0';
+          node.style.boxShadow = 'none';
+          
+          // Then use editor commands to properly remove the mark
           const range = document.createRange();
           range.selectNode(node);
           
@@ -102,8 +48,11 @@ export const processInvalidVariables = (editor: any) => {
             selection.removeAllRanges();
             selection.addRange(range);
             
-            // Forcefully unset the mark
-            editor.chain().focus().unsetMark('variable').run();
+            // Use the editor to unset the mark
+            editor.chain()
+              .focus()
+              .unsetMark('variable')
+              .run();
             
             // Clear the selection
             selection.removeAllRanges();
@@ -112,49 +61,10 @@ export const processInvalidVariables = (editor: any) => {
           console.error('Error processing variable node:', innerError);
         }
       }
-    });
+    }
     
-    // Also look for text that matches variable pattern but doesn't have styling
+    // Also check for any P tag that contains a BR and a variable - this indicates a line break
     const paragraphs = editorDOM.querySelectorAll('p');
-    paragraphs.forEach(p => {
-      const textNodes = Array.from(p.childNodes).filter(node => 
-        node.nodeType === Node.TEXT_NODE && 
-        VALID_VARIABLE_REGEX.test(node.textContent || '')
-      );
-      
-      // If we find any such text nodes, we need to apply variable styling
-      textNodes.forEach(textNode => {
-        const text = textNode.textContent || '';
-        if (isValidVariable(text)) {
-          // Extract the variable name
-          const variableName = text.substring(1, text.length - 1);
-          
-          // Use a range to select this text
-          const range = document.createRange();
-          range.selectNode(textNode);
-          
-          const selection = window.getSelection();
-          if (selection) {
-            selection.removeAllRanges();
-            selection.addRange(range);
-            
-            // Apply variable mark
-            editor.chain()
-              .focus()
-              .setMark('variable', { 
-                'class': 'editor-variable',
-                'data-variable': variableName 
-              })
-              .run();
-            
-            // Clear selection
-            selection.removeAllRanges();
-          }
-        }
-      });
-    });
-    
-    // Check for any P tag that contains a BR and a variable - this indicates a line break
     paragraphs.forEach((p) => {
       if (p.querySelector('br') && p.querySelector('.editor-variable')) {
         // This paragraph has both a line break and a variable - need to split and clean
@@ -162,8 +72,7 @@ export const processInvalidVariables = (editor: any) => {
         variables.forEach((v) => {
           // Force remove styling
           v.classList.remove('editor-variable');
-          v.removeAttribute('data-variable');
-          v.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
+          v.setAttribute('style', 'background-color: transparent; color: inherit; font-weight: normal;');
         });
       }
     });
@@ -177,23 +86,47 @@ export const processInvalidVariables = (editor: any) => {
 export const validateOnInput = (editor: any) => {
   if (!editor?.view?.dom) return;
   
-  // Monitor all input events to detect variable changes immediately
-  const handleInput = () => {
-    // Immediate processing
-    setTimeout(() => processInvalidVariables(editor), 0);
-  };
-  
-  editor.view.dom.addEventListener('input', handleInput, true);
-  editor.view.dom.addEventListener('keydown', handleInput, true);
-  editor.view.dom.addEventListener('keyup', handleInput, true);
-  
   // Set up a MutationObserver with high sensitivity
-  const observer = new MutationObserver(() => {
-    processInvalidVariables(editor); // Run processing immediately
+  const editorDOM = editor.view.dom;
+  const observer = new MutationObserver((mutations) => {
+    // Process immediately for any change
+    processInvalidVariables(editor);
+    
+    // Special check for mutations that might include linebreaks
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList' || mutation.type === 'characterData') {
+        // Extra check for any newly inserted nodes that might break variables
+        const nearbyBRs = editorDOM.querySelectorAll('br');
+        if (nearbyBRs.length > 0) {
+          nearbyBRs.forEach(br => {
+            // Check siblings for variables
+            let sibling = br.nextSibling;
+            while (sibling) {
+              if (sibling.nodeType === Node.ELEMENT_NODE && 
+                  (sibling as Element).classList.contains('editor-variable')) {
+                // Force remove styling from this variable
+                (sibling as Element).classList.remove('editor-variable');
+              }
+              sibling = sibling.nextSibling;
+            }
+            
+            sibling = br.previousSibling;
+            while (sibling) {
+              if (sibling.nodeType === Node.ELEMENT_NODE && 
+                  (sibling as Element).classList.contains('editor-variable')) {
+                // Force remove styling from this variable
+                (sibling as Element).classList.remove('editor-variable');
+              }
+              sibling = sibling.previousSibling;
+            }
+          });
+        }
+      }
+    }
   });
   
   // Observe all changes with maximum sensitivity
-  observer.observe(editor.view.dom, {
+  observer.observe(editorDOM, {
     childList: true,
     subtree: true,
     characterData: true,
@@ -201,12 +134,7 @@ export const validateOnInput = (editor: any) => {
     characterDataOldValue: true
   });
   
-  return () => {
-    editor.view.dom.removeEventListener('input', handleInput, true);
-    editor.view.dom.removeEventListener('keydown', handleInput, true);
-    editor.view.dom.removeEventListener('keyup', handleInput, true);
-    observer.disconnect();
-  };
+  return () => observer.disconnect();
 };
 
 // Enhanced validation for line breaks and other variable-breaking events
@@ -215,148 +143,105 @@ export const setupVariableValidationListeners = (editor: any) => {
   
   const editorDOM = editor.view.dom;
   
-  // Aggressive variable content monitoring
-  const contentChangeMonitor = (e: Event) => {
-    // Check every 10ms for a short duration to catch any changes
-    const startTime = Date.now();
-    const interval = setInterval(() => {
+  // Critical event handler for Enter key and other variable-breaking events
+  const handleVariableBreakingEvents = (e: Event) => {
+    // Need to run right away and also after a short delay to catch DOM updates
+    processInvalidVariables(editor);
+    
+    // Run again after a delay to catch any DOM updates
+    setTimeout(() => {
       processInvalidVariables(editor);
       
-      // Stop after 200ms to avoid performance issues
-      if (Date.now() - startTime > 200) {
-        clearInterval(interval);
-      }
+      // Specifically check for paragraphs with line breaks AND variables
+      const paragraphsWithBRs = editorDOM.querySelectorAll('p:has(br)');
+      paragraphsWithBRs.forEach(p => {
+        const variables = p.querySelectorAll('.editor-variable');
+        if (variables.length > 0) {
+          variables.forEach(v => {
+            // Force remove styling
+            v.classList.remove('editor-variable');
+            editor.chain().selectNode(v).unsetMark('variable').run();
+          });
+        }
+      });
     }, 10);
   };
   
-  // Special handler for key events that might modify variable content
-  const handleKeyEvents = (e: KeyboardEvent) => {
-    // If Enter key was pressed, immediately strip variable formatting from all variables
-    if (e.key === 'Enter') {
-      const variableElements = editorDOM.querySelectorAll('.editor-variable');
-      variableElements.forEach(el => {
-        // Immediately break styling on ENTER key anywhere in editor
-        el.classList.remove('editor-variable');
-        el.removeAttribute('data-variable');
-        el.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
-      });
+  // More aggressive Enter key handling
+  const handleEnterKey = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+      // Immediately process to catch variables that might be broken
+      processInvalidVariables(editor);
       
-      // Stop event propagation to prevent freezing
-      e.stopPropagation();
-      return;
-    }
-    
-    // Specifically check if we're typing inside or near a variable
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      
-      // Check if the range is inside or adjacent to a variable
-      const variableElements = editorDOM.querySelectorAll('.editor-variable');
-      variableElements.forEach(el => {
-        if (range.intersectsNode(el)) {
-          // We're typing inside or near a variable - check its content immediately
-          setTimeout(() => {
-            const text = el.textContent || '';
-            if (!isValidVariable(text)) {
-              // Immediately break styling
-              el.classList.remove('editor-variable');
-              el.removeAttribute('data-variable');
-              
-              // Apply direct style override
-              el.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
-              
-              // Forcefully remove the mark through editor commands
-              const tempRange = document.createRange();
-              tempRange.selectNode(el);
-              selection.removeAllRanges();
-              selection.addRange(tempRange);
-              editor.chain().unsetMark('variable').run();
-              selection.removeAllRanges();
-            }
-          }, 0);
-        }
-      });
-    }
-    
-    // Run normal processing as well
-    processInvalidVariables(editor);
-  };
-  
-  // Set up a character-level listener for immediate detection of changes
-  const characterDataMonitor = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.type === 'characterData') {
-        const target = mutation.target;
-        
-        // Add proper type checking for DOM nodes
-        if (target && typeof target === 'object') {
-          // First check if it's a node with nodeType property
-          if ('nodeType' in target) {
-            // Cast target to Node type after confirming it has nodeType property
-            const node = target as Node;
-            
-            if (node.nodeType === Node.TEXT_NODE) {
-              // Now we can safely access textContent
-              const textContent = node.textContent || '';
-              
-              // Check for parent element
-              if (node.parentElement) {
-                const parentElement = node.parentElement;
-                
-                // Make sure parent has the required properties for classList
-                if (parentElement &&
-                    parentElement.classList &&
-                    typeof parentElement.classList.contains === 'function' &&
-                    parentElement.classList.contains('editor-variable')) {
-                  
-                  // Now it's safe to check the variable validity
-                  if (!isValidVariable(textContent)) {
-                    // Break variable styling immediately
-                    parentElement.classList.remove('editor-variable');
-                    parentElement.removeAttribute('data-variable');
-                    parentElement.setAttribute('style', 
-                      'background-color: transparent !important; ' + 
-                      'color: inherit !important; ' + 
-                      'font-weight: normal !important;'
-                    );
+      // Then find the cursor position and check nearby elements
+      const selection = editor.view.state.selection;
+      if (selection) {
+        const pos = selection.$from.pos;
+        // Use the editor's view to find DOM position
+        const domPos = editor.view.domAtPos(pos);
+        if (domPos && domPos.node) {
+          // Check if we're inside or near a variable
+          let current = domPos.node;
+          let parent = current.parentNode;
+          
+          // Find any variable marks in the vicinity
+          while (parent && parent !== editorDOM) {
+            if (parent.nodeType === Node.ELEMENT_NODE) {
+              const variables = parent.querySelectorAll('.editor-variable');
+              if (variables.length > 0) {
+                // Force clean these variables
+                variables.forEach(v => {
+                  v.classList.remove('editor-variable');
+                  // Use TipTap to properly unset the mark
+                  try {
+                    const range = document.createRange();
+                    range.selectNode(v);
+                    const selection = window.getSelection();
+                    if (selection) {
+                      selection.removeAllRanges();
+                      selection.addRange(range);
+                      editor.chain().unsetMark('variable').run();
+                      selection.removeAllRanges();
+                    }
+                  } catch (err) {
+                    console.error('Error cleaning variable on Enter:', err);
                   }
-                }
+                });
               }
             }
+            parent = parent.parentNode;
           }
         }
       }
+      
+      // Set a series of delayed checks to catch variables after DOM updates
+      for (let i = 1; i <= 5; i++) {
+        setTimeout(() => processInvalidVariables(editor), i * 50);
+      }
     }
-    
-    // Also run standard processing
-    processInvalidVariables(editor);
-  });
+  };
   
-  characterDataMonitor.observe(editorDOM, {
-    characterData: true,
-    subtree: true,
-    characterDataOldValue: true
-  });
+  // Add all relevant event listeners
+  editorDOM.addEventListener('keydown', handleEnterKey, true);
+  editorDOM.addEventListener('paste', handleVariableBreakingEvents, true);
+  editorDOM.addEventListener('input', handleVariableBreakingEvents, true);
+  editorDOM.addEventListener('compositionend', handleVariableBreakingEvents, true);
+  editorDOM.addEventListener('mouseup', handleVariableBreakingEvents, true);
   
-  // Add all event listeners
-  editorDOM.addEventListener('keydown', handleKeyEvents, true);
-  editorDOM.addEventListener('keyup', handleKeyEvents, true);
-  editorDOM.addEventListener('input', contentChangeMonitor, true);
-  editorDOM.addEventListener('paste', contentChangeMonitor, true);
-  editorDOM.addEventListener('cut', contentChangeMonitor, true);
-  editorDOM.addEventListener('compositionend', contentChangeMonitor, true);
-  editorDOM.addEventListener('compositionupdate', contentChangeMonitor, true);
+  // Also handle input events at the document level to catch bubbled events
+  document.addEventListener('selectionchange', () => {
+    setTimeout(() => processInvalidVariables(editor), 0);
+  });
   
   return () => {
-    editorDOM.removeEventListener('keydown', handleKeyEvents, true);
-    editorDOM.removeEventListener('keyup', handleKeyEvents, true);
-    editorDOM.removeEventListener('input', contentChangeMonitor, true);
-    editorDOM.removeEventListener('paste', contentChangeMonitor, true);
-    editorDOM.removeEventListener('cut', contentChangeMonitor, true);
-    editorDOM.removeEventListener('compositionend', contentChangeMonitor, true);
-    editorDOM.removeEventListener('compositionupdate', contentChangeMonitor, true);
-    characterDataMonitor.disconnect();
+    editorDOM.removeEventListener('keydown', handleEnterKey, true);
+    editorDOM.removeEventListener('paste', handleVariableBreakingEvents, true);
+    editorDOM.removeEventListener('input', handleVariableBreakingEvents, true);
+    editorDOM.removeEventListener('compositionend', handleVariableBreakingEvents, true);
+    editorDOM.removeEventListener('mouseup', handleVariableBreakingEvents, true);
+    document.removeEventListener('selectionchange', () => {
+      setTimeout(() => processInvalidVariables(editor), 0);
+    });
   };
 };
 
@@ -366,23 +251,37 @@ export const cleanVariablesOnEnter = (editor: any) => {
   
   const handleEnter = (event: KeyboardEvent) => {
     if (event.key === 'Enter') {
-      // Force clean all variables on Enter
-      const variables = editor.view.dom.querySelectorAll('.editor-variable');
-      
-      for (const variable of variables) {
-        // Remove styling immediately
-        variable.classList.remove('editor-variable');
-        variable.removeAttribute('data-variable');
-        variable.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
+      // First check if cursor is inside or near a variable
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        
+        // Check if the range intersects with any variable
+        const variables = editor.view.dom.querySelectorAll('.editor-variable');
+        
+        for (const variable of variables) {
+          if (range.intersectsNode(variable)) {
+            // Force remove the variable styling
+            variable.classList.remove('editor-variable');
+            setTimeout(() => {
+              editor.chain().focus().unsetMark('variable').run();
+            }, 0);
+          }
+        }
       }
       
-      // Stop event propagation to prevent freezing
-      event.stopImmediatePropagation();
+      // Run multiple cleaning passes to ensure variables are properly removed
+      setTimeout(() => {
+        processInvalidVariables(editor);
+      }, 0);
       
-      // Also run multiple cleaning passes
-      setTimeout(() => processInvalidVariables(editor), 0);
-      setTimeout(() => processInvalidVariables(editor), 50);
-      setTimeout(() => processInvalidVariables(editor), 100);
+      setTimeout(() => {
+        processInvalidVariables(editor);
+      }, 50);
+      
+      setTimeout(() => {
+        processInvalidVariables(editor);
+      }, 100);
     }
   };
   
@@ -391,49 +290,5 @@ export const cleanVariablesOnEnter = (editor: any) => {
   
   return () => {
     editor.view.dom.removeEventListener('keydown', handleEnter, true);
-  };
-};
-
-// Function to watch for character-by-character changes inside variables
-export const watchVariableContent = (editor: any) => {
-  if (!editor?.view?.dom) return;
-  
-  // Set up a real-time character monitoring system
-  const checkVariableContent = () => {
-    const variableElements = editor.view.dom.querySelectorAll('.editor-variable');
-    variableElements.forEach(el => {
-      const text = el.textContent || '';
-      if (!isValidVariable(text)) {
-        // Break styling immediately
-        el.classList.remove('editor-variable');
-        el.removeAttribute('data-variable');
-        
-        // Apply direct style removal
-        el.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
-        
-        // Also try to remove through editor API if possible
-        try {
-          const range = document.createRange();
-          range.selectNode(el);
-          
-          const selection = window.getSelection();
-          if (selection) {
-            selection.removeAllRanges();
-            selection.addRange(range);
-            editor.chain().unsetMark('variable').run();
-            selection.removeAllRanges();
-          }
-        } catch (err) {
-          // Ignore - we already removed styling directly
-        }
-      }
-    });
-  };
-  
-  // Run checks frequently
-  const interval = setInterval(checkVariableContent, 100);
-  
-  return () => {
-    clearInterval(interval);
   };
 };
