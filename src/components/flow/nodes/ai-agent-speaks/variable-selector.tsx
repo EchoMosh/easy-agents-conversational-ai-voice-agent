@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -57,58 +58,62 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
       }
     }, []);
 
-    // When isFullScreen is true, use Dialog for a full-screen modal
+    // When isFullScreen is true, use a more accessible and visually distinct approach
     if (isFullScreen) {
       return (
-        <Dialog open={true} onOpenChange={() => onSelectVariable('')}>
-          <DialogContent className="max-w-md mx-auto border-none bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-            <Command className="rounded-lg">
-              <div className="flex items-center border-b px-3">
-                <CommandInput 
-                  placeholder="Search variable..." 
-                  value={searchTerm} 
-                  onValueChange={setSearchTerm}
-                  className="h-9 w-full"
-                />
-              </div>
-              
-              <CommandList className="max-h-[300px] overflow-y-auto">
-                <CommandEmpty>No variable found.</CommandEmpty>
+        <div className="fixed inset-0 z-[999] flex items-center justify-center pointer-events-none">
+          <div className="w-full max-w-md mx-auto pointer-events-auto">
+            <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-border">
+              <Command className="rounded-lg">
+                <div className="flex items-center border-b px-3">
+                  <CommandInput 
+                    placeholder="Search variable..." 
+                    value={searchTerm} 
+                    onValueChange={setSearchTerm}
+                    className="h-9 w-full"
+                  />
+                </div>
                 
-                {Object.keys(groupedVariables).length > 0 ? (
-                  Object.entries(groupedVariables).map(([category, variables]) => (
-                    <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
-                      {variables.map((variable) => (
-                        <CommandItem
-                          key={variable.id}
-                          onSelect={() => onSelectVariable(variable.value, 'default')}
-                          className="cursor-pointer flex items-center gap-2 py-2"
-                        >
-                          <span className="flex items-center justify-center h-5 w-5">
-                            <Variable className="h-4 w-4" />
-                          </span>
-                          {variable.label}
-                        </CommandItem>
-                      ))}
+                <CommandList className="max-h-[300px] overflow-y-auto">
+                  <CommandEmpty>No variable found.</CommandEmpty>
+                  
+                  {Object.keys(groupedVariables).length > 0 ? (
+                    Object.entries(groupedVariables).map(([category, variables]) => (
+                      <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
+                        {variables.map((variable) => (
+                          <CommandItem
+                            key={variable.id}
+                            onSelect={() => onSelectVariable(variable.value, 'default')}
+                            className="cursor-pointer flex items-center gap-2 py-2"
+                          >
+                            <span className="flex items-center justify-center h-5 w-5">
+                              <Variable className="h-4 w-4" />
+                            </span>
+                            {variable.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ))
+                  ) : (
+                    <CommandGroup>
+                      <CommandItem disabled>No variables found</CommandItem>
                     </CommandGroup>
-                  ))
-                ) : (
-                  <CommandGroup>
-                    <CommandItem disabled>No variables found</CommandItem>
-                  </CommandGroup>
-                )}
-              </CommandList>
-            </Command>
-          </DialogContent>
-        </Dialog>
+                  )}
+                </CommandList>
+              </Command>
+            </div>
+          </div>
+        </div>
       );
     }
 
-    // Inline variable selector (non-full-screen) - fixed to prevent turning the background black
+    // Inline variable selector (non-full-screen) - fixed positioning to prevent background darkening
     return (
-      <div className="absolute z-[100] w-[250px] bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden border border-border" 
-           ref={commandRef}
-           style={{ top: '100%', left: '0' }}>
+      <div 
+        className="absolute z-[1000] w-[250px] bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden border border-border" 
+        ref={commandRef}
+        style={{ top: '100%', left: '0' }}
+      >
         <Command className="rounded-none">
           <div className="flex items-center border-b px-3">
             <CommandInput 

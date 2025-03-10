@@ -65,6 +65,22 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     };
   }, [editor]);
 
+  // Close variable selector when clicking outside
+  useEffect(() => {
+    if (!showVariableSelector) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      if (editorContainerRef.current && !editorContainerRef.current.contains(e.target as Node)) {
+        setShowVariableSelector(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showVariableSelector]);
+
   const handleInsertVariable = useCallback((variable: string) => {
     insertVariable(variable, triggerChar);
     setShowVariableSelector(false);
@@ -89,7 +105,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       
       {showVariableSelector && (
         <div 
-          className="relative z-[9999]"
+          className="absolute z-[9999]"
           style={{
             position: 'absolute',
             top: `${selectorPosition.top + 20}px`,

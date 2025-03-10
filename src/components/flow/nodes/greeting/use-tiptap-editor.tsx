@@ -30,14 +30,27 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
           if (event.key === '#') {
             setShowTip(false);
             
-            // Get cursor position for variable selector
-            const { view: editorView } = editor!;
-            const { top, left } = editorView.coordsAtPos(editorView.state.selection.from);
-            
+            // Get precise cursor position for variable selector
             if (onVariableTrigger) {
               setTimeout(() => {
-                onVariableTrigger('#', { top, left });
-              }, 50);
+                if (!editor) return;
+                const { view: editorView } = editor;
+                const { from } = editorView.state.selection;
+                const pos = editorView.coordsAtPos(from);
+                
+                // Get coordinates relative to the editor container
+                const editorElement = editorView.dom.closest('.ProseMirror');
+                const rect = editorElement?.getBoundingClientRect();
+                
+                if (rect) {
+                  const relativeTop = pos.top - rect.top;
+                  const relativeLeft = pos.left - rect.left;
+                  onVariableTrigger('#', { top: relativeTop, left: relativeLeft });
+                } else {
+                  // Fallback to absolute position if we can't get relative
+                  onVariableTrigger('#', { top: pos.top, left: pos.left });
+                }
+              }, 10);
             }
             return false;
           }
