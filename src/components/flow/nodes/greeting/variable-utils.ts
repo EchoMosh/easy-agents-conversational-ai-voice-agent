@@ -288,15 +288,18 @@ export const setupVariableValidationListeners = (editor: any) => {
     for (const mutation of mutations) {
       if (mutation.type === 'characterData') {
         const node = mutation.target;
-        if (node.parentElement && node.parentElement.classList.contains('editor-variable')) {
-          // Direct text change inside a variable - check validity immediately
-          const text = node.textContent || '';
-          if (!isValidVariable(text)) {
-            // Break variable styling immediately
-            const parent = node.parentElement;
-            parent.classList.remove('editor-variable');
-            parent.removeAttribute('data-variable');
-            parent.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
+        if (node && node.nodeType === Node.TEXT_NODE) {
+          // Get the parent node which should be the span
+          const parentElement = node.parentElement;
+          if (parentElement && parentElement.classList.contains('editor-variable')) {
+            // Direct text change inside a variable - check validity immediately
+            const text = node.textContent || '';
+            if (!isValidVariable(text)) {
+              // Break variable styling immediately
+              parentElement.classList.remove('editor-variable');
+              parentElement.removeAttribute('data-variable');
+              parentElement.setAttribute('style', 'background-color: transparent !important; color: inherit !important; font-weight: normal !important;');
+            }
           }
         }
       }
