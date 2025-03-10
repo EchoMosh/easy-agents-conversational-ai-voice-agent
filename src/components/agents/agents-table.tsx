@@ -9,10 +9,10 @@ import {
   CheckCircle, 
   XCircle, 
   Share2, 
-  Fingerprint, 
   Search,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MoreHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,6 +32,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 interface AgentsTableProps {
   agents: Agent[];
@@ -133,59 +140,60 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
           <p className="text-muted-foreground">No agents match your search criteria</p>
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-xl border border-border/40 shadow-sm bg-card/50 overflow-hidden backdrop-blur-sm">
           <ScrollArea className="h-[calc(100vh-220px)]">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-[300px]">Agent</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead className="w-[300px] font-medium">Agent</TableHead>
+                  <TableHead className="font-medium">Status</TableHead>
+                  <TableHead className="font-medium">ID</TableHead>
+                  <TableHead className="font-medium">Created</TableHead>
+                  <TableHead className="text-right font-medium">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAgents.map((agent) => (
                   <React.Fragment key={agent.id}>
-                    <TableRow className="hover:bg-muted/30">
+                    <TableRow className="border-b border-border/30 hover:bg-muted/20 transition-colors">
                       <TableCell>
                         <div className="flex items-center space-x-3">
-                          <Avatar className="h-9 w-9 border border-primary/10">
+                          <Avatar className="h-10 w-10 rounded-md border border-primary/10 bg-secondary/20">
                             <AvatarImage 
                               src={getAvatarUrl(agent.id, agent.role)} 
                               alt={agent.name} 
                             />
-                            <AvatarFallback>
+                            <AvatarFallback className="rounded-md bg-gradient-to-br from-primary/10 to-primary/5">
                               {agent.name ? agent.name.substring(0, 2).toUpperCase() : "AG"}
                             </AvatarFallback>
                           </Avatar>
                           <div className="space-y-0.5">
-                            <p className="font-medium">{agent.name}</p>
-                            <p className="text-sm text-muted-foreground capitalize">{agent.role.replace('_', ' ')}</p>
+                            <p className="font-medium text-foreground">{agent.name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{agent.role.replace('_', ' ')}</p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span 
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        <Badge 
+                          variant={agent.is_active ? "default" : "outline"}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs ${
                             agent.is_active 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' 
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300'
+                              ? 'bg-green-100/50 text-green-800 hover:bg-green-100/50 dark:bg-green-900/30 dark:text-green-200 dark:hover:bg-green-900/30' 
+                              : 'bg-secondary/30 text-muted-foreground'
                           }`}
                         >
                           {agent.is_active ? (
                             <>
-                              <CheckCircle className="w-3 h-3 mr-1" />
+                              <CheckCircle className="w-3 h-3" />
                               Active
                             </>
                           ) : (
                             <>
-                              <XCircle className="w-3 h-3 mr-1" />
+                              <XCircle className="w-3 h-3" />
                               Inactive
                             </>
                           )}
-                        </span>
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <span className="text-xs font-mono text-muted-foreground">
@@ -193,12 +201,12 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-xs text-muted-foreground">
                           {agent.created_at ? new Date(agent.created_at).toLocaleDateString() : "Recently"}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
+                        <div className="flex items-center justify-end space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -211,37 +219,46 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
                               <ChevronDown className="w-3 h-3" />
                             }
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditFlow(agent.id)}
-                            className="h-8 text-xs"
-                          >
-                            <Pencil className="w-3 h-3 mr-1" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(agent.id)}
-                            className="h-8 text-xs text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
-                          >
-                            <Trash className="w-3 h-3 mr-1" />
-                            Delete
-                          </Button>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[160px]">
+                              <DropdownMenuItem onClick={() => handleEditFlow(agent.id)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                <span>Edit</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDelete(agent.id)}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/10"
+                              >
+                                <Trash className="mr-2 h-4 w-4" />
+                                <span>Delete</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
-                    <TableRow className={expandedAgents[agent.id] ? "" : "hidden"}>
-                      <TableCell colSpan={5} className="p-0 border-t-0">
+                    <TableRow className={expandedAgents[agent.id] ? "border-t-0" : "hidden"}>
+                      <TableCell colSpan={5} className="p-0 border-t-0 bg-secondary/10">
                         <Collapsible open={expandedAgents[agent.id]} className="w-full">
-                          <CollapsibleContent className="px-4 pb-4">
-                            <div className="pt-2 w-full">
+                          <CollapsibleContent className="px-4 py-3">
+                            <div className="pt-1 w-full">
                               <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground">
                                 <Share2 className="h-3 w-3" />
                                 <span>Flow Preview</span>
                               </div>
-                              <AgentFlowPreview flowData={agent.flow} maxHeight={180} />
+                              <div className="rounded-lg overflow-hidden border border-border/50 bg-card/80">
+                                <AgentFlowPreview flowData={agent.flow} maxHeight={180} />
+                              </div>
                             </div>
                           </CollapsibleContent>
                         </Collapsible>
