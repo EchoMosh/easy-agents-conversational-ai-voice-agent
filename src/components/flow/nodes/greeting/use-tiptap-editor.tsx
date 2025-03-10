@@ -32,18 +32,15 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
             
             // Get precise cursor position for variable selector
             if (onVariableTrigger) {
-              setTimeout(() => {
-                if (!editor) return;
-                const { view: editorView } = editor;
-                const { from } = editorView.state.selection;
-                const pos = editorView.coordsAtPos(from);
-                
-                // Get coordinates relative to the viewport for fixed positioning
-                onVariableTrigger('#', { 
-                  top: pos.top, 
-                  left: pos.left 
-                });
-              }, 10);
+              const { view: editorView } = editor!;
+              const { from } = editorView.state.selection;
+              const pos = editorView.coordsAtPos(from);
+              
+              // Get coordinates relative to the viewport for fixed positioning
+              onVariableTrigger('#', { 
+                top: pos.top, 
+                left: pos.left 
+              });
             }
           }
           return false;

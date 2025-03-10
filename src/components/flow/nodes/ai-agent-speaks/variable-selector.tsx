@@ -57,10 +57,10 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
       }
     }, []);
 
-    // Inline variable selector - prevent the black overlay
+    // Inline variable selector - no overlay and transparent background
     return (
       <div 
-        className="absolute z-[9999] w-[250px] bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden border border-border" 
+        className="absolute z-[9999] w-[250px] bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden border border-border"
         ref={commandRef}
         style={{ maxWidth: '250px' }}
       >
