@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -62,102 +61,96 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
     if (isFullScreen) {
       return (
         <Dialog open={true} onOpenChange={() => onSelectVariable('')}>
-          <DialogOverlay className="bg-black/80" />
-          <DialogContent className="max-w-md mx-auto border-none bg-transparent shadow-none">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-              <Command className="rounded-lg">
-                <div className="flex items-center border-b px-3">
-                  <CommandInput 
-                    placeholder="Search variable..." 
-                    value={searchTerm} 
-                    onValueChange={setSearchTerm}
-                    className="h-9 w-full"
-                  />
-                </div>
+          <DialogContent className="max-w-md mx-auto border-none bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+            <Command className="rounded-lg">
+              <div className="flex items-center border-b px-3">
+                <CommandInput 
+                  placeholder="Search variable..." 
+                  value={searchTerm} 
+                  onValueChange={setSearchTerm}
+                  className="h-9 w-full"
+                />
+              </div>
+              
+              <CommandList className="max-h-[300px] overflow-y-auto">
+                <CommandEmpty>No variable found.</CommandEmpty>
                 
-                <CommandList className="max-h-[300px] overflow-y-auto">
-                  <CommandEmpty>No variable found.</CommandEmpty>
-                  
-                  {Object.keys(groupedVariables).length > 0 ? (
-                    Object.entries(groupedVariables).map(([category, variables]) => (
-                      <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
-                        {variables.map((variable) => (
-                          <CommandItem
-                            key={variable.id}
-                            onSelect={() => onSelectVariable(variable.value, 'default')}
-                            className="cursor-pointer flex items-center gap-2 py-2"
-                          >
-                            <span className="flex items-center justify-center h-5 w-5">
-                              <Variable className="h-4 w-4" />
-                            </span>
-                            {variable.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    ))
-                  ) : (
-                    <CommandGroup>
-                      <CommandItem disabled>No variables found</CommandItem>
+                {Object.keys(groupedVariables).length > 0 ? (
+                  Object.entries(groupedVariables).map(([category, variables]) => (
+                    <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
+                      {variables.map((variable) => (
+                        <CommandItem
+                          key={variable.id}
+                          onSelect={() => onSelectVariable(variable.value, 'default')}
+                          className="cursor-pointer flex items-center gap-2 py-2"
+                        >
+                          <span className="flex items-center justify-center h-5 w-5">
+                            <Variable className="h-4 w-4" />
+                          </span>
+                          {variable.label}
+                        </CommandItem>
+                      ))}
                     </CommandGroup>
-                  )}
-                </CommandList>
-              </Command>
-            </div>
+                  ))
+                ) : (
+                  <CommandGroup>
+                    <CommandItem disabled>No variables found</CommandItem>
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
           </DialogContent>
         </Dialog>
       );
     }
 
-    // Original node-specific dropdown (non-full-screen)
+    // Inline variable selector (non-full-screen) - fixed to prevent turning the background black
     return (
-      <>
-        {/* Semi-transparent backdrop */}
-        <div className="fixed inset-0 bg-black/30 z-40" onClick={() => onSelectVariable('')} />
-        
-        {/* Variable selector dropdown */}
-        <div className="absolute z-50 w-[250px] bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden border border-border" ref={commandRef}>
-          <Command className="rounded-none">
-            <div className="flex items-center border-b px-3">
-              <CommandInput 
-                placeholder="Search variable..." 
-                value={searchTerm} 
-                onValueChange={setSearchTerm}
-                className="h-9 w-full"
-              />
-            </div>
+      <div className="absolute z-[100] w-[250px] bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden border border-border" 
+           ref={commandRef}
+           style={{ top: '100%', left: '0' }}>
+        <Command className="rounded-none">
+          <div className="flex items-center border-b px-3">
+            <CommandInput 
+              placeholder="Search variable..." 
+              value={searchTerm} 
+              onValueChange={setSearchTerm}
+              className="h-9 w-full"
+            />
+          </div>
+          
+          <CommandList>
+            <CommandEmpty>No variable found.</CommandEmpty>
             
-            <CommandList>
-              <CommandEmpty>No variable found.</CommandEmpty>
-              
-              {Object.keys(groupedVariables).length > 0 ? (
-                Object.entries(groupedVariables).map(([category, variables]) => (
-                  <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
-                    {variables.map((variable) => (
-                      <CommandItem
-                        key={variable.id}
-                        onSelect={() => onSelectVariable(variable.value, 'default')}
-                        className="cursor-pointer flex items-center gap-2 py-2"
-                      >
-                        <span className="flex items-center justify-center h-5 w-5">
-                          <Variable className="h-4 w-4" />
-                        </span>
-                        {variable.label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                ))
-              ) : (
-                <CommandGroup>
-                  <CommandItem disabled>No variables found</CommandItem>
+            {Object.keys(groupedVariables).length > 0 ? (
+              Object.entries(groupedVariables).map(([category, variables]) => (
+                <CommandGroup key={category} heading={category.charAt(0).toUpperCase() + category.slice(1)}>
+                  {variables.map((variable) => (
+                    <CommandItem
+                      key={variable.id}
+                      onSelect={() => onSelectVariable(variable.value, 'default')}
+                      className="cursor-pointer flex items-center gap-2 py-2"
+                    >
+                      <span className="flex items-center justify-center h-5 w-5">
+                        <Variable className="h-4 w-4" />
+                      </span>
+                      {variable.label}
+                    </CommandItem>
+                  ))}
                 </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
-        </div>
-      </>
+              ))
+            ) : (
+              <CommandGroup>
+                <CommandItem disabled>No variables found</CommandItem>
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </div>
     );
   }
 
+  
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

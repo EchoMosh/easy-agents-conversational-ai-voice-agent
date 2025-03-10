@@ -15,10 +15,14 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const [triggerChar, setTriggerChar] = useState<'#' | null>(null);
+  const [selectorPosition, setSelectorPosition] = useState({ top: 0, left: 0 });
 
-  const handleVariableTrigger = useCallback((char: '#') => {
+  const handleVariableTrigger = useCallback((char: '#', position?: { top: number, left: number }) => {
     setTriggerChar(char);
     setShowVariableSelector(true);
+    if (position) {
+      setSelectorPosition(position);
+    }
   }, []);
 
   const { editor, showTip, insertVariable } = useTiptapEditor({
@@ -78,14 +82,26 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     >
       <EditorTip show={showTip} />
       
-      <EditorContent editor={editor} className="prose dark:prose-invert prose-sm max-w-none cursor-text nodrag" />
+      <EditorContent 
+        editor={editor} 
+        className="prose dark:prose-invert prose-sm max-w-none cursor-text nodrag"
+      />
       
       {showVariableSelector && (
-        <VariableSelector 
-          onSelectVariable={handleInsertVariable} 
-          triggerChar="#" 
-          isFullScreen={true}
-        />
+        <div 
+          className="relative z-[9999]"
+          style={{
+            position: 'absolute',
+            top: `${selectorPosition.top + 20}px`,
+            left: `${selectorPosition.left}px`,
+          }}
+        >
+          <VariableSelector 
+            onSelectVariable={handleInsertVariable} 
+            triggerChar="#" 
+            isFullScreen={false}
+          />
+        </div>
       )}
       
       <style>{editorStyles}</style>
