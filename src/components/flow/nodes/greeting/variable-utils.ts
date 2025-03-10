@@ -1,3 +1,4 @@
+
 // Valid variable format: {variableName} - alphanumeric and underscore only
 // Only shorter variable names between 2-20 characters are allowed
 export const VALID_VARIABLE_REGEX = /^\{[a-zA-Z][a-zA-Z0-9_]{1,19}\}$/;
@@ -291,19 +292,22 @@ export const setupVariableValidationListeners = (editor: any) => {
         // Add proper type checking for DOM nodes
         if (target && typeof target === 'object') {
           // First check if it's a node with nodeType property
-          if ('nodeType' in target && target.nodeType === Node.TEXT_NODE) {
-            // Check if it has textContent property
-            if ('textContent' in target) {
-              const textContent = target.textContent || '';
+          if ('nodeType' in target) {
+            // Cast target to Node type after confirming it has nodeType property
+            const node = target as Node;
+            
+            if (node.nodeType === Node.TEXT_NODE) {
+              // Now we can safely access textContent
+              const textContent = node.textContent || '';
               
-              // Now check for parent element
-              if ('parentElement' in target && target.parentElement) {
-                const parentElement = target.parentElement;
+              // Check for parent element
+              if (node.parentElement) {
+                const parentElement = node.parentElement;
                 
-                // Make sure parent has the required properties
-                if (parentElement && 
-                    'classList' in parentElement && 
-                    typeof parentElement.classList?.contains === 'function' &&
+                // Make sure parent has the required properties for classList
+                if (parentElement &&
+                    parentElement.classList &&
+                    typeof parentElement.classList.contains === 'function' &&
                     parentElement.classList.contains('editor-variable')) {
                   
                   // Now it's safe to check the variable validity
@@ -324,6 +328,9 @@ export const setupVariableValidationListeners = (editor: any) => {
         }
       }
     }
+    
+    // Also run standard processing
+    processInvalidVariables(editor);
   });
   
   characterDataMonitor.observe(editorDOM, {
