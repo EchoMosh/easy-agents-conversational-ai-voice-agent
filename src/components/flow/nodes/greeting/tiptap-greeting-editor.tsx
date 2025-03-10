@@ -5,6 +5,7 @@ import { VariableSelector } from '../ai-agent-speaks/variable-selector';
 import { EditorTip } from './editor-tip';
 import { useTiptapEditor } from './use-tiptap-editor';
 import { editorStyles } from './editor-styles';
+import { Portal } from '@radix-ui/react-portal';
 
 interface TipTapGreetingEditorProps {
   value: string;
@@ -21,7 +22,16 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     setTriggerChar(char);
     setShowVariableSelector(true);
     if (position) {
-      setSelectorPosition(position);
+      // Get absolute position instead of relative
+      const rect = editorContainerRef.current?.getBoundingClientRect();
+      if (rect) {
+        // Calculate position relative to viewport
+        const absoluteTop = rect.top + position.top + window.scrollY;
+        const absoluteLeft = rect.left + position.left + window.scrollX;
+        setSelectorPosition({ top: absoluteTop, left: absoluteLeft });
+      } else {
+        setSelectorPosition(position);
+      }
     }
   }, []);
 
@@ -70,7 +80,16 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     if (!showVariableSelector) return;
     
     const handleClickOutside = (e: MouseEvent) => {
-      if (editorContainerRef.current && !editorContainerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const selectorElement = document.querySelector('.variable-selector-popup');
+      
+      // Close only if click is outside both the editor and selector
+      if (
+        editorContainerRef.current && 
+        !editorContainerRef.current.contains(target) &&
+        selectorElement && 
+        !selectorElement.contains(target)
+      ) {
         setShowVariableSelector(false);
       }
     };
@@ -104,20 +123,22 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       />
       
       {showVariableSelector && (
-        <div 
-          className="absolute z-[9999]"
-          style={{
-            position: 'absolute',
-            top: `${selectorPosition.top + 20}px`,
-            left: `${selectorPosition.left}px`,
-          }}
-        >
-          <VariableSelector 
-            onSelectVariable={handleInsertVariable} 
-            triggerChar="#" 
-            isFullScreen={false}
-          />
-        </div>
+        <Portal>
+          <div 
+            className="variable-selector-popup absolute z-[9999]"
+            style={{
+              position: 'fixed',
+              top: `${selectorPosition.top + 20}px`,
+              left: `${selectorPosition.left}px`,
+            }}
+          >
+            <VariableSelector 
+              onSelectVariable={handleInsertVariable} 
+              triggerChar="#" 
+              isFullScreen={false}
+            />
+          </div>
+        </Portal>
       )}
       
       <style>{editorStyles}</style>

@@ -38,18 +38,11 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
                 const { from } = editorView.state.selection;
                 const pos = editorView.coordsAtPos(from);
                 
-                // Get coordinates relative to the editor container
-                const editorElement = editorView.dom.closest('.ProseMirror');
-                const rect = editorElement?.getBoundingClientRect();
-                
-                if (rect) {
-                  const relativeTop = pos.top - rect.top;
-                  const relativeLeft = pos.left - rect.left;
-                  onVariableTrigger('#', { top: relativeTop, left: relativeLeft });
-                } else {
-                  // Fallback to absolute position if we can't get relative
-                  onVariableTrigger('#', { top: pos.top, left: pos.left });
-                }
+                // Get coordinates relative to the viewport for fixed positioning
+                onVariableTrigger('#', { 
+                  top: pos.top, 
+                  left: pos.left 
+                });
               }, 10);
             }
             return false;
