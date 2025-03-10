@@ -266,7 +266,7 @@ export function GreetingNode({
           <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-sky-500">Speak</span>
         </div>
 
-        <div className="space-y-2 mb-6">
+        <div className="space-y-2 mb-6 w-full">
           <Label className="text-xs font-medium text-blue-600/75 dark:text-blue-300/75">
             Message
           </Label>

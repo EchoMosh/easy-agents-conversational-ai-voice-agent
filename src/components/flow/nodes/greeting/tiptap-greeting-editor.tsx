@@ -109,21 +109,21 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     <>
       <div 
         ref={editorContainerRef}
-        className="border rounded-md p-2 bg-white dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative nodrag"
+        className="border rounded-md p-2 bg-white dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative nodrag w-full"
         onClick={handleClick}
       >
         <EditorTip show={showTip} />
         
         <EditorContent 
           editor={editor} 
-          className="prose dark:prose-invert prose-sm max-w-none cursor-text nodrag"
+          className="prose dark:prose-invert prose-sm max-w-none cursor-text nodrag w-full"
         />
       </div>
       
       {showVariableSelector && (
         <Portal>
           <div 
-            className="variable-selector-popup fixed"
+            className="variable-selector-popup fixed z-[9999]"
             style={{
               position: 'fixed',
               top: `${selectorPosition.top + 20}px`,

@@ -14,16 +14,8 @@ export function GreetingInput({ value, onChange }: GreetingInputProps) {
     onChange(newValue);
   };
 
-  const containerStyle = {
-    maxWidth: '250px',
-    width: '250px',
-    minWidth: '0',
-    overflow: 'hidden',
-    flex: '1 1 auto'
-  };
-
   return (
-    <div className="relative nodrag" style={containerStyle}>
+    <div className="relative nodrag w-full">
       <TipTapGreetingEditor
         value={sanitizedValue}
         onChange={handleChange}
