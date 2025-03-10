@@ -28,6 +28,7 @@ export const editorStyles = `
   position: relative;
   z-index: 1;
   pointer-events: auto;
+  transition: all 0.2s ease;
 }
 
 /* Fix for dark mode */
@@ -42,13 +43,17 @@ export const editorStyles = `
   word-break: break-word;
 }
 
-/* Explicit prevention of variable marks across nodes */
-.ProseMirror p + p .editor-variable {
-  background-color: transparent;
-  color: inherit;
-  font-weight: normal;
-  box-shadow: none;
-  white-space: normal;
+/* Styling for variables that are being edited */
+.ProseMirror .editor-variable:has(br),
+.ProseMirror .editor-variable:not(:matches([data-variable="{*}"])) {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-weight: normal !important;
+  box-shadow: none !important;
+  white-space: normal !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  transition: all 0.2s ease;
 }
 
 /* Handle return key (enter) inside variables */

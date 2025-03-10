@@ -50,6 +50,30 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       onChange(html);
+      
+      // Reset any invalid variable marks
+      const state = editor.state;
+      const { doc } = state;
+      let hasInvalidVariables = false;
+      
+      // Check for broken variables
+      doc.descendants((node, pos) => {
+        if (node.isText && node.marks.some(mark => mark.type.name === 'variable')) {
+          const text = node.text;
+          if (text && !text.match(/^\{[a-zA-Z][a-zA-Z0-9_]*\}$/)) {
+            hasInvalidVariables = true;
+          }
+        }
+        return true;
+      });
+      
+      // If invalid variables found, trigger a full update to reset formatting
+      if (hasInvalidVariables) {
+        console.log("Detected invalid variable formatting");
+        const currentHtml = editor.getHTML();
+        editor.commands.clearContent();
+        editor.commands.setContent(currentHtml);
+      }
     },
   });
   
