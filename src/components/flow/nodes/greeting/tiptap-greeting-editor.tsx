@@ -23,11 +23,8 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     setShowVariableSelector(true);
     
     if (position) {
-      // Calculate position relative to viewport for fixed positioning
-      setSelectorPosition({
-        top: position.top, 
-        left: position.left
-      });
+      // We no longer need to calculate position for the modal-style popup
+      setSelectorPosition(position);
     }
   }, []);
 
@@ -71,30 +68,25 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     };
   }, [editor]);
 
-  // Close variable selector when clicking outside
+  // Handle closing variable selector with Escape key
   useEffect(() => {
     if (!showVariableSelector) return;
     
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      const selectorElement = document.querySelector('.variable-selector-popup');
-      
-      // Close only if click is outside both the editor and selector
-      if (
-        editorContainerRef.current && 
-        !editorContainerRef.current.contains(target) &&
-        selectorElement && 
-        !selectorElement.contains(target)
-      ) {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
         setShowVariableSelector(false);
+        // Focus back on editor when closing with Escape
+        if (editor) {
+          editor.commands.focus();
+        }
       }
     };
     
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showVariableSelector]);
+  }, [showVariableSelector, editor]);
 
   const handleInsertVariable = useCallback((variable: string) => {
     insertVariable(variable, triggerChar);
@@ -122,21 +114,11 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       
       {showVariableSelector && (
         <Portal>
-          <div 
-            className="variable-selector-popup fixed z-[9999]"
-            style={{
-              position: 'fixed',
-              top: `${selectorPosition.top + 20}px`,
-              left: `${selectorPosition.left}px`,
-              zIndex: 9999,
-            }}
-          >
-            <VariableSelector 
-              onSelectVariable={handleInsertVariable} 
-              triggerChar={triggerChar || "#"} 
-              isFullScreen={false}
-            />
-          </div>
+          <VariableSelector 
+            onSelectVariable={handleInsertVariable} 
+            triggerChar={triggerChar || "#"} 
+            isFullScreen={false}
+          />
         </Portal>
       )}
       
