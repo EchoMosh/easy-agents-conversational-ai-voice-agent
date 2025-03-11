@@ -18,6 +18,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const [triggerChar, setTriggerChar] = useState<'@' | '#' | null>(null);
   const [selectorPosition, setSelectorPosition] = useState({ top: 0, left: 0 });
+  const [isEmpty, setIsEmpty] = useState(value === '<p></p>' || !value);
 
   const handleVariableTrigger = useCallback((char: '@' | '#', position?: { top: number, left: number }) => {
     setTriggerChar(char);
@@ -30,7 +31,13 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
 
   const { editor, showTip, insertVariable } = useTiptapEditor({
     value,
-    onChange,
+    onChange: (newValue) => {
+      onChange(newValue);
+      
+      // Check if editor is empty to control placeholder visibility
+      const isContentEmpty = newValue === '<p></p>' || !newValue;
+      setIsEmpty(isContentEmpty);
+    },
     onVariableTrigger: handleVariableTrigger
   });
 
@@ -99,17 +106,24 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       >
         <EditorTip show={showTip} />
         
-        {/* Variable triggers preview label */}
-        <div className="absolute top-2 right-2 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/70 px-2 py-1 rounded-md border border-gray-100 dark:border-gray-700">
-          <span>Insert variable:</span>
-          <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-0.5">
-              <Hash className="h-3.5 w-3.5" />
-              <span>or</span>
-              <AtSign className="h-3.5 w-3.5" />
+        {/* Placeholder that disappears when content is entered */}
+        {isEmpty && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-80">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 py-3 px-4 max-w-xs text-center">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                Start typing your message here
+              </p>
+              <div className="flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-1">
+                  <Hash className="h-3.5 w-3.5" />
+                  <span>or</span>
+                  <AtSign className="h-3.5 w-3.5" />
+                </div>
+                <span>to insert variables</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
         
         <EditorContent 
           editor={editor} 

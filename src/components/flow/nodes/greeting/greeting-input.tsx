@@ -7,6 +7,7 @@ interface GreetingInputProps {
 }
 
 export function GreetingInput({ value, onChange }: GreetingInputProps) {
+  // Make sure we start with a clean slate for new nodes
   const sanitizedValue = value && value !== '<p>Enter your message here...</p>' ? value : '<p></p>';
   
   const handleChange = (newValue: string) => {
