@@ -102,7 +102,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   }, [insertVariable, triggerChar]);
 
   if (!editor) {
-    return <div className="p-2 text-sm text-gray-500">Loading editor...</div>;
+    return <div className="p-2 text-sm text-gray-500 w-full">Loading editor...</div>;
   }
 
   return (

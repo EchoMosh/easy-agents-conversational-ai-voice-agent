@@ -44,16 +44,14 @@ export const editorStyles = `
 }
 
 /* Styling for variables that are being edited */
-.ProseMirror .editor-variable:has(br),
-.ProseMirror .editor-variable:not(:matches([data-variable="{*}"])) {
-  background-color: transparent !important;
-  color: inherit !important;
-  font-weight: normal !important;
-  box-shadow: none !important;
-  white-space: normal !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  transition: all 0.2s ease;
+.ProseMirror .editor-variable[data-variable="editing"] {
+  background-color: rgba(99, 102, 241, 0.05);
+  color: inherit;
+  box-shadow: none;
+  border: 1px dashed rgba(99, 102, 241, 0.3);
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+  font-weight: normal;
 }
 
 /* Handle return key (enter) inside variables */

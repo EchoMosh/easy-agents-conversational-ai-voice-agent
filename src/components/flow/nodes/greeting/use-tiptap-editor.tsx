@@ -51,28 +51,53 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       const html = editor.getHTML();
       onChange(html);
       
-      // Reset any invalid variable marks
+      // Check for any variables that need their styling updated
       const state = editor.state;
       const { doc } = state;
-      let hasInvalidVariables = false;
+      let updatedDoc = false;
+      const tr = state.tr;
       
-      // Check for broken variables
+      // Check all variable marks to ensure proper styling
       doc.descendants((node, pos) => {
         if (node.isText && node.marks.some(mark => mark.type.name === 'variable')) {
           const text = node.text;
-          if (text && !text.match(/^\{[a-zA-Z][a-zA-Z0-9_]*\}$/)) {
-            hasInvalidVariables = true;
+          const hasValidVariable = text && text.match(/^\{[a-zA-Z][a-zA-Z0-9_]*\}$/);
+          
+          // Get the current mark to see if we need to update
+          const currentMark = node.marks.find(m => m.type.name === 'variable');
+          const currentStatus = currentMark?.attrs['data-variable'];
+          
+          if (hasValidVariable && currentStatus === 'editing') {
+            // Variable is now valid, restore proper styling
+            const varName = text?.slice(1, -1);
+            tr.addMark(
+              pos, 
+              pos + node.nodeSize, 
+              state.schema.marks.variable.create({
+                class: 'editor-variable',
+                'data-variable': varName
+              })
+            );
+            updatedDoc = true;
+          } else if (!hasValidVariable && currentStatus !== 'editing') {
+            // Variable is now invalid, change styling
+            tr.addMark(
+              pos, 
+              pos + node.nodeSize, 
+              state.schema.marks.variable.create({
+                class: 'editor-variable',
+                'data-variable': 'editing'
+              })
+            );
+            updatedDoc = true;
           }
         }
         return true;
       });
       
-      // If invalid variables found, trigger a full update to reset formatting
-      if (hasInvalidVariables) {
-        console.log("Detected invalid variable formatting");
-        const currentHtml = editor.getHTML();
-        editor.commands.clearContent();
-        editor.commands.setContent(currentHtml);
+      // Apply any mark updates
+      if (updatedDoc) {
+        editor.view.dispatch(tr);
       }
     },
   });
