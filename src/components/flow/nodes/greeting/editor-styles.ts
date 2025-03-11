@@ -1,3 +1,4 @@
+
 export const editorStyles = `
 .ProseMirror {
   outline: none;
@@ -68,5 +69,37 @@ export const editorStyles = `
   white-space: normal !important;
   border-radius: 0 !important;
   padding: 0 !important;
+}
+
+/* Animation styles */
+@keyframes fadeUpIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUpIn 0.6s ease-out forwards;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
 }
 `;
