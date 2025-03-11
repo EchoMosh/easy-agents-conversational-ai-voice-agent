@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useReactFlow } from '@xyflow/react';
+import { ComingSoonDialog } from './coming-soon-dialog';
 
 type GreetingNodeData = {
   greeting: string;
@@ -31,17 +32,12 @@ export function GreetingNode({
     updateNodeData
   } = useContext(NodeUpdateContext);
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
-  const [showActionDialog, setShowActionDialog] = useState(false);
-  const [showActionTypeDialog, setShowActionTypeDialog] = useState(false);
-  const [showActionsListDialog, setShowActionsListDialog] = useState(false);
+  const [showComingSoonDialog, setShowComingSoonDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [greeting, setGreeting] = useState(data.greeting);
   const [outcomes, setOutcomes] = useState(data.outcomes || []);
   const [actions, setActions] = useState<NodeAction[]>(data.actions || []);
-  const [selectedActionType, setSelectedActionType] = useState<'sms' | 'webhook' | 'email'>('sms');
-  const [editingAction, setEditingAction] = useState<NodeAction | null>(null);
-  const [actionsOpen, setActionsOpen] = useState(false);
   const { getEdges, setEdges } = useReactFlow();
 
   useEffect(() => {
@@ -140,80 +136,10 @@ export function GreetingNode({
     setGreeting(value);
   };
 
-  const openActionTypeDialog = () => {
-    setShowActionTypeDialog(true);
+  const openComingSoonDialog = () => {
+    setShowComingSoonDialog(true);
   };
 
-  const openActionsListDialog = () => {
-    setShowActionsListDialog(true);
-  };
-
-  const selectActionType = (type: 'sms' | 'webhook' | 'email') => {
-    setSelectedActionType(type);
-    setShowActionTypeDialog(false);
-    
-    const newAction: NodeAction = {
-      id: `action-${Date.now()}`,
-      type: type,
-      config: {}
-    };
-
-    if (type === 'sms') {
-      newAction.config = {
-        phoneNumber: '',
-        message: ''
-      };
-    } else if (type === 'webhook') {
-      newAction.config = {
-        url: '',
-        method: 'POST',
-        payload: '{}'
-      };
-    } else if (type === 'email') {
-      newAction.config = {
-        to: '',
-        subject: '',
-        message: ''
-      };
-    }
-    
-    setEditingAction(newAction);
-    setShowActionDialog(true);
-  };
-  
-  const saveAction = () => {
-    if (!editingAction) return;
-    const updatedActions = editingAction.id ? 
-      actions.map(a => a.id === editingAction.id ? editingAction : a) : 
-      [...actions, editingAction];
-    
-    setActions(updatedActions);
-    setEditingAction(null);
-    setShowActionDialog(false);
-
-    updateNodeData(id, {
-      ...data,
-      actions: updatedActions
-    });
-  };
-  
-  const editAction = (action: NodeAction) => {
-    setEditingAction(action);
-    setSelectedActionType(action.type);
-    setShowActionDialog(true);
-    setShowActionsListDialog(false);
-  };
-  
-  const removeAction = (actionId: string) => {
-    const newActions = actions.filter(a => a.id !== actionId);
-    setActions(newActions);
-
-    updateNodeData(id, {
-      ...data,
-      actions: newActions
-    });
-  };
-  
   const getActionIcon = (type: string) => {
     switch (type) {
       case 'sms':
@@ -310,7 +236,7 @@ export function GreetingNode({
 
       <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <Button 
-          onClick={openActionsListDialog}
+          onClick={openComingSoonDialog}
           className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-md rounded-full border border-blue-200/50 dark:border-blue-800/50 my-[9px]"
         >
           <Send className="h-3 w-3 text-blue-600/80 dark:text-blue-400/80" />
@@ -391,7 +317,13 @@ export function GreetingNode({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showActionsListDialog} onOpenChange={setShowActionsListDialog}>
+      <ComingSoonDialog 
+        open={showComingSoonDialog} 
+        onOpenChange={setShowComingSoonDialog}
+        feature="Actions"
+      />
+
+      <Dialog open={false} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -410,10 +342,7 @@ export function GreetingNode({
                   Actions will be executed when this node is triggered.
                 </p>
                 <Button 
-                  onClick={() => {
-                    setShowActionsListDialog(false);
-                    openActionTypeDialog();
-                  }} 
+                  onClick={() => {}} 
                   className="text-xs"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1" /> Add Your First Action
@@ -440,7 +369,7 @@ export function GreetingNode({
                         variant="ghost" 
                         size="icon" 
                         className="h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-100 dark:hover:bg-blue-900/30" 
-                        onClick={() => editAction(action)}
+                        onClick={() => {}}
                       >
                         <Pencil className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                       </Button>
@@ -448,7 +377,7 @@ export function GreetingNode({
                         variant="ghost" 
                         size="icon" 
                         className="h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-900/30" 
-                        onClick={() => removeAction(action.id)}
+                        onClick={() => {}}
                       >
                         <X className="h-3.5 w-3.5 text-red-500" />
                       </Button>
@@ -461,10 +390,7 @@ export function GreetingNode({
             {actions.length > 0 && (
               <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
                 <Button 
-                  onClick={() => {
-                    setShowActionsListDialog(false);
-                    openActionTypeDialog();
-                  }} 
+                  onClick={() => {}} 
                   className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200/50 dark:border-blue-800/50"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1" /> Add Another Action
@@ -475,7 +401,7 @@ export function GreetingNode({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showActionTypeDialog} onOpenChange={setShowActionTypeDialog}>
+      <Dialog open={false} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Select Action Type</DialogTitle>
@@ -483,7 +409,7 @@ export function GreetingNode({
           <div className="py-4 space-y-4">
             <div className="grid grid-cols-1 gap-3">
               <Button 
-                onClick={() => selectActionType('sms')} 
+                onClick={() => {}} 
                 className="flex items-center justify-start gap-3 h-14 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50"
               >
                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
@@ -496,7 +422,7 @@ export function GreetingNode({
               </Button>
               
               <Button 
-                onClick={() => selectActionType('email')} 
+                onClick={() => {}} 
                 className="flex items-center justify-start gap-3 h-14 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800/50"
               >
                 <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-800 flex items-center justify-center">
@@ -509,7 +435,7 @@ export function GreetingNode({
               </Button>
               
               <Button 
-                onClick={() => selectActionType('webhook')} 
+                onClick={() => {}} 
                 className="flex items-center justify-start gap-3 h-14 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50"
               >
                 <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 flex items-center justify-center">
@@ -525,30 +451,25 @@ export function GreetingNode({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showActionDialog} onOpenChange={open => {
-        setShowActionDialog(open);
-        if (!open) setEditingAction(null);
-      }}>
+      <Dialog open={false} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
             <DialogTitle>
-              {editingAction?.id ? 'Edit Action' : 'Add New Action'}
-              {editingAction && <span className="ml-2 text-sm font-normal">
-                ({editingAction.type === 'sms' ? 'SMS' : 
-                  editingAction.type === 'email' ? 'Email' : 
-                  editingAction.type === 'webhook' ? 'Webhook' : 'Unknown'})
+              {'Edit Action'}
+              {null && <span className="ml-2 text-sm font-normal">
+                {null}
               </span>}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {editingAction && <ActionConfig action={editingAction} onChange={updatedAction => setEditingAction(updatedAction)} />}
+            {null && <ActionConfig action={null} onChange={() => {}} />}
 
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="outline" onClick={() => setShowActionDialog(false)}>
+              <Button variant="outline" onClick={() => {}}>
                 Cancel
               </Button>
-              <Button className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white" onClick={saveAction}>
-                {editingAction?.id ? 'Save Changes' : 'Add Action'}
+              <Button className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white" onClick={() => {}}>
+                {'Add Action'}
               </Button>
             </div>
           </div>
