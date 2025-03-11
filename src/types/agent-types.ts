@@ -94,8 +94,7 @@ export interface Agent {
   interaction_type?: string[];
   language?: string;
   voice_id?: string;
-  humor_level?: number;
-  humorLevel?: number; // Keep for backward compatibility
+  humor_level?: number; // Keep for backward compatibility
   maxDurationSeconds?: number;
   mermaid_chart?: string;
   elevenlabs_agent_id?: string;
