@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -54,6 +55,10 @@ export default {
         float: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-6px)" }
+        },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" }
         }
       },
       animation: {
@@ -62,7 +67,8 @@ export default {
         "wave": "wave 8s ease-in-out infinite",
         "breathing": "breathing 4s ease-in-out infinite",
         "bounce": "bounce 2s ease-in-out infinite",
-        "float": "float 3s ease-in-out infinite"
+        "float": "float 3s ease-in-out infinite",
+        "fade-in": "fade-in 0.4s ease-out"
       },
       colors: {
         border: "hsl(var(--border))",
