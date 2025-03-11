@@ -30,6 +30,57 @@ export interface TrainingExample {
   created_at?: string;
 }
 
+// Configuration for voice settings
+export interface VoiceConfig {
+  provider?: string;
+  voiceId?: string;
+  speed?: number;
+  chunkPlan?: {
+    enabled?: boolean;
+    minCharacters?: number;
+    punctuationBoundaries?: string[];
+  };
+  fallbackVoices?: Array<{
+    provider: string;
+    voiceId: string;
+  }>;
+}
+
+// Configuration for transcription
+export interface TranscriberConfig {
+  provider?: string;
+  language?: string;
+  disablePartialTranscripts?: boolean;
+  endUtteranceSilenceThreshold?: number;
+  wordBoost?: string[];
+}
+
+// Model configuration
+export interface ModelConfig {
+  provider?: string;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  emotionRecognitionEnabled?: boolean;
+  numFastTurns?: number;
+  knowledgeBaseId?: string;
+}
+
+// Call timing settings
+export interface CallTimingConfig {
+  silenceTimeoutSeconds?: number;
+  maxDurationSeconds?: number;
+  idleTimeoutSeconds?: number;
+}
+
+// Speaking behavior configuration
+export interface SpeakingBehaviorConfig {
+  startSpeakingDelay?: number;
+  smartEndpointingEnabled?: boolean;
+  acknowledgementPhrases?: string[];
+  interruptionPhrases?: string[];
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -50,6 +101,20 @@ export interface Agent {
   elevenlabs_agent_id?: string;
   knowledge_ids?: string[]; // Array of knowledge base IDs
   v_agent_id?: string; // New field for storing API agent ID
+  
+  // Advanced configuration options
+  voice_config?: VoiceConfig;
+  transcriber_config?: TranscriberConfig;
+  model_config?: ModelConfig;
+  call_timing?: CallTimingConfig;
+  speaking_behavior?: SpeakingBehaviorConfig;
+  background_sound?: 'off' | 'office' | 'cafe' | 'nature';
+  background_denoising_enabled?: boolean;
+  first_message?: string;
+  first_message_mode?: 'assistant-speaks-first' | 'user-speaks-first';
+  end_call_message?: string;
+  end_call_phrases?: string[];
+  silence_timeout_message?: string;
   
   // Training related fields
   training_status?: 'not_started' | 'in_progress' | 'completed';
