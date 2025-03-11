@@ -1,3 +1,4 @@
+
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -232,58 +233,83 @@ export function GreetingNode({
       {(!outcomes || outcomes.length === 0) && <Handle type="source" position={Position.Right} id="default" className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-blue-500" />}
 
       <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{editingIndex !== null ? 'Edit Outcome' : 'Add New Outcome'}</DialogTitle>
-            <DialogDescription>
-              Create outcomes that represent user responses to your message. These become branching paths in your conversation flow.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-5 py-4">
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-2">Be specific and descriptive</h4>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-lg">
-                    <p className="font-semibold text-red-600 dark:text-red-400 mb-1">⛔ Poor examples:</p>
-                    <ul className="list-disc list-inside space-y-1 text-gray-700 dark:text-gray-300">
-                      <li>"Yes"</li>
-                      <li>"No"</li>
-                      <li>"Maybe"</li>
-                      <li>"I agree"</li>
-                    </ul>
-                  </div>
-                  <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30 rounded-lg">
-                    <p className="font-semibold text-green-600 dark:text-green-400 mb-1">✅ Good examples:</p>
-                    <ul className="list-disc list-inside space-y-1 text-gray-700 dark:text-gray-300">
-                      <li>"I'm interested in learning more about your pricing"</li>
-                      <li>"What features does your product offer?"</li>
-                      <li>"I'm not ready to purchase yet"</li>
-                    </ul>
-                  </div>
-                </div>
+        <DialogContent className="sm:max-w-[650px] p-0 gap-0 border-0 shadow-xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-800">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold">{editingIndex !== null ? 'Edit Outcome' : 'Add New Outcome'}</DialogTitle>
+              <DialogDescription className="text-gray-500 dark:text-gray-400 mt-1.5">
+                Create specific outcomes that represent different user response paths
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          <div className="p-6 space-y-6">
+            <div className="space-y-5 animate-fade-in">
+              <div className="rounded-xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-900/10 p-4">
+                <h4 className="font-medium text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Best practices for outcomes</span>
+                </h4>
+                
+                <ul className="space-y-3 text-sm text-amber-700 dark:text-amber-300/80">
+                  <li className="animate-[fade-in_0.3s_ease-out_0.1s] opacity-0 fill-mode-forwards">
+                    <span className="font-medium">Avoid similar outcomes:</span> Don't create multiple outcomes for similar responses (e.g., "Yes I'm interested" and "Sure, tell me more")
+                  </li>
+                  <li className="animate-[fade-in_0.3s_ease-out_0.2s] opacity-0 fill-mode-forwards">
+                    <span className="font-medium">Focus on key decision points:</span> Even if your agent asks multiple questions (e.g., "Do you want a car, SUV, or minivan?"), create a single outcome for each main path
+                  </li>
+                  <li className="animate-[fade-in_0.3s_ease-out_0.3s] opacity-0 fill-mode-forwards">
+                    <span className="font-medium">Be specific:</span> Make outcomes clearly distinct and descriptive of the user's intent
+                  </li>
+                </ul>
               </div>
               
-              <Input 
-                value={newOutcome} 
-                onChange={e => setNewOutcome(e.target.value)} 
-                placeholder="Enter a detailed potential response..." 
-                className="text-sm" 
-                onKeyDown={handleKeyDown}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="outcome-input" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Outcome
+                </Label>
+                <Input 
+                  id="outcome-input"
+                  value={newOutcome} 
+                  onChange={e => setNewOutcome(e.target.value)} 
+                  placeholder="Enter a detailed user response..." 
+                  className="text-sm border-gray-200 dark:border-gray-700 h-10 px-4"
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mt-4 animate-[fade-in_0.3s_ease-out_0.4s] opacity-0 fill-mode-forwards">
+                <div className="rounded-lg border border-red-100 dark:border-red-900/30 p-4">
+                  <p className="font-medium text-red-600 dark:text-red-400 text-sm mb-2">Not recommended:</p>
+                  <ul className="list-disc list-inside text-xs space-y-1 text-gray-700 dark:text-gray-300">
+                    <li>Generic responses ("Yes"/"No")</li>
+                    <li>Very similar options ("I agree"/"I'm interested")</li>
+                    <li>Too many specific variations</li>
+                  </ul>
+                </div>
+                <div className="rounded-lg border border-green-100 dark:border-green-900/30 p-4">
+                  <p className="font-medium text-green-600 dark:text-green-400 text-sm mb-2">Recommended:</p>
+                  <ul className="list-disc list-inside text-xs space-y-1 text-gray-700 dark:text-gray-300">
+                    <li>"I'd like to learn about pricing options"</li>
+                    <li>"I'm interested in the sedan model"</li>
+                    <li>"I want to speak with a representative"</li>
+                  </ul>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={cancelEdit}>
-                Cancel
-              </Button>
-              <Button 
-                className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white" 
-                onClick={() => editingIndex !== null ? saveEdit() : addOutcome()}
-                disabled={!newOutcome.trim() || newOutcome.trim().length < 5}
-              >
-                {editingIndex !== null ? 'Save Changes' : 'Add Outcome'}
-              </Button>
-            </div>
+          </div>
+          
+          <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20 animate-[fade-in_0.3s_ease-out_0.5s] opacity-0 fill-mode-forwards">
+            <Button variant="outline" onClick={cancelEdit} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+              Cancel
+            </Button>
+            <Button 
+              className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white transition-all duration-200 shadow-md hover:shadow-lg" 
+              onClick={() => editingIndex !== null ? saveEdit() : addOutcome()}
+              disabled={!newOutcome.trim() || newOutcome.trim().length < 5}
+            >
+              {editingIndex !== null ? 'Save Changes' : 'Add Outcome'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
