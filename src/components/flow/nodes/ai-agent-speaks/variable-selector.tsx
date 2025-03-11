@@ -19,6 +19,7 @@ interface VariableSelectorProps {
 export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen = false }: VariableSelectorProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
   const commandRef = useRef<HTMLDivElement>(null);
   
   // Available variables with descriptive categories and icons
@@ -48,18 +49,75 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
     return groupedVariables;
   };
 
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!triggerChar) return;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setActiveIndex(prev => (prev < filteredVariables.length - 1 ? prev + 1 : prev));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setActiveIndex(prev => (prev > 0 ? prev - 1 : 0));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (filteredVariables[activeIndex]) {
+            onSelectVariable(filteredVariables[activeIndex].value, 'default');
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          onSelectVariable('', 'default'); // Cancel selection
+          break;
+      }
+    };
+
+    if (triggerChar) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeIndex, filteredVariables, onSelectVariable, triggerChar]);
+
+  // Handle click outside to close
+  useEffect(() => {
+    if (!triggerChar) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (commandRef.current && !commandRef.current.contains(event.target as Node)) {
+        onSelectVariable('', 'default'); // Cancel selection
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onSelectVariable, triggerChar]);
+
+  useEffect(() => {
+    if (commandRef.current) {
+      const inputElement = commandRef.current.querySelector('input');
+      if (inputElement) {
+        setTimeout(() => inputElement.focus(), 0);
+      }
+    }
+  }, []);
+
+  // Reset active index when search changes
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [searchTerm]);
+
   if (triggerChar) {
     const groupedVariables = groupVariablesByCategory();
     
-    useEffect(() => {
-      if (commandRef.current) {
-        const inputElement = commandRef.current.querySelector('input');
-        if (inputElement) {
-          setTimeout(() => inputElement.focus(), 0);
-        }
-      }
-    }, []);
-
     // Modal-style dialog with darkened background
     return (
       <div className="variable-selector-popup" ref={commandRef}>
@@ -85,27 +143,36 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
                       {category.charAt(0).toUpperCase() + category.slice(1)}
                     </div>
                     <div className="space-y-1.5">
-                      {variables.map((variable) => (
-                        <div
-                          key={variable.id}
-                          onClick={() => onSelectVariable(variable.value, 'default')}
-                          className="flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-primary/10 active:bg-primary/15 transition-all duration-150 cursor-pointer group"
-                        >
-                          <div className={cn(
-                            "flex items-center justify-center w-8 h-8 rounded-full", 
-                            "bg-primary/10 dark:bg-primary/20 text-primary",
-                            "transition-all duration-300 group-hover:scale-105",
-                            "group-hover:bg-primary/15 dark:group-hover:bg-primary/25",
-                            "group-hover:shadow-[0_0_10px_rgba(99,102,241,0.25)]"
-                          )}>
-                            {variable.icon}
+                      {variables.map((variable, index) => {
+                        // Calculate overall index in the flattened array
+                        const flattenedIndex = filteredVariables.findIndex(v => v.id === variable.id);
+                        const isActive = flattenedIndex === activeIndex;
+                        
+                        return (
+                          <div
+                            key={variable.id}
+                            onClick={() => onSelectVariable(variable.value, 'default')}
+                            className={cn(
+                              "flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-150 cursor-pointer group",
+                              isActive ? "bg-primary/15 dark:bg-primary/25" : "hover:bg-primary/10 active:bg-primary/15"
+                            )}
+                          >
+                            <div className={cn(
+                              "flex items-center justify-center w-8 h-8 rounded-full", 
+                              "bg-primary/10 dark:bg-primary/20 text-primary",
+                              "transition-all duration-300 group-hover:scale-105",
+                              "group-hover:bg-primary/15 dark:group-hover:bg-primary/25",
+                              "group-hover:shadow-[0_0_10px_rgba(99,102,241,0.25)]"
+                            )}>
+                              {variable.icon}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm">{variable.label}</span>
+                              <span className="text-xs text-muted-foreground/70">{'{'}{variable.value}{'}'}</span>
+                            </div>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm">{variable.label}</span>
-                            <span className="text-xs text-muted-foreground/70">{'{'}{variable.value}{'}'}</span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))

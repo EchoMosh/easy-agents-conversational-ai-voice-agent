@@ -68,30 +68,23 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     };
   }, [editor]);
 
-  // Handle closing variable selector with Escape key
-  useEffect(() => {
-    if (!showVariableSelector) return;
-    
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowVariableSelector(false);
-        // Focus back on editor when closing with Escape
-        if (editor) {
-          editor.commands.focus();
-        }
+  const handleInsertVariable = useCallback((variable: string, displayStyle?: any) => {
+    if (variable === '') {
+      // This means the user clicked away or pressed escape
+      setShowVariableSelector(false);
+      // Focus back on editor
+      if (editor) {
+        editor.commands.focus();
       }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [showVariableSelector, editor]);
-
-  const handleInsertVariable = useCallback((variable: string) => {
-    insertVariable(variable, triggerChar);
-    setShowVariableSelector(false);
-  }, [insertVariable, triggerChar]);
+    } else {
+      insertVariable(variable, triggerChar);
+      setShowVariableSelector(false);
+      // Focus back on editor after inserting
+      if (editor) {
+        editor.commands.focus();
+      }
+    }
+  }, [editor, insertVariable, triggerChar]);
 
   if (!editor) {
     return <div className="p-2 text-sm text-gray-500 w-full">Loading editor...</div>;
