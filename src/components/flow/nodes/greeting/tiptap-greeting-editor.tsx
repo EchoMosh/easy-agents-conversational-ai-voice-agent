@@ -23,7 +23,6 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     setShowVariableSelector(true);
     
     if (position) {
-      // We no longer need to calculate position for the modal-style popup
       setSelectorPosition(position);
     }
   }, []);
@@ -109,7 +108,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         <Portal>
           <VariableSelector 
             onSelectVariable={handleInsertVariable} 
-            triggerChar={triggerChar || "#"} 
+            triggerChar={triggerChar} 
             isFullScreen={false}
           />
         </Portal>

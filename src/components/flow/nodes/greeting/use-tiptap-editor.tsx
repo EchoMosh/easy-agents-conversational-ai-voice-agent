@@ -36,11 +36,16 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
               const { from } = editorView.state.selection;
               const pos = editorView.coordsAtPos(from);
               
+              // Trigger the variable selector but don't let the character be part of the search
+              event.preventDefault();
+              
               // Get coordinates relative to the viewport for fixed positioning
               onVariableTrigger(event.key as '#' | '@', { 
                 top: pos.top, 
                 left: pos.left 
               });
+              
+              return true; // Prevent the character from being entered
             }
           }
           return false;
@@ -128,15 +133,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
   const insertVariable = useCallback((variableName: string, triggerChar: '@' | '#' | null) => {
     if (!editor) return;
     
-    // If there's a # or @ character at the current position, remove it
-    if (triggerChar) {
-      editor.commands.deleteRange({
-        from: editor.state.selection.from - 1,
-        to: editor.state.selection.from
-      });
-    }
-    
-    // Insert the variable with the correct format
+    // Insert the variable with the correct format without adding the trigger character
     editor.commands.insertContent(`<span class="editor-variable" data-variable="${variableName}">{${variableName}}</span>`);
     
     // Focus back on editor
