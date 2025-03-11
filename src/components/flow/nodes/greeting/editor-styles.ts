@@ -1,3 +1,4 @@
+
 export const editorStyles = `
 .ProseMirror {
   outline: none;
@@ -68,5 +69,34 @@ export const editorStyles = `
   white-space: normal !important;
   border-radius: 0 !important;
   padding: 0 !important;
+}
+
+/* Animation for the dialog */
+@keyframes fadeUpIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeUpIn 0.3s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 `;

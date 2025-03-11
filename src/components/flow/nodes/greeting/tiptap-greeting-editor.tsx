@@ -7,6 +7,7 @@ import { useTiptapEditor } from './use-tiptap-editor';
 import { editorStyles } from './editor-styles';
 import { Portal } from '@radix-ui/react-portal';
 import { Hash, AtSign } from 'lucide-react';
+import { ComingSoonDialog } from '../coming-soon-dialog';
 
 interface TipTapGreetingEditorProps {
   value: string;
@@ -18,6 +19,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const [triggerChar, setTriggerChar] = useState<'@' | '#' | null>(null);
   const [selectorPosition, setSelectorPosition] = useState({ top: 0, left: 0 });
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   const handleVariableTrigger = useCallback((char: '@' | '#', position?: { top: number, left: number }) => {
     setTriggerChar(char);
@@ -88,6 +90,10 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     }
   }, [editor, insertVariable, triggerChar]);
 
+  const handleActionClick = useCallback(() => {
+    setShowComingSoon(true);
+  }, []);
+
   if (!editor) {
     return <div className="p-2 text-sm text-gray-500 w-full">Loading editor...</div>;
   }
@@ -105,6 +111,15 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           editor={editor} 
           className="prose dark:prose-invert prose-sm max-w-none cursor-text nodrag w-full"
         />
+        
+        <div className="flex justify-end mt-2 border-t pt-2">
+          <button 
+            className="text-xs bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1 rounded-md transition-colors"
+            onClick={handleActionClick}
+          >
+            Add Action
+          </button>
+        </div>
       </div>
       
       {showVariableSelector && (
@@ -116,6 +131,12 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           />
         </Portal>
       )}
+      
+      <ComingSoonDialog
+        open={showComingSoon}
+        onOpenChange={setShowComingSoon}
+        feature="Actions"
+      />
       
       <style>{editorStyles}</style>
     </>
