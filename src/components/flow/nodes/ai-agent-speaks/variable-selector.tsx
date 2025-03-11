@@ -9,7 +9,7 @@ export type VariableDisplayStyle = 'default' | 'badge' | 'code' | 'tag';
 
 interface VariableSelectorProps {
   onSelectVariable: (variable: string, displayStyle?: VariableDisplayStyle) => void;
-  triggerChar?: '#';
+  triggerChar?: '@' | '#';
   isFullScreen?: boolean;
 }
 
