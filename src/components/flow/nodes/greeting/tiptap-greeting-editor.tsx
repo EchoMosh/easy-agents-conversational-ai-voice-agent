@@ -15,10 +15,10 @@ interface TipTapGreetingEditorProps {
 export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorProps) {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const [showVariableSelector, setShowVariableSelector] = useState(false);
-  const [triggerChar, setTriggerChar] = useState<'#' | null>(null);
+  const [triggerChar, setTriggerChar] = useState<'@' | '#' | null>(null);
   const [selectorPosition, setSelectorPosition] = useState({ top: 0, left: 0 });
 
-  const handleVariableTrigger = useCallback((char: '#', position?: { top: number, left: number }) => {
+  const handleVariableTrigger = useCallback((char: '@' | '#', position?: { top: number, left: number }) => {
     setTriggerChar(char);
     setShowVariableSelector(true);
     
@@ -133,7 +133,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
           >
             <VariableSelector 
               onSelectVariable={handleInsertVariable} 
-              triggerChar="#" 
+              triggerChar={triggerChar || "#"} 
               isFullScreen={false}
             />
           </div>

@@ -7,7 +7,7 @@ import VariableMark from './variable-mark';
 interface UseTiptapEditorProps {
   value: string;
   onChange: (value: string) => void;
-  onVariableTrigger?: (char: '#', position?: { top: number, left: number }) => void;
+  onVariableTrigger?: (char: '@' | '#', position?: { top: number, left: number }) => void;
 }
 
 export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTiptapEditorProps) {
@@ -26,8 +26,8 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       },
       handleDOMEvents: {
         keydown: (view, event) => {
-          // Show tip when typing #
-          if (event.key === '#') {
+          // Show tip when typing # or @
+          if (event.key === '#' || event.key === '@') {
             setShowTip(false);
             
             // Get precise cursor position for variable selector
@@ -37,7 +37,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
               const pos = editorView.coordsAtPos(from);
               
               // Get coordinates relative to the viewport for fixed positioning
-              onVariableTrigger('#', { 
+              onVariableTrigger(event.key as '#' | '@', { 
                 top: pos.top, 
                 left: pos.left 
               });
@@ -125,10 +125,10 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
   }, [editor, value]);
   
   // Handle variable insertion
-  const insertVariable = useCallback((variableName: string, triggerChar: '#' | null) => {
+  const insertVariable = useCallback((variableName: string, triggerChar: '@' | '#' | null) => {
     if (!editor) return;
     
-    // If there's a # character at the current position, remove it
+    // If there's a # or @ character at the current position, remove it
     if (triggerChar) {
       editor.commands.deleteRange({
         from: editor.state.selection.from - 1,
