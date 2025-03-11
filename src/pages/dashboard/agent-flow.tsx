@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -186,11 +185,34 @@ export default function AgentFlowPage() {
         throw new Error('Agent not found');
       }
 
+      // Verify that the agent has a valid v_agent_id
+      if (!data.v_agent_id) {
+        console.error('[AgentFlowPage] Agent missing v_agent_id');
+        throw new Error('Agent has not been properly initialized with n8n');
+      }
+
       console.log('[AgentFlowPage] Agent data retrieved:', data);
       return data as Agent;
     },
     enabled: !!id
   });
+
+  // This effect handles when the agent is missing a v_agent_id
+  useEffect(() => {
+    if (isError) {
+      toast({
+        variant: "destructive",
+        title: "Agent Error",
+        description: "This agent has not been properly initialized. Redirecting back to agents list.",
+      });
+      // Navigate back to the agents list page after a short delay
+      const timer = setTimeout(() => {
+        navigate('/dashboard/agents');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isError, navigate, toast]);
 
   const saveFlowMutation = useMutation({
     mutationFn: async (flowData: FlowData) => {

@@ -1,12 +1,10 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Wand2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import type { Agent } from "@/types/agent";
 import { useState } from "react";
+import type { Agent } from "@/types/agent";
 
 interface TemplateStepProps {
   selectedTemplate: string;
@@ -85,14 +83,11 @@ export function TemplateStep({
       
       // Check if the response contains the VAPI agent ID
       if (!data || !data.v_agent_id) {
-        console.warn('No v_agent_id returned from n8n webhook, proceeding anyway');
+        throw new Error('No v_agent_id returned from n8n webhook');
       }
       
-      // Store the VAPI agent ID to pass back to the parent component
-      const vAgentId = data?.v_agent_id;
-      if (vAgentId) {
-        console.log('Received v_agent_id:', vAgentId);
-      }
+      const vAgentId = data.v_agent_id;
+      console.log('Received v_agent_id:', vAgentId);
       
       toast({
         title: "Success",

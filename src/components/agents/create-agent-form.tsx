@@ -64,6 +64,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     try {
       console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role, 'v_agent_id:', vAgentId);
       
+      if (!vAgentId) {
+        throw new Error("No v_agent_id received from n8n, cannot create agent");
+      }
+      
       // Generate a unique ID for this new agent
       const tempAgentId = crypto.randomUUID();
       
@@ -84,7 +88,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           objective: 'answer_calls',
           interaction_type: ['inbound'],
           language: "en",
-          v_agent_id: vAgentId // Store the VAPI agent ID from the webhook
+          v_agent_id: vAgentId // Save the VAPI agent ID received from n8n
         })
         .select()
         .single();
@@ -121,10 +125,17 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   };
 
   const handleNextFromTemplate = (vAgentIdFromWebhook?: string) => {
-    if (vAgentIdFromWebhook) {
-      // Store the VAPI agent ID if it was returned
-      setVAgentId(vAgentIdFromWebhook);
+    if (!vAgentIdFromWebhook) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No agent ID received from n8n.io",
+      });
+      return;
     }
+    
+    // Store the VAPI agent ID
+    setVAgentId(vAgentIdFromWebhook);
     handleCreateAgent();
   };
 
