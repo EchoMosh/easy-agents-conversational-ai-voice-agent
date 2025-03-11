@@ -4,6 +4,7 @@ export const editorStyles = `
   outline: none;
   min-height: 80px;
   cursor: text;
+  padding-top: 1.5rem; /* Add padding to make room for the trigger label */
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {

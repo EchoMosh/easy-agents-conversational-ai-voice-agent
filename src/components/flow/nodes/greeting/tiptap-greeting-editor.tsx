@@ -6,6 +6,7 @@ import { EditorTip } from './editor-tip';
 import { useTiptapEditor } from './use-tiptap-editor';
 import { editorStyles } from './editor-styles';
 import { Portal } from '@radix-ui/react-portal';
+import { Hash, AtSign } from 'lucide-react';
 
 interface TipTapGreetingEditorProps {
   value: string;
@@ -97,6 +98,18 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         onClick={handleClick}
       >
         <EditorTip show={showTip} />
+        
+        {/* Variable triggers preview label */}
+        <div className="absolute top-2 right-2 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/70 px-2 py-1 rounded-md border border-gray-100 dark:border-gray-700">
+          <span>Insert variable:</span>
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
+              <Hash className="h-3.5 w-3.5" />
+              <span>or</span>
+              <AtSign className="h-3.5 w-3.5" />
+            </div>
+          </div>
+        </div>
         
         <EditorContent 
           editor={editor} 
