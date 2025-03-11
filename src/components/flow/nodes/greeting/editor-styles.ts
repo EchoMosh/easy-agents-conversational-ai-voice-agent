@@ -4,15 +4,17 @@ export const editorStyles = `
   outline: none;
   min-height: 80px;
   cursor: text;
-  padding-top: 1.5rem; /* Add padding to make room for the trigger label */
+  text-align: left;
+  width: 100%;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
+  content: "Type your message here...";
   float: left;
-  color: #adb5bd;
+  color: #9ca3af;
   pointer-events: none;
   height: 0;
+  font-style: italic;
 }
 
 /* Variable styling */
