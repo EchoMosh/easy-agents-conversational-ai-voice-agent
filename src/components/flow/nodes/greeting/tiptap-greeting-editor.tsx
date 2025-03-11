@@ -6,7 +6,7 @@ import { EditorTip } from './editor-tip';
 import { useTiptapEditor } from './use-tiptap-editor';
 import { editorStyles } from './editor-styles';
 import { Portal } from '@radix-ui/react-portal';
-import { Hash, AtSign } from 'lucide-react';
+import { Hash, AtSign, MessageCircle } from 'lucide-react';
 
 interface TipTapGreetingEditorProps {
   value: string;
@@ -106,18 +106,20 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
       >
         <EditorTip show={showTip} />
         
-        {/* Placeholder that disappears when content is entered */}
+        {/* Better styled placeholder that disappears when content is entered */}
         {isEmpty && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-80">
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 py-3 px-4 max-w-xs text-center">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
-                Start typing your message here
-              </p>
-              <div className="flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                <div className="flex items-center gap-1">
-                  <Hash className="h-3.5 w-3.5" />
-                  <span>or</span>
-                  <AtSign className="h-3.5 w-3.5" />
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500 px-4 py-3">
+              <MessageCircle className="h-5 w-5 mb-1 text-gray-300 dark:text-gray-600" />
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Type your message here</p>
+              <div className="flex items-center gap-2 mt-1 text-xs bg-gray-50 dark:bg-gray-800/70 px-3 py-1.5 rounded-full">
+                <span>Use</span>
+                <div className="flex items-center justify-center h-5 w-5 bg-gray-100 dark:bg-gray-700 rounded-full">
+                  <Hash className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                </div>
+                <span>or</span>
+                <div className="flex items-center justify-center h-5 w-5 bg-gray-100 dark:bg-gray-700 rounded-full">
+                  <AtSign className="h-3 w-3 text-gray-500 dark:text-gray-400" />
                 </div>
                 <span>to insert variables</span>
               </div>
