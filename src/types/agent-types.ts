@@ -81,6 +81,9 @@ export interface SpeakingBehaviorConfig {
   interruptionPhrases?: string[];
 }
 
+export type BackgroundSound = 'off' | 'office' | 'cafe' | 'nature';
+export type FirstMessageMode = 'assistant-speaks-first' | 'user-speaks-first';
+
 export interface Agent {
   id: string;
   name: string;
@@ -107,10 +110,10 @@ export interface Agent {
   model_config?: ModelConfig;
   call_timing?: CallTimingConfig;
   speaking_behavior?: SpeakingBehaviorConfig;
-  background_sound?: 'off' | 'office' | 'cafe' | 'nature';
+  background_sound?: BackgroundSound;
   background_denoising_enabled?: boolean;
   first_message?: string;
-  first_message_mode?: 'assistant-speaks-first' | 'user-speaks-first';
+  first_message_mode?: FirstMessageMode;
   end_call_message?: string;
   end_call_phrases?: string[];
   silence_timeout_message?: string;
