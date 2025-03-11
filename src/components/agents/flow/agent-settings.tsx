@@ -256,113 +256,116 @@ export function AgentSettings({
           if (error) throw error;
           
           if (data) {
+            // Cast the data to our Agent type to access properties safely
+            const agentData = data as unknown as Agent;
+            
             // Basic settings
-            if (data.voice_id) {
-              setSelectedVoice(data.voice_id);
+            if (agentData.voice_id) {
+              setSelectedVoice(agentData.voice_id);
             }
             
-            if (data.language) {
-              setLanguage(data.language);
+            if (agentData.language) {
+              setLanguage(agentData.language);
             }
             
-            if (data.knowledge_ids && data.knowledge_ids.length > 0) {
-              setKnowledgeBase(data.knowledge_ids[0]);
+            if (agentData.knowledge_ids && agentData.knowledge_ids.length > 0) {
+              setKnowledgeBase(agentData.knowledge_ids[0]);
             } else {
               setKnowledgeBase("none");
             }
             
             // Advanced settings
-            if (data.maxDurationSeconds) {
-              setMaxDurationSeconds(data.maxDurationSeconds);
+            if (agentData.maxDurationSeconds) {
+              setMaxDurationSeconds(agentData.maxDurationSeconds);
             }
             
-            if (data.first_message) {
-              setFirstMessage(data.first_message);
+            if (agentData.first_message) {
+              setFirstMessage(agentData.first_message);
             }
             
-            if (data.first_message_mode) {
-              setFirstMessageMode(data.first_message_mode);
+            if (agentData.first_message_mode) {
+              setFirstMessageMode(agentData.first_message_mode);
             }
             
-            if (data.end_call_message) {
-              setEndCallMessage(data.end_call_message);
+            if (agentData.end_call_message) {
+              setEndCallMessage(agentData.end_call_message);
             }
             
-            if (data.silence_timeout_message) {
-              setSilenceTimeoutMessage(data.silence_timeout_message);
+            if (agentData.silence_timeout_message) {
+              setSilenceTimeoutMessage(agentData.silence_timeout_message);
             }
             
-            if (data.call_timing?.silenceTimeoutSeconds) {
-              setSilenceTimeoutSeconds(data.call_timing.silenceTimeoutSeconds);
+            if (agentData.call_timing?.silenceTimeoutSeconds) {
+              setSilenceTimeoutSeconds(agentData.call_timing.silenceTimeoutSeconds);
             }
             
-            if (data.background_sound) {
-              setBackgroundSound(data.background_sound);
+            if (agentData.background_sound) {
+              setBackgroundSound(agentData.background_sound);
             }
             
-            if (data.background_denoising_enabled !== undefined) {
-              setBackgroundDenoising(data.background_denoising_enabled);
+            if (agentData.background_denoising_enabled !== undefined) {
+              setBackgroundDenoising(agentData.background_denoising_enabled);
             }
             
-            if (data.end_call_phrases) {
-              setEndCallPhrases(data.end_call_phrases);
-              setEndCallPhrasesText(data.end_call_phrases.join(', '));
+            if (agentData.end_call_phrases) {
+              setEndCallPhrases(agentData.end_call_phrases);
+              setEndCallPhrasesText(agentData.end_call_phrases.join(', '));
             }
             
             // Voice config
-            if (data.voice_config?.provider) {
-              setVoiceProvider(data.voice_config.provider);
+            if (agentData.voice_config?.provider) {
+              setVoiceProvider(agentData.voice_config.provider);
             }
             
-            if (data.voice_config?.speed) {
-              setVoiceSpeed(data.voice_config.speed);
+            if (agentData.voice_config?.speed) {
+              setVoiceSpeed(agentData.voice_config.speed);
             }
             
             // Model config
-            if (data.model_config?.provider) {
-              setModelProvider(data.model_config.provider);
+            if (agentData.model_config?.provider) {
+              setModelProvider(agentData.model_config.provider);
             }
             
-            if (data.model_config?.model) {
-              setModel(data.model_config.model);
+            if (agentData.model_config?.model) {
+              setModel(agentData.model_config.model);
             }
             
-            if (data.model_config?.temperature) {
-              setTemperature(data.model_config.temperature);
+            if (agentData.model_config?.temperature) {
+              setTemperature(agentData.model_config.temperature);
             }
             
-            if (data.model_config?.emotionRecognitionEnabled !== undefined) {
-              setEmotionRecognitionEnabled(data.model_config.emotionRecognitionEnabled);
+            if (agentData.model_config?.emotionRecognitionEnabled !== undefined) {
+              setEmotionRecognitionEnabled(agentData.model_config.emotionRecognitionEnabled);
             }
             
             // Transcription config
-            if (data.transcriber_config?.provider) {
-              setTranscriptionProvider(data.transcriber_config.provider);
+            if (agentData.transcriber_config?.provider) {
+              setTranscriptionProvider(agentData.transcriber_config.provider);
             }
             
-            if (data.transcriber_config?.disablePartialTranscripts !== undefined) {
-              setDisablePartialTranscripts(data.transcriber_config.disablePartialTranscripts);
+            if (agentData.transcriber_config?.disablePartialTranscripts !== undefined) {
+              setDisablePartialTranscripts(agentData.transcriber_config.disablePartialTranscripts);
             }
             
-            if (data.transcriber_config?.endUtteranceSilenceThreshold) {
-              setEndUtteranceSilenceThreshold(data.transcriber_config.endUtteranceSilenceThreshold);
+            if (agentData.transcriber_config?.endUtteranceSilenceThreshold) {
+              setEndUtteranceSilenceThreshold(agentData.transcriber_config.endUtteranceSilenceThreshold);
             }
             
             // Speaking behavior
-            if (data.speaking_behavior?.startSpeakingDelay) {
-              setStartSpeakingDelay(data.speaking_behavior.startSpeakingDelay);
+            if (agentData.speaking_behavior?.startSpeakingDelay) {
+              setStartSpeakingDelay(agentData.speaking_behavior.startSpeakingDelay);
             }
             
-            if (data.speaking_behavior?.smartEndpointingEnabled !== undefined) {
-              setSmartEndpointing(data.speaking_behavior.smartEndpointingEnabled);
+            if (agentData.speaking_behavior?.smartEndpointingEnabled !== undefined) {
+              setSmartEndpointing(agentData.speaking_behavior.smartEndpointingEnabled);
             }
             
-            if (data.speaking_behavior?.acknowledgementPhrases) {
-              setAcknowledgementPhrasesText(data.speaking_behavior.acknowledgementPhrases.join(', '));
+            if (agentData.speaking_behavior?.acknowledgementPhrases) {
+              setAcknowledgementPhrasesText(agentData.speaking_behavior.acknowledgementPhrases.join(', '));
             }
             
-            if (data.speaking_behavior?.interruptionPhrases) {
-              setInterruptionPhrasesText(data.speaking_behavior.interruptionPhrases.join(', '));
+            if (agentData.speaking_behavior?.interruptionPhrases) {
+              setInterruptionPhrasesText(agentData.speaking_behavior.interruptionPhrases.join(', '));
             }
           }
         } catch (error) {
