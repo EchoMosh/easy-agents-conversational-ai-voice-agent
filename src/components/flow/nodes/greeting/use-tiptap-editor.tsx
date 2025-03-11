@@ -3,6 +3,7 @@ import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useCallback, useState, useEffect } from 'react';
 import VariableMark from './variable-mark';
+import Placeholder from '@tiptap/extension-placeholder';
 
 interface UseTiptapEditorProps {
   value: string;
@@ -18,6 +19,10 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
     extensions: [
       StarterKit,
       VariableMark,
+      Placeholder.configure({
+        placeholder: 'Type your message here...',
+        emptyEditorClass: 'is-editor-empty',
+      }),
     ],
     content: value || '<p></p>',
     editorProps: {

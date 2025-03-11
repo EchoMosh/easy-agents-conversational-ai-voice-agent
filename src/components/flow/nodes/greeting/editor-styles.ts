@@ -10,11 +10,12 @@ export const editorStyles = `
 
 .ProseMirror p.is-editor-empty:first-child::before {
   content: "Type your message here...";
-  float: left;
   color: #9ca3af;
   pointer-events: none;
-  height: 0;
+  position: absolute;
   font-style: italic;
+  float: none;
+  height: auto;
 }
 
 /* Variable styling */
