@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Rocket, Send, Webhook, Mail, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,18 +24,27 @@ export function ComingSoonDialog({
     rocket: false
   });
 
+  // Reset animation states when dialog closes
+  useEffect(() => {
+    if (!open) {
+      // Small delay to ensure animations are reset only after dialog is fully closed
+      const timer = setTimeout(() => {
+        setAnimationStates({
+          title: false,
+          description: false,
+          cards: false,
+          button: false,
+          rocket: false
+        });
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
   // Staggered animation when dialog opens
   useEffect(() => {
     if (open) {
-      // Reset animation states
-      setAnimationStates({
-        title: false,
-        description: false,
-        cards: false,
-        button: false,
-        rocket: false
-      });
-      
       // Stagger animations with longer delays for a more elegant feel
       const timers = [
         setTimeout(() => setAnimationStates(prev => ({ ...prev, title: true })), 300),
@@ -54,6 +63,7 @@ export function ComingSoonDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden bg-white dark:bg-slate-900 border-none shadow-lg">
+        <DialogTitle className="sr-only">{feature} Coming Soon</DialogTitle>
         <button 
           onClick={() => onOpenChange(false)}
           className="absolute z-10 right-4 top-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
@@ -67,8 +77,8 @@ export function ComingSoonDialog({
           <div className="flex items-center mb-6">
             <div 
               className={cn(
-                "h-12 w-12 mr-4 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/30 transition-all duration-700 ease-out",
-                animationStates.rocket ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                "h-12 w-12 mr-4 rounded-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/30 transition-all duration-700 ease-out opacity-0 translate-y-4",
+                animationStates.rocket && "opacity-100 translate-y-0"
               )}
             >
               <Rocket 
@@ -82,16 +92,16 @@ export function ComingSoonDialog({
             <div>
               <h2 
                 className={cn(
-                  "text-2xl font-semibold text-gray-800 dark:text-gray-100 transition-all duration-500 ease-out",
-                  animationStates.title ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                  "text-2xl font-semibold text-gray-800 dark:text-gray-100 transition-all duration-500 ease-out opacity-0 translate-y-4",
+                  animationStates.title && "opacity-100 translate-y-0"
                 )}
               >
                 {feature} Coming Soon
               </h2>
               <p 
                 className={cn(
-                  "text-gray-500 dark:text-gray-400 mt-1 transition-all duration-500 ease-out",
-                  animationStates.description ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                  "text-gray-500 dark:text-gray-400 mt-1 transition-all duration-500 ease-out opacity-0 translate-y-4",
+                  animationStates.description && "opacity-100 translate-y-0"
                 )}
               >
                 We're building powerful automation tools to enhance your workflow.
@@ -102,8 +112,8 @@ export function ComingSoonDialog({
           {/* Feature cards with minimal styling */}
           <div 
             className={cn(
-              "grid grid-cols-1 md:grid-cols-3 gap-5 transition-all duration-700 ease-out",
-              animationStates.cards ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              "grid grid-cols-1 md:grid-cols-3 gap-5 transition-all duration-700 ease-out opacity-0 translate-y-6",
+              animationStates.cards && "opacity-100 translate-y-0"
             )}
           >
             {/* SMS Card */}
@@ -151,8 +161,8 @@ export function ComingSoonDialog({
             <Button
               onClick={() => onOpenChange(false)}
               className={cn(
-                "w-full bg-blue-500 hover:bg-blue-600 text-white border-none transition-all duration-700 ease-out",
-                animationStates.button ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                "w-full bg-blue-500 hover:bg-blue-600 text-white border-none transition-all duration-700 ease-out opacity-0 translate-y-4",
+                animationStates.button && "opacity-100 translate-y-0"
               )}
             >
               <span>Notify me when available</span>
