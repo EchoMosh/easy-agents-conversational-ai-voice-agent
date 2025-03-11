@@ -81,9 +81,6 @@ export interface SpeakingBehaviorConfig {
   interruptionPhrases?: string[];
 }
 
-export type BackgroundSound = 'off' | 'office' | 'cafe' | 'nature';
-export type FirstMessageMode = 'assistant-speaks-first' | 'user-speaks-first';
-
 export interface Agent {
   id: string;
   name: string;
@@ -97,7 +94,8 @@ export interface Agent {
   interaction_type?: string[];
   language?: string;
   voice_id?: string;
-  humor_level?: number; // Keep for backward compatibility
+  humor_level?: number;
+  humorLevel?: number; // Keep for backward compatibility
   maxDurationSeconds?: number;
   mermaid_chart?: string;
   elevenlabs_agent_id?: string;
@@ -110,10 +108,10 @@ export interface Agent {
   model_config?: ModelConfig;
   call_timing?: CallTimingConfig;
   speaking_behavior?: SpeakingBehaviorConfig;
-  background_sound?: BackgroundSound;
+  background_sound?: 'off' | 'office' | 'cafe' | 'nature';
   background_denoising_enabled?: boolean;
   first_message?: string;
-  first_message_mode?: FirstMessageMode;
+  first_message_mode?: 'assistant-speaks-first' | 'user-speaks-first';
   end_call_message?: string;
   end_call_phrases?: string[];
   silence_timeout_message?: string;
