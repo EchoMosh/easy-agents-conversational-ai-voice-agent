@@ -62,7 +62,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     try {
-      console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role);
+      console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role, 'v_agent_id:', vAgentId);
       
       // Generate a unique ID for this new agent
       const tempAgentId = crypto.randomUUID();

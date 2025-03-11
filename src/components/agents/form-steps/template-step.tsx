@@ -59,38 +59,37 @@ export function TemplateStep({
     setIsLoading(true);
     
     try {
-      setCreationStatus("Creating agent through n8n.io webhook...");
+      setCreationStatus("Creating agent through n8n webhook...");
       
-      // Call the webhook-relay function to trigger your n8n.io workflow
-      const { data, error } = await supabase.functions.invoke('webhook-relay', {
-        body: {
-          webhookUrl: process.env.N8N_WEBHOOK_URL || "https://hooks.n8n.cloud/webhook-test/your-webhook-id",
-          payload: {
-            agentName: agentName,
-            role: "virtual_assistant",
-            language: "en"
-          }
-        }
+      // Direct POST request to n8n webhook
+      const webhookUrl = "https://moshi.app.n8n.cloud/webhook/create-agent";
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agentName: agentName,
+          role: "virtual_assistant",
+          language: "en"
+        })
       });
-
-      if (error) {
-        console.error('Error calling webhook-relay function:', error);
-        throw new Error(`Failed to connect to n8n: ${error.message}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to create agent via n8n webhook: ${response.statusText}`);
       }
-
+      
+      const data = await response.json();
       console.log('n8n webhook response:', data);
       
-      if (!data.success) {
-        throw new Error('Failed to create agent via n8n webhook');
-      }
-      
       // Check if the response contains the VAPI agent ID
-      if (!data.response || !data.response.v_agent_id) {
+      if (!data || !data.v_agent_id) {
         console.warn('No v_agent_id returned from n8n webhook, proceeding anyway');
       }
       
       // Store the VAPI agent ID to pass back to the parent component
-      const vAgentId = data.response?.v_agent_id;
+      const vAgentId = data?.v_agent_id;
       if (vAgentId) {
         console.log('Received v_agent_id:', vAgentId);
       }
@@ -110,6 +109,7 @@ export function TemplateStep({
         description: error instanceof Error ? error.message : "Failed to create agent",
       });
       setIsLoading(false);
+      setCreationStatus(null);
     }
   };
 
