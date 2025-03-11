@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Rocket, ArrowRight, Webhook, Mail, Send, X } from "lucide-react";
+import { Sparkles, Rocket, Send, Webhook, Mail, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ComingSoonDialogProps {
@@ -114,14 +114,9 @@ export function ComingSoonDialog({
                 </div>
               </div>
               <h3 className="font-medium mb-2 text-gray-800 dark:text-gray-200">SMS Actions</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Send timely text messages with personalized information to your customers.
               </p>
-              <div className="h-6 flex items-center">
-                <span className="text-xs text-blue-500 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
-                  Learn more <ArrowRight className="ml-1 h-3 w-3" />
-                </span>
-              </div>
             </div>
             
             {/* Webhook Card */}
@@ -132,14 +127,9 @@ export function ComingSoonDialog({
                 </div>
               </div>
               <h3 className="font-medium mb-2 text-gray-800 dark:text-gray-200">API Integration</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Connect to third-party services and fetch real-time data during conversations.
               </p>
-              <div className="h-6 flex items-center">
-                <span className="text-xs text-purple-500 dark:text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
-                  Learn more <ArrowRight className="ml-1 h-3 w-3" />
-                </span>
-              </div>
             </div>
             
             {/* Email Card */}
@@ -150,14 +140,9 @@ export function ComingSoonDialog({
                 </div>
               </div>
               <h3 className="font-medium mb-2 text-gray-800 dark:text-gray-200">Email Actions</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Send beautiful, branded emails with information collected during conversations.
               </p>
-              <div className="h-6 flex items-center">
-                <span className="text-xs text-pink-500 dark:text-pink-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
-                  Learn more <ArrowRight className="ml-1 h-3 w-3" />
-                </span>
-              </div>
             </div>
           </div>
           
@@ -170,7 +155,7 @@ export function ComingSoonDialog({
                 animationStates.button ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               )}
             >
-              <span>Got it</span>
+              <span>Notify me when available</span>
               <Sparkles className="h-4 w-4 ml-2" />
             </Button>
           </div>
