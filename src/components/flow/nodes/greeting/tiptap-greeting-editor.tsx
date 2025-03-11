@@ -18,7 +18,6 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const [triggerChar, setTriggerChar] = useState<'@' | '#' | null>(null);
   const [selectorPosition, setSelectorPosition] = useState({ top: 0, left: 0 });
-  const [isEmpty, setIsEmpty] = useState(value === '<p></p>' || !value);
 
   const handleVariableTrigger = useCallback((char: '@' | '#', position?: { top: number, left: number }) => {
     setTriggerChar(char);
@@ -33,10 +32,6 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     value,
     onChange: (newValue) => {
       onChange(newValue);
-      
-      // Check if editor is empty to control placeholder visibility
-      const isContentEmpty = newValue === '<p></p>' || !newValue;
-      setIsEmpty(isContentEmpty);
     },
     onVariableTrigger: handleVariableTrigger
   });
