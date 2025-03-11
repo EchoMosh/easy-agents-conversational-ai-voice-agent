@@ -93,14 +93,14 @@ export interface Agent {
   objective?: string;
   interaction_type?: string[];
   language?: string;
-  voice_id?: string; // This field should match the database column name
-  humor_level?: number; // Changed to match database column name
+  voice_id?: string;
+  humor_level?: number;
   humorLevel?: number; // Keep for backward compatibility
   maxDurationSeconds?: number;
   mermaid_chart?: string;
   elevenlabs_agent_id?: string;
-  knowledge_ids?: string[]; // Array of knowledge base IDs
-  v_agent_id?: string; // New field for storing API agent ID
+  knowledge_ids?: string[];
+  v_agent_id?: string;
   
   // Advanced configuration options
   voice_config?: VoiceConfig;
@@ -120,5 +120,5 @@ export interface Agent {
   training_status?: 'not_started' | 'in_progress' | 'completed';
   last_trained_at?: string;
   training_webhook_url?: string;
-  training_examples?: TrainingExample[]; // New field for training examples
+  training_examples?: TrainingExample[];
 }
