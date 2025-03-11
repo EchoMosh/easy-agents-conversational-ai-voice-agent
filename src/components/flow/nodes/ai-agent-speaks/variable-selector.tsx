@@ -4,9 +4,11 @@ import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
-import { User, Mail, Phone, Building2, Briefcase, Search, Variable } from "lucide-react";
+import { User, Mail, Phone, Building2, Briefcase, Search, Variable, Tag } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from "@/integrations/supabase/client";
 
 export type VariableDisplayStyle = 'default' | 'badge' | 'code' | 'tag';
 
@@ -16,28 +18,64 @@ interface VariableSelectorProps {
   isFullScreen?: boolean;
 }
 
+interface CustomVariable {
+  id: string;
+  name: string;
+  value: string | null;
+}
+
 export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen = false }: VariableSelectorProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const commandRef = useRef<HTMLDivElement>(null);
   
-  // Available variables with descriptive categories and icons
-  const availableVariables = [
+  // Fetch custom user variables from lead_variables table
+  const { data: customVariables = [], isLoading: isLoadingCustomVariables } = useQuery({
+    queryKey: ['leadVariables'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lead_variables')
+        .select('id, name, value')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching custom variables:', error);
+        return [] as CustomVariable[];
+      }
+      
+      return data as CustomVariable[];
+    },
+  });
+  
+  // Available static variables with descriptive categories and icons
+  const staticVariables = [
     { id: 'name', label: 'Name', value: 'name', category: 'contact', icon: <User className="h-4 w-4" /> },
     { id: 'email', label: 'Email', value: 'email', category: 'contact', icon: <Mail className="h-4 w-4" /> },
     { id: 'phone', label: 'Phone', value: 'phone', category: 'contact', icon: <Phone className="h-4 w-4" /> },
     { id: 'company', label: 'Company', value: 'company', category: 'organization', icon: <Building2 className="h-4 w-4" /> },
     { id: 'position', label: 'Position', value: 'position', category: 'organization', icon: <Briefcase className="h-4 w-4" /> },
   ];
-
-  const filteredVariables = availableVariables.filter(variable => 
+  
+  // Convert custom variables to compatible format
+  const customVariablesFormatted = customVariables.map(variable => ({
+    id: variable.id,
+    label: variable.name,
+    value: variable.name,
+    category: 'custom',
+    icon: <Tag className="h-4 w-4" />,
+  }));
+  
+  // Combine static and custom variables
+  const allVariables = [...staticVariables, ...customVariablesFormatted];
+  
+  const filteredVariables = allVariables.filter(variable => 
     variable.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
     variable.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const groupVariablesByCategory = () => {
-    const groupedVariables: Record<string, typeof availableVariables> = {};
+    const groupedVariables: Record<string, typeof allVariables> = {};
     
     filteredVariables.forEach(variable => {
       if (!groupedVariables[variable.category]) {
@@ -136,11 +174,17 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
             </div>
             
             <div className="max-h-[320px] overflow-y-auto custom-scrollbar p-2">
-              {Object.keys(groupedVariables).length > 0 ? (
+              {isLoadingCustomVariables && (
+                <div className="py-8 text-sm text-center text-muted-foreground">
+                  Loading variables...
+                </div>
+              )}
+              
+              {!isLoadingCustomVariables && Object.keys(groupedVariables).length > 0 ? (
                 Object.entries(groupedVariables).map(([category, variables]) => (
                   <div key={category} className="mb-3 last:mb-0">
                     <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                      {category === 'custom' ? 'Custom Variables' : category.charAt(0).toUpperCase() + category.slice(1)}
                     </div>
                     <div className="space-y-1.5">
                       {variables.map((variable, index) => {
@@ -177,9 +221,11 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
                   </div>
                 ))
               ) : (
-                <div className="py-8 text-sm text-center text-muted-foreground">
-                  No variables found
-                </div>
+                !isLoadingCustomVariables && (
+                  <div className="py-8 text-sm text-center text-muted-foreground">
+                    No variables found
+                  </div>
+                )
               )}
             </div>
           </div>
@@ -216,7 +262,9 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
         </div>
         
         <div className="max-h-[320px] overflow-y-auto custom-scrollbar p-2">
-          {filteredVariables.length > 0 ? (
+          {isLoadingCustomVariables ? (
+            <div className="py-8 text-sm text-center text-muted-foreground">Loading variables...</div>
+          ) : filteredVariables.length > 0 ? (
             <>
               <div className="py-1 px-2 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
                 Available Variables
