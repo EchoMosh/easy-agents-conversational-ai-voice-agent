@@ -102,6 +102,7 @@ export type Database = {
           objective: string
           role: Database["public"]["Enums"]["agent_role"]
           user_id: string
+          v_agent_id: string | null
           voice_id: string | null
         }
         Insert: {
@@ -119,6 +120,7 @@ export type Database = {
           objective: string
           role: Database["public"]["Enums"]["agent_role"]
           user_id: string
+          v_agent_id?: string | null
           voice_id?: string | null
         }
         Update: {
@@ -136,6 +138,7 @@ export type Database = {
           objective?: string
           role?: Database["public"]["Enums"]["agent_role"]
           user_id?: string
+          v_agent_id?: string | null
           voice_id?: string | null
         }
         Relationships: []

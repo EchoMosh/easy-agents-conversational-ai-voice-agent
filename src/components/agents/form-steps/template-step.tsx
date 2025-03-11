@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Wand2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import type { Agent } from "@/types/agent";
 
 interface TemplateStepProps {
@@ -53,37 +54,38 @@ export function TemplateStep({
     }
     
     try {
-      // Send a direct POST request to the n8n webhook
-      const response = await fetch('https://moshi.app.n8n.cloud/webhook/create-agent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: agentName, // Use the passed agent name
+      // Call the Supabase Edge Function to create an ElevenLabs agent
+      const { data, error } = await supabase.functions.invoke('create-elevenlabs-agent', {
+        body: {
+          name: agentName,
           role: "virtual_assistant",
-        }),
+          language: "en"
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+      if (error) {
+        console.error('Error calling create-elevenlabs-agent function:', error);
+        throw new Error(`Failed to create agent: ${error.message}`);
       }
 
-      const data = await response.json();
-      console.log('Webhook response:', data);
+      console.log('ElevenLabs agent creation response:', data);
+      
+      if (!data.success || !data.elevenlabsAgentId) {
+        throw new Error('Failed to create agent in ElevenLabs');
+      }
       
       toast({
         title: "Success",
-        description: "Agent creation request sent successfully",
+        description: "Agent created successfully with ElevenLabs",
       });
       
       onNext();
     } catch (error) {
-      console.error('Error sending webhook:', error);
+      console.error('Error creating agent:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to send agent creation request",
+        description: error instanceof Error ? error.message : "Failed to create agent",
       });
     }
   };

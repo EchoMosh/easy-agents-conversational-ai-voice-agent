@@ -49,6 +49,7 @@ export interface Agent {
   mermaid_chart?: string;
   elevenlabs_agent_id?: string;
   knowledge_ids?: string[]; // Array of knowledge base IDs
+  v_agent_id?: string; // New field for storing API agent ID
   
   // Training related fields
   training_status?: 'not_started' | 'in_progress' | 'completed';

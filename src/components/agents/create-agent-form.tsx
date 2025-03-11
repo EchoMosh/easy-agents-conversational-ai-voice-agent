@@ -24,6 +24,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creationStatus, setCreationStatus] = useState<string | null>(null);
+  const [elevenlabsAgentId, setElevenlabsAgentId] = useState<string | null>(null);
   const [newAgent, setNewAgent] = useState<{
     name: string;
     role: Agent["role"];
@@ -68,10 +69,34 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       
       setCreationStatus("Creating agent...");
       
-      // Create the agent in our database
+      // Get ElevenLabs agent ID from the previous step
+      const { data, error } = await supabase.functions.invoke('create-elevenlabs-agent', {
+        body: {
+          name: newAgent.name,
+          role: newAgent.role,
+          language: "en"
+        }
+      });
+
+      if (error) {
+        console.error('Error calling create-elevenlabs-agent function:', error);
+        throw new Error(`Failed to create agent in ElevenLabs: ${error.message}`);
+      }
+
+      console.log('ElevenLabs agent creation response:', data);
+      
+      if (!data.success || !data.elevenlabsAgentId) {
+        throw new Error('Failed to create agent in ElevenLabs');
+      }
+      
+      const elevenlabsId = data.elevenlabsAgentId;
+      setElevenlabsAgentId(elevenlabsId);
+      
+      // Create the flow for the agent
       const flow = getDefaultFlow();
       
-      const { data, error } = await supabase
+      // Create the agent in our database
+      const { data: agentData, error: agentError } = await supabase
         .from('agents')
         .insert({
           name: newAgent.name,
@@ -81,15 +106,16 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           is_active: true,
           objective: 'answer_calls',
           interaction_type: ['inbound'],
-          language: "en"
+          language: "en",
+          elevenlabs_agent_id: elevenlabsId // Store the ElevenLabs agent ID
         })
         .select()
         .single();
 
-      if (error) {
-        console.error('Error creating agent in database:', error);
-        setError(`Failed to create agent in database: ${error.message}`);
-        throw error;
+      if (agentError) {
+        console.error('Error creating agent in database:', agentError);
+        setError(`Failed to create agent in database: ${agentError.message}`);
+        throw agentError;
       }
 
       setCreationStatus("Agent created successfully, redirecting...");
@@ -99,8 +125,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         description: "Agent created successfully. Redirecting to flow editor...",
       });
       
-      await onSuccess(data.id);
-      navigate(`/dashboard/agents/flow/${data.id}`, { replace: true });
+      await onSuccess(agentData.id);
+      navigate(`/dashboard/agents/flow/${agentData.id}`, { replace: true });
     } catch (error) {
       console.error('Error creating agent:', error);
       const errorMessage = typeof error === 'object' && error !== null && 'message' in error 
