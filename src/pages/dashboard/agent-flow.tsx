@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -12,10 +13,17 @@ import { AgentTrainingPopup } from '@/components/agents/training/agent-training-
 import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 
-// Helper function to strip HTML tags from content
+// Helper function to strip HTML tags from content and preserve variables
 function stripHtmlTags(html: string): string {
   if (!html) return '';
-  return html.replace(/<\/?[^>]+(>|$)/g, '');
+  
+  // First, replace variable spans with their content
+  let content = html.replace(/<span class="editor-variable"[^>]*data-variable="([^"]+)"[^>]*>\{([^}]+)\}<\/span>/g, '{$2}');
+  
+  // Then remove all remaining HTML tags
+  content = content.replace(/<\/?[^>]+(>|$)/g, '');
+  
+  return content;
 }
 
 function generateMermaidFromFlow(flowData: FlowData): string {
@@ -70,17 +78,17 @@ function generateMermaidFromFlow(flowData: FlowData): string {
     
     if (node.data) {
       if (node.type === 'speakNode' && node.data.message) {
-        nodeLabel = String(node.data.message);
+        nodeLabel = stripHtmlTags(String(node.data.message));
         if (node.data.outcomes && Array.isArray(node.data.outcomes)) {
-          outcomeLabels = node.data.outcomes;
+          outcomeLabels = node.data.outcomes.map(outcome => stripHtmlTags(String(outcome)));
         }
       } else if (node.type === 'greetingNode' && node.data.greeting) {
-        nodeLabel = String(node.data.greeting);
+        nodeLabel = stripHtmlTags(String(node.data.greeting));
         if (node.data.outcomes && Array.isArray(node.data.outcomes)) {
-          outcomeLabels = node.data.outcomes;
+          outcomeLabels = node.data.outcomes.map(outcome => stripHtmlTags(String(outcome)));
         }
       } else if (node.type === 'endNode' && node.data.message) {
-        nodeLabel = `End: ${String(node.data.message)}`;
+        nodeLabel = `End: ${stripHtmlTags(String(node.data.message))}`;
       } else if (node.type === 'endNode') {
         nodeLabel = 'End Call';
       } else if (node.type === 'triggerNode' && node.data.platform) {
@@ -129,8 +137,8 @@ function generateMermaidFromFlow(flowData: FlowData): string {
       if (edge.sourceHandle && edge.sourceHandle.startsWith('outcome-')) {
         const outcomeIndex = parseInt(edge.sourceHandle.replace('outcome-', ''), 10);
         if (!isNaN(outcomeIndex) && outcomeIndex < outcomes.length) {
-          // Display full outcome text without truncation
-          const outcomeText = outcomes[outcomeIndex].replace(/"/g, '');
+          // Strip HTML from outcome text
+          const outcomeText = stripHtmlTags(outcomes[outcomeIndex]).replace(/"/g, '');
           edgeLabel = `|"${outcomeText}"|`;
         }
       }
