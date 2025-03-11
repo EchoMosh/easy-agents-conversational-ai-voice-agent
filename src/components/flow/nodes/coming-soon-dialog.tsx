@@ -17,18 +17,18 @@ export function ComingSoonDialog({
 }: ComingSoonDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md animate-fade-in">
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-primary/10 p-3 rounded-full">
+      <DialogContent className="sm:max-w-md">
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-primary/10 p-3 rounded-full animate-fade-in">
           <Sparkles className="h-8 w-8 text-primary animate-pulse" />
         </div>
         
         <DialogHeader className="pt-6">
-          <DialogTitle className="text-xl text-center font-semibold">
+          <DialogTitle className="text-xl text-center font-semibold animate-fade-in">
             Coming Soon
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fade-in">
           <div className="space-y-2">
             <p className="text-center text-muted-foreground">
               {feature} functionality is currently in development.

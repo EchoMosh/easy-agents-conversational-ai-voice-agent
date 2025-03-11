@@ -6,7 +6,6 @@ import { EditorTip } from './editor-tip';
 import { useTiptapEditor } from './use-tiptap-editor';
 import { editorStyles } from './editor-styles';
 import { Portal } from '@radix-ui/react-portal';
-import { Hash, AtSign } from 'lucide-react';
 import { ComingSoonDialog } from '../coming-soon-dialog';
 
 interface TipTapGreetingEditorProps {
