@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -28,8 +29,14 @@ export default {
           to: { height: "0" },
         },
         wave: {
-          "0%, 100%": { transform: "translate(-50%) rotate(0deg)" },
-          "50%": { transform: "translate(-50%) rotate(3deg)" },
+          "0%, 100%": { 
+            transform: "translateX(-50%) rotate(0deg)",
+            opacity: "0.5"
+          },
+          "50%": { 
+            transform: "translateX(-50%) rotate(3deg)",
+            opacity: "1"
+          },
         },
         breathing: {
           "0%, 100%": { 
@@ -40,6 +47,10 @@ export default {
             backgroundPosition: "51% 50%",
             filter: "saturate(102%) brightness(101%)"
           }
+        },
+        bounce: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" }
         }
       },
       animation: {
@@ -47,6 +58,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "wave": "wave 8s ease-in-out infinite",
         "breathing": "breathing 4s ease-in-out infinite",
+        "bounce": "bounce 2s ease-in-out infinite",
       },
       colors: {
         border: "hsl(var(--border))",
