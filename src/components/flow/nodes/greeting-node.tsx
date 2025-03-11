@@ -1,4 +1,3 @@
-
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -233,8 +232,8 @@ export function GreetingNode({
       {(!outcomes || outcomes.length === 0) && <Handle type="source" position={Position.Right} id="default" className="!w-2 !h-4 !bg-blue-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-blue-500" />}
 
       <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
-        <DialogContent className="sm:max-w-[700px] p-0 gap-0 border-0 shadow-xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl">
-          <div className="p-8 border-b border-gray-100 dark:border-gray-800">
+        <DialogContent className="sm:max-w-[800px] p-0 gap-0 border-0 shadow-xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-800">
             <DialogHeader>
               <DialogTitle className="text-2xl font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">{editingIndex !== null ? 'Edit Outcome' : 'Add New Outcome'}</DialogTitle>
               <DialogDescription className="text-gray-500 dark:text-gray-400 mt-2 text-base">
@@ -243,72 +242,71 @@ export function GreetingNode({
             </DialogHeader>
           </div>
           
-          <div className="p-8 space-y-8">
-            <div className="space-y-6 animate-fade-in">
-              <div className="rounded-xl border border-amber-100 dark:border-amber-900/30 bg-gradient-to-r from-amber-50/70 to-amber-50/30 dark:from-amber-900/10 dark:to-amber-900/5 p-6">
-                <h4 className="font-medium text-amber-800 dark:text-amber-400 mb-3 flex items-center gap-2.5">
-                  <AlertTriangle className="h-5 w-5" />
-                  <span className="text-base">Best practices for outcomes</span>
-                </h4>
-                
-                <ul className="space-y-4 text-sm text-amber-700 dark:text-amber-300/80 pl-3">
-                  <li className="animate-[fade-in_0.4s_ease-out_0.1s] opacity-0 fill-mode-forwards flex gap-2.5 items-baseline">
-                    <div className="h-1.5 w-1.5 rounded-full bg-amber-400 dark:bg-amber-500 mt-1.5 flex-shrink-0"></div>
-                    <div>
-                      <span className="font-semibold">Avoid similar outcomes:</span> Don't create multiple outcomes for similar responses (e.g., "Yes I'm interested" and "Sure, tell me more")
-                    </div>
+          <div className="p-6 space-y-6">
+            <div className="flex items-start gap-3 rounded-lg border border-amber-100 dark:border-amber-900/30 bg-gradient-to-r from-amber-50/70 to-amber-50/30 dark:from-amber-900/10 dark:to-amber-900/5 p-4 animate-fade-in">
+              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="font-medium text-amber-800 dark:text-amber-400 text-sm">Avoid creating multiple similar outcomes</h4>
+                <p className="text-xs text-amber-700/80 dark:text-amber-300/70">
+                  Create only distinct outcomes even if your agent asks for multiple options. Focus on key decision points rather than every possible response.
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-5 animate-[fade-in_0.4s_ease-out_0.2s] opacity-0 fill-mode-forwards">
+              <div className="rounded-xl border border-red-100 dark:border-red-900/30 bg-gradient-to-r from-red-50/70 to-red-50/30 dark:from-red-900/10 dark:to-red-900/5 p-4">
+                <p className="font-medium text-red-600 dark:text-red-400 text-sm mb-2">Not recommended:</p>
+                <ul className="space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
+                  <li className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-red-400 dark:bg-red-500 mt-1.5 flex-shrink-0"></div>
+                    <span>Generic responses ("Yes"/"No")</span>
                   </li>
-                  <li className="animate-[fade-in_0.4s_ease-out_0.2s] opacity-0 fill-mode-forwards flex gap-2.5 items-baseline">
-                    <div className="h-1.5 w-1.5 rounded-full bg-amber-400 dark:bg-amber-500 mt-1.5 flex-shrink-0"></div>
-                    <div>
-                      <span className="font-semibold">Focus on key decision points:</span> Even if your agent asks multiple questions (e.g., "Do you want a car, SUV, or minivan?"), create a single outcome for each main path
-                    </div>
+                  <li className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-red-400 dark:bg-red-500 mt-1.5 flex-shrink-0"></div>
+                    <span>Very similar options ("I agree"/"I'm interested")</span>
                   </li>
-                  <li className="animate-[fade-in_0.4s_ease-out_0.3s] opacity-0 fill-mode-forwards flex gap-2.5 items-baseline">
-                    <div className="h-1.5 w-1.5 rounded-full bg-amber-400 dark:bg-amber-500 mt-1.5 flex-shrink-0"></div>
-                    <div>
-                      <span className="font-semibold">Be specific:</span> Make outcomes clearly distinct and descriptive of the user's intent
-                    </div>
+                  <li className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-red-400 dark:bg-red-500 mt-1.5 flex-shrink-0"></div>
+                    <span>Too many specific variations</span>
                   </li>
                 </ul>
               </div>
-              
-              <div className="space-y-2.5">
-                <Label htmlFor="outcome-input" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Outcome
-                </Label>
-                <Input 
-                  id="outcome-input"
-                  value={newOutcome} 
-                  onChange={e => setNewOutcome(e.target.value)} 
-                  placeholder="Enter a detailed user response..." 
-                  className="text-base border-gray-200 dark:border-gray-700 h-12 px-4 rounded-lg focus-visible:ring-purple-500"
-                  onKeyDown={handleKeyDown}
-                />
+              <div className="rounded-xl border border-green-100 dark:border-green-900/30 bg-gradient-to-r from-green-50/70 to-green-50/30 dark:from-green-900/10 dark:to-green-900/5 p-4">
+                <p className="font-medium text-green-600 dark:text-green-400 text-sm mb-2">Recommended:</p>
+                <ul className="space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
+                  <li className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-400 dark:bg-green-500 mt-1.5 flex-shrink-0"></div>
+                    <span>"I'd like to learn about pricing options"</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-400 dark:bg-green-500 mt-1.5 flex-shrink-0"></div>
+                    <span>"I'm interested in the sedan model"</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-400 dark:bg-green-500 mt-1.5 flex-shrink-0"></div>
+                    <span>"I want to speak with a representative"</span>
+                  </li>
+                </ul>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="rounded-xl border border-red-100 dark:border-red-900/30 bg-gradient-to-r from-red-50/70 to-red-50/30 dark:from-red-900/10 dark:to-red-900/5 p-5 animate-[fade-in_0.4s_ease-out_0.4s] opacity-0 fill-mode-forwards">
-                  <p className="font-semibold text-red-600 dark:text-red-400 text-sm mb-3">Not recommended:</p>
-                  <ul className="list-disc list-inside text-sm space-y-2 text-gray-700 dark:text-gray-300 pl-2">
-                    <li>Generic responses ("Yes"/"No")</li>
-                    <li>Very similar options ("I agree"/"I'm interested")</li>
-                    <li>Too many specific variations</li>
-                  </ul>
-                </div>
-                <div className="rounded-xl border border-green-100 dark:border-green-900/30 bg-gradient-to-r from-green-50/70 to-green-50/30 dark:from-green-900/10 dark:to-green-900/5 p-5 animate-[fade-in_0.4s_ease-out_0.5s] opacity-0 fill-mode-forwards">
-                  <p className="font-semibold text-green-600 dark:text-green-400 text-sm mb-3">Recommended:</p>
-                  <ul className="list-disc list-inside text-sm space-y-2 text-gray-700 dark:text-gray-300 pl-2">
-                    <li>"I'd like to learn about pricing options"</li>
-                    <li>"I'm interested in the sedan model"</li>
-                    <li>"I want to speak with a representative"</li>
-                  </ul>
-                </div>
-              </div>
+            </div>
+            
+            <div className="animate-[fade-in_0.4s_ease-out_0.3s] opacity-0 fill-mode-forwards">
+              <Label htmlFor="outcome-input" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                Outcome
+              </Label>
+              <Input 
+                id="outcome-input"
+                value={newOutcome} 
+                onChange={e => setNewOutcome(e.target.value)} 
+                placeholder="Enter a detailed user response..." 
+                className="text-base border-gray-200 dark:border-gray-700 h-12 px-4 rounded-lg focus-visible:ring-purple-500"
+                onKeyDown={handleKeyDown}
+                autoFocus
+              />
             </div>
           </div>
           
-          <div className="p-8 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20 animate-[fade-in_0.3s_ease-out_0.6s] opacity-0 fill-mode-forwards">
+          <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20 animate-[fade-in_0.3s_ease-out_0.4s] opacity-0 fill-mode-forwards">
             <Button 
               variant="outline" 
               onClick={cancelEdit} 
