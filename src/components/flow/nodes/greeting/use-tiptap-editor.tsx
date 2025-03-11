@@ -20,7 +20,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       StarterKit,
       VariableMark,
       Placeholder.configure({
-        placeholder: 'Type your message here...',
+        placeholder: 'Enter the message your bot will say. Use # or @ to insert variables like {firstName}...',
         emptyEditorClass: 'is-editor-empty',
       }),
     ],

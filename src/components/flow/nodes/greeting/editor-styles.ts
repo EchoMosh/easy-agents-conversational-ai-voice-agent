@@ -9,7 +9,7 @@ export const editorStyles = `
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
-  content: "Type your message here...";
+  content: "Enter the message your bot will say. Use # or @ to insert variables like {firstName}...";
   color: #9ca3af;
   pointer-events: none;
   position: absolute;
