@@ -1,13 +1,12 @@
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageSquare, Pencil, X, Send, AlertTriangle, Webhook, Mail, MessageCirclePlus, List } from 'lucide-react';
+import { Plus, MessageSquare, Pencil, X, Send, AlertTriangle, Webhook, Mail, MessageCirclePlus } from 'lucide-react';
 import { useState, useEffect, useContext } from 'react';
 import { GreetingInput } from './greeting/greeting-input';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { NodeAction, NodeData } from '@/types/agent-types';
-import { ActionConfig } from './actions/action-config';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
@@ -28,9 +27,7 @@ export function GreetingNode({
   data: GreetingNodeData;
   id: string;
 }) {
-  const {
-    updateNodeData
-  } = useContext(NodeUpdateContext);
+  const { updateNodeData } = useContext(NodeUpdateContext);
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [showComingSoonDialog, setShowComingSoonDialog] = useState(false);
   const [newOutcome, setNewOutcome] = useState('');
@@ -138,32 +135,6 @@ export function GreetingNode({
 
   const openComingSoonDialog = () => {
     setShowComingSoonDialog(true);
-  };
-
-  const getActionIcon = (type: string) => {
-    switch (type) {
-      case 'sms':
-        return <Send className="h-3.5 w-3.5" />;
-      case 'webhook':
-        return <Webhook className="h-3.5 w-3.5" />;
-      case 'email':
-        return <Mail className="h-3.5 w-3.5" />;
-      default:
-        return <AlertTriangle className="h-3.5 w-3.5" />;
-    }
-  };
-  
-  const getActionLabel = (action: NodeAction) => {
-    switch (action.type) {
-      case 'sms':
-        return `SMS to ${action.config.phoneNumber || 'unknown'}`;
-      case 'webhook':
-        return `${action.config.method || 'POST'} ${action.config.url || 'unknown'}`;
-      case 'email':
-        return `Email to ${action.config.to || 'unknown'}`;
-      default:
-        return 'Unknown action';
-    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -322,159 +293,6 @@ export function GreetingNode({
         onOpenChange={setShowComingSoonDialog}
         feature="Actions"
       />
-
-      <Dialog open={false} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <List className="h-4 w-4 text-blue-500" />
-              <span>Actions for this Node</span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            {actions.length === 0 ? (
-              <div className="text-center py-8 px-4">
-                <div className="mx-auto w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-3">
-                  <Send className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-                </div>
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No actions configured</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                  Actions will be executed when this node is triggered.
-                </p>
-                <Button 
-                  onClick={() => {}} 
-                  className="text-xs"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Your First Action
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                {actions.map(action => (
-                  <div 
-                    key={action.id} 
-                    className="group relative flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors border border-gray-100 dark:border-gray-800"
-                  >
-                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md bg-gradient-to-br from-blue-500/10 to-sky-500/10 dark:from-blue-500/20 dark:to-sky-500/20 text-blue-600 dark:text-blue-400 border border-blue-100/50 dark:border-blue-800/50">
-                      {getActionIcon(action.type)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium">{action.type.charAt(0).toUpperCase() + action.type.slice(1)}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[300px]">
-                        {getActionLabel(action)}
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-100 dark:hover:bg-blue-900/30" 
-                        onClick={() => {}}
-                      >
-                        <Pencil className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-900/30" 
-                        onClick={() => {}}
-                      >
-                        <X className="h-3.5 w-3.5 text-red-500" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {actions.length > 0 && (
-              <div className="flex justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
-                <Button 
-                  onClick={() => {}} 
-                  className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200/50 dark:border-blue-800/50"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Another Action
-                </Button>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={false} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Select Action Type</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="grid grid-cols-1 gap-3">
-              <Button 
-                onClick={() => {}} 
-                className="flex items-center justify-start gap-3 h-14 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50"
-              >
-                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
-                  <Send className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">SMS Message</div>
-                  <div className="text-xs text-blue-600/70 dark:text-blue-400/70">Send text messages to phones</div>
-                </div>
-              </Button>
-              
-              <Button 
-                onClick={() => {}} 
-                className="flex items-center justify-start gap-3 h-14 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800/50"
-              >
-                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-800 flex items-center justify-center">
-                  <Mail className="h-4 w-4 text-green-600 dark:text-green-400" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">Email</div>
-                  <div className="text-xs text-green-600/70 dark:text-green-400/70">Send emails to your customers</div>
-                </div>
-              </Button>
-              
-              <Button 
-                onClick={() => {}} 
-                className="flex items-center justify-start gap-3 h-14 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50"
-              >
-                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-800 flex items-center justify-center">
-                  <Webhook className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">Webhook</div>
-                  <div className="text-xs text-purple-600/70 dark:text-purple-400/70">Call external services or APIs</div>
-                </div>
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={false} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-[450px]">
-          <DialogHeader>
-            <DialogTitle>
-              {'Edit Action'}
-              {null && <span className="ml-2 text-sm font-normal">
-                {null}
-              </span>}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {null && <ActionConfig action={null} onChange={() => {}} />}
-
-            <div className="flex justify-end gap-3 mt-6">
-              <Button variant="outline" onClick={() => {}}>
-                Cancel
-              </Button>
-              <Button className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white" onClick={() => {}}>
-                {'Add Action'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
