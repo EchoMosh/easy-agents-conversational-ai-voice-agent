@@ -86,9 +86,7 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
                       onSelect={() => onSelectVariable(variable.value, 'default')}
                       className="cursor-pointer flex items-center gap-2 py-2"
                     >
-                      <span className="flex items-center justify-center h-5 w-5">
-                        <Variable className="h-4 w-4" />
-                      </span>
+                      <Variable className="h-4 w-4 text-muted-foreground" />
                       {variable.label}
                     </CommandItem>
                   ))}
@@ -138,7 +136,7 @@ export function VariableSelector({ onSelectVariable, triggerChar, isFullScreen =
                     }}
                     className="cursor-pointer flex items-center gap-2"
                   >
-                    <Variable className="h-4 w-4" />
+                    <Variable className="h-4 w-4 text-muted-foreground" />
                     {variable.label}
                   </CommandItem>
                 ))
