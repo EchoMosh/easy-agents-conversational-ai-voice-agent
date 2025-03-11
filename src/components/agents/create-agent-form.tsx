@@ -24,7 +24,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creationStatus, setCreationStatus] = useState<string | null>(null);
-  const [elevenlabsAgentId, setElevenlabsAgentId] = useState<string | null>(null);
+  const [vAgentId, setVAgentId] = useState<string | null>(null);
   const [newAgent, setNewAgent] = useState<{
     name: string;
     role: Agent["role"];
@@ -67,30 +67,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       // Generate a unique ID for this new agent
       const tempAgentId = crypto.randomUUID();
       
-      setCreationStatus("Creating agent...");
-      
-      // Get ElevenLabs agent ID from the previous step
-      const { data, error } = await supabase.functions.invoke('create-elevenlabs-agent', {
-        body: {
-          name: newAgent.name,
-          role: newAgent.role,
-          language: "en"
-        }
-      });
-
-      if (error) {
-        console.error('Error calling create-elevenlabs-agent function:', error);
-        throw new Error(`Failed to create agent in ElevenLabs: ${error.message}`);
-      }
-
-      console.log('ElevenLabs agent creation response:', data);
-      
-      if (!data.success || !data.elevenlabsAgentId) {
-        throw new Error('Failed to create agent in ElevenLabs');
-      }
-      
-      const elevenlabsId = data.elevenlabsAgentId;
-      setElevenlabsAgentId(elevenlabsId);
+      setCreationStatus("Creating agent in database...");
       
       // Create the flow for the agent
       const flow = getDefaultFlow();
@@ -107,7 +84,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           objective: 'answer_calls',
           interaction_type: ['inbound'],
           language: "en",
-          elevenlabs_agent_id: elevenlabsId // Store the ElevenLabs agent ID
+          v_agent_id: vAgentId // Store the VAPI agent ID from the webhook
         })
         .select()
         .single();
@@ -141,6 +118,14 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       setIsCreating(false);
       setCreationStatus(null);
     }
+  };
+
+  const handleNextFromTemplate = (vAgentIdFromWebhook?: string) => {
+    if (vAgentIdFromWebhook) {
+      // Store the VAPI agent ID if it was returned
+      setVAgentId(vAgentIdFromWebhook);
+    }
+    handleCreateAgent();
   };
 
   if (isCreating) {
@@ -188,10 +173,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             onTemplateSelect={(templateId, role) => {
               setNewAgent(prev => ({ ...prev, template: templateId, role }));
             }}
-            onNext={handleCreateAgent}
+            onNext={handleNextFromTemplate}
             onBack={() => setStep(1)}
             showOnlyScratch={true}
-            agentName={newAgent.name} // Pass the agent name to TemplateStep
+            agentName={newAgent.name}
           />
         )}
       </div>

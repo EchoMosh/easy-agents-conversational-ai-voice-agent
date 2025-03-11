@@ -6,14 +6,15 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Agent } from "@/types/agent";
+import { useState } from "react";
 
 interface TemplateStepProps {
   selectedTemplate: string;
-  onTemplateSelect: (templateId: string, role: Agent['role']) => void;
-  onNext: () => void;
+  onTemplateSelect: (templateId: string, role: Agent["role"]) => void;
+  onNext: (vAgentId?: string) => void;
   onBack: () => void;
   showOnlyScratch?: boolean;
-  agentName?: string; // Add agentName prop
+  agentName?: string;
 }
 
 export function TemplateStep({ 
@@ -22,14 +23,16 @@ export function TemplateStep({
   onNext, 
   onBack,
   showOnlyScratch = false,
-  agentName = "New Agent", // Default to "New Agent" if not provided
+  agentName = "New Agent",
 }: TemplateStepProps) {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [creationStatus, setCreationStatus] = useState<string | null>(null);
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && selectedTemplate) {
       e.preventDefault();
-      onNext();
+      handleContinueClick();
     }
   };
 
@@ -53,33 +56,52 @@ export function TemplateStep({
       return;
     }
     
+    setIsLoading(true);
+    
     try {
-      // Call the Supabase Edge Function to create an ElevenLabs agent
-      const { data, error } = await supabase.functions.invoke('create-elevenlabs-agent', {
+      setCreationStatus("Creating agent through n8n.io webhook...");
+      
+      // Call the webhook-relay function to trigger your n8n.io workflow
+      const { data, error } = await supabase.functions.invoke('webhook-relay', {
         body: {
-          name: agentName,
-          role: "virtual_assistant",
-          language: "en"
+          webhookUrl: process.env.N8N_WEBHOOK_URL || "https://hooks.n8n.cloud/webhook-test/your-webhook-id",
+          payload: {
+            agentName: agentName,
+            role: "virtual_assistant",
+            language: "en"
+          }
         }
       });
 
       if (error) {
-        console.error('Error calling create-elevenlabs-agent function:', error);
-        throw new Error(`Failed to create agent: ${error.message}`);
+        console.error('Error calling webhook-relay function:', error);
+        throw new Error(`Failed to connect to n8n: ${error.message}`);
       }
 
-      console.log('ElevenLabs agent creation response:', data);
+      console.log('n8n webhook response:', data);
       
-      if (!data.success || !data.elevenlabsAgentId) {
-        throw new Error('Failed to create agent in ElevenLabs');
+      if (!data.success) {
+        throw new Error('Failed to create agent via n8n webhook');
+      }
+      
+      // Check if the response contains the VAPI agent ID
+      if (!data.response || !data.response.v_agent_id) {
+        console.warn('No v_agent_id returned from n8n webhook, proceeding anyway');
+      }
+      
+      // Store the VAPI agent ID to pass back to the parent component
+      const vAgentId = data.response?.v_agent_id;
+      if (vAgentId) {
+        console.log('Received v_agent_id:', vAgentId);
       }
       
       toast({
         title: "Success",
-        description: "Agent created successfully with ElevenLabs",
+        description: "Agent created successfully via n8n",
       });
       
-      onNext();
+      // Pass the VAPI agent ID back to the parent component
+      onNext(vAgentId);
     } catch (error) {
       console.error('Error creating agent:', error);
       toast({
@@ -87,6 +109,7 @@ export function TemplateStep({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create agent",
       });
+      setIsLoading(false);
     }
   };
 
@@ -138,10 +161,16 @@ export function TemplateStep({
           className="w-full relative"
           size="lg"
           onClick={handleContinueClick}
-          disabled={!selectedTemplate}
+          disabled={!selectedTemplate || isLoading}
         >
-          Continue
-          <ArrowRight className="ml-2 h-4 w-4" />
+          {isLoading ? (
+            <>Creating<span className="loading ml-2">...</span></>
+          ) : (
+            <>
+              Continue
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
         </Button>
       </div>
     </motion.div>
