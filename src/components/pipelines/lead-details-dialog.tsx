@@ -241,22 +241,22 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
                 </motion.div>
               )}
 
-              {/* Remove lead button */}
+              {/* Remove lead button - styled as a subtle link */}
               <motion.div
                 custom={4}
                 initial="hidden"
                 animate="visible"
                 variants={fadeInUpVariants}
-                className="mt-6 pt-4 border-t border-border/40"
+                className="mt-6 pt-4 border-t border-border/40 flex justify-center"
               >
                 <Button 
-                  variant="destructive" 
+                  variant="ghost" 
                   size="sm"
-                  className="w-full gap-2"
+                  className="text-muted-foreground hover:text-destructive gap-1.5 text-xs font-normal"
                   onClick={handleRemoveLead}
                   disabled={isRemoving}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                   Remove from pipeline
                 </Button>
               </motion.div>
