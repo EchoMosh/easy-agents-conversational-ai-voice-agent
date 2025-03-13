@@ -4,13 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Lead } from "@/pages/dashboard/leads";
 import { format } from "date-fns";
 import { PipelineColumn } from "@/types/pipeline";
-import { Mail, Phone, Calendar, User, Copy, ExternalLink } from "lucide-react";
+import { Mail, Phone, Calendar, User, ExternalLink, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface LeadDetailsDialogProps {
   lead: Lead | null;
@@ -20,7 +22,8 @@ interface LeadDetailsDialogProps {
 
 export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogProps) {
   const { toast } = useToast();
-  const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
+  const [isRemoving, setIsRemoving] = useState(false);
 
   if (!lead) return null;
 
@@ -35,14 +38,39 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
     return column?.color || "bg-gray-200";
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(`${lead.name} - ${lead.email || 'No email'}`);
-    setCopied(true);
-    toast({
-      title: "Copied to clipboard",
-      description: "Lead details copied to clipboard",
-    });
-    setTimeout(() => setCopied(false), 2000);
+  const handleViewProfile = () => {
+    onClose();
+    navigate(`/dashboard/chats?leadId=${lead.id}`);
+  };
+
+  const handleRemoveLead = async () => {
+    setIsRemoving(true);
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update({ 
+          pipeline_id: null,
+          status: null
+        })
+        .eq("id", lead.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Lead removed",
+        description: "Lead has been removed from pipeline",
+      });
+      onClose();
+    } catch (error) {
+      console.error("Error removing lead:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove lead from pipeline",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRemoving(false);
+    }
   };
 
   const fadeInUpVariants = {
@@ -95,16 +123,7 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
                 variant="outline" 
                 size="sm" 
                 className="h-9 gap-1.5 text-xs"
-                onClick={copyToClipboard}
-              >
-                <Copy className="h-3.5 w-3.5" />
-                {copied ? 'Copied' : 'Copy link'}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-9 gap-1.5 text-xs"
+                onClick={handleViewProfile}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 View profile
@@ -221,6 +240,26 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
                   </div>
                 </motion.div>
               )}
+
+              {/* Remove lead button */}
+              <motion.div
+                custom={4}
+                initial="hidden"
+                animate="visible"
+                variants={fadeInUpVariants}
+                className="mt-6 pt-4 border-t border-border/40"
+              >
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  className="w-full gap-2"
+                  onClick={handleRemoveLead}
+                  disabled={isRemoving}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remove from pipeline
+                </Button>
+              </motion.div>
             </div>
           </div>
         </div>
