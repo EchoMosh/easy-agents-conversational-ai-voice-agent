@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X, Keyboard } from 'lucide-react';
@@ -758,5 +759,10 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                   <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
                 </ContextMenuItem>
               ))}
-           
-
+            </ContextMenuContent>
+          </ContextMenu>
+        </div>
+      </div>
+    </NodeUpdateContext.Provider>
+  );
+}
