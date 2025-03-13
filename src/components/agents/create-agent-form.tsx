@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,17 +34,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     template: '',
   });
 
-  const handleCreateAgent = async () => {
-    if (!newAgent.name) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please fill in all required fields",
-      });
-      return;
-    }
-
-    if (!vAgentId) {
+  const handleNextFromTemplate = async (vAgentIdFromWebhook?: string) => {
+    if (!vAgentIdFromWebhook) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -53,10 +43,24 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       });
       return;
     }
+    
+    setVAgentId(vAgentIdFromWebhook);
+    await handleCreateAgent();
+  };
+
+  const handleCreateAgent = async () => {
+    if (!newAgent.name || !vAgentId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: !newAgent.name ? "Please fill in all required fields" : "No agent ID received, please try again",
+      });
+      return;
+    }
 
     setIsCreating(true);
     setError(null);
-    setCreationStatus("Starting agent creation process...");
+    setCreationStatus("Creating agent in database...");
 
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -73,12 +77,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     try {
       console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role, 'v_agent_id:', vAgentId);
       
-      setCreationStatus("Creating agent in database...");
-      
-      // Create the flow for the agent
       const flow = getDefaultFlow();
       
-      // Create the agent in our database
       const { data: agentData, error: agentError } = await supabase
         .from('agents')
         .insert({
@@ -90,15 +90,14 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           objective: 'answer_calls',
           interaction_type: ['inbound'],
           language: "en",
-          v_agent_id: vAgentId // Save the VAPI agent ID received from n8n
+          v_agent_id: vAgentId
         })
         .select()
         .single();
 
       if (agentError) {
         console.error('Error creating agent in database:', agentError);
-        setError(`Failed to create agent in database: ${agentError.message}`);
-        throw agentError;
+        throw new Error(`Failed to create agent in database: ${agentError.message}`);
       }
 
       setCreationStatus("Agent created successfully, redirecting...");
@@ -110,38 +109,23 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       
       await onSuccess(agentData.id);
       navigate(`/dashboard/agents/flow/${agentData.id}`, { replace: true });
+      
     } catch (error) {
       console.error('Error creating agent:', error);
-      const errorMessage = typeof error === 'object' && error !== null && 'message' in error 
+      setError(typeof error === 'object' && error !== null && 'message' in error 
         ? String(error.message) 
-        : "Failed to create agent";
+        : "Failed to create agent");
       
       toast({
         variant: "destructive",
         title: "Error",
-        description: errorMessage,
+        description: typeof error === 'object' && error !== null && 'message' in error 
+          ? String(error.message) 
+          : "Failed to create agent",
       });
+    } finally {
       setIsCreating(false);
       setCreationStatus(null);
-    }
-  };
-
-  const handleNextFromTemplate = (vAgentIdFromWebhook?: string) => {
-    if (!vAgentIdFromWebhook) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No agent ID received from n8n.io",
-      });
-      return;
-    }
-    
-    // Store the VAPI agent ID
-    setVAgentId(vAgentIdFromWebhook);
-    
-    // Only proceed with agent creation if we have a valid ID
-    if (vAgentIdFromWebhook) {
-      handleCreateAgent();
     }
   };
 

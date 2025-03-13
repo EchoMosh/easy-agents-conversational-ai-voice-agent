@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Wand2 } from "lucide-react";
@@ -36,7 +35,6 @@ export function TemplateStep({
   };
 
   const handleTemplateClick = () => {
-    // Toggle selection - if already selected, deselect it, otherwise select it
     if (selectedTemplate === '') {
       onTemplateSelect('not_selected', 'virtual_assistant');
     } else {
@@ -45,7 +43,6 @@ export function TemplateStep({
   };
 
   const handleContinueClick = async () => {
-    // Validate that a template is selected before proceeding
     if (!selectedTemplate) {
       toast({
         variant: "destructive",
@@ -59,7 +56,6 @@ export function TemplateStep({
     setCreationStatus("Creating agent through n8n webhook...");
     
     try {
-      // Direct POST request to n8n webhook
       const webhookUrl = "https://moshi.app.n8n.cloud/webhook/create-agent";
       
       const response = await fetch(webhookUrl, {
@@ -87,7 +83,6 @@ export function TemplateStep({
         throw new Error('Invalid response from n8n webhook');
       }
       
-      // Check if the response contains the VAPI agent ID
       if (!data || !data.v_agent_id) {
         console.error('No v_agent_id in response:', data);
         throw new Error('No v_agent_id returned from n8n webhook');
@@ -101,8 +96,7 @@ export function TemplateStep({
         description: "Agent created successfully via n8n",
       });
       
-      // Pass the VAPI agent ID back to the parent component
-      onNext(vAgentId);
+      await onNext(vAgentId);
       
     } catch (error) {
       console.error('Error creating agent:', error);
@@ -111,6 +105,7 @@ export function TemplateStep({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create agent",
       });
+    } finally {
       setIsLoading(false);
       setCreationStatus(null);
     }
