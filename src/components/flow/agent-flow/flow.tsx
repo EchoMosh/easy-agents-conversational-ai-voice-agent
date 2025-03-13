@@ -473,9 +473,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
 
   const handlePaneContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     console.log('[Flow] Pane context menu triggered at:', event.clientX, event.clientY);
     
     setRightClickedNodeId(null);
+    setContextMenuOpen(true);
     
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -583,7 +585,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           onKeyDown={handleFlowKeyDown}
           style={{ outline: 'none' }}
         >
-          <ContextMenu>
+          <ContextMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
             <ContextMenuTrigger className="flex w-full h-full">
               <ReactFlow
                 nodes={nodes}
