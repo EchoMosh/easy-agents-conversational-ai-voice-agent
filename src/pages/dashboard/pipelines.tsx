@@ -12,6 +12,7 @@ import { useDeletePipeline } from "@/hooks/pipeline/use-delete-pipeline";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
 import { usePipelineColumns } from "@/hooks/pipeline/use-pipeline-columns";
 import { defaultColumns } from "@/hooks/use-pipeline";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
@@ -20,6 +21,7 @@ export function DroppableColumn({ id, children }: { id: string; children: React.
 
 export default function PipelinesPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const queryClient = useQueryClient();
   
   const {
     pipelines,
@@ -49,7 +51,41 @@ export default function PipelinesPage() {
     onDelete,
   } = useDeletePipeline(handleDeletePipeline, selectedPipeline?.id);
 
-  const { handleDragEnd } = usePipelineDrag(selectedPipeline, leads, refetchLeads);
+  // Custom drag handler with optimistic updates
+  const { handleDragEnd: baseHandleDragEnd } = usePipelineDrag(selectedPipeline, leads, refetchLeads);
+  
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    
+    if (!over || !selectedPipeline) return;
+    
+    const leadId = String(active.id);
+    const newColumnId = String(over.id);
+    
+    // Apply optimistic update
+    if (leadId && newColumnId) {
+      const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
+      if (!targetColumn) return;
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(["leads", selectedPipeline.id], (oldData: any) => {
+        if (!oldData) return oldData;
+        
+        return oldData.map((lead: Lead) => {
+          if (lead.id === leadId) {
+            return {
+              ...lead,
+              status: targetColumn.title
+            };
+          }
+          return lead;
+        });
+      });
+    }
+    
+    // Call the original handler for database updates
+    baseHandleDragEnd(event);
+  };
   
   const {
     editedColumns,

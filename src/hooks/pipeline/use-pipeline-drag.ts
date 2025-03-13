@@ -25,6 +25,9 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     
     if (lead?.status === newStatus) return;
 
+    // Optimistically update UI without waiting for the server response
+    // This will be handled by the query client below
+
     try {
       const { error } = await supabase
         .from("leads")
@@ -36,11 +39,13 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
 
       if (error) throw error;
 
+      // Show success toast after the update succeeds
       toast({
         title: "Lead status updated",
         description: `Lead moved to ${newStatus}`,
       });
       
+      // Refetch leads to ensure UI is in sync with server state
       refetchLeads();
     } catch (error) {
       console.error("Error updating lead status:", error);
@@ -49,6 +54,8 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
         description: "Failed to update lead status",
         variant: "destructive",
       });
+      // Force refetch to revert to correct state in case of error
+      refetchLeads();
     }
   };
 
