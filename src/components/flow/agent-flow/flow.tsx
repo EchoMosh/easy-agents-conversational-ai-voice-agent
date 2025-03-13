@@ -9,6 +9,13 @@ import { TriggerNode } from '@/components/flow/nodes/trigger-node';
 import { TransferNode } from '@/components/flow/nodes/transfer-node';
 import { WebhookNode } from '@/components/flow/nodes/webhook-node';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { toast } from "sonner";
 
 import React from 'react';
 
@@ -78,35 +85,40 @@ const widgets = [
     label: 'Speak', 
     icon: Smile, 
     color: '#60a5fa',
-    description: 'Start a conversation with customizable responses'
+    description: 'Start a conversation with customizable responses',
+    shortcut: 'S'
   },
   { 
     type: 'endNode', 
     label: 'End', 
     icon: XCircle, 
     color: '#f87171',
-    description: 'End the conversation flow'
+    description: 'End the conversation flow',
+    shortcut: 'E'
   },
   { 
     type: 'triggerNode', 
     label: 'Trigger', 
     icon: Zap, 
     color: '#fbbf24',
-    description: 'Define when this flow should start'
+    description: 'Define when this flow should start',
+    shortcut: 'T'
   },
   { 
     type: 'transferNode', 
     label: 'Transfer', 
     icon: PhoneForwarded, 
     color: '#10b981',
-    description: 'Transfer the conversation to a live agent'
+    description: 'Transfer the conversation to a live agent',
+    shortcut: 'X'
   },
   { 
     type: 'webhookNode', 
     label: 'Webhook', 
     icon: Webhook, 
     color: '#d946ef',
-    description: 'Make HTTP requests to external services'
+    description: 'Make HTTP requests to external services',
+    shortcut: 'W'
   }
 ];
 
@@ -248,6 +260,76 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
       data: node.data || {}
     }));
   }, []);
+
+  const handleFlowKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    const isEditingText = target.tagName === 'INPUT' || 
+                          target.tagName === 'TEXTAREA' || 
+                          target.isContentEditable;
+    
+    if (isEditingText) return;
+    
+    const keyPressed = event.key.toUpperCase();
+    const widget = widgets.find(w => w.shortcut === keyPressed);
+    
+    if (widget && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      
+      if (reactFlowWrapper.current) {
+        const bounds = reactFlowWrapper.current.getBoundingClientRect();
+        const position = screenToFlowPosition({
+          x: bounds.width / 2,
+          y: bounds.height / 2,
+        });
+        
+        const newNode = createNodeFromType(widget.type, position);
+        
+        toast.success(`Added ${widget.label} node with keyboard shortcut '${widget.shortcut}'`);
+      }
+    }
+    
+    handleKeyDown(event);
+  }, [widgets, createNodeFromType, handleKeyDown, screenToFlowPosition]);
+
+  const createNodeFromType = useCallback((nodeType: string, position: { x: number, y: number }) => {
+    let newNodeData: NodeData = {};
+    
+    switch (nodeType) {
+      case 'greetingNode':
+        newNodeData = { greeting: 'Hello, this is your agent. How can I help you?', outcomes: [], actions: [] };
+        break;
+      case 'endNode':
+        newNodeData = { message: 'Enter your message here' };
+        break;
+      case 'triggerNode':
+        newNodeData = { platform: undefined, action: undefined };
+        break;
+      case 'transferNode':
+        newNodeData = { message: 'Transfer to agent', outcomes: [] };
+        break;
+      case 'webhookNode':
+        newNodeData = { url: '', method: 'GET' };
+        break;
+    }
+
+    const newNode: Node = {
+      id: `${nodeType}-${Date.now()}`,
+      type: nodeType,
+      position,
+      data: newNodeData,
+      draggable: true
+    };
+
+    console.log('[Flow] Adding new node:', newNode);
+    const updatedNodes = [...nodes, newNode];
+    setNodes(updatedNodes);
+    
+    setTimeout(() => {
+      onNodesChange(updatedNodes);
+    }, 0);
+    
+    return newNode;
+  }, [nodes, setNodes, onNodesChange]);
 
   useEffect(() => {
     if (safeInitialNodes.length > 0 && !initialized) {
@@ -398,47 +480,45 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         return;
       }
 
-      let newNodeData: NodeData = {};
-      
-      switch (nodeType) {
-        case 'greetingNode':
-          newNodeData = { greeting: 'Hello, this is your agent. How can I help you?', outcomes: [], actions: [] };
-          break;
-        case 'endNode':
-          newNodeData = { message: 'Enter your message here' };
-          break;
-        case 'triggerNode':
-          newNodeData = { platform: undefined, action: undefined };
-          break;
-        case 'transferNode':
-          newNodeData = { message: 'Transfer to agent', outcomes: [] };
-          break;
-        case 'webhookNode':
-          newNodeData = { url: '', method: 'GET' };
-          break;
-      }
+      createNodeFromType(nodeType, position);
+    }
+  }, [screenToFlowPosition, createNodeFromType]);
 
-      const newNode: Node = {
-        id: `${nodeType}-${Date.now()}`,
-        type: nodeType,
-        position,
-        data: newNodeData,
-        draggable: true
+  const duplicateNode = useCallback((nodeId: string) => {
+    const nodeToDuplicate = nodes.find(node => node.id === nodeId);
+    
+    if (nodeToDuplicate) {
+      const newPosition = {
+        x: nodeToDuplicate.position.x + 50,
+        y: nodeToDuplicate.position.y + 50
       };
-
-      console.log('[Flow] Adding new node:', newNode);
+      
+      const newNode: Node = {
+        ...nodeToDuplicate,
+        id: `${nodeToDuplicate.type}-${Date.now()}`,
+        position: newPosition,
+        selected: false,
+        data: { ...nodeToDuplicate.data }
+      };
+      
       const updatedNodes = [...nodes, newNode];
       setNodes(updatedNodes);
       
       setTimeout(() => {
         onNodesChange(updatedNodes);
       }, 0);
+      
+      toast.success("Node duplicated");
+      return newNode;
     }
-  }, [screenToFlowPosition, setNodes, nodes, onNodesChange]);
+    return null;
+  }, [nodes, setNodes, onNodesChange]);
 
   const toggleWidgetPanel = () => {
     setShowWidgets(prev => !prev);
   };
+  
+  const selectedNode = nodes.find(node => node.selected);
 
   return (
     <NodeUpdateContext.Provider value={{ updateNodeData }}>
@@ -450,170 +530,234 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           ref={flowContainerRef}
           className="w-full h-full" 
           tabIndex={0} 
-          onKeyDown={handleKeyDown}
+          onKeyDown={handleFlowKeyDown}
           style={{ outline: 'none' }}
         >
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={handleNodesChange}
-            onEdgesChange={handleEdgesChange}
-            onConnect={onConnect}
-            onEdgeClick={onEdgeClick}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            fitView
-            defaultEdgeOptions={defaultEdgeOptions}
-            connectionMode={ConnectionMode.Loose}
-            className="bg-white dark:bg-gray-950"
-            snapToGrid={true}
-            snapGrid={[15, 15]}
-            deleteKeyCode={['Delete', 'Backspace']}
-            onInit={(reactFlowInstance) => {
-              console.log('[Flow] ReactFlow initialized');
-              setTimeout(() => {
-                reactFlowInstance.fitView({ padding: 0.2 });
+          <ContextMenu>
+            <ContextMenuTrigger className="w-full h-full">
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={handleNodesChange}
+                onEdgesChange={handleEdgesChange}
+                onConnect={onConnect}
+                onEdgeClick={onEdgeClick}
+                onDragOver={onDragOver}
+                onDrop={onDrop}
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                fitView
+                defaultEdgeOptions={defaultEdgeOptions}
+                connectionMode={ConnectionMode.Loose}
+                className="bg-white dark:bg-gray-950"
+                snapToGrid={true}
+                snapGrid={[15, 15]}
+                deleteKeyCode={['Delete', 'Backspace']}
+                onInit={(reactFlowInstance) => {
+                  console.log('[Flow] ReactFlow initialized');
+                  setTimeout(() => {
+                    reactFlowInstance.fitView({ padding: 0.2 });
+                    
+                    const currentNodes = reactFlowInstance.getNodes();
+                    console.log('[Flow] Current nodes after init:', currentNodes);
+                    
+                    if (currentNodes.length === 0 && safeInitialNodes.length > 0) {
+                      console.log('[Flow] Forcing node initialization after init');
+                      setNodes(normalizeNodes(safeInitialNodes));
+                    }
+                  }, 100);
+                }}
+              >
+                <style>
+                  {`
+                    @keyframes dashdraw {
+                      from {
+                        stroke-dashoffset: 24;
+                      }
+                      to {
+                        stroke-dashoffset: 0;
+                      }
+                    }
+                    
+                    @keyframes pulse {
+                      0%, 100% {
+                        opacity: 1;
+                        transform: scale(1);
+                      }
+                      50% {
+                        opacity: 0.8;
+                        transform: scale(1.05);
+                      }
+                    }
+                    
+                    .edge-delete-button {
+                      cursor: pointer;
+                      z-index: 10;
+                    }
+                    
+                    .edge-delete-button .animate-pulse {
+                      animation: pulse 1.5s infinite ease-in-out;
+                    }
+                    
+                    .edge-hit-area {
+                      pointer-events: all;
+                      fill: none;
+                    }
+                    
+                    .react-flow__edge {
+                      pointer-events: all;
+                      cursor: pointer;
+                      transition: all 0.2s ease;
+                    }
+                    
+                    .react-flow__edge:hover .react-flow__edge-path {
+                      stroke-width: 4px;
+                      stroke: #64748b;
+                      transition: all 0.2s ease;
+                    }
+                    
+                    .react-flow__edge-path {
+                      stroke-dasharray: 8 4;
+                      animation: dashdraw 0.8s linear infinite;
+                      fill: none;
+                    }
+                  `}
+                </style>
                 
-                const currentNodes = reactFlowInstance.getNodes();
-                console.log('[Flow] Current nodes after init:', currentNodes);
+                <Background className="opacity-40" />
+                <MiniMap
+                  className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
+                  nodeColor={node => {
+                    switch (node.type) {
+                      case 'greetingNode':
+                        return '#60a5fa';
+                      case 'triggerNode':
+                        return '#fbbf24';
+                      case 'endNode':
+                        return '#f87171';
+                      case 'transferNode':
+                        return '#10b981';
+                      case 'webhookNode':
+                        return '#d946ef';
+                      default:
+                        return '#60a5fa';
+                    }
+                  }}
+                  maskColor="rgba(0, 0, 0, 0.05)"
+                />
                 
-                if (currentNodes.length === 0 && safeInitialNodes.length > 0) {
-                  console.log('[Flow] Forcing node initialization after init');
-                  setNodes(normalizeNodes(safeInitialNodes));
-                }
-              }, 100);
-            }}
-          >
-            <style>
-              {`
-                @keyframes dashdraw {
-                  from {
-                    stroke-dashoffset: 24;
-                  }
-                  to {
-                    stroke-dashoffset: 0;
-                  }
-                }
-                
-                @keyframes pulse {
-                  0%, 100% {
-                    opacity: 1;
-                    transform: scale(1);
-                  }
-                  50% {
-                    opacity: 0.8;
-                    transform: scale(1.05);
-                  }
-                }
-                
-                .edge-delete-button {
-                  cursor: pointer;
-                  z-index: 10;
-                }
-                
-                .edge-delete-button .animate-pulse {
-                  animation: pulse 1.5s infinite ease-in-out;
-                }
-                
-                .edge-hit-area {
-                  pointer-events: all;
-                  fill: none;
-                }
-                
-                .react-flow__edge {
-                  pointer-events: all;
-                  cursor: pointer;
-                  transition: all 0.2s ease;
-                }
-                
-                .react-flow__edge:hover .react-flow__edge-path {
-                  stroke-width: 4px;
-                  stroke: #64748b;
-                  transition: all 0.2s ease;
-                }
-                
-                .react-flow__edge-path {
-                  stroke-dasharray: 8 4;
-                  animation: dashdraw 0.8s linear infinite;
-                  fill: none;
-                }
-              `}
-            </style>
-            
-            <Background className="opacity-40" />
-            <MiniMap
-              className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
-              nodeColor={node => {
-                switch (node.type) {
-                  case 'greetingNode':
-                    return '#60a5fa';
-                  case 'triggerNode':
-                    return '#fbbf24';
-                  case 'endNode':
-                    return '#f87171';
-                  case 'transferNode':
-                    return '#10b981';
-                  case 'webhookNode':
-                    return '#d946ef';
-                  default:
-                    return '#60a5fa';
-                }
-              }}
-              maskColor="rgba(0, 0, 0, 0.05)"
-            />
-            <Panel position="bottom-left" className="space-y-2">
-              <div className="relative">
-                <button
-                  ref={widgetButtonRef}
-                  onClick={toggleWidgetPanel}
-                  className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl hover:bg-primary/90"
-                >
-                  <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
-                </button>
-                {showWidgets && (
-                  <div 
-                    className="widget-panel absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
-                  >
-                    <TooltipProvider>
-                      {widgets.map((widget) => (
-                        <Tooltip key={widget.type}>
-                          <TooltipTrigger asChild>
-                            <div
-                              className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-move transition-all duration-200"
-                              style={{
-                                background: `color-mix(in srgb, ${widget.color} 10%, transparent)`,
-                              }}
-                              onDragStart={(e) => onDragStart(e, widget.type)}
-                              draggable
-                            >
-                              <span 
-                                className="p-1.5 rounded-lg"
-                                style={{
-                                  background: `color-mix(in srgb, ${widget.color} 15%, transparent)`,
-                                  color: widget.color
-                                }}
-                              >
-                                <widget.icon className="h-4 w-4" />
-                              </span>
-                              <span className="font-medium text-sm text-foreground/80">{widget.label}</span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent 
-                            side="right"
-                            className="bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-none shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]"
-                          >
-                            {widget.description}
-                          </TooltipContent>
-                        </Tooltip>
+                <Panel position="top-right" className="p-2 bg-white/80 dark:bg-gray-900/80 rounded-lg backdrop-blur-sm shadow-sm border border-gray-200 dark:border-gray-800">
+                  <div className="text-xs text-muted-foreground">
+                    <div className="font-medium mb-1">Keyboard Shortcuts:</div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                      {widgets.map(widget => (
+                        <div key={widget.type} className="flex items-center gap-1">
+                          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
+                          <span>Add {widget.label}</span>
+                        </div>
                       ))}
-                    </TooltipProvider>
+                      <div className="flex items-center gap-1">
+                        <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-semibold">Del</kbd>
+                        <span>Delete selected</span>
+                      </div>
+                      {selectedNode && (
+                        <div className="flex items-center gap-1">
+                          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-semibold">D</kbd>
+                          <span>Duplicate selected</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            </Panel>
-          </ReactFlow>
+                </Panel>
+                
+                <Panel position="bottom-left" className="space-y-2">
+                  <div className="relative">
+                    <button
+                      ref={widgetButtonRef}
+                      onClick={toggleWidgetPanel}
+                      className="p-2 rounded-full bg-primary text-primary-foreground shadow-lg transform transition-transform hover:scale-105 backdrop-blur-xl hover:bg-primary/90"
+                    >
+                      <Plus className={`h-5 w-5 transition-transform ${showWidgets ? 'rotate-45' : ''}`} />
+                    </button>
+                    {showWidgets && (
+                      <div 
+                        className="widget-panel absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
+                      >
+                        <TooltipProvider>
+                          {widgets.map((widget) => (
+                            <Tooltip key={widget.type}>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className="group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-move transition-all duration-200"
+                                  style={{
+                                    background: `color-mix(in srgb, ${widget.color} 10%, transparent)`,
+                                  }}
+                                  onDragStart={(e) => onDragStart(e, widget.type)}
+                                  draggable
+                                >
+                                  <span 
+                                    className="p-1.5 rounded-lg"
+                                    style={{
+                                      background: `color-mix(in srgb, ${widget.color} 15%, transparent)`,
+                                      color: widget.color
+                                    }}
+                                  >
+                                    <widget.icon className="h-4 w-4" />
+                                  </span>
+                                  <span className="font-medium text-sm text-foreground/80">{widget.label}</span>
+                                  <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold text-muted-foreground">{widget.shortcut}</kbd>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent 
+                                side="right"
+                                className="bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl border-none shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]"
+                              >
+                                {widget.description}
+                              </TooltipContent>
+                            </Tooltip>
+                          ))}
+                        </TooltipProvider>
+                      </div>
+                    )}
+                  </div>
+                </Panel>
+              </ReactFlow>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="w-64">
+              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Add Node</div>
+              {widgets.map((widget) => (
+                <ContextMenuItem
+                  key={widget.type}
+                  onClick={(e) => handleContextMenuAddNode(widget.type, e)}
+                  className="flex items-center gap-2"
+                >
+                  <span 
+                    className="p-1 rounded-md"
+                    style={{ color: widget.color }}
+                  >
+                    <widget.icon className="h-3.5 w-3.5" />
+                  </span>
+                  <span>{widget.label}</span>
+                  <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
+                </ContextMenuItem>
+              ))}
+              
+              {selectedNode && (
+                <>
+                  <ContextMenuItem 
+                    onClick={() => duplicateNode(selectedNode.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="p-1 rounded-md text-indigo-500">
+                      <MessageCircle className="h-3.5 w-3.5" />
+                    </span>
+                    <span>Duplicate Selected Node</span>
+                    <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">D</kbd>
+                  </ContextMenuItem>
+                </>
+              )}
+            </ContextMenuContent>
+          </ContextMenu>
         </div>
       </div>
     </NodeUpdateContext.Provider>
