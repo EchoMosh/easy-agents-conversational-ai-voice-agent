@@ -127,6 +127,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   const [initialized, setInitialized] = useState(false);
   const [rightClickPosition, setRightClickPosition] = useState<{ x: number, y: number } | null>(null);
   const [rightClickedNodeId, setRightClickedNodeId] = useState<string | null>(null);
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
 
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     console.log(`[Flow] updateNodeData called for node ${nodeId} with data:`, newData);
@@ -501,6 +502,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         y: event.clientY - bounds.top
       });
     }
+    
+    setContextMenuOpen(true);
   }, []);
 
   const handlePaneContextMenu = useCallback((event: React.MouseEvent) => {
@@ -515,9 +518,12 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         y: event.clientY - bounds.top
       });
     }
+    
+    setContextMenuOpen(true);
   }, []);
 
   const handleContextMenuOpenChange = useCallback((open: boolean) => {
+    setContextMenuOpen(open);
     if (!open) {
       setRightClickPosition(null);
       setRightClickedNodeId(null);
@@ -587,7 +593,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           onKeyDown={handleFlowKeyDown}
           style={{ outline: 'none' }}
         >
-          <ContextMenu onOpenChange={handleContextMenuOpenChange}>
+          <ContextMenu open={contextMenuOpen} onOpenChange={handleContextMenuOpenChange}>
             <ContextMenuTrigger className="w-full h-full">
               <ReactFlow
                 nodes={nodes}
@@ -803,50 +809,51 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
               </ReactFlow>
             </ContextMenuTrigger>
             
-            <ContextMenuContent 
-              className="w-64"
-              style={rightClickPosition ? {
-                position: 'absolute',
-                left: `${rightClickPosition.x}px`,
-                top: `${rightClickPosition.y}px`
-              } : undefined}
-            >
-              {rightClickedNodeId ? (
-                <>
-                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Node Actions</div>
+            {rightClickPosition && (
+              <ContextMenuContent 
+                className="w-64"
+                style={{
+                  position: 'absolute',
+                  left: `${rightClickPosition.x}px`,
+                  top: `${rightClickPosition.y}px`
+                }}
+              >
+                {rightClickedNodeId ? (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Node Actions</div>
+                    <ContextMenuItem
+                      onClick={handleDeleteSelectedNode}
+                      className="flex items-center gap-2 text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Delete Node</span>
+                      <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">Del</kbd>
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                  </>
+                ) : null}
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Add Node</div>
+                {widgets.map((widget) => (
                   <ContextMenuItem
-                    onClick={handleDeleteSelectedNode}
-                    className="flex items-center gap-2 text-destructive focus:text-destructive"
+                    key={widget.type}
+                    onClick={(e) => handleContextMenuAddNode(widget.type, e)}
+                    className="flex items-center gap-2"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span>Delete Node</span>
-                    <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">Del</kbd>
+                    <span 
+                      className="p-1 rounded-md"
+                      style={{ color: widget.color }}
+                    >
+                      <widget.icon className="h-3.5 w-3.5" />
+                    </span>
+                    <span>{widget.label}</span>
+                    <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
                   </ContextMenuItem>
-                  <ContextMenuSeparator />
-                </>
-              ) : null}
-              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Add Node</div>
-              {widgets.map((widget) => (
-                <ContextMenuItem
-                  key={widget.type}
-                  onClick={(e) => handleContextMenuAddNode(widget.type, e)}
-                  className="flex items-center gap-2"
-                >
-                  <span 
-                    className="p-1 rounded-md"
-                    style={{ color: widget.color }}
-                  >
-                    <widget.icon className="h-3.5 w-3.5" />
-                  </span>
-                  <span>{widget.label}</span>
-                  <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
-                </ContextMenuItem>
-              ))}
-            </ContextMenuContent>
+                ))}
+              </ContextMenuContent>
+            )}
           </ContextMenu>
         </div>
       </div>
     </NodeUpdateContext.Provider>
   );
 }
-
