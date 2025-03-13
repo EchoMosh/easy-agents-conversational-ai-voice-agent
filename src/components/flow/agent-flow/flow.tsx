@@ -1,14 +1,11 @@
-
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
-import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X, Keyboard } from 'lucide-react';
+import { Plus, MessageCircle, Smile, XCircle, Zap } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
 import { EndNode } from '@/components/flow/nodes/end-node';
 import { TriggerNode } from '@/components/flow/nodes/trigger-node';
-import { TransferNode } from '@/components/flow/nodes/transfer-node';
-import { WebhookNode } from '@/components/flow/nodes/webhook-node';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   ContextMenu,
@@ -29,9 +26,7 @@ export const NodeUpdateContext = React.createContext<{
 const nodeTypes: NodeTypes = {
   greetingNode: GreetingNode,
   endNode: EndNode,
-  triggerNode: TriggerNode,
-  transferNode: TransferNode,
-  webhookNode: WebhookNode
+  triggerNode: TriggerNode
 };
 
 const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd }: any) => {
@@ -104,22 +99,6 @@ const widgets = [
     color: '#fbbf24',
     description: 'Define when this flow should start',
     shortcut: 'T'
-  },
-  { 
-    type: 'transferNode', 
-    label: 'Transfer', 
-    icon: PhoneForwarded, 
-    color: '#10b981',
-    description: 'Transfer the conversation to a live agent',
-    shortcut: 'X'
-  },
-  { 
-    type: 'webhookNode', 
-    label: 'Webhook', 
-    icon: Webhook, 
-    color: '#d946ef',
-    description: 'Make HTTP requests to external services',
-    shortcut: 'W'
   }
 ];
 
@@ -188,12 +167,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         break;
       case 'triggerNode':
         newNodeData = { platform: undefined, action: undefined };
-        break;
-      case 'transferNode':
-        newNodeData = { message: 'Transfer to agent', outcomes: [] };
-        break;
-      case 'webhookNode':
-        newNodeData = { url: '', method: 'GET' };
         break;
     }
 
@@ -656,10 +629,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                         return '#fbbf24';
                       case 'endNode':
                         return '#f87171';
-                      case 'transferNode':
-                        return '#10b981';
-                      case 'webhookNode':
-                        return '#d946ef';
                       default:
                         return '#60a5fa';
                     }
@@ -766,3 +735,4 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     </NodeUpdateContext.Provider>
   );
 }
+
