@@ -127,7 +127,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   const [initialized, setInitialized] = useState(false);
   const [rightClickPosition, setRightClickPosition] = useState<{ x: number, y: number } | null>(null);
   const [rightClickedNodeId, setRightClickedNodeId] = useState<string | null>(null);
-  const [contextMenuOpen, setContextMenuOpen] = useState(false);
 
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     console.log(`[Flow] updateNodeData called for node ${nodeId} with data:`, newData);
@@ -502,8 +501,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         y: event.clientY - bounds.top
       });
     }
-    
-    setContextMenuOpen(true);
   }, []);
 
   const handlePaneContextMenu = useCallback((event: React.MouseEvent) => {
@@ -517,16 +514,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top
       });
-    }
-    
-    setContextMenuOpen(true);
-  }, []);
-
-  const handleContextMenuOpenChange = useCallback((open: boolean) => {
-    setContextMenuOpen(open);
-    if (!open) {
-      setRightClickPosition(null);
-      setRightClickedNodeId(null);
     }
   }, []);
 
@@ -593,7 +580,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           onKeyDown={handleFlowKeyDown}
           style={{ outline: 'none' }}
         >
-          <ContextMenu open={contextMenuOpen} onOpenChange={handleContextMenuOpenChange}>
+          <ContextMenu>
             <ContextMenuTrigger className="w-full h-full">
               <ReactFlow
                 nodes={nodes}
@@ -857,3 +844,4 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     </NodeUpdateContext.Provider>
   );
 }
+
