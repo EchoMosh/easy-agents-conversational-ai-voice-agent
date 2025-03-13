@@ -1,7 +1,6 @@
-
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
-import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
+import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X, Keyboard } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
@@ -17,6 +16,13 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { toast } from "sonner";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from "@/components/ui/sheet";
 
 import React from 'react';
 
@@ -175,7 +181,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     }, 0);
   }, [nodes, setNodes, onNodesChange]);
 
-  // Define createNodeFromType function before it's used
   const createNodeFromType = useCallback((nodeType: string, position: { x: number, y: number }) => {
     let newNodeData: NodeData = {};
     
@@ -216,7 +221,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     return newNode;
   }, [nodes, setNodes, onNodesChange]);
 
-  // Add the missing handleContextMenuAddNode function
   const handleContextMenuAddNode = useCallback((nodeType: string, event: React.MouseEvent) => {
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -662,28 +666,84 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                   maskColor="rgba(0, 0, 0, 0.05)"
                 />
                 
-                <Panel position="top-right" className="p-2 bg-white/80 dark:bg-gray-900/80 rounded-lg backdrop-blur-sm shadow-sm border border-gray-200 dark:border-gray-800">
-                  <div className="text-xs text-muted-foreground">
-                    <div className="font-medium mb-1">Keyboard Shortcuts:</div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                      {widgets.map(widget => (
-                        <div key={widget.type} className="flex items-center gap-1">
-                          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
-                          <span>Add {widget.label}</span>
+                <Panel position="top-right" className="p-2">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <button className="flex items-center gap-2 px-3 py-2 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-xs font-medium hover:bg-white dark:hover:bg-gray-800 transition-colors">
+                        <Keyboard className="h-3.5 w-3.5" />
+                        <span>Shortcuts</span>
+                      </button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="max-w-sm">
+                      <SheetHeader>
+                        <SheetTitle>Keyboard Shortcuts</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-6 space-y-4">
+                        <div>
+                          <h3 className="text-sm font-medium mb-2">Node Creation</h3>
+                          <div className="grid gap-3">
+                            {widgets.map(widget => (
+                              <div key={widget.type} className="flex items-center gap-3 p-2 rounded-md bg-muted/50">
+                                <div className="flex items-center justify-center h-8 w-8 rounded-md" style={{ backgroundColor: `${widget.color}20`, color: widget.color }}>
+                                  <widget.icon className="h-4.5 w-4.5" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium">{widget.label}</div>
+                                  <div className="text-xs text-muted-foreground">{widget.description}</div>
+                                </div>
+                                <kbd className="px-2 py-1 bg-background rounded text-xs font-semibold border border-border">{widget.shortcut}</kbd>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                      <div className="flex items-center gap-1">
-                        <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-semibold">Del</kbd>
-                        <span>Delete selected</span>
+                        
+                        <div>
+                          <h3 className="text-sm font-medium mb-2">Actions</h3>
+                          <div className="grid gap-3">
+                            <div className="flex items-center gap-3 p-2 rounded-md bg-muted/50">
+                              <div className="flex items-center justify-center h-8 w-8 rounded-md bg-red-500/20 text-red-500">
+                                <X className="h-4.5 w-4.5" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="text-sm font-medium">Delete Selection</div>
+                                <div className="text-xs text-muted-foreground">Delete selected nodes or edges</div>
+                              </div>
+                              <kbd className="px-2 py-1 bg-background rounded text-xs font-semibold border border-border">Del</kbd>
+                            </div>
+                            
+                            <div className="flex items-center gap-3 p-2 rounded-md bg-muted/50">
+                              <div className="flex items-center justify-center h-8 w-8 rounded-md bg-indigo-500/20 text-indigo-500">
+                                <MessageCircle className="h-4.5 w-4.5" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="text-sm font-medium">Duplicate Node</div>
+                                <div className="text-xs text-muted-foreground">Duplicate selected node</div>
+                              </div>
+                              <kbd className="px-2 py-1 bg-background rounded text-xs font-semibold border border-border">D</kbd>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-sm font-medium mb-2">Tips</h3>
+                          <ul className="text-xs space-y-2 text-muted-foreground">
+                            <li className="flex gap-2">
+                              <span>•</span>
+                              <span>Right-click anywhere to add a node</span>
+                            </li>
+                            <li className="flex gap-2">
+                              <span>•</span>
+                              <span>Drag from the plus menu to place nodes precisely</span>
+                            </li>
+                            <li className="flex gap-2">
+                              <span>•</span>
+                              <span>Connect nodes by dragging from one handle to another</span>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
-                      {selectedNode && (
-                        <div className="flex items-center gap-1">
-                          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-semibold">D</kbd>
-                          <span>Duplicate selected</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    </SheetContent>
+                  </Sheet>
                 </Panel>
                 
                 <Panel position="bottom-left" className="space-y-2">
@@ -739,6 +799,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 </Panel>
               </ReactFlow>
             </ContextMenuTrigger>
+            
             <ContextMenuContent className="w-64">
               <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Add Node</div>
               {widgets.map((widget) => (
