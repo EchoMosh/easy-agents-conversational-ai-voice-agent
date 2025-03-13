@@ -125,7 +125,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
   const [initialized, setInitialized] = useState(false);
-  const [rightClickOnNode, setRightClickOnNode] = useState(false);
+  const [rightClickPosition, setRightClickPosition] = useState<{ x: number, y: number } | null>(null);
+  const [rightClickedNodeId, setRightClickedNodeId] = useState<string | null>(null);
 
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     console.log(`[Flow] updateNodeData called for node ${nodeId} with data:`, newData);
@@ -485,15 +486,55 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     setSelectedNodeId(selectedNode ? selectedNode.id : null);
   }, [nodes]);
 
+  const handleNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('[Flow] Node context menu triggered for node:', node.id);
+    
+    setRightClickedNodeId(node.id);
+    
+    if (reactFlowWrapper.current) {
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      setRightClickPosition({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top
+      });
+    }
+  }, []);
+
+  const handlePaneContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    
+    setRightClickedNodeId(null);
+    
+    if (reactFlowWrapper.current) {
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      setRightClickPosition({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top
+      });
+    }
+  }, []);
+
+  const handleContextMenuOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setRightClickPosition(null);
+      setRightClickedNodeId(null);
+    }
+  }, []);
+
   const handleDeleteSelectedNode = useCallback(() => {
-    if (selectedNodeId) {
-      console.log('[Flow] Deleting selected node:', selectedNodeId);
+    const nodeIdToDelete = rightClickedNodeId || selectedNodeId;
+    
+    if (nodeIdToDelete) {
+      console.log('[Flow] Deleting node:', nodeIdToDelete);
       setProcessingDeletion(true);
       
-      const nodeToDelete = nodes.find(node => node.id === selectedNodeId);
+      const nodeToDelete = nodes.find(node => node.id === nodeIdToDelete);
       
       if (nodeToDelete) {
-        const nodeIdsToDelete = new Set([selectedNodeId]);
+        const nodeIdsToDelete = new Set([nodeIdToDelete]);
         
         const newEdges = edges.filter(edge => 
           !nodeIdsToDelete.has(edge.source) && !nodeIdsToDelete.has(edge.target)
@@ -523,6 +564,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           
           setTimeout(() => {
             setSelectedNodeId(null);
+            setRightClickedNodeId(null);
             setProcessingDeletion(false);
           }, 200);
         });
@@ -530,21 +572,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         setProcessingDeletion(false);
       }
     }
-  }, [selectedNodeId, nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion]);
-
-  const handleNodeContextMenu = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    setRightClickOnNode(true);
-    setTimeout(() => {
-      setRightClickOnNode(false);
-    }, 100);
-  }, []);
-
-  const handleContextMenuOpenChange = useCallback((open: boolean) => {
-    if (!open) {
-      setRightClickOnNode(false);
-    }
-  }, []);
+  }, [rightClickedNodeId, selectedNodeId, nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion]);
 
   return (
     <NodeUpdateContext.Provider value={{ updateNodeData }}>
@@ -580,6 +608,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 snapGrid={[15, 15]}
                 deleteKeyCode={['Delete', 'Backspace']}
                 onNodeContextMenu={handleNodeContextMenu}
+                onPaneContextMenu={handlePaneContextMenu}
                 onInit={(reactFlowInstance) => {
                   console.log('[Flow] ReactFlow initialized');
                   setTimeout(() => {
@@ -774,8 +803,15 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
               </ReactFlow>
             </ContextMenuTrigger>
             
-            <ContextMenuContent className="w-64">
-              {selectedNodeId && rightClickOnNode ? (
+            <ContextMenuContent 
+              className="w-64"
+              style={rightClickPosition ? {
+                position: 'absolute',
+                left: `${rightClickPosition.x}px`,
+                top: `${rightClickPosition.y}px`
+              } : undefined}
+            >
+              {rightClickedNodeId ? (
                 <>
                   <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Node Actions</div>
                   <ContextMenuItem
@@ -813,3 +849,4 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     </NodeUpdateContext.Provider>
   );
 }
+
