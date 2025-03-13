@@ -8,7 +8,7 @@ export const getDefaultFlow = (): FlowData => {
     type: 'greetingNode',
     position: { x: 250, y: 150 },
     data: { 
-      greeting: 'Hello, this is your new agent speaking. How can I help you today?',
+      greeting: '', // Empty greeting by default
       outcomes: [],
       actions: []
     },

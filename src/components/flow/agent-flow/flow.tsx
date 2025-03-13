@@ -160,7 +160,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     
     switch (nodeType) {
       case 'greetingNode':
-        newNodeData = { greeting: 'Hello, this is your agent. How can I help you?', outcomes: [], actions: [] };
+        newNodeData = { greeting: '', outcomes: [], actions: [] };
         break;
       case 'endNode':
         newNodeData = { message: 'Enter your message here' };
@@ -735,4 +735,3 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     </NodeUpdateContext.Provider>
   );
 }
-
