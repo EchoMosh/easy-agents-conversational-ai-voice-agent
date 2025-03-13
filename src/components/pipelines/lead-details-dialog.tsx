@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { ActivityTab } from "@/components/chat/tabs/activity-tab";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface LeadDetailsDialogProps {
   lead: Lead | null;
@@ -51,10 +52,10 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
       
       if (error) throw error;
       
-      // Transform to the format expected by ActivityTab
+      // Transform to the format expected by ActivityTab with explicit type casting
       const formattedActivities = (data || []).map(activity => ({
         id: activity.id,
-        type: activity.content.toLowerCase().includes('email') ? 'email' : 'sms',
+        type: activity.content.toLowerCase().includes('email') ? 'email' as const : 'sms' as const,
         content: activity.content,
         timestamp: activity.created_at
       }));
@@ -113,209 +114,165 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
     }
   };
 
-  const fadeInUpVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: i * 0.05,
-        duration: 0.3,
-        ease: "easeOut"
-      }
-    })
-  };
-
   return (
     <Dialog open={!!lead} onOpenChange={onClose}>
-      <DialogContent className="p-0 overflow-hidden max-w-lg bg-background/95 backdrop-blur-sm border-none shadow-xl rounded-xl">
-        <div className="flex flex-col w-full">
-          {/* Header with avatar */}
-          <div className="px-8 pt-8 pb-5 flex flex-col items-center relative">
-            <Avatar className="h-24 w-24 mb-4 border-4 border-primary/10">
-              <AvatarFallback className="bg-primary/10 text-primary text-xl font-medium">
-                {getInitials(lead.name)}
-              </AvatarFallback>
-            </Avatar>
-            
-            <motion.h2 
-              className="text-2xl font-semibold mb-1 text-center"
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {lead.name}
-            </motion.h2>
-            
-            {lead.email && (
-              <motion.p 
-                className="text-muted-foreground text-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
+      <DialogContent className="p-0 overflow-hidden max-w-4xl bg-background/95 backdrop-blur-sm border-none shadow-lg rounded-2xl">
+        <div className="flex flex-col md:flex-row w-full h-full">
+          {/* Left Column - Lead Info */}
+          <div className="md:w-1/3 p-8 border-r border-border/10 flex flex-col items-center justify-start space-y-6 bg-gradient-to-b from-background to-muted/10">
+            <div className="flex flex-col items-center">
+              <Avatar className="h-24 w-24 mb-6 shadow-md border-4 border-background">
+                <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+                  {getInitials(lead.name)}
+                </AvatarFallback>
+              </Avatar>
+              
+              <motion.h2 
+                className="text-2xl font-semibold text-center"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
               >
-                {lead.email}
-              </motion.p>
-            )}
+                {lead.name}
+              </motion.h2>
+              
+              {lead.email && (
+                <motion.p 
+                  className="text-muted-foreground text-center mt-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                >
+                  {lead.email}
+                </motion.p>
+              )}
+            </div>
 
-            <div className="absolute right-6 top-6 flex gap-2">
+            <Badge 
+              variant="outline" 
+              className={`${findColumnColor(lead.status)} text-background px-3 py-1 text-xs font-medium rounded-full`}
+            >
+              {lead.status}
+            </Badge>
+
+            <div className="flex gap-3 mt-6">
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-9 gap-1.5 text-xs"
+                className="h-9 gap-1.5 text-xs rounded-full bg-background/80 backdrop-blur-sm shadow-sm border-border/30 hover:bg-background"
                 onClick={handleViewProfile}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 View profile
               </Button>
+              
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="h-9 text-muted-foreground hover:text-destructive text-xs"
+                className="h-9 gap-1.5 text-xs rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/5"
                 onClick={handleRemoveLead}
                 disabled={isRemoving}
               >
                 <Trash2 className="h-3.5 w-3.5" />
+                Remove from pipeline
               </Button>
+            </div>
+
+            <div className="w-full space-y-5 mt-4">
+              {/* Contact Info Section */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Contact Information</h3>
+                
+                {lead.email && (
+                  <Card className="overflow-hidden bg-card/50 backdrop-blur-sm border-border/20">
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className="bg-primary/5 p-2 rounded-md">
+                        <Mail className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Email</div>
+                        <div className="text-sm font-medium truncate">{lead.email}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                {lead.phone && (
+                  <Card className="overflow-hidden bg-card/50 backdrop-blur-sm border-border/20">
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className="bg-primary/5 p-2 rounded-md">
+                        <Phone className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Phone</div>
+                        <div className="text-sm font-medium">{lead.phone}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                <Card className="overflow-hidden bg-card/50 backdrop-blur-sm border-border/20">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="bg-primary/5 p-2 rounded-md">
+                      <Calendar className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Created on</div>
+                      <div className="text-sm font-medium">
+                        {format(new Date(lead.created_at), 'MMMM dd, yyyy')}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
 
-          {/* Details content */}
-          <div className="p-6 pt-3 border-t border-border/40">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-6">
-                {/* Status */}
-                <motion.div 
-                  custom={0} 
-                  initial="hidden" 
-                  animate="visible" 
-                  variants={fadeInUpVariants}
-                  className="flex justify-between items-center"
-                >
-                  <div className="text-sm font-medium">Status</div>
-                  <Badge 
-                    variant="outline" 
-                    className={`${findColumnColor(lead.status)} text-background px-3 py-1 text-xs rounded-md`}
-                  >
-                    {lead.status}
-                  </Badge>
-                </motion.div>
-
-                {/* Contact Info */}
-                {(lead.email || lead.phone) && (
-                  <motion.div 
-                    custom={1} 
-                    initial="hidden" 
-                    animate="visible" 
-                    variants={fadeInUpVariants}
-                    className="space-y-4"
-                  >
-                    <div className="text-sm font-medium text-muted-foreground">CONTACT INFO</div>
-                    
-                    {lead.email && (
-                      <div className="flex items-center gap-2.5 group">
-                        <div className="bg-primary/10 p-2 rounded-md">
-                          <Mail className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">Email address</div>
-                          <Input 
-                            value={lead.email} 
-                            readOnly 
-                            className="border-0 p-0 h-7 bg-transparent text-muted-foreground text-sm"
-                          />
-                        </div>
-                      </div>
-                    )}
-                    
-                    {lead.phone && (
-                      <div className="flex items-center gap-2.5">
-                        <div className="bg-primary/10 p-2 rounded-md">
-                          <Phone className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">Phone number</div>
-                          <Input 
-                            value={lead.phone} 
-                            readOnly 
-                            className="border-0 p-0 h-7 bg-transparent text-muted-foreground text-sm"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-
-                {/* Date Added */}
-                <motion.div 
-                  custom={2} 
-                  initial="hidden" 
-                  animate="visible" 
-                  variants={fadeInUpVariants}
-                  className="flex items-center gap-2.5"
-                >
-                  <div className="bg-primary/10 p-2 rounded-md">
-                    <Calendar className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">Created on</div>
-                    <div className="text-sm text-muted-foreground">
-                      {format(new Date(lead.created_at), 'MMMM dd, yyyy')}
-                    </div>
-                  </div>
-                </motion.div>
+          {/* Right Column - Activity Feed & Variables */}
+          <div className="md:w-2/3 p-8 space-y-6">
+            {/* Activity Section */}
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Activity className="h-4 w-4 text-primary" />
+                <h3 className="text-base font-semibold">Recent Activity</h3>
               </div>
-
-              {/* Activity section */}
-              <motion.div
-                custom={3}
-                initial="hidden"
-                animate="visible"
-                variants={fadeInUpVariants}
-                className="space-y-4"
-              >
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Activity className="h-4 w-4" />
-                  RECENT ACTIVITY
+              
+              {activities.length > 0 ? (
+                <div className="space-y-3">
+                  <ActivityTab activities={activities} />
                 </div>
-                
-                {activities.length > 0 ? (
-                  <div className="max-h-64 overflow-y-auto pr-1 custom-scrollbar">
-                    <ActivityTab activities={activities} />
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground italic">
-                    No recent activity
-                  </div>
-                )}
-              </motion.div>
-
-              {/* Variables (if any) - in left column below existing content */}
-              {lead.variables && lead.variables.length > 0 && (
-                <motion.div 
-                  custom={4} 
-                  initial="hidden" 
-                  animate="visible" 
-                  variants={fadeInUpVariants}
-                  className="space-y-3"
-                >
-                  <div className="text-sm font-medium text-muted-foreground">VARIABLES</div>
-                  <div className="space-y-3">
-                    {lead.variables.map((variable, index) => (
-                      <div key={index} className="flex items-center gap-2.5">
-                        <div className="bg-primary/10 p-2 rounded-md">
-                          <User className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">{variable.name}</div>
-                          <div className="text-sm text-muted-foreground">{variable.value}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
+              ) : (
+                <Card className="bg-muted/30 border-border/20">
+                  <CardContent className="p-6 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No recent activities found for this lead
+                    </p>
+                  </CardContent>
+                </Card>
               )}
             </div>
+            
+            {/* Custom Variables Section */}
+            {lead.variables && lead.variables.length > 0 && (
+              <div>
+                <h3 className="text-base font-semibold mb-4">Lead Variables</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {lead.variables.map((variable, index) => (
+                    <Card key={index} className="overflow-hidden bg-card/50 backdrop-blur-sm border-border/20">
+                      <CardContent className="p-3 flex items-center gap-3">
+                        <div className="bg-primary/5 p-2 rounded-md">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs text-muted-foreground">{variable.name}</div>
+                          <div className="text-sm font-medium truncate">{variable.value}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
