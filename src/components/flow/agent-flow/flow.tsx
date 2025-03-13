@@ -498,36 +498,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     }
   }, [screenToFlowPosition, createNodeFromType]);
 
-  const duplicateNode = useCallback((nodeId: string) => {
-    const nodeToDuplicate = nodes.find(node => node.id === nodeId);
-    
-    if (nodeToDuplicate) {
-      const newPosition = {
-        x: nodeToDuplicate.position.x + 50,
-        y: nodeToDuplicate.position.y + 50
-      };
-      
-      const newNode: Node = {
-        ...nodeToDuplicate,
-        id: `${nodeToDuplicate.type}-${Date.now()}`,
-        position: newPosition,
-        selected: false,
-        data: { ...nodeToDuplicate.data }
-      };
-      
-      const updatedNodes = [...nodes, newNode];
-      setNodes(updatedNodes);
-      
-      setTimeout(() => {
-        onNodesChange(updatedNodes);
-      }, 0);
-      
-      toast.success("Node duplicated");
-      return newNode;
-    }
-    return null;
-  }, [nodes, setNodes, onNodesChange]);
-
   const toggleWidgetPanel = () => {
     setShowWidgets(prev => !prev);
   };
@@ -640,6 +610,37 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                       animation: dashdraw 0.8s linear infinite;
                       fill: none;
                     }
+                    
+                    .shortcut-key {
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                      min-width: 1.5rem;
+                      height: 1.5rem;
+                      padding: 0 0.25rem;
+                      font-size: 0.75rem;
+                      font-weight: 600;
+                      border-radius: 0.25rem;
+                      border: 1px solid rgba(0, 0, 0, 0.1);
+                      background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+                      color: #495057;
+                      box-shadow: 
+                        inset 0 0.5px 0 0 #fff, 
+                        0 1px 2px rgba(0, 0, 0, 0.1),
+                        0 2px 0 rgba(0, 0, 0, 0.08);
+                      text-shadow: 0 1px 0 #fff;
+                    }
+                    
+                    .dark .shortcut-key {
+                      background: linear-gradient(to bottom, #2d3748, #1a202c);
+                      color: #e2e8f0;
+                      border-color: rgba(255, 255, 255, 0.1);
+                      box-shadow: 
+                        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1), 
+                        0 1px 2px rgba(0, 0, 0, 0.3),
+                        0 2px 0 rgba(0, 0, 0, 0.2);
+                      text-shadow: 0 1px 0 #000;
+                    }
                   `}
                 </style>
                 
@@ -681,15 +682,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                         <span className="shortcut-key">Del</span>
                         <span>Delete</span>
                       </div>
-                      
-                      {selectedNodeId && (
-                        <>
-                          <div className="flex items-center gap-1.5">
-                            <span className="shortcut-key">D</span>
-                            <span>Duplicate</span>
-                          </div>
-                        </>
-                      )}
                     </div>
                   </div>
                 </Panel>
@@ -766,25 +758,5 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                   <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
                 </ContextMenuItem>
               ))}
-              
-              {selectedNode && (
-                <>
-                  <ContextMenuItem 
-                    onClick={() => duplicateNode(selectedNode.id)}
-                    className="flex items-center gap-2"
-                  >
-                    <span className="p-1 rounded-md text-indigo-500">
-                      <MessageCircle className="h-3.5 w-3.5" />
-                    </span>
-                    <span>Duplicate Selected Node</span>
-                    <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">D</kbd>
-                  </ContextMenuItem>
-                </>
-              )}
-            </ContextMenuContent>
-          </ContextMenu>
-        </div>
-      </div>
-    </NodeUpdateContext.Provider>
-  );
-}
+           
+
