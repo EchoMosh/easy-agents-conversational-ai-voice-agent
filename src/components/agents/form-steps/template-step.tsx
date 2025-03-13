@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Wand2 } from "lucide-react";
@@ -55,10 +56,9 @@ export function TemplateStep({
     }
     
     setIsLoading(true);
+    setCreationStatus("Creating agent through n8n webhook...");
     
     try {
-      setCreationStatus("Creating agent through n8n webhook...");
-      
       // Direct POST request to n8n webhook
       const webhookUrl = "https://moshi.app.n8n.cloud/webhook/create-agent";
       
@@ -78,11 +78,18 @@ export function TemplateStep({
         throw new Error(`Failed to create agent via n8n webhook: ${response.statusText}`);
       }
       
-      const data = await response.json();
-      console.log('n8n webhook response:', data);
+      let data;
+      try {
+        data = await response.json();
+        console.log('n8n webhook response:', data);
+      } catch (error) {
+        console.error('Failed to parse webhook response:', error);
+        throw new Error('Invalid response from n8n webhook');
+      }
       
       // Check if the response contains the VAPI agent ID
       if (!data || !data.v_agent_id) {
+        console.error('No v_agent_id in response:', data);
         throw new Error('No v_agent_id returned from n8n webhook');
       }
       
@@ -96,6 +103,7 @@ export function TemplateStep({
       
       // Pass the VAPI agent ID back to the parent component
       onNext(vAgentId);
+      
     } catch (error) {
       console.error('Error creating agent:', error);
       toast({

@@ -45,6 +45,15 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       return;
     }
 
+    if (!vAgentId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No agent ID received from n8n, please try again",
+      });
+      return;
+    }
+
     setIsCreating(true);
     setError(null);
     setCreationStatus("Starting agent creation process...");
@@ -63,13 +72,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
     try {
       console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role, 'v_agent_id:', vAgentId);
-      
-      if (!vAgentId) {
-        throw new Error("No v_agent_id received from n8n, cannot create agent");
-      }
-      
-      // Generate a unique ID for this new agent
-      const tempAgentId = crypto.randomUUID();
       
       setCreationStatus("Creating agent in database...");
       
@@ -136,7 +138,11 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     
     // Store the VAPI agent ID
     setVAgentId(vAgentIdFromWebhook);
-    handleCreateAgent();
+    
+    // Only proceed with agent creation if we have a valid ID
+    if (vAgentIdFromWebhook) {
+      handleCreateAgent();
+    }
   };
 
   if (isCreating) {
