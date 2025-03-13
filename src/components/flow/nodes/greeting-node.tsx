@@ -98,7 +98,6 @@ export function GreetingNode({ id, data }: { id: string; data: any }) {
             <TipTapGreetingEditor 
               value={greeting} 
               onChange={handleGreetingChange} 
-              placeholder="What does the agent say in this step?" 
             />
           </div>
           
@@ -135,7 +134,7 @@ export function GreetingNode({ id, data }: { id: string; data: any }) {
               <OutcomeInput 
                 value={currentOutcome}
                 onChange={setCurrentOutcome}
-                onSave={() => handleAddOutcome(currentOutcome)}
+                onSave={handleAddOutcome}
                 onCancel={handleOutcomeInputCancel} 
                 isEditing={editingOutcomeIndex !== null}
               />

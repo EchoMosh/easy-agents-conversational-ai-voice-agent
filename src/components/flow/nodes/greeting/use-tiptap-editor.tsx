@@ -9,9 +9,10 @@ interface UseTiptapEditorProps {
   value: string;
   onChange: (value: string) => void;
   onVariableTrigger?: (char: '@' | '#', position?: { top: number, left: number }) => void;
+  placeholder?: string;
 }
 
-export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTiptapEditorProps) {
+export function useTiptapEditor({ value, onChange, onVariableTrigger, placeholder }: UseTiptapEditorProps) {
   const [showTip, setShowTip] = useState(false);
   
   // Initialize editor
@@ -20,7 +21,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
       StarterKit,
       VariableMark,
       Placeholder.configure({
-        placeholder: 'Enter the message your bot will say. Use # or @ to insert variables.',
+        placeholder: placeholder || 'Enter the message your bot will say. Use # or @ to insert variables.',
         emptyEditorClass: 'is-editor-empty',
       }),
     ],

@@ -32,7 +32,8 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     onChange: (newValue) => {
       onChange(newValue);
     },
-    onVariableTrigger: handleVariableTrigger
+    onVariableTrigger: handleVariableTrigger,
+    placeholder: 'Enter the message your bot will say. Use # or @ to insert variables.',
   });
 
   const handleClick = useCallback(() => {
