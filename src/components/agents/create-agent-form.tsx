@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +36,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   });
 
   const handleNextFromTemplate = async (vAgentIdFromWebhook?: string) => {
+    console.log("Received vAgentIdFromWebhook:", vAgentIdFromWebhook);
+    
     if (!vAgentIdFromWebhook) {
       toast({
         variant: "destructive",
@@ -45,15 +48,29 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
     
     setVAgentId(vAgentIdFromWebhook);
-    await handleCreateAgent();
+    
+    // Immediately proceed with agent creation after setting vAgentId
+    await handleCreateAgent(vAgentIdFromWebhook);
   };
 
-  const handleCreateAgent = async () => {
-    if (!newAgent.name || !vAgentId) {
+  const handleCreateAgent = async (currentVAgentId?: string) => {
+    // Use the passed in vAgentId or fall back to the state value
+    const finalVAgentId = currentVAgentId || vAgentId;
+    
+    if (!newAgent.name) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: !newAgent.name ? "Please fill in all required fields" : "No agent ID received, please try again",
+        description: "Please fill in all required fields",
+      });
+      return;
+    }
+    
+    if (!finalVAgentId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No agent ID received, please try again",
       });
       return;
     }
@@ -75,7 +92,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     }
 
     try {
-      console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role, 'v_agent_id:', vAgentId);
+      console.log('Creating agent with name:', newAgent.name, 'role:', newAgent.role, 'v_agent_id:', finalVAgentId);
       
       const flow = getDefaultFlow();
       
@@ -90,7 +107,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           objective: 'answer_calls',
           interaction_type: ['inbound'],
           language: "en",
-          v_agent_id: vAgentId
+          v_agent_id: finalVAgentId
         })
         .select()
         .single();

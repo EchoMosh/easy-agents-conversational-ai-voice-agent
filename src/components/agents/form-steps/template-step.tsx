@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Wand2 } from "lucide-react";
@@ -83,13 +84,18 @@ export function TemplateStep({
         throw new Error('Invalid response from n8n webhook');
       }
       
-      if (!data || !data.v_agent_id) {
-        console.error('No v_agent_id in response:', data);
-        throw new Error('No v_agent_id returned from n8n webhook');
+      if (!data) {
+        console.error('No data in response');
+        throw new Error('No data returned from n8n webhook');
       }
       
       const vAgentId = data.v_agent_id;
       console.log('Received v_agent_id:', vAgentId);
+      
+      if (!vAgentId) {
+        console.error('No v_agent_id in response:', data);
+        throw new Error('No v_agent_id returned from n8n webhook');
+      }
       
       toast({
         title: "Success",
