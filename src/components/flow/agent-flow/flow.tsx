@@ -125,6 +125,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
   const [initialized, setInitialized] = useState(false);
+  const [rightClickOnNode, setRightClickOnNode] = useState(false);
 
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     console.log(`[Flow] updateNodeData called for node ${nodeId} with data:`, newData);
@@ -531,6 +532,20 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     }
   }, [selectedNodeId, nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion]);
 
+  const handleNodeContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    setRightClickOnNode(true);
+    setTimeout(() => {
+      setRightClickOnNode(false);
+    }, 100);
+  }, []);
+
+  const handleContextMenuOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setRightClickOnNode(false);
+    }
+  }, []);
+
   return (
     <NodeUpdateContext.Provider value={{ updateNodeData }}>
       <div 
@@ -544,7 +559,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           onKeyDown={handleFlowKeyDown}
           style={{ outline: 'none' }}
         >
-          <ContextMenu>
+          <ContextMenu onOpenChange={handleContextMenuOpenChange}>
             <ContextMenuTrigger className="w-full h-full">
               <ReactFlow
                 nodes={nodes}
@@ -564,6 +579,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 snapToGrid={true}
                 snapGrid={[15, 15]}
                 deleteKeyCode={['Delete', 'Backspace']}
+                onNodeContextMenu={handleNodeContextMenu}
                 onInit={(reactFlowInstance) => {
                   console.log('[Flow] ReactFlow initialized');
                   setTimeout(() => {
@@ -759,7 +775,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             </ContextMenuTrigger>
             
             <ContextMenuContent className="w-64">
-              {selectedNodeId ? (
+              {selectedNodeId && rightClickOnNode ? (
                 <>
                   <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Node Actions</div>
                   <ContextMenuItem
