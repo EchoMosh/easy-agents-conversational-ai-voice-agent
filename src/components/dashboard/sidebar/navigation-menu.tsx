@@ -18,7 +18,7 @@ import {
   ArrowRight,
   LayoutDashboard,
   CalendarDays,
-  Globe
+  Scan
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -52,7 +52,7 @@ const iconComponents = {
   ArrowRight,
   LayoutDashboard,
   CalendarDays,
-  Globe
+  Scan
 };
 
 export const mainMenuItems = [
@@ -85,7 +85,7 @@ export const mainMenuItems = [
   },
   {
     title: "Lead Scraper",
-    icon: Globe,
+    icon: Scan,
     url: "/dashboard/lead-scraper",
   },
   {

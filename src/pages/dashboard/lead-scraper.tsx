@@ -1,102 +1,131 @@
 
-import { Sparkles, Globe, ArrowRight } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Scan, MessageSquare, ArrowRight, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LeadScraperPage() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // Show content with a slight delay for a dramatic effect
+    const timer = setTimeout(() => {
+      setVisible(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="flex flex-col items-center text-center mb-12">
-        <div className="bg-primary/10 p-3 rounded-full mb-4">
-          <Globe className="h-8 w-8 text-primary" />
-        </div>
-        <h1 className="text-3xl md:text-4xl font-bold mb-4">Lead Scraper</h1>
-        <p className="text-muted-foreground max-w-2xl">
-          Automatically discover and collect qualified leads from across the web
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <Card className="bg-card/50 border-dashed hover:bg-card/80 transition-colors">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Intelligent Discovery
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-foreground/80">
-              Our AI identifies high-quality leads by analyzing websites, social profiles, and business directories that match your target audience.
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50 border-dashed hover:bg-card/80 transition-colors">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Automated Enrichment
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-foreground/80">
-              Automatically enhance lead data with contact information, company details, and social profiles from multiple trusted sources.
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50 border-dashed hover:bg-card/80 transition-colors">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Seamless Integration
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-foreground/80">
-              Leads flow directly into your pipeline, ready for your AI agents to engage and nurture through personalized outreach.
-            </CardDescription>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="mx-auto max-w-3xl bg-muted/30">
-        <CardHeader className="text-center border-b pb-6">
-          <CardTitle className="flex items-center justify-center gap-2 text-2xl">
-            <Sparkles className="h-6 w-6 text-primary" />
-            Coming Soon
-          </CardTitle>
-          <CardDescription className="text-lg">
-            We're putting the finishing touches on this exciting feature
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <p className="text-center">
-              Lead Scraper will enable you to automatically discover and import qualified leads from across the web, 
-              saving you hours of manual research and data entry.
-            </p>
-            
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mt-6">
-              <h3 className="font-medium mb-2">Be the first to know when it launches</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Join the waitlist to get early access and special onboarding assistance.
-              </p>
-              <div className="flex justify-center">
-                <Button className="gap-2 bg-primary hover:bg-primary/90">
-                  Join the waitlist 
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+    <div className="container mx-auto py-8 px-4 max-w-6xl min-h-[80vh]">
+      <AnimatePresence>
+        {visible && (
+          <motion.div 
+            className="flex flex-col items-center justify-center text-center max-w-3xl mx-auto space-y-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            {/* Animated icon */}
+            <motion.div 
+              className="relative"
+              animate={{ y: [0, -10, 0] }}
+              transition={{ 
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <div className="rounded-full bg-slate-100 dark:bg-slate-800 w-24 h-24 flex items-center justify-center">
+                <Scan className="h-12 w-12 text-slate-700 dark:text-slate-300" />
               </div>
+            </motion.div>
+
+            {/* Title */}
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                Lead Scraper Coming Soon
+              </h1>
+              
+              <p className="text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+                Automatically discover and collect qualified leads from across the web, saving you hours of manual research.
+              </p>
             </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-center border-t pt-6">
-          <p className="text-sm text-muted-foreground">
-            Have specific scraping needs? <a href="#" className="text-primary hover:underline">Let us know</a> and we'll prioritize your use case.
-          </p>
-        </CardFooter>
-      </Card>
+
+            {/* Feature preview cards */}
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+            >
+              {[
+                { 
+                  title: "Intelligent Discovery", 
+                  description: "AI identifies high-quality leads by analyzing websites, social profiles, and business directories.",
+                  icon: <Scan className="h-5 w-5 text-slate-700 dark:text-slate-300" />,
+                  delay: 0
+                },
+                { 
+                  title: "Automated Enrichment", 
+                  description: "Enhance lead data with contact information, company details, and social profiles.",
+                  icon: <Zap className="h-5 w-5 text-slate-700 dark:text-slate-300" />,
+                  delay: 0.2
+                },
+                { 
+                  title: "Seamless Integration", 
+                  description: "Leads flow directly into your pipeline, ready for your AI agents to engage with personalized outreach.",
+                  icon: <MessageSquare className="h-5 w-5 text-slate-700 dark:text-slate-300" />,
+                  delay: 0.4
+                }
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 + feature.delay }}
+                >
+                  <Card className="h-full p-6 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                    <div className="flex items-start space-x-4">
+                      <div className="p-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                        {feature.icon}
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-semibold text-lg mb-2 text-slate-900 dark:text-slate-100">{feature.title}</h3>
+                        <p className="text-slate-600 dark:text-slate-400 text-sm">{feature.description}</p>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* CTA Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+              className="w-full mt-4"
+            >
+              <Card className="bg-muted/30 p-6 border border-slate-200 dark:border-slate-700">
+                <CardContent className="flex flex-col items-center justify-center p-4">
+                  <h3 className="text-xl font-medium mb-4">Join the waitlist to get early access</h3>
+                  <Button className="gap-2 bg-primary hover:bg-primary/90">
+                    Join the waitlist 
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </CardContent>
+                <CardFooter className="flex justify-center pt-2 pb-0">
+                  <p className="text-sm text-muted-foreground">
+                    Have specific scraping needs? <a href="#" className="text-primary hover:underline">Let us know</a>
+                  </p>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
