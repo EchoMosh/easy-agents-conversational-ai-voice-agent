@@ -4,15 +4,16 @@ import { Badge } from "@/components/ui/badge";
 import { Lead } from "@/pages/dashboard/leads";
 import { format } from "date-fns";
 import { PipelineColumn } from "@/types/pipeline";
-import { Mail, Phone, Calendar, User, ExternalLink, Trash2 } from "lucide-react";
+import { Mail, Phone, Calendar, User, ExternalLink, Trash2, Activity } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { ActivityTab } from "@/components/chat/tabs/activity-tab";
 
 interface LeadDetailsDialogProps {
   lead: Lead | null;
@@ -20,10 +21,49 @@ interface LeadDetailsDialogProps {
   columns: PipelineColumn[];
 }
 
+interface Activity {
+  id: string;
+  type: 'email' | 'sms';
+  content: string;
+  timestamp: string;
+}
+
 export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isRemoving, setIsRemoving] = useState(false);
+  const [activities, setActivities] = useState<Activity[]>([]);
+
+  useEffect(() => {
+    if (lead) {
+      fetchActivities(lead.id);
+    }
+  }, [lead]);
+
+  const fetchActivities = async (leadId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('lead_activities')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      
+      // Transform to the format expected by ActivityTab
+      const formattedActivities = (data || []).map(activity => ({
+        id: activity.id,
+        type: activity.content.toLowerCase().includes('email') ? 'email' : 'sms',
+        content: activity.content,
+        timestamp: activity.created_at
+      }));
+      
+      setActivities(formattedActivities);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    }
+  };
 
   if (!lead) return null;
 
@@ -128,97 +168,132 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
                 <ExternalLink className="h-3.5 w-3.5" />
                 View profile
               </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="h-9 text-muted-foreground hover:text-destructive text-xs"
+                onClick={handleRemoveLead}
+                disabled={isRemoving}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </div>
 
           {/* Details content */}
           <div className="p-6 pt-3 border-t border-border/40">
-            <div className="space-y-6">
-              {/* Status */}
-              <motion.div 
-                custom={0} 
-                initial="hidden" 
-                animate="visible" 
-                variants={fadeInUpVariants}
-                className="flex justify-between items-center"
-              >
-                <div className="text-sm font-medium">Status</div>
-                <Badge 
-                  variant="outline" 
-                  className={`${findColumnColor(lead.status)} text-background px-3 py-1 text-xs rounded-md`}
-                >
-                  {lead.status}
-                </Badge>
-              </motion.div>
-
-              {/* Contact Info */}
-              {(lead.email || lead.phone) && (
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-6">
+                {/* Status */}
                 <motion.div 
-                  custom={1} 
+                  custom={0} 
                   initial="hidden" 
                   animate="visible" 
                   variants={fadeInUpVariants}
-                  className="space-y-4"
+                  className="flex justify-between items-center"
                 >
-                  <div className="text-sm font-medium text-muted-foreground">CONTACT INFO</div>
-                  
-                  {lead.email && (
-                    <div className="flex items-center gap-2.5 group">
-                      <div className="bg-primary/10 p-2 rounded-md">
-                        <Mail className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">Email address</div>
-                        <Input 
-                          value={lead.email} 
-                          readOnly 
-                          className="border-0 p-0 h-7 bg-transparent text-muted-foreground text-sm"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {lead.phone && (
-                    <div className="flex items-center gap-2.5">
-                      <div className="bg-primary/10 p-2 rounded-md">
-                        <Phone className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">Phone number</div>
-                        <Input 
-                          value={lead.phone} 
-                          readOnly 
-                          className="border-0 p-0 h-7 bg-transparent text-muted-foreground text-sm"
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-sm font-medium">Status</div>
+                  <Badge 
+                    variant="outline" 
+                    className={`${findColumnColor(lead.status)} text-background px-3 py-1 text-xs rounded-md`}
+                  >
+                    {lead.status}
+                  </Badge>
                 </motion.div>
-              )}
 
-              {/* Date Added */}
-              <motion.div 
-                custom={2} 
-                initial="hidden" 
-                animate="visible" 
-                variants={fadeInUpVariants}
-                className="flex items-center gap-2.5"
-              >
-                <div className="bg-primary/10 p-2 rounded-md">
-                  <Calendar className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium">Created on</div>
-                  <div className="text-sm text-muted-foreground">
-                    {format(new Date(lead.created_at), 'MMMM dd, yyyy')}
+                {/* Contact Info */}
+                {(lead.email || lead.phone) && (
+                  <motion.div 
+                    custom={1} 
+                    initial="hidden" 
+                    animate="visible" 
+                    variants={fadeInUpVariants}
+                    className="space-y-4"
+                  >
+                    <div className="text-sm font-medium text-muted-foreground">CONTACT INFO</div>
+                    
+                    {lead.email && (
+                      <div className="flex items-center gap-2.5 group">
+                        <div className="bg-primary/10 p-2 rounded-md">
+                          <Mail className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">Email address</div>
+                          <Input 
+                            value={lead.email} 
+                            readOnly 
+                            className="border-0 p-0 h-7 bg-transparent text-muted-foreground text-sm"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {lead.phone && (
+                      <div className="flex items-center gap-2.5">
+                        <div className="bg-primary/10 p-2 rounded-md">
+                          <Phone className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">Phone number</div>
+                          <Input 
+                            value={lead.phone} 
+                            readOnly 
+                            className="border-0 p-0 h-7 bg-transparent text-muted-foreground text-sm"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* Date Added */}
+                <motion.div 
+                  custom={2} 
+                  initial="hidden" 
+                  animate="visible" 
+                  variants={fadeInUpVariants}
+                  className="flex items-center gap-2.5"
+                >
+                  <div className="bg-primary/10 p-2 rounded-md">
+                    <Calendar className="h-4 w-4 text-primary" />
                   </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">Created on</div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(lead.created_at), 'MMMM dd, yyyy')}
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Activity section */}
+              <motion.div
+                custom={3}
+                initial="hidden"
+                animate="visible"
+                variants={fadeInUpVariants}
+                className="space-y-4"
+              >
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Activity className="h-4 w-4" />
+                  RECENT ACTIVITY
                 </div>
+                
+                {activities.length > 0 ? (
+                  <div className="max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                    <ActivityTab activities={activities} />
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground italic">
+                    No recent activity
+                  </div>
+                )}
               </motion.div>
 
-              {/* Variables (if any) */}
+              {/* Variables (if any) - in left column below existing content */}
               {lead.variables && lead.variables.length > 0 && (
                 <motion.div 
-                  custom={3} 
+                  custom={4} 
                   initial="hidden" 
                   animate="visible" 
                   variants={fadeInUpVariants}
@@ -240,26 +315,6 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
                   </div>
                 </motion.div>
               )}
-
-              {/* Remove lead button - styled as a subtle link */}
-              <motion.div
-                custom={4}
-                initial="hidden"
-                animate="visible"
-                variants={fadeInUpVariants}
-                className="mt-6 pt-4 border-t border-border/40 flex justify-center"
-              >
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="text-muted-foreground hover:text-destructive gap-1.5 text-xs font-normal"
-                  onClick={handleRemoveLead}
-                  disabled={isRemoving}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Remove from pipeline
-                </Button>
-              </motion.div>
             </div>
           </div>
         </div>
