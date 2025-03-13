@@ -5,13 +5,15 @@ import { SmileIcon } from 'lucide-react';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
 import { OutcomeInput } from '@/components/flow/nodes/greeting/outcome-input';
 import { OutcomeListItem } from '@/components/flow/nodes/greeting/outcome-list-item';
-import { TiptapGreetingEditor } from '@/components/flow/nodes/greeting/tiptap-greeting-editor';
+import { TipTapGreetingEditor } from '@/components/flow/nodes/greeting/tiptap-greeting-editor';
 import { NodeStatusIndicator } from '@/components/flow/node-status-indicator';
 
 export function GreetingNode({ id, data }: { id: string; data: any }) {
   const [greeting, setGreeting] = useState(data?.greeting || 'Hello, this is your agent. How can I help you?');
   const [outcomes, setOutcomes] = useState(data?.outcomes || []);
   const [showOutcomeInput, setShowOutcomeInput] = useState(false);
+  const [editingOutcomeIndex, setEditingOutcomeIndex] = useState<number | null>(null);
+  const [currentOutcome, setCurrentOutcome] = useState('');
   const { updateNodeData } = useContext(NodeUpdateContext);
   const edges = useEdges();
   
@@ -34,23 +36,43 @@ export function GreetingNode({ id, data }: { id: string; data: any }) {
     updateNodeData(id, { ...data, greeting: newGreeting, outcomes });
   };
 
-  const addOutcome = (outcome: string) => {
+  const handleAddOutcome = (outcome: string) => {
     if (!outcome.trim()) return;
     
-    const updatedOutcomes = [...outcomes, outcome];
-    setOutcomes(updatedOutcomes);
-    updateNodeData(id, { ...data, greeting, outcomes: updatedOutcomes });
+    if (editingOutcomeIndex !== null) {
+      // Edit existing outcome
+      const updatedOutcomes = [...outcomes];
+      updatedOutcomes[editingOutcomeIndex] = outcome;
+      setOutcomes(updatedOutcomes);
+      updateNodeData(id, { ...data, greeting, outcomes: updatedOutcomes });
+      setEditingOutcomeIndex(null);
+    } else {
+      // Add new outcome
+      const updatedOutcomes = [...outcomes, outcome];
+      setOutcomes(updatedOutcomes);
+      updateNodeData(id, { ...data, greeting, outcomes: updatedOutcomes });
+    }
+    
+    setCurrentOutcome('');
     setShowOutcomeInput(false);
   };
 
-  const removeOutcome = (index: number) => {
+  const handleRemoveOutcome = (index: number) => {
     const updatedOutcomes = outcomes.filter((_, i) => i !== index);
     setOutcomes(updatedOutcomes);
     updateNodeData(id, { ...data, greeting, outcomes: updatedOutcomes });
   };
 
+  const handleEditOutcome = (index: number) => {
+    setCurrentOutcome(outcomes[index]);
+    setEditingOutcomeIndex(index);
+    setShowOutcomeInput(true);
+  };
+
   const handleOutcomeInputCancel = () => {
     setShowOutcomeInput(false);
+    setEditingOutcomeIndex(null);
+    setCurrentOutcome('');
   };
 
   return (
@@ -73,7 +95,7 @@ export function GreetingNode({ id, data }: { id: string; data: any }) {
           </div>
         
           <div className="mt-2 text-gray-700 dark:text-gray-300">
-            <TiptapGreetingEditor 
+            <TipTapGreetingEditor 
               value={greeting} 
               onChange={handleGreetingChange} 
               placeholder="What does the agent say in this step?" 
@@ -90,7 +112,9 @@ export function GreetingNode({ id, data }: { id: string; data: any }) {
                   <OutcomeListItem 
                     key={`${id}-outcome-${index}`}
                     outcome={outcome}
-                    onDelete={() => removeOutcome(index)}
+                    index={index}
+                    onEdit={handleEditOutcome}
+                    onRemove={handleRemoveOutcome}
                     sourceHandleId={`outcome-${index}`}
                   />
                 ))}
@@ -109,8 +133,11 @@ export function GreetingNode({ id, data }: { id: string; data: any }) {
           ) : (
             <div className="mt-4">
               <OutcomeInput 
-                onAdd={addOutcome} 
+                value={currentOutcome}
+                onChange={setCurrentOutcome}
+                onSave={() => handleAddOutcome(currentOutcome)}
                 onCancel={handleOutcomeInputCancel} 
+                isEditing={editingOutcomeIndex !== null}
               />
             </div>
           )}

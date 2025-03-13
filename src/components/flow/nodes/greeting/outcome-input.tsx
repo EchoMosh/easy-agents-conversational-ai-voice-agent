@@ -2,7 +2,7 @@
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 
-interface OutcomeInputProps {
+export interface OutcomeInputProps {
   value: string;
   onChange: (value: string) => void;
   onSave: () => void;
