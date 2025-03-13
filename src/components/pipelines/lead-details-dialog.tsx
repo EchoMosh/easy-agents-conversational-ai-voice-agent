@@ -84,7 +84,8 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
 
   const handleViewProfile = () => {
     onClose();
-    navigate(`/dashboard/chats?leadId=${lead.id}`);
+    // Update to navigate directly to the chat page with the lead ID
+    navigate(`/dashboard/chats/${lead.id}`);
   };
 
   const handleRemoveLead = async () => {
