@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
-import { Plus, MessageCircle, Smile, XCircle, Zap } from 'lucide-react';
+import { Plus, MessageCircle, Smile, XCircle, Zap, Trash2 } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 import { NodeData } from '@/types/agent';
 import { GreetingNode } from '@/components/flow/nodes/greeting-node';
@@ -12,6 +12,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator
 } from "@/components/ui/context-menu";
 import { toast } from "sonner";
 
@@ -483,6 +484,53 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     setSelectedNodeId(selectedNode ? selectedNode.id : null);
   }, [nodes]);
 
+  const handleDeleteSelectedNode = useCallback(() => {
+    if (selectedNodeId) {
+      console.log('[Flow] Deleting selected node:', selectedNodeId);
+      setProcessingDeletion(true);
+      
+      const nodeToDelete = nodes.find(node => node.id === selectedNodeId);
+      
+      if (nodeToDelete) {
+        const nodeIdsToDelete = new Set([selectedNodeId]);
+        
+        const newEdges = edges.filter(edge => 
+          !nodeIdsToDelete.has(edge.source) && !nodeIdsToDelete.has(edge.target)
+        );
+        
+        const newNodes = nodes.filter(node => !nodeIdsToDelete.has(node.id));
+        
+        Promise.all([
+          new Promise<void>(resolve => {
+            setNodes(newNodes);
+            resolve();
+          }),
+          new Promise<void>(resolve => {
+            setEdges(newEdges);
+            resolve();
+          })
+        ]).then(() => {
+          console.log('[Flow] Notifying parent about deleted node and related edges');
+          onNodesChange(newNodes);
+          onEdgesChange(newEdges);
+          
+          if (onNodeDeletion) {
+            onNodeDeletion([nodeToDelete], newNodes, newEdges);
+          }
+          
+          toast.success(`Node deleted`);
+          
+          setTimeout(() => {
+            setSelectedNodeId(null);
+            setProcessingDeletion(false);
+          }, 200);
+        });
+      } else {
+        setProcessingDeletion(false);
+      }
+    }
+  }, [selectedNodeId, nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion]);
+
   return (
     <NodeUpdateContext.Provider value={{ updateNodeData }}>
       <div 
@@ -711,6 +759,20 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             </ContextMenuTrigger>
             
             <ContextMenuContent className="w-64">
+              {selectedNodeId ? (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Node Actions</div>
+                  <ContextMenuItem
+                    onClick={handleDeleteSelectedNode}
+                    className="flex items-center gap-2 text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete Node</span>
+                    <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">Del</kbd>
+                  </ContextMenuItem>
+                  <ContextMenuSeparator />
+                </>
+              ) : null}
               <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Add Node</div>
               {widgets.map((widget) => (
                 <ContextMenuItem
