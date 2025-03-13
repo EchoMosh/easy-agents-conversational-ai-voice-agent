@@ -11,6 +11,7 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuTrigger,
   ContextMenuSeparator
 } from "@/components/ui/context-menu";
 import { toast } from "sonner";
