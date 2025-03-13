@@ -127,6 +127,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   const [initialized, setInitialized] = useState(false);
   const [rightClickPosition, setRightClickPosition] = useState<{ x: number, y: number } | null>(null);
   const [rightClickedNodeId, setRightClickedNodeId] = useState<string | null>(null);
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
 
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     console.log(`[Flow] updateNodeData called for node ${nodeId} with data:`, newData);
@@ -202,6 +203,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
       
       createNodeFromType(nodeType, position);
       toast.success(`Added ${widgets.find(w => w.type === nodeType)?.label || nodeType} node`);
+      setContextMenuOpen(false);
     }
   }, [screenToFlowPosition, createNodeFromType, widgets]);
 
@@ -321,34 +323,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     
     handleKeyDown(event);
   }, [widgets, createNodeFromType, handleKeyDown, screenToFlowPosition]);
-
-  useEffect(() => {
-    if (safeInitialNodes.length > 0 && !initialized) {
-      console.log('[Flow] Setting initial nodes with normalization:', safeInitialNodes);
-      const normalizedNodes = normalizeNodes(safeInitialNodes);
-      setNodes(normalizedNodes);
-      setInitialized(true);
-      
-      if (safeInitialEdges.length > 0) {
-        setEdges(safeInitialEdges);
-      }
-    }
-  }, [safeInitialNodes, safeInitialEdges, setNodes, setEdges, normalizeNodes, initialized]);
-
-  useEffect(() => {
-    if (flowContainerRef.current) {
-      flowContainerRef.current.focus();
-    }
-  }, []);
-
-  const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (showWidgets && 
-        widgetButtonRef.current && 
-        !widgetButtonRef.current.contains(event.target as Element) &&
-        !document.querySelector('.widget-panel')?.contains(event.target as Element)) {
-      setShowWidgets(false);
-    }
-  }, [showWidgets]);
 
   const isValidConnection = useCallback((connection: Connection) => {
     const sourceNode = nodes.find(node => node.id === connection.source);
@@ -478,13 +452,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   const toggleWidgetPanel = () => {
     setShowWidgets(prev => !prev);
   };
-  
-  const selectedNode = nodes.find(node => node.selected);
-
-  useEffect(() => {
-    const selectedNode = nodes.find(node => node.selected);
-    setSelectedNodeId(selectedNode ? selectedNode.id : null);
-  }, [nodes]);
 
   const handleNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
     event.preventDefault();
@@ -493,6 +460,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     console.log('[Flow] Node context menu triggered for node:', node.id);
     
     setRightClickedNodeId(node.id);
+    setContextMenuOpen(true);
     
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -505,8 +473,10 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
 
   const handlePaneContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     
     setRightClickedNodeId(null);
+    setContextMenuOpen(true);
     
     if (reactFlowWrapper.current) {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -559,6 +529,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             setSelectedNodeId(null);
             setRightClickedNodeId(null);
             setProcessingDeletion(false);
+            setContextMenuOpen(false);
           }, 200);
         });
       } else {
@@ -566,6 +537,39 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
       }
     }
   }, [rightClickedNodeId, selectedNodeId, nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion]);
+
+  useEffect(() => {
+    if (safeInitialNodes.length > 0 && !initialized) {
+      console.log('[Flow] Setting initial nodes with normalization:', safeInitialNodes);
+      const normalizedNodes = normalizeNodes(safeInitialNodes);
+      setNodes(normalizedNodes);
+      setInitialized(true);
+      
+      if (safeInitialEdges.length > 0) {
+        setEdges(safeInitialEdges);
+      }
+    }
+  }, [safeInitialNodes, safeInitialEdges, setNodes, setEdges, normalizeNodes, initialized]);
+
+  useEffect(() => {
+    if (flowContainerRef.current) {
+      flowContainerRef.current.focus();
+    }
+  }, []);
+
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (showWidgets && 
+        widgetButtonRef.current && 
+        !widgetButtonRef.current.contains(event.target as Element) &&
+        !document.querySelector('.widget-panel')?.contains(event.target as Element)) {
+      setShowWidgets(false);
+    }
+  }, [showWidgets]);
+
+  useEffect(() => {
+    const selectedNode = nodes.find(node => node.selected);
+    setSelectedNodeId(selectedNode ? selectedNode.id : null);
+  }, [nodes]);
 
   return (
     <NodeUpdateContext.Provider value={{ updateNodeData }}>
@@ -580,7 +584,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           onKeyDown={handleFlowKeyDown}
           style={{ outline: 'none' }}
         >
-          <ContextMenu>
+          <ContextMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
             <ContextMenuTrigger className="w-full h-full">
               <ReactFlow
                 nodes={nodes}
@@ -798,12 +802,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             
             {rightClickPosition && (
               <ContextMenuContent 
-                className="w-64"
-                style={{
-                  position: 'absolute',
-                  left: `${rightClickPosition.x}px`,
-                  top: `${rightClickPosition.y}px`
-                }}
+                className="w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg z-50 border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg"
               >
                 {rightClickedNodeId ? (
                   <>
@@ -844,4 +843,3 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     </NodeUpdateContext.Provider>
   );
 }
-
