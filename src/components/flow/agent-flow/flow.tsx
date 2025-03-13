@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState, useEffect, KeyboardEvent } from 'react';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Connection, Node, Edge, NodeTypes, useReactFlow, Panel, ConnectionMode, EdgeMouseHandler } from '@xyflow/react';
 import { Plus, MessageCircle, Smile, XCircle, Zap, PhoneForwarded, Webhook, X } from 'lucide-react';
@@ -174,6 +175,61 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     }, 0);
   }, [nodes, setNodes, onNodesChange]);
 
+  // Define createNodeFromType function before it's used
+  const createNodeFromType = useCallback((nodeType: string, position: { x: number, y: number }) => {
+    let newNodeData: NodeData = {};
+    
+    switch (nodeType) {
+      case 'greetingNode':
+        newNodeData = { greeting: 'Hello, this is your agent. How can I help you?', outcomes: [], actions: [] };
+        break;
+      case 'endNode':
+        newNodeData = { message: 'Enter your message here' };
+        break;
+      case 'triggerNode':
+        newNodeData = { platform: undefined, action: undefined };
+        break;
+      case 'transferNode':
+        newNodeData = { message: 'Transfer to agent', outcomes: [] };
+        break;
+      case 'webhookNode':
+        newNodeData = { url: '', method: 'GET' };
+        break;
+    }
+
+    const newNode: Node = {
+      id: `${nodeType}-${Date.now()}`,
+      type: nodeType,
+      position,
+      data: newNodeData,
+      draggable: true
+    };
+
+    console.log('[Flow] Adding new node:', newNode);
+    const updatedNodes = [...nodes, newNode];
+    setNodes(updatedNodes);
+    
+    setTimeout(() => {
+      onNodesChange(updatedNodes);
+    }, 0);
+    
+    return newNode;
+  }, [nodes, setNodes, onNodesChange]);
+
+  // Add the missing handleContextMenuAddNode function
+  const handleContextMenuAddNode = useCallback((nodeType: string, event: React.MouseEvent) => {
+    if (reactFlowWrapper.current) {
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = screenToFlowPosition({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      });
+      
+      createNodeFromType(nodeType, position);
+      toast.success(`Added ${widgets.find(w => w.type === nodeType)?.label || nodeType} node`);
+    }
+  }, [screenToFlowPosition, createNodeFromType, widgets]);
+
   const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
     const isEditingText = target.tagName === 'INPUT' || 
@@ -263,7 +319,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
 
   const handleFlowKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
-    const isEditingText = target.tagName === 'INPUT' || 
+    const isEditingText = target.tag === 'INPUT' || 
                           target.tagName === 'TEXTAREA' || 
                           target.isContentEditable;
     
@@ -763,3 +819,4 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     </NodeUpdateContext.Provider>
   );
 }
+
