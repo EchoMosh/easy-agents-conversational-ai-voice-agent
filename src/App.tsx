@@ -21,6 +21,7 @@ import KnowledgePage from "@/pages/dashboard/knowledge";
 import AutomationsPage from "@/pages/dashboard/automations";
 import DashboardPage from "@/pages/dashboard/dashboard";
 import CalendarPage from "@/pages/dashboard/calendar";
+import LeadScraperPage from "@/pages/dashboard/lead-scraper";
 import ProtectedRoute from "@/components/auth/protected-route";
 
 // Create a new QueryClient instance
@@ -45,6 +46,7 @@ function App() {
                 <Route path="/dashboard/agents" element={<AgentsPage />} />
                 <Route path="/dashboard/agents/flow/:id" element={<AgentFlowPage />} />
                 <Route path="/dashboard/leads" element={<LeadsPage />} />
+                <Route path="/dashboard/lead-scraper" element={<LeadScraperPage />} />
                 <Route path="/dashboard/pipelines" element={<PipelinesPage />} />
                 <Route path="/dashboard/settings" element={<SettingsPage />} />
                 <Route path="/dashboard/profile" element={<ProfilePage />} />

@@ -17,7 +17,8 @@ import {
   ArrowLeft,
   ArrowRight,
   LayoutDashboard,
-  CalendarDays
+  CalendarDays,
+  Globe
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -50,7 +51,8 @@ const iconComponents = {
   ArrowLeft,
   ArrowRight,
   LayoutDashboard,
-  CalendarDays
+  CalendarDays,
+  Globe
 };
 
 export const mainMenuItems = [
@@ -80,6 +82,11 @@ export const mainMenuItems = [
     title: "Leads",
     icon: Target,
     url: "/dashboard/leads",
+  },
+  {
+    title: "Lead Scraper",
+    icon: Globe,
+    url: "/dashboard/lead-scraper",
   },
   {
     title: "Pipelines",
