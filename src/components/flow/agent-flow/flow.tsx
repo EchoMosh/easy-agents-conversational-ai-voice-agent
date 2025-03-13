@@ -319,7 +319,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
 
   const handleFlowKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
-    const isEditingText = target.tag === 'INPUT' || 
+    const isEditingText = target.tagName === 'INPUT' || 
                           target.tagName === 'TEXTAREA' || 
                           target.isContentEditable;
     
@@ -346,46 +346,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     
     handleKeyDown(event);
   }, [widgets, createNodeFromType, handleKeyDown, screenToFlowPosition]);
-
-  const createNodeFromType = useCallback((nodeType: string, position: { x: number, y: number }) => {
-    let newNodeData: NodeData = {};
-    
-    switch (nodeType) {
-      case 'greetingNode':
-        newNodeData = { greeting: 'Hello, this is your agent. How can I help you?', outcomes: [], actions: [] };
-        break;
-      case 'endNode':
-        newNodeData = { message: 'Enter your message here' };
-        break;
-      case 'triggerNode':
-        newNodeData = { platform: undefined, action: undefined };
-        break;
-      case 'transferNode':
-        newNodeData = { message: 'Transfer to agent', outcomes: [] };
-        break;
-      case 'webhookNode':
-        newNodeData = { url: '', method: 'GET' };
-        break;
-    }
-
-    const newNode: Node = {
-      id: `${nodeType}-${Date.now()}`,
-      type: nodeType,
-      position,
-      data: newNodeData,
-      draggable: true
-    };
-
-    console.log('[Flow] Adding new node:', newNode);
-    const updatedNodes = [...nodes, newNode];
-    setNodes(updatedNodes);
-    
-    setTimeout(() => {
-      onNodesChange(updatedNodes);
-    }, 0);
-    
-    return newNode;
-  }, [nodes, setNodes, onNodesChange]);
 
   useEffect(() => {
     if (safeInitialNodes.length > 0 && !initialized) {
@@ -819,4 +779,3 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     </NodeUpdateContext.Provider>
   );
 }
-
