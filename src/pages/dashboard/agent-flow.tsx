@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DragProvider } from '@/components/flow/drag-context';
@@ -160,7 +161,7 @@ export default function AgentFlowPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [mermaidChart, setMermaidChart] = useState<string>('');
-  const [showMermaid, setShowMermaid] = useState<boolean>(true);
+  const [showMermaid, setShowMermaid] = useState<boolean>(false); // Changed to default false
   const [flowState, setFlowState] = useState<FlowData>({ nodes: [], edges: [] });
   const [showTraining, setShowTraining] = useState(false);
 
@@ -391,6 +392,21 @@ export default function AgentFlowPage() {
     console.log('[AgentFlowPage] Agent settings updated successfully');
   };
 
+  // Add keyboard shortcut handler for CTRL+M
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 'm') {
+        event.preventDefault(); // Prevent default browser behavior
+        setShowMermaid(prev => !prev); // Toggle mermaid chart visibility
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
@@ -436,7 +452,7 @@ export default function AgentFlowPage() {
               style={{ opacity: 0.9 }}
             >
               <div className="flex justify-between mb-2">
-                <span className="font-bold">Mermaid Chart Preview</span>
+                <span className="font-bold">Mermaid Chart Preview (CTRL+M)</span>
                 <button 
                   className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   onClick={() => setShowMermaid(false)}
