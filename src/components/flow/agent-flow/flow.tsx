@@ -119,8 +119,11 @@ interface FlowProps {
 }
 
 export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange, onNodeDeletion }: FlowProps) {
-  const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
+  const safeInitialNodes = Array.isArray(initialNodes) ? initialNodes : [];
+  const safeInitialEdges = Array.isArray(initialEdges) ? initialEdges : [];
+  
+  const [nodes, setNodes, onNodesChangeInternal] = useNodesState(safeInitialNodes);
+  const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(safeInitialEdges);
   const [showWidgets, setShowWidgets] = useState(false);
   const [processingDeletion, setProcessingDeletion] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -237,16 +240,18 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   }, [nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion, processingDeletion]);
 
   useEffect(() => {
-    if (JSON.stringify(initialNodes) !== JSON.stringify(nodes)) {
-      setNodes(initialNodes);
+    if (safeInitialNodes !== nodes) {
+      console.log('[Flow] Setting initial nodes:', safeInitialNodes);
+      setNodes(safeInitialNodes);
     }
-  }, [initialNodes, setNodes]);
+  }, [safeInitialNodes, setNodes]);
 
   useEffect(() => {
-    if (JSON.stringify(initialEdges) !== JSON.stringify(edges)) {
-      setEdges(initialEdges);
+    if (safeInitialEdges !== edges) {
+      console.log('[Flow] Setting initial edges:', safeInitialEdges);
+      setEdges(safeInitialEdges);
     }
-  }, [initialEdges, setEdges]);
+  }, [safeInitialEdges, setEdges]);
 
   useEffect(() => {
     if (flowContainerRef.current) {
@@ -383,13 +388,19 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
       });
 
       const nodeType = event.dataTransfer.getData('application/reactflow');
-      if (!nodeType) return;
+      
+      console.log('[Flow] onDrop called with nodeType:', nodeType);
+      
+      if (!nodeType) {
+        console.log('[Flow] No nodeType found in drag data');
+        return;
+      }
 
       let newNodeData: NodeData = {};
       
       switch (nodeType) {
         case 'greetingNode':
-          newNodeData = { greeting: '', outcomes: [], actions: [] };
+          newNodeData = { greeting: 'Hello, this is your agent. How can I help you?', outcomes: [], actions: [] };
           break;
         case 'endNode':
           newNodeData = { message: 'Enter your message here' };
@@ -415,7 +426,10 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
       console.log('[Flow] Adding new node:', newNode);
       const updatedNodes = [...nodes, newNode];
       setNodes(updatedNodes);
-      onNodesChange(updatedNodes);
+      
+      setTimeout(() => {
+        onNodesChange(updatedNodes);
+      }, 0);
     }
   }, [screenToFlowPosition, setNodes, nodes, onNodesChange]);
 
@@ -454,6 +468,10 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             snapToGrid={true}
             snapGrid={[15, 15]}
             deleteKeyCode={['Delete', 'Backspace']}
+            onInit={(reactFlowInstance) => {
+              console.log('[Flow] ReactFlow initialized');
+              setTimeout(() => reactFlowInstance.fitView(), 100);
+            }}
           >
             <style>
               {`
@@ -588,3 +606,4 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     </NodeUpdateContext.Provider>
   );
 }
+
