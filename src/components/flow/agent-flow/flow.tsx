@@ -11,7 +11,6 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuTrigger,
   ContextMenuSeparator
 } from "@/components/ui/context-menu";
 import { toast } from "sonner";
@@ -584,7 +583,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           onKeyDown={handleFlowKeyDown}
           style={{ outline: 'none' }}
         >
-          <ContextMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
+          <ContextMenu>
             <ContextMenuTrigger className="w-full h-full">
               <ReactFlow
                 nodes={nodes}

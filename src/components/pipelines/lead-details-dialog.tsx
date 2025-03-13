@@ -169,11 +169,6 @@ export function LeadDetailsDialog({ lead, onClose, columns }: LeadDetailsDialogP
                       {lead.status}
                     </Badge>
                   )}
-                  {lead.is_new && (
-                    <Badge className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 text-xs rounded-full">
-                      New
-                    </Badge>
-                  )}
                 </div>
                 
                 <div className="flex items-center mt-1 gap-5">
