@@ -122,14 +122,15 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   const safeInitialNodes = Array.isArray(initialNodes) ? initialNodes : [];
   const safeInitialEdges = Array.isArray(initialEdges) ? initialEdges : [];
   
-  const [nodes, setNodes, onNodesChangeInternal] = useNodesState(safeInitialNodes);
-  const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(safeInitialEdges);
+  const [nodes, setNodes, onNodesChangeInternal] = useNodesState([]);
+  const [edges, setEdges, onEdgesChangeInternal] = useEdgesState([]);
   const [showWidgets, setShowWidgets] = useState(false);
   const [processingDeletion, setProcessingDeletion] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
+  const [initialized, setInitialized] = useState(false);
 
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     console.log(`[Flow] updateNodeData called for node ${nodeId} with data:`, newData);
@@ -239,19 +240,27 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     }
   }, [nodes, edges, setNodes, setEdges, onNodesChange, onEdgesChange, onNodeDeletion, processingDeletion]);
 
-  useEffect(() => {
-    if (safeInitialNodes !== nodes) {
-      console.log('[Flow] Setting initial nodes:', safeInitialNodes);
-      setNodes(safeInitialNodes);
-    }
-  }, [safeInitialNodes, setNodes]);
+  const normalizeNodes = useCallback((inputNodes: Node[]) => {
+    return inputNodes.map(node => ({
+      ...node,
+      draggable: node.draggable !== false,
+      type: node.type || 'default',
+      data: node.data || {}
+    }));
+  }, []);
 
   useEffect(() => {
-    if (safeInitialEdges !== edges) {
-      console.log('[Flow] Setting initial edges:', safeInitialEdges);
-      setEdges(safeInitialEdges);
+    if (safeInitialNodes.length > 0 && !initialized) {
+      console.log('[Flow] Setting initial nodes with normalization:', safeInitialNodes);
+      const normalizedNodes = normalizeNodes(safeInitialNodes);
+      setNodes(normalizedNodes);
+      setInitialized(true);
+      
+      if (safeInitialEdges.length > 0) {
+        setEdges(safeInitialEdges);
+      }
     }
-  }, [safeInitialEdges, setEdges]);
+  }, [safeInitialNodes, safeInitialEdges, setNodes, setEdges, normalizeNodes, initialized]);
 
   useEffect(() => {
     if (flowContainerRef.current) {
@@ -259,20 +268,13 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     }
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showWidgets && 
-          widgetButtonRef.current && 
-          !widgetButtonRef.current.contains(event.target as Element) &&
-          !document.querySelector('.widget-panel')?.contains(event.target as Element)) {
-        setShowWidgets(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (showWidgets && 
+        widgetButtonRef.current && 
+        !widgetButtonRef.current.contains(event.target as Element) &&
+        !document.querySelector('.widget-panel')?.contains(event.target as Element)) {
+      setShowWidgets(false);
+    }
   }, [showWidgets]);
 
   const isValidConnection = useCallback((connection: Connection) => {
@@ -420,7 +422,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
         id: `${nodeType}-${Date.now()}`,
         type: nodeType,
         position,
-        data: newNodeData
+        data: newNodeData,
+        draggable: true
       };
 
       console.log('[Flow] Adding new node:', newNode);
@@ -470,7 +473,17 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             deleteKeyCode={['Delete', 'Backspace']}
             onInit={(reactFlowInstance) => {
               console.log('[Flow] ReactFlow initialized');
-              setTimeout(() => reactFlowInstance.fitView(), 100);
+              setTimeout(() => {
+                reactFlowInstance.fitView({ padding: 0.2 });
+                
+                const currentNodes = reactFlowInstance.getNodes();
+                console.log('[Flow] Current nodes after init:', currentNodes);
+                
+                if (currentNodes.length === 0 && safeInitialNodes.length > 0) {
+                  console.log('[Flow] Forcing node initialization after init');
+                  setNodes(normalizeNodes(safeInitialNodes));
+                }
+              }, 100);
             }}
           >
             <style>
@@ -606,4 +619,3 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     </NodeUpdateContext.Provider>
   );
 }
-

@@ -11,7 +11,8 @@ export const getDefaultFlow = (): FlowData => {
       greeting: 'Hello, this is your new agent speaking. How can I help you today?',
       outcomes: [],
       actions: []
-    }
+    },
+    draggable: true
   };
 
   return {
