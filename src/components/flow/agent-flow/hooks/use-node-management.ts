@@ -1,6 +1,6 @@
 
 import { useCallback, useState } from 'react';
-import { Node, useReactFlow } from '@xyflow/react';
+import { Node, Edge, useReactFlow } from '@xyflow/react';
 import { toast } from 'sonner';
 import { NodeData } from '@/types/agent';
 import { widgets } from '../widgets/widget-definitions';
@@ -67,7 +67,7 @@ export function useNodeManagement() {
       createNodeFromType(nodeType, position, nodes, setNodes, onNodesChange);
       toast.success(`Added ${widgets.find(w => w.type === nodeType)?.label || nodeType} node`);
     }
-  }, [screenToFlowPosition, createNodePosition, contextMenuPosition, widgets, toast, createNodeFromType]);
+  }, [screenToFlowPosition, contextMenuPosition, widgets, toast, createNodeFromType]);
 
   const handleNodeContextMenu = useCallback((
     event: React.MouseEvent, 

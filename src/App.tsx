@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,7 +9,7 @@ import AuthPage from "@/pages/auth";
 import NotFound from "@/pages/NotFound";
 import DashboardLayout from "@/layouts/dashboard-layout";
 import AgentsPage from "@/pages/dashboard/agents";
-import AgentFlowPage from "@/pages/dashboard/agent-flow";
+import AgentFlowPage from './pages/dashboard/agent-flow';
 import LeadsPage from "@/pages/dashboard/leads";
 import PipelinesPage from "@/pages/dashboard/pipelines";
 import SettingsPage from "@/pages/dashboard/settings";

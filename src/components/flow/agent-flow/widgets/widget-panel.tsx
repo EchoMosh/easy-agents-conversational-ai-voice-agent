@@ -15,7 +15,7 @@ export function WidgetPanel({ showWidgets, setShowWidgets, onDragStart }: Widget
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
 
   const toggleWidgetPanel = () => {
-    setShowWidgets(prev => !prev);
+    setShowWidgets(!showWidgets);
   };
 
   return (
