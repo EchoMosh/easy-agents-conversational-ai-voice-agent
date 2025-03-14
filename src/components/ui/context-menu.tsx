@@ -1,11 +1,23 @@
-
 import * as React from "react"
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const ContextMenu = ContextMenuPrimitive.Root
+const ContextMenu = React.forwardRef<
+  React.ElementRef<typeof ContextMenuPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Root> & {
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  }
+>(({ open, onOpenChange, ...props }, ref) => (
+  <ContextMenuPrimitive.Root 
+    open={open} 
+    onOpenChange={onOpenChange} 
+    {...props} 
+  />
+))
+ContextMenu.displayName = "ContextMenu"
 
 const ContextMenuTrigger = ContextMenuPrimitive.Trigger
 
