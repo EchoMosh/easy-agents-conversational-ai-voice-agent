@@ -10,6 +10,7 @@ import { AgentTrainingPopup } from '@/components/agents/training/agent-training-
 import { useAgentData } from './hooks/use-agent-data';
 import { useMermaidChart } from './hooks/use-mermaid-chart';
 import { useFlowManagement } from './hooks/use-flow-management';
+import { MermaidChartPreview } from './components/mermaid-chart-preview';
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();

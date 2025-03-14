@@ -1,3 +1,4 @@
+
 import { Handle, Position } from '@xyflow/react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { NodeAction, NodeData } from '@/types/agent-types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
+import { NodeUpdateContext } from '@/components/flow/agent-flow/node-update-context';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useReactFlow } from '@xyflow/react';
 import { ComingSoonDialog } from './coming-soon-dialog';

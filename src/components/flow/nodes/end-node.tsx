@@ -2,7 +2,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { X } from 'lucide-react';
 import { useState, useContext, useEffect } from 'react';
-import { NodeUpdateContext } from '@/components/flow/agent-flow/flow';
+import { NodeUpdateContext } from '@/components/flow/agent-flow/node-update-context';
 import { Textarea } from '@/components/ui/textarea';
 
 export function EndNode({ id, data }: { id: string; data: { message?: string } }) {
