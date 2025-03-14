@@ -585,7 +585,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
           onKeyDown={handleFlowKeyDown}
           style={{ outline: 'none' }}
         >
-          <ContextMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
+          <ContextMenu>
             <ContextMenuTrigger className="flex w-full h-full">
               <ReactFlow
                 nodes={nodes}
@@ -606,7 +606,21 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 snapGrid={[15, 15]}
                 deleteKeyCode={['Delete', 'Backspace']}
                 onNodeContextMenu={handleNodeContextMenu}
-                onPaneContextMenu={handlePaneContextMenu}
+                onPaneContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  console.log('[Flow] Pane context menu triggered at:', event.clientX, event.clientY);
+                  
+                  setRightClickedNodeId(null);
+                  
+                  if (reactFlowWrapper.current) {
+                    const bounds = reactFlowWrapper.current.getBoundingClientRect();
+                    setRightClickPosition({
+                      x: event.clientX - bounds.left,
+                      y: event.clientY - bounds.top
+                    });
+                  }
+                }}
                 onInit={(reactFlowInstance) => {
                   console.log('[Flow] ReactFlow initialized');
                   setTimeout(() => {
