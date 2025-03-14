@@ -125,9 +125,8 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
   const [initialized, setInitialized] = useState(false);
-  const [rightClickPosition, setRightClickPosition] = useState<{ x: number, y: number } | null>(null);
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
   const [rightClickedNodeId, setRightClickedNodeId] = useState<string | null>(null);
-  const [contextMenuOpen, setContextMenuOpen] = useState(false);
 
   const updateNodeData = useCallback((nodeId: string, newData: any) => {
     console.log(`[Flow] updateNodeData called for node ${nodeId} with data:`, newData);
@@ -193,19 +192,47 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     return newNode;
   }, [nodes, setNodes, onNodesChange]);
 
-  const handleContextMenuAddNode = useCallback((nodeType: string, event: React.MouseEvent) => {
+  const handleContextMenuAddNode = useCallback((nodeType: string) => {
     if (reactFlowWrapper.current) {
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = screenToFlowPosition({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
+        x: contextMenuPosition.x,
+        y: contextMenuPosition.y,
       });
       
       createNodeFromType(nodeType, position);
       toast.success(`Added ${widgets.find(w => w.type === nodeType)?.label || nodeType} node`);
-      setContextMenuOpen(false);
     }
-  }, [screenToFlowPosition, createNodeFromType, widgets]);
+  }, [screenToFlowPosition, createNodeFromType, widgets, contextMenuPosition]);
+
+  const handleNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
+    event.preventDefault();
+    
+    console.log('[Flow] Node context menu triggered for node:', node.id);
+    setRightClickedNodeId(node.id);
+    
+    if (reactFlowWrapper.current) {
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      setContextMenuPosition({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top
+      });
+    }
+  }, []);
+
+  const handlePaneContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    
+    console.log('[Flow] Pane context menu triggered at:', event.clientX, event.clientY);
+    setRightClickedNodeId(null);
+    
+    if (reactFlowWrapper.current) {
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      setContextMenuPosition({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top
+      });
+    }
+  }, []);
 
   const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
@@ -453,41 +480,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
     setShowWidgets(prev => !prev);
   };
 
-  const handleNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    console.log('[Flow] Node context menu triggered for node:', node.id);
-    
-    setRightClickedNodeId(node.id);
-    setContextMenuOpen(true);
-    
-    if (reactFlowWrapper.current) {
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      setRightClickPosition({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top
-      });
-    }
-  }, []);
-
-  const handlePaneContextMenu = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    console.log('[Flow] Pane context menu triggered at:', event.clientX, event.clientY);
-    
-    setRightClickedNodeId(null);
-    setContextMenuOpen(true);
-    
-    if (reactFlowWrapper.current) {
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      setRightClickPosition({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top
-      });
-    }
-  }, []);
-
   const handleDeleteSelectedNode = useCallback(() => {
     const nodeIdToDelete = rightClickedNodeId || selectedNodeId;
     
@@ -530,7 +522,6 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             setSelectedNodeId(null);
             setRightClickedNodeId(null);
             setProcessingDeletion(false);
-            setContextMenuOpen(false);
           }, 200);
         });
       } else {
@@ -801,48 +792,41 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
               </ReactFlow>
             </ContextMenuTrigger>
             
-            {rightClickPosition && (
-              <ContextMenuContent 
-                className="w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg z-50 border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg"
-                style={{
-                  position: 'absolute',
-                  left: `${rightClickPosition.x}px`,
-                  top: `${rightClickPosition.y}px`
-                }}
-              >
-                {rightClickedNodeId ? (
-                  <>
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Node Actions</div>
-                    <ContextMenuItem
-                      onClick={handleDeleteSelectedNode}
-                      className="flex items-center gap-2 text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>Delete Node</span>
-                      <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">Del</kbd>
-                    </ContextMenuItem>
-                    <ContextMenuSeparator />
-                  </>
-                ) : null}
-                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Add Node</div>
-                {widgets.map((widget) => (
+            <ContextMenuContent 
+              className="w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg z-50 border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg overflow-hidden"
+            >
+              {rightClickedNodeId ? (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Node Actions</div>
                   <ContextMenuItem
-                    key={widget.type}
-                    onClick={(e) => handleContextMenuAddNode(widget.type, e)}
-                    className="flex items-center gap-2"
+                    onClick={handleDeleteSelectedNode}
+                    className="flex items-center gap-2 text-destructive focus:text-destructive"
                   >
-                    <span 
-                      className="p-1 rounded-md"
-                      style={{ color: widget.color }}
-                    >
-                      <widget.icon className="h-3.5 w-3.5" />
-                    </span>
-                    <span>{widget.label}</span>
-                    <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete Node</span>
+                    <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">Del</kbd>
                   </ContextMenuItem>
-                ))}
-              </ContextMenuContent>
-            )}
+                  <ContextMenuSeparator />
+                </>
+              ) : null}
+              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Add Node</div>
+              {widgets.map((widget) => (
+                <ContextMenuItem
+                  key={widget.type}
+                  onClick={() => handleContextMenuAddNode(widget.type)}
+                  className="flex items-center gap-2"
+                >
+                  <span 
+                    className="p-1 rounded-md"
+                    style={{ color: widget.color }}
+                  >
+                    <widget.icon className="h-3.5 w-3.5" />
+                  </span>
+                  <span>{widget.label}</span>
+                  <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
+                </ContextMenuItem>
+              ))}
+            </ContextMenuContent>
           </ContextMenu>
         </div>
       </div>
