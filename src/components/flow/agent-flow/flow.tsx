@@ -606,21 +606,7 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
                 snapGrid={[15, 15]}
                 deleteKeyCode={['Delete', 'Backspace']}
                 onNodeContextMenu={handleNodeContextMenu}
-                onPaneContextMenu={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  console.log('[Flow] Pane context menu triggered at:', event.clientX, event.clientY);
-                  
-                  setRightClickedNodeId(null);
-                  
-                  if (reactFlowWrapper.current) {
-                    const bounds = reactFlowWrapper.current.getBoundingClientRect();
-                    setRightClickPosition({
-                      x: event.clientX - bounds.left,
-                      y: event.clientY - bounds.top
-                    });
-                  }
-                }}
+                onPaneContextMenu={handlePaneContextMenu}
                 onInit={(reactFlowInstance) => {
                   console.log('[Flow] ReactFlow initialized');
                   setTimeout(() => {
@@ -818,6 +804,11 @@ export function Flow({ initialNodes, initialEdges, onNodesChange, onEdgesChange,
             {rightClickPosition && (
               <ContextMenuContent 
                 className="w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg z-50 border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg"
+                style={{
+                  position: 'absolute',
+                  left: `${rightClickPosition.x}px`,
+                  top: `${rightClickPosition.y}px`
+                }}
               >
                 {rightClickedNodeId ? (
                   <>
