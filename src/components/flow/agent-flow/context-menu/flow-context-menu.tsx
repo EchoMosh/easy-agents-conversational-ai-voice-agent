@@ -1,56 +1,77 @@
-
 import { Trash2 } from 'lucide-react';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-  ContextMenuSeparator
-} from "@/components/ui/context-menu";
-import { widgets, WidgetDefinition } from '../widgets/widget-definitions';
+import React, { useEffect } from 'react';
+import { widgets } from '../widgets/widget-definitions';
 
 interface FlowContextMenuProps {
   children: React.ReactNode;
   rightClickedNodeId: string | null;
-  onAddNode: (nodeType: string) => void;
+  contextMenuPosition: { x: number, y: number } | null;
+  onAddNode: (nodeType: string, position?: { x: number, y: number }) => void;
   onDeleteNode: () => void;
 }
 
 export function FlowContextMenu({ 
   children, 
-  rightClickedNodeId, 
+  rightClickedNodeId,
+  contextMenuPosition,
   onAddNode, 
   onDeleteNode 
 }: FlowContextMenuProps) {
+  // If no context menu position is set, just render the children
+  if (!contextMenuPosition) {
+    return <>{children}</>;
+  }
+  
+  // Create click handler for menu items
+  const handleItemClick = (callback: () => void) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    callback();
+  };
+  
+  // Portal the menu directly to the body to avoid ReactFlow's event handling
   return (
-    <ContextMenu>
-      <ContextMenuTrigger className="flex w-full h-full">
-        {children}
-      </ContextMenuTrigger>
+    <>
+      {children}
       
-      <ContextMenuContent 
-        className="w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg z-50 border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg overflow-hidden"
+      <div
+        className="fixed z-[9999] min-w-[200px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg overflow-hidden"
+        style={{
+          left: `${contextMenuPosition.x + 5}px`,
+          top: `${contextMenuPosition.y + 5}px`,
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onContextMenu={(e) => e.preventDefault()}
       >
         {rightClickedNodeId ? (
           <>
             <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Node Actions</div>
-            <ContextMenuItem
-              onClick={onDeleteNode}
-              className="flex items-center gap-2 text-destructive focus:text-destructive"
+            <div
+              onClick={handleItemClick(onDeleteNode)}
+              className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-red-600"
             >
               <Trash2 className="h-3.5 w-3.5" />
               <span>Delete Node</span>
-              <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">Del</kbd>
-            </ContextMenuItem>
-            <ContextMenuSeparator />
+            </div>
+            <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
           </>
         ) : null}
+        
         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">Add Node</div>
+        
         {widgets.map((widget) => (
-          <ContextMenuItem
+          <div
             key={widget.type}
-            onClick={() => onAddNode(widget.type)}
-            className="flex items-center gap-2"
+            onClick={handleItemClick(() => {
+              // Use exact context menu position with minimal offset
+              // This will be converted to flow coordinates in the handler
+              const nodePosition = {
+                x: contextMenuPosition.x,
+                y: contextMenuPosition.y
+              };
+              onAddNode(widget.type, nodePosition);
+            })}
+            className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
           >
             <span 
               className="p-1 rounded-md"
@@ -59,10 +80,9 @@ export function FlowContextMenu({
               <widget.icon className="h-3.5 w-3.5" />
             </span>
             <span>{widget.label}</span>
-            <kbd className="ml-auto px-1.5 py-0.5 bg-muted/50 rounded text-[10px] font-semibold">{widget.shortcut}</kbd>
-          </ContextMenuItem>
+          </div>
         ))}
-      </ContextMenuContent>
-    </ContextMenu>
+      </div>
+    </>
   );
 }

@@ -1,4 +1,3 @@
-
 import { Smile, XCircle, Zap } from 'lucide-react';
 
 export interface WidgetDefinition {
@@ -7,7 +6,6 @@ export interface WidgetDefinition {
   icon: React.ElementType;
   color: string;
   description: string;
-  shortcut: string;
 }
 
 export const widgets: WidgetDefinition[] = [
@@ -16,23 +14,20 @@ export const widgets: WidgetDefinition[] = [
     label: 'Speak', 
     icon: Smile, 
     color: '#60a5fa',
-    description: 'Start a conversation with customizable responses',
-    shortcut: 'S'
+    description: 'Start a conversation with customizable responses'
   },
   { 
     type: 'endNode', 
     label: 'End', 
     icon: XCircle, 
     color: '#f87171',
-    description: 'End the conversation flow',
-    shortcut: 'E'
+    description: 'End the conversation flow'
   },
   { 
     type: 'triggerNode', 
     label: 'Trigger', 
     icon: Zap, 
     color: '#fbbf24',
-    description: 'Define when this flow should start',
-    shortcut: 'T'
+    description: 'Define when this flow should start'
   }
 ];

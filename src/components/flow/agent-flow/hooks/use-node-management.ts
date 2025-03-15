@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import { Node, Edge, useReactFlow } from '@xyflow/react';
 import { toast } from 'sonner';
@@ -8,8 +7,8 @@ import { widgets } from '../widgets/widget-definitions';
 export function useNodeManagement() {
   const [processingDeletion, setProcessingDeletion] = useState(false);
   const [rightClickedNodeId, setRightClickedNodeId] = useState<string | null>(null);
-  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
-  const { screenToFlowPosition, getNodes } = useReactFlow();
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number, y: number } | null>(null);
+  const { screenToFlowPosition } = useReactFlow();
 
   const createNodeFromType = useCallback((
     nodeType: string, 
@@ -58,14 +57,26 @@ export function useNodeManagement() {
     onNodesChange: (nodes: Node[]) => void,
     reactFlowWrapperRef: React.RefObject<HTMLDivElement>
   ) => {
-    if (reactFlowWrapperRef.current) {
+    if (reactFlowWrapperRef.current && contextMenuPosition) {
+      console.log('[Flow] Adding node from context menu at position:', contextMenuPosition);
+      
       const position = screenToFlowPosition({
         x: contextMenuPosition.x,
         y: contextMenuPosition.y,
       });
       
-      createNodeFromType(nodeType, position, nodes, setNodes, onNodesChange);
+      console.log('[Flow] Converted to flow position:', position);
+      
+      const newNode = createNodeFromType(nodeType, position, nodes, setNodes, onNodesChange);
+      console.log('[Flow] Created new node:', newNode);
+      
+      // Clear the context menu after adding a node
+      setContextMenuPosition(null);
+      setRightClickedNodeId(null);
+      
       toast.success(`Added ${widgets.find(w => w.type === nodeType)?.label || nodeType} node`);
+    } else {
+      console.error('[Flow] reactFlowWrapperRef is not available or contextMenuPosition is null');
     }
   }, [screenToFlowPosition, contextMenuPosition, widgets, toast, createNodeFromType]);
 
@@ -74,36 +85,36 @@ export function useNodeManagement() {
     node: Node,
     reactFlowWrapperRef: React.RefObject<HTMLDivElement>
   ) => {
+    // Prevent default browser context menu
     event.preventDefault();
+    event.stopPropagation();
     
     console.log('[Flow] Node context menu triggered for node:', node.id);
     setRightClickedNodeId(node.id);
     
-    if (reactFlowWrapperRef.current) {
-      const bounds = reactFlowWrapperRef.current.getBoundingClientRect();
-      setContextMenuPosition({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top
-      });
-    }
+    // Set the context menu position at the mouse coordinates
+    setContextMenuPosition({
+      x: event.clientX,
+      y: event.clientY
+    });
   }, []);
 
   const handlePaneContextMenu = useCallback((
     event: React.MouseEvent,
     reactFlowWrapperRef: React.RefObject<HTMLDivElement>
   ) => {
+    // Prevent default browser context menu
     event.preventDefault();
+    event.stopPropagation();
     
     console.log('[Flow] Pane context menu triggered at:', event.clientX, event.clientY);
     setRightClickedNodeId(null);
     
-    if (reactFlowWrapperRef.current) {
-      const bounds = reactFlowWrapperRef.current.getBoundingClientRect();
-      setContextMenuPosition({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top
-      });
-    }
+    // Set the context menu position at the mouse coordinates
+    setContextMenuPosition({
+      x: event.clientX,
+      y: event.clientY
+    });
   }, []);
 
   const handleDeleteSelectedNode = useCallback((
@@ -153,16 +164,19 @@ export function useNodeManagement() {
           
           toast.success(`Node deleted`);
           
-          setTimeout(() => {
-            setRightClickedNodeId(null);
-            setProcessingDeletion(false);
-          }, 200);
+          // Clear context menu after deletion
+          setContextMenuPosition(null);
+          setRightClickedNodeId(null);
+          setProcessingDeletion(false);
         });
       } else {
         setProcessingDeletion(false);
+        // Clear context menu if node not found
+        setContextMenuPosition(null);
+        setRightClickedNodeId(null);
       }
     }
-  }, [rightClickedNodeId, setRightClickedNodeId, setProcessingDeletion, toast]);
+  }, [rightClickedNodeId, setRightClickedNodeId, setProcessingDeletion, toast, setContextMenuPosition]);
 
   return {
     processingDeletion,
@@ -173,6 +187,7 @@ export function useNodeManagement() {
     handleNodeContextMenu,
     handlePaneContextMenu,
     handleDeleteSelectedNode,
-    setRightClickedNodeId
+    setRightClickedNodeId,
+    setContextMenuPosition
   };
 }
