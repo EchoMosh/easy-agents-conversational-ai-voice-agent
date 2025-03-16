@@ -67,7 +67,7 @@ export function BulkActionsDialog({
   
   const handlePipelineChange = (value: string) => {
     setSelectedPipeline(value);
-    // Fix: Use only one parameter for toast.success
+    // Fix: toast.success only accepts a single string argument
     toast.success(value === "none" ? "No Pipeline selected" : `Pipeline selected: ${pipelines.find(p => p.id === value)?.name || value}`);
   };
   
