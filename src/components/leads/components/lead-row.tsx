@@ -13,6 +13,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { LeadVariable } from "@/pages/dashboard/leads";
 
 export function LeadRow({ 
   lead, 
@@ -23,8 +26,26 @@ export function LeadRow({
   pipelineName 
 }: LeadRowProps) {
   const { theme } = useTheme();
-  // Make sure we're getting the correct count - handling null/undefined variables array
-  const variableCount = Array.isArray(lead.variables) ? lead.variables.length : 0;
+  const [variableCount, setVariableCount] = useState(0);
+
+  // Fetch variable count from database when component mounts
+  useEffect(() => {
+    const fetchVariableCount = async () => {
+      try {
+        const { data, error, count } = await supabase
+          .from("lead_variables")
+          .select("*", { count: 'exact' })
+          .eq("lead_id", lead.id);
+        
+        if (error) throw error;
+        setVariableCount(count || 0);
+      } catch (error) {
+        console.error("Error fetching variables count:", error);
+      }
+    };
+
+    fetchVariableCount();
+  }, [lead.id]);
 
   return (
     <TableRow className={cn(

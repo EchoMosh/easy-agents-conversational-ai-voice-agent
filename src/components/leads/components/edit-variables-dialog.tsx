@@ -29,7 +29,6 @@ export function EditVariablesDialog({
 }: EditVariablesDialogProps) {
   const [variables, setVariables] = useState<LeadVariable[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingVariable, setEditingVariable] = useState<LeadVariable | null>(null);
   const [newVariables, setNewVariables] = useState<{name: string; value: string}[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -59,7 +58,7 @@ export function EditVariablesDialog({
   };
 
   const handleEditVariable = (variable: LeadVariable) => {
-    setEditingVariable(variable);
+    // Dialog will take care of the edit
   };
 
   const handleDeleteVariable = async (id: string) => {
@@ -149,6 +148,10 @@ export function EditVariablesDialog({
                 onEdit={handleEditVariable}
                 onDelete={handleDeleteVariable}
                 onAddClick={handleAddVariable}
+                onVariablesUpdated={() => {
+                  fetchVariables();
+                  onLeadUpdated();
+                }}
               />
 
               {/* New Variables Forms */}
