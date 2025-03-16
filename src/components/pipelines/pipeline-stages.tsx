@@ -46,8 +46,15 @@ export function PipelineStages({
           description: `${column.title} stage has been deleted successfully`
         });
       } catch (error) {
-        if ((error as Error).message !== "Cannot delete stage with leads") {
+        // Show the actual error message from the deleteStage function
+        if (error instanceof Error) {
           console.error("Error deleting stage:", error);
+          toast({
+            title: "Cannot delete stage",
+            description: error.message || "Failed to delete stage",
+            variant: "destructive"
+          });
+        } else {
           toast({
             title: "Error",
             description: "Failed to delete stage",
