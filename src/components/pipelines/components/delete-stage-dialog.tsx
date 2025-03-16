@@ -1,7 +1,17 @@
 
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { PipelineColumn } from "@/types/pipeline";
 import { useState } from "react";
+import { 
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle 
+} from "@/components/ui/drawer";
+import { Trash2 } from "lucide-react";
 
 interface DeleteStageDialogProps {
   stageToDelete: PipelineColumn | null;
@@ -18,40 +28,45 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
     setIsDeleting(true);
     try {
       await onConfirm(stageToDelete);
-      onClose(false); // Ensure dialog closes after deletion completes
+      onClose(false);
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <AlertDialog 
-      open={!!stageToDelete} 
+    <Drawer
+      open={!!stageToDelete}
       onOpenChange={(open) => {
-        if (!isDeleting) { // Only allow closing if not deleting
+        if (!isDeleting) {
           onClose(open);
         }
       }}
+      direction="right"
     >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-          <AlertDialogDescription>
+      <DrawerContent className="max-w-sm ml-auto">
+        <DrawerHeader>
+          <DrawerTitle>Are you sure?</DrawerTitle>
+          <DrawerDescription>
             This will permanently delete the "{stageToDelete?.title}" stage and all its associated data.
             This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting} onClick={() => onClose(false)}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          </DrawerDescription>
+        </DrawerHeader>
+        <DrawerFooter className="flex flex-row justify-end gap-3">
+          <DrawerClose asChild>
+            <Button variant="outline" disabled={isDeleting}>Cancel</Button>
+          </DrawerClose>
+          <Button
+            variant="destructive"
             onClick={handleDelete}
             disabled={isDeleting}
+            className="flex items-center gap-2"
           >
+            <Trash2 className="h-4 w-4" />
             {isDeleting ? "Deleting..." : "Delete Stage"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }
