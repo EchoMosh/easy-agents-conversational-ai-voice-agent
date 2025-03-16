@@ -6,6 +6,7 @@ import { PipelineName } from "./components/pipeline-name";
 import { StagesContainer } from "./components/stages-container";
 import { useStages } from "@/hooks/pipeline/use-stages";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
@@ -36,6 +37,17 @@ export function PipelineStages({
   const {
     handleDeleteStage
   } = useStages(onReorderColumns);
+
+  // Ensure unique columns when rendering
+  useEffect(() => {
+    // Check if there are duplicate columns
+    const columnIds = selectedPipeline.columns.map(col => col.id);
+    const uniqueIds = new Set(columnIds);
+    
+    if (columnIds.length !== uniqueIds.size) {
+      console.warn(`Pipeline ${selectedPipeline.name} has duplicate column IDs. Found ${columnIds.length} IDs but only ${uniqueIds.size} are unique.`);
+    }
+  }, [selectedPipeline]);
 
   const handleDeleteStageClick = async (column: PipelineColumn) => {
     if (column && selectedPipeline) {
@@ -76,7 +88,9 @@ export function PipelineStages({
     selectedPipeline.columns = uniqueColumns;
   }
   
-  console.log(`Selected pipeline "${selectedPipeline.name}" (${selectedPipeline.id}) has ${leads.length} total leads`);
+  // Filter leads to only include those belonging to this pipeline
+  const pipelineLeads = leads.filter(lead => lead.pipeline_id === selectedPipeline.id);
+  console.log(`Selected pipeline "${selectedPipeline.name}" (${selectedPipeline.id}) has ${pipelineLeads.length} leads (out of ${leads.length} total leads)`);
 
   return (
     <>

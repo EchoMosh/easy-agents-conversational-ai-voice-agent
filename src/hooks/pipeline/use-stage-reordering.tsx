@@ -34,7 +34,16 @@ export function useStageReordering(
     const oldIndex = uniqueColumns.findIndex(col => col.id === active.id);
     const newIndex = uniqueColumns.findIndex(col => col.id === over.id);
     
-    if (oldIndex === -1 || newIndex === -1) return;
+    if (oldIndex === -1 || newIndex === -1) {
+      console.error("Could not find columns for reordering:", {
+        activeId: active.id,
+        overId: over.id,
+        oldIndex,
+        newIndex,
+        columns: uniqueColumns.map(c => ({ id: c.id, title: c.title }))
+      });
+      return;
+    }
     
     // Create a new array with the columns in the new order
     const newColumns = [...uniqueColumns];

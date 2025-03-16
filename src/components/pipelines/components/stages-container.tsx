@@ -8,7 +8,7 @@ import { PipelineStage } from "./pipeline-stage";
 import { AddStageButton } from "./add-stage-button";
 import { useStageReordering } from "@/hooks/pipeline/use-stage-reordering";
 import { useStages } from "@/hooks/pipeline/use-stages";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface StagesContainerProps {
   selectedPipeline: Pipeline;
@@ -49,10 +49,13 @@ export function StagesContainer({
   const { handleStageReorder, isReordering } = useStageReordering(onReorderColumns);
   const [isDraggingStage, setIsDraggingStage] = useState(false);
 
+  // Get only the leads that belong to the current pipeline
+  const pipelineLeads = leads.filter(lead => lead.pipeline_id === selectedPipeline.id);
+
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 5, // Adjust as needed for your use case
+        distance: 5,
       },
     }),
     useSensor(TouchSensor, {
@@ -64,17 +67,14 @@ export function StagesContainer({
   );
 
   const handleDragStart = (event: DragStartEvent) => {
-    // Check if the dragged item is a stage
     if (selectedPipeline.columns.some(col => col.id === event.active.id)) {
       setIsDraggingStage(true);
     }
   };
 
   const handleDragEndWrapper = (event: DragEndEvent) => {
-    // Reset the dragging stage state
     setIsDraggingStage(false);
     
-    // Determine if this is a stage reordering or a lead movement
     if (selectedPipeline.columns.some(col => col.id === event.active.id)) {
       handleStageReorder(event, selectedPipeline.id, selectedPipeline.columns);
     } else {
@@ -82,13 +82,20 @@ export function StagesContainer({
     }
   };
 
-  // Deduplicate columns by ID to ensure we don't render duplicate columns
+  // This is the key fix - ensure column IDs are unique
   const uniqueColumns = Array.from(
     new Map(selectedPipeline.columns.map(col => [col.id, col])).values()
   );
   
-  console.log(`Pipeline ${selectedPipeline.name} has ${uniqueColumns.length} unique columns (from ${selectedPipeline.columns.length} total columns)`);
-  console.log(`Total leads for pipeline: ${leads.length}`);
+  useEffect(() => {
+    console.log(`Pipeline ${selectedPipeline.name} has ${uniqueColumns.length} unique columns (from ${selectedPipeline.columns.length} total columns)`);
+    console.log(`Pipeline leads: ${pipelineLeads.length} (out of ${leads.length} total leads)`);
+    
+    // Log warning if duplicates found
+    if (uniqueColumns.length !== selectedPipeline.columns.length) {
+      console.warn("Duplicate column IDs detected in pipeline:", selectedPipeline.id);
+    }
+  }, [selectedPipeline, uniqueColumns, pipelineLeads, leads]);
   
   return (
     <DndContext 
@@ -99,15 +106,16 @@ export function StagesContainer({
       <div className="flex flex-wrap gap-6">
         <SortableContext items={uniqueColumns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
           {uniqueColumns.map((column) => {
-            // Filter leads that belong to this pipeline AND match this column's status
-            const columnLeads = leads.filter(lead => {
-              const statusMatches = lead.status?.toLowerCase() === column.title?.toLowerCase();
-              
-              // We only want leads that belong to this pipeline
-              return statusMatches && lead.pipeline_id === selectedPipeline.id;
+            // Filter leads with case-insensitive comparison
+            // Only use leads from the current pipeline
+            const columnLeads = pipelineLeads.filter(lead => {
+              const statusMatches = lead.status && 
+                                    column.title && 
+                                    lead.status.toLowerCase() === column.title.toLowerCase();
+              return statusMatches;
             });
             
-            console.log(`Column "${column.title}" has ${columnLeads.length} leads from pipeline ${selectedPipeline.id}`);
+            console.log(`Column "${column.title}" has ${columnLeads.length} leads in pipeline ${selectedPipeline.id}`);
             
             return (
               <SortableStage 
@@ -124,7 +132,7 @@ export function StagesContainer({
                   onEditColumnTitle={(e) => handleKeyDown(e, onEditColumnTitle)}
                   setEditingColumnTitle={setEditingColumnTitle}
                   handleColorChange={(columnId, color) => 
-                    handleColorChange(selectedPipeline.id, columnId, color, selectedPipeline.columns)
+                    handleColorChange(selectedPipeline.id, columnId, color, uniqueColumns)
                   }
                   onDeleteStage={onDeleteStage}
                   toggleColumnCollapse={(columnId) => toggleColumnCollapse(selectedPipeline.id, columnId)}
@@ -139,7 +147,7 @@ export function StagesContainer({
         </SortableContext>
         
         <AddStageButton 
-          onAddStage={() => handleAddNewStage(selectedPipeline.id, selectedPipeline.columns, onAddStage)} 
+          onAddStage={() => handleAddNewStage(selectedPipeline.id, uniqueColumns, onAddStage)} 
           isLoading={isAddingStage}
         />
       </div>

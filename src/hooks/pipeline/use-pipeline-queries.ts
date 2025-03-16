@@ -38,6 +38,8 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
         // Add debugging info about duplicates if they exist
         if (convertedPipeline.columns.length !== uniqueColumnsMap.size) {
           console.warn(`Pipeline ${convertedPipeline.id} had duplicate columns. Original: ${convertedPipeline.columns.length}, Unique: ${uniqueColumnsMap.size}`);
+          console.warn("Original columns:", convertedPipeline.columns.map(c => ({ id: c.id, title: c.title })));
+          console.warn("Deduplicated columns:", Array.from(uniqueColumnsMap.values()).map(c => ({ id: c.id, title: c.title })));
         }
         
         convertedPipeline.columns = Array.from(uniqueColumnsMap.values());
@@ -81,6 +83,8 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
         name: lead.name || 'Unnamed Lead',
         email: lead.email || null,
         phone: lead.phone || null,
+        // Ensure pipeline_id is valid
+        pipeline_id: lead.pipeline_id || null
       }));
       
       // Log leads by pipeline for debugging
@@ -99,15 +103,6 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
-  });
-
-  console.log("Query States:", {
-    isPipelinesLoading,
-    isPipelinesFetching,
-    isPipelinesPending,
-    isLeadsLoading,
-    isLeadsFetching,
-    isLeadsPending
   });
 
   // Filter leads for the selected pipeline if needed (for convenience but not essential)
