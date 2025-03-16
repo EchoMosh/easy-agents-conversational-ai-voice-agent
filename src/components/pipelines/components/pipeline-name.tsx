@@ -35,7 +35,7 @@ export function PipelineName({ name, onEditPipelineName, onDeletePipeline }: Pip
           <Button 
             type="submit" 
             size="sm"
-            variant="success"
+            variant="subtle"
             className="h-8 w-8 p-0"
           >
             <Check className="h-4 w-4" />
@@ -62,7 +62,7 @@ export function PipelineName({ name, onEditPipelineName, onDeletePipeline }: Pip
         variant="danger"
         onClick={onDeletePipeline}
         size="sm"
-        className="h-9 shadow-sm"
+        className="h-9 rounded-full"
       >
         <Trash className="w-4 h-4 mr-2" />
         Delete Pipeline

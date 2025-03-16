@@ -45,7 +45,7 @@ export function PipelineStage({
         <DroppableColumn id={column.id}>
           <Card className={`h-full transition-all duration-300 ${
             isCollapsed ? "w-16" : "w-[350px]"
-          }`}>
+          } backdrop-blur-sm bg-background/90 border-gray-200 dark:border-gray-800 shadow-sm rounded-lg overflow-hidden`}>
             <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
               <StageHeader
                 column={column}
@@ -75,7 +75,7 @@ export function PipelineStage({
                   />
                 ))}
                 {columnLeads.length === 0 && (
-                  <div className="min-h-[200px] flex items-center justify-center border-2 border-dashed border-muted rounded-lg">
+                  <div className="min-h-[200px] flex items-center justify-center border-2 border-dashed border-muted rounded-lg bg-muted/20">
                     <p className="text-sm text-muted-foreground/70 text-center px-4">
                       Drop leads here
                     </p>

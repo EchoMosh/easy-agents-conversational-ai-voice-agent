@@ -49,7 +49,7 @@ export function StageHeader({
             <Popover>
               <PopoverTrigger asChild>
                 <div 
-                  className={`${column.color} cursor-pointer rounded transition-all ${
+                  className={`${column.color} cursor-pointer rounded transition-all ring-offset-2 hover:ring-2 ring-offset-background ring-gray-200 dark:ring-gray-700 ${
                     isCollapsed ? "w-8 h-8 mb-2" : "w-3 h-3"
                   }`}
                 />

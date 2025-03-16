@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Plus, PlusCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Pipeline } from "@/types/pipeline";
 import { useNavigate } from "react-router-dom";
 
@@ -27,13 +27,13 @@ export function PipelineHeader({
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-3xl font-semibold tracking-tight">
           Pipelines
         </h1>
         <Button
           onClick={onCreatePipeline}
           size="sm"
-          className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 shadow-md transition-all"
+          className="bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:from-gray-800 hover:to-gray-700 rounded-full px-4 shadow-sm transition-all"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Pipeline
@@ -41,18 +41,18 @@ export function PipelineHeader({
       </div>
       
       {pipelines.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {pipelines.map((pipeline) => (
             <Button
               key={pipeline.id}
-              variant={selectedPipeline?.id === pipeline.id ? "default" : "outline"}
+              variant={selectedPipeline?.id === pipeline.id ? "subtle" : "clean"}
               onClick={() => handlePipelineClick(pipeline)}
               size="sm"
               className={`
                 font-medium rounded-full px-4 transition-all
                 ${selectedPipeline?.id === pipeline.id 
-                  ? "bg-primary text-primary-foreground shadow-sm" 
-                  : "hover:bg-muted/50"}
+                  ? "bg-gray-100 dark:bg-gray-800 shadow-sm" 
+                  : "hover:bg-gray-50 dark:hover:bg-gray-900"}
               `}
             >
               {pipeline.name}

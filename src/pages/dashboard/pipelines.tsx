@@ -119,7 +119,7 @@ export default function PipelinesPage() {
 
   return (
     <div className="relative">
-      <div className="px-8 py-6 min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="px-8 py-6 min-h-screen bg-gradient-to-b from-background to-muted/10">
         <PipelineHeader 
           pipelines={pipelines || []}
           selectedPipeline={selectedPipeline}
