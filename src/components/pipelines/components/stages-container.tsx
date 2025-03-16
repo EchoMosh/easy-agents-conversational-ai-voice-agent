@@ -1,0 +1,114 @@
+
+import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
+import { Lead } from "@/pages/dashboard/leads";
+import { SortableStage } from "./sortable-stage";
+import { PipelineStage } from "./pipeline-stage";
+import { AddStageButton } from "./add-stage-button";
+import { useStageReordering } from "@/hooks/pipeline/use-stage-reordering";
+import { useStages } from "@/hooks/pipeline/use-stages";
+
+interface StagesContainerProps {
+  selectedPipeline: Pipeline;
+  leads: Lead[];
+  onDragEnd: (event: DragEndEvent) => void;
+  onEditColumnTitle: (columnId: string, newTitle: string) => void;
+  onLeadClick: (lead: Lead) => void;
+  onAddStage: (stage: PipelineColumn) => void;
+  onReorderColumns: (newOrder: PipelineColumn[]) => void;
+  allPipelines?: Pipeline[];
+}
+
+export function StagesContainer({
+  selectedPipeline,
+  leads,
+  onDragEnd,
+  onEditColumnTitle,
+  onLeadClick,
+  onAddStage,
+  onReorderColumns,
+  allPipelines = [],
+}: StagesContainerProps) {
+  const {
+    editingColumnId,
+    setEditingColumnId,
+    editingColumnTitle,
+    setEditingColumnTitle,
+    isColumnCollapsed,
+    toggleColumnCollapse,
+    handleKeyDown,
+    handleColorChange,
+    setStageToDelete,
+    handleAddNewStage
+  } = useStages(onReorderColumns);
+
+  const { handleStageReorder } = useStageReordering(onReorderColumns);
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    })
+  );
+
+  const handleDragEndWrapper = (event: DragEndEvent) => {
+    // Determine if this is a stage reordering or a lead movement
+    if (selectedPipeline.columns.some(col => col.id === event.active.id)) {
+      handleStageReorder(event, selectedPipeline.id, selectedPipeline.columns);
+    } else {
+      onDragEnd(event);
+    }
+  };
+
+  return (
+    <DndContext 
+      sensors={sensors} 
+      onDragEnd={handleDragEndWrapper}
+    >
+      <div className="flex flex-wrap gap-6">
+        <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
+          {selectedPipeline.columns.map((column) => {
+            const columnLeads = leads.filter((lead) => 
+              lead.status.toLowerCase() === column.title.toLowerCase()
+            );
+            
+            return (
+              <SortableStage key={column.id} column={column}>
+                <PipelineStage
+                  column={column}
+                  columnLeads={columnLeads}
+                  isCollapsed={isColumnCollapsed(selectedPipeline.id, column.id)}
+                  editingColumnId={editingColumnId}
+                  editingColumnTitle={editingColumnTitle}
+                  onEditColumnTitle={(e) => handleKeyDown(e, onEditColumnTitle)}
+                  setEditingColumnTitle={setEditingColumnTitle}
+                  handleColorChange={(columnId, color) => 
+                    handleColorChange(selectedPipeline.id, columnId, color, selectedPipeline.columns)
+                  }
+                  setStageToDelete={setStageToDelete}
+                  toggleColumnCollapse={(columnId) => toggleColumnCollapse(selectedPipeline.id, columnId)}
+                  setEditingColumnId={setEditingColumnId}
+                  onLeadClick={onLeadClick}
+                  allPipelines={allPipelines}
+                  currentPipelineId={selectedPipeline.id}
+                />
+              </SortableStage>
+            );
+          })}
+        </SortableContext>
+        
+        <AddStageButton 
+          onAddStage={() => handleAddNewStage(selectedPipeline.id, selectedPipeline.columns, onAddStage)} 
+        />
+      </div>
+    </DndContext>
+  );
+}
