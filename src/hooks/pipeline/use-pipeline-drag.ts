@@ -15,9 +15,17 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     
     if (!over || !selectedPipeline || isUpdating) return;
 
+    // Get IDs as strings
     const leadId = String(active.id);
     const newColumnId = String(over.id);
     
+    // Validate that we have a proper lead ID (not a stage ID or other element)
+    // Lead IDs should be UUIDs, so they should be alphanumeric with dashes
+    if (!leadId.match(/^[0-9a-f-]+$/i) || leadId === 'new') {
+      console.log(`Invalid lead ID or stage operation detected: ${leadId}, skipping drag operation`);
+      return;
+    }
+
     // Find the lead being dragged
     const lead = leads.find(l => l.id === leadId);
     if (!lead) {
