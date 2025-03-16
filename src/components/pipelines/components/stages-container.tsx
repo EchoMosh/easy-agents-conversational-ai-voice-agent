@@ -42,7 +42,9 @@ export function StagesContainer({
     isColumnCollapsed,
     toggleColumnCollapse,
     handleKeyDown,
-    handleColorChange
+    handleColorChange,
+    handleAddNewStage,
+    isAddingStage
   } = useStages(onReorderColumns);
 
   const [pipelineLeads, setPipelineLeads] = useState<Lead[]>([]);
@@ -135,13 +137,14 @@ export function StagesContainer({
           </SortableContext>
         
           <AddStageButton 
-            onClick={() => {
+            onAddStage={() => {
               handleAddNewStage(
                 selectedPipeline.id, 
                 selectedPipeline.columns, 
                 onAddStage
               );
             }}
+            isLoading={isAddingStage}
           />
         </div>
       </DndContext>

@@ -4,7 +4,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Plus } from "lucide-react";
 
 interface AddStageButtonProps {
-  onAddStage: () => void;
+  onAddStage: () => void; // Change onClick to onAddStage to match how it's used
   isLoading?: boolean;
 }
 

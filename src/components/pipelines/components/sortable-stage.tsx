@@ -1,15 +1,14 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { PipelineColumn } from "@/types/pipeline";
 
 interface SortableStageProps {
-  column: PipelineColumn;
   children: React.ReactNode;
+  id: string; // Add the id prop to fix the TypeScript error
   disabled?: boolean;
 }
 
-export function SortableStage({ column, children, disabled = false }: SortableStageProps) {
+export function SortableStage({ id, children, disabled = false }: SortableStageProps) {
   const {
     attributes,
     listeners,
@@ -18,7 +17,7 @@ export function SortableStage({ column, children, disabled = false }: SortableSt
     transition,
     isDragging,
   } = useSortable({ 
-    id: column.id,
+    id,
     disabled
   });
 
