@@ -44,21 +44,54 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
     try {
       // Get the pipeline to find default status
       const targetPipeline = pipelines.find(p => p.id === pipelineId);
-      const defaultStatus = targetPipeline?.columns[0]?.title || 'New';
+      
+      // Ensure we're working with unique columns for the target pipeline
+      let defaultStatus = 'New';
+      if (targetPipeline?.columns?.length > 0) {
+        // Deduplicate columns before getting the first one
+        const uniqueColumnsMap = new Map();
+        targetPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
+        const uniqueColumns = Array.from(uniqueColumnsMap.values());
+        
+        // Use the first column's title as the default status
+        if (uniqueColumns.length > 0) {
+          defaultStatus = uniqueColumns[0].title;
+        }
+      }
       
       const { error } = await supabase
         .from('leads')
         .update({ 
           pipeline_id: pipelineId,
-          status: defaultStatus
+          status: defaultStatus,
+          updated_at: new Date().toISOString() // Add timestamp to ensure trigger fires
         })
         .eq('id', lead.id);
       
       if (error) throw error;
       
-      // Optimistically update UI
-      queryClient.invalidateQueries({
-        queryKey: ['leads', currentPipelineId]
+      // Invalidate all relevant queries to ensure UI updates
+      await Promise.all([
+        // Invalidate the leads query to refresh all leads
+        queryClient.invalidateQueries({
+          queryKey: ['leads']
+        }),
+        // Invalidate the pipelines query to refresh all pipelines
+        queryClient.invalidateQueries({
+          queryKey: ['pipelines']
+        }),
+        // Invalidate any specific pipeline queries if they exist
+        currentPipelineId && queryClient.invalidateQueries({
+          queryKey: ['pipelines', currentPipelineId]
+        }),
+        pipelineId && queryClient.invalidateQueries({
+          queryKey: ['pipelines', pipelineId]
+        })
+      ]);
+      
+      // Force a refetch to ensure new data is loaded
+      queryClient.refetchQueries({
+        queryKey: ['leads']
       });
       
       toast({

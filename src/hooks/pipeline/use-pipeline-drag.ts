@@ -26,7 +26,12 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     }
 
     // Find the target column in the selected pipeline
-    const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
+    // First, ensure we're working with unique columns
+    const uniqueColumnsMap = new Map();
+    selectedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
+    const uniqueColumns = Array.from(uniqueColumnsMap.values());
+    
+    const targetColumn = uniqueColumns.find(col => col.id === newColumnId);
     if (!targetColumn) {
       console.error("Target column not found:", newColumnId);
       return;
