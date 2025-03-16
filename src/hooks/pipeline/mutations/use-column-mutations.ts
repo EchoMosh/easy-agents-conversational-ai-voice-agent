@@ -12,7 +12,34 @@ export function useColumnMutations() {
     console.log("Updating column title...", { columnId, newTitle });
     const newColumns = [...pipeline.columns];
     const index = newColumns.findIndex(c => c.id === columnId);
+    
+    if (index === -1) {
+      console.error("Column not found:", columnId);
+      toast({
+        title: "Error",
+        description: "Column not found",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const oldTitle = newColumns[index].title;
+    
+    // Check for duplicate stage name
+    const isDuplicate = newColumns.some(col => 
+      col.id !== columnId && col.title.toLowerCase() === newTitle.toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      console.error("Duplicate stage name:", newTitle);
+      toast({
+        title: "Duplicate stage name",
+        description: `A stage named "${newTitle}" already exists in this pipeline. Please choose a different name.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     newColumns[index] = { ...newColumns[index], title: newTitle };
 
     try {

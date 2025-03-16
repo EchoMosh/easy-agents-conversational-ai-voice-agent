@@ -44,6 +44,14 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     }
   };
 
+  // Check if a stage name already exists in the pipeline
+  const isDuplicateStageName = (columns: PipelineColumn[], title: string, excludeColumnId?: string): boolean => {
+    const normalizedTitle = title.trim().toLowerCase();
+    return columns.some(col => 
+      col.title.toLowerCase() === normalizedTitle && (!excludeColumnId || col.id !== excludeColumnId)
+    );
+  };
+
   const handleColorChange = async (
     pipelineId: string, 
     columnId: string, 
@@ -96,12 +104,24 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     try {
       setIsAddingStage(true);
       
+      // Default stage name
+      const defaultStageName = "New Stage";
+      
+      // Check if default name exists, if so add a number
+      let newStageName = defaultStageName;
+      let counter = 1;
+      
+      while (isDuplicateStageName(columns, newStageName)) {
+        newStageName = `${defaultStageName} ${counter}`;
+        counter++;
+      }
+      
       // Generate a truly unique ID
       const newId = crypto.randomUUID();
       
       const newStage: PipelineColumn = {
         id: newId,
-        title: "New Stage",
+        title: newStageName,
         color: "bg-gray-500",
       };
       
@@ -130,7 +150,7 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
       
       // Set the new stage for editing
       setEditingColumnId(newId);
-      setEditingColumnTitle("New Stage");
+      setEditingColumnTitle(newStageName);
       
       toast({
         title: "Stage added",
@@ -260,6 +280,7 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     handleColorChange,
     handleAddNewStage,
     handleDeleteStage,
-    isAddingStage
+    isAddingStage,
+    isDuplicateStageName
   };
 }
