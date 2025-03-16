@@ -4,13 +4,14 @@ import { Lead } from "@/pages/dashboard/leads";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme/theme-provider";
-import { Mail, Phone, MoveRight, Globe, User } from "lucide-react";
+import { Mail, Phone, MoveRight, Globe, User, Tag, Clock } from "lucide-react";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Pipeline } from "@/types/pipeline";
+import { format } from "date-fns";
 
 interface LeadCardProps {
   lead: Lead;
@@ -89,6 +90,22 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
     }
     return "direct";
   };
+  
+  // Format the creation date
+  const formattedDate = lead.created_at 
+    ? format(new Date(lead.created_at), 'MMM d')
+    : '';
+
+  // Get initials for avatar
+  const getInitials = () => {
+    if (!lead.name) return "??";
+    return lead.name
+      .split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <ContextMenu>
@@ -99,45 +116,59 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
           {...attributes}
           {...listeners}
           className={cn(
-            "cursor-grab active:cursor-grabbing transition-all hover:shadow-md",
-            "rounded-lg border border-gray-200 dark:border-gray-700",
-            "hover:border-blue-300 dark:hover:border-blue-500",
-            isDragging && "opacity-80 shadow-lg rotate-1"
+            "cursor-grab active:cursor-grabbing transition-all",
+            "rounded-md border border-gray-200 dark:border-gray-800",
+            "hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md",
+            isDragging && "opacity-90 shadow-lg rotate-1 scale-105",
+            "overflow-hidden"
           )}
           onClick={onClick}
         >
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2.5">
-              <div className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-full h-8 w-8 flex items-center justify-center">
-                <User size={16} className="text-blue-600 dark:text-blue-400" />
+          <CardContent className="p-0">
+            {/* Top section with name and avatar */}
+            <div className="flex items-center gap-3 p-3 pb-2">
+              <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full h-8 w-8 flex items-center justify-center text-xs font-medium text-white">
+                {getInitials()}
               </div>
               <div className="flex-grow min-w-0">
                 <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
                   {lead.name}
                 </h3>
-                
-                <div className="flex items-center gap-3 mt-1">
-                  {lead.email && (
-                    <div className="flex items-center text-xs text-gray-600 dark:text-gray-400 truncate">
-                      <Mail className="h-3 w-3 mr-1 flex-shrink-0" />
-                      <span className="truncate max-w-[100px]">{lead.email}</span>
-                    </div>
-                  )}
-                  
-                  {lead.phone && (
-                    <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                      <Phone className="h-3 w-3 mr-1 flex-shrink-0" />
-                      <span className="truncate max-w-[60px]">{lead.phone}</span>
-                    </div>
-                  )}
-                </div>
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex items-center">
+                <Clock size={12} className="mr-1" />
+                {formattedDate}
               </div>
             </div>
             
-            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-              <div className="flex items-center text-xs font-medium">
-                <Globe className="h-3 w-3 mr-1 text-gray-500 dark:text-gray-400" />
-                <span className="text-blue-600 dark:text-blue-400 capitalize">
+            {/* Contact info */}
+            <div className="px-3 pb-2.5 flex flex-wrap gap-x-4 gap-y-1">
+              {lead.email && (
+                <div className="flex items-center text-xs text-gray-600 dark:text-gray-400 truncate">
+                  <Mail className="h-3 w-3 mr-1 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                  <span className="truncate max-w-[140px]">{lead.email}</span>
+                </div>
+              )}
+              
+              {lead.phone && (
+                <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                  <Phone className="h-3 w-3 mr-1 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                  <span className="truncate max-w-[90px]">{lead.phone}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Status footer */}
+            <div className="bg-gray-50 dark:bg-gray-900/40 px-3 py-1.5 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+              <div className="flex items-center text-xs">
+                <Tag size={12} className="mr-1.5 text-blue-500 dark:text-blue-400" />
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  {lead.status}
+                </span>
+              </div>
+              <div className="flex items-center text-xs">
+                <Globe size={12} className="mr-1.5 text-emerald-500 dark:text-emerald-400" />
+                <span className="font-medium text-gray-700 dark:text-gray-300 capitalize">
                   {getLeadSource()}
                 </span>
               </div>
