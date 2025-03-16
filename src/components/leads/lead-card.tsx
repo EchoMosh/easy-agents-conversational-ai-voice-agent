@@ -116,7 +116,7 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
           {...attributes}
           {...listeners}
           className={cn(
-            "cursor-grab active:cursor-grabbing transition-all",
+            "cursor-grab active:cursor-grabbing transition-all mb-2.5",
             "rounded-md border border-gray-200 dark:border-gray-800",
             "hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md",
             isDragging && "opacity-90 shadow-lg rotate-1 scale-105",
@@ -127,7 +127,7 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
           <CardContent className="p-0">
             {/* Top section with name and avatar */}
             <div className="flex items-center gap-3 p-3 pb-2">
-              <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full h-8 w-8 flex items-center justify-center text-xs font-medium text-white">
+              <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full h-10 w-10 flex items-center justify-center text-sm font-medium text-white">
                 {getInitials()}
               </div>
               <div className="flex-grow min-w-0">
