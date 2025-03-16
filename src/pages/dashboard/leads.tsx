@@ -201,7 +201,7 @@ export default function LeadsPage() {
               <SelectValue placeholder="All Pipelines" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Pipelines</SelectItem>
+              <SelectItem value="all">All Pipelines</SelectItem>
               {pipelines.map((pipeline) => (
                 <SelectItem key={pipeline.id} value={pipeline.id}>
                   {pipeline.name}
@@ -375,7 +375,7 @@ export default function LeadsPage() {
                   <SelectValue placeholder="Select a pipeline" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Pipeline</SelectItem>
+                  <SelectItem value="none">No Pipeline</SelectItem>
                   {pipelines.map((pipeline) => (
                     <SelectItem key={pipeline.id} value={pipeline.id}>
                       {pipeline.name}
