@@ -17,7 +17,7 @@ interface SelectionHeaderProps {
   isDeleting: boolean;
   onMoveToPipeline: (pipelineId: string) => void;
   onAddVariables: () => void;
-  pipelines: Pipeline[];
+  pipelines: Array<{ id: string; name: string }>;
 }
 
 export function SelectionHeader({
@@ -75,7 +75,6 @@ export function SelectionHeader({
         selectedLeads={Array(selectedCount).fill({ id: "" })}
         onAssignTags={async () => {}}
         onRemoveTags={async () => {}}
-        onMoveToPipeline={onMoveToPipeline}
         onChangeStatus={async () => {}}
         onDeleteLeads={async () => onDelete()}
         onChangePipeline={async (leadIds, pipelineId) => onMoveToPipeline(pipelineId)}

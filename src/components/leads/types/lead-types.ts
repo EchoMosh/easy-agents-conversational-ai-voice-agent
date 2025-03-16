@@ -41,13 +41,15 @@ export interface LeadActionsProps {
   onEditSuccess: () => void;
 }
 
+// Update BulkActionsDialogProps to match the actual BulkActionsDialog implementation
 export interface BulkActionsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedCount: number;
-  onDelete: () => void;
-  isDeleting: boolean;
-  onMoveToPipeline: (pipelineId: string) => void;
-  onAddVariables: () => void;
+  selectedLeads: Lead[];
+  onAssignTags: (leadIds: string[], tagIds: string[]) => Promise<void>;
+  onRemoveTags: (leadIds: string[], tagIds: string[]) => Promise<void>;
+  onChangePipeline: (leadIds: string[], pipelineId: string) => Promise<void>;
+  onChangeStatus: (leadIds: string[], status: string) => Promise<void>;
+  onDeleteLeads: (leadIds: string[]) => Promise<void>;
   pipelines: Array<{ id: string; name: string }>;
 }

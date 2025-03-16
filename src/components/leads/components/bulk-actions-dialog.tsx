@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Sheet,
@@ -13,24 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Lead } from "@/pages/dashboard/leads";
-import { Tag } from "@/types/tag-types";
+import { BulkActionsDialogProps } from "@/components/leads/types/lead-types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Pipeline } from "@/types/pipeline";
-
-interface BulkActionsDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedLeads: Lead[];
-  onAssignTags: (leadIds: string[], tagIds: string[]) => Promise<void>;
-  onRemoveTags: (leadIds: string[], tagIds: string[]) => Promise<void>;
-  onChangePipeline: (leadIds: string[], pipelineId: string) => Promise<void>;
-  onChangeStatus: (leadIds: string[], status: string) => Promise<void>;
-  onDeleteLeads: (leadIds: string[]) => Promise<void>;
-  pipelines: Pipeline[];
-}
 
 export function BulkActionsDialog({
   isOpen,
