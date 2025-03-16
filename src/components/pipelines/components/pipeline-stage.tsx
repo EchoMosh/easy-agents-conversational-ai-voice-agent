@@ -43,6 +43,9 @@ export function PipelineStage({
 }: PipelineStageProps) {
   const isEditing = editingColumnId === column.id;
 
+  // Log the leads for this column to help with debugging
+  console.log(`Column "${column.title}" has ${columnLeads.length} leads in pipeline ${currentPipelineId}`);
+
   // Handler for the delete context menu option
   const handleDeleteClick = () => {
     console.log("Delete stage clicked:", column.title);

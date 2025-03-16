@@ -103,7 +103,11 @@ export function PipelineStages({
   const handleDeleteStageClick = async (column: PipelineColumn) => {
     if (column && cleanedPipeline) {
       try {
-        await handleDeleteStage(cleanedPipeline.id, column, cleanedPipeline.columns, leads);
+        // Get only the leads for this pipeline
+        const pipelineLeads = leads.filter(lead => lead.pipeline_id === cleanedPipeline.id);
+        console.log(`Attempting to delete stage "${column.title}" - checking ${pipelineLeads.length} leads in this pipeline`);
+        
+        await handleDeleteStage(cleanedPipeline.id, column, cleanedPipeline.columns, pipelineLeads);
         toast({
           title: "Stage deleted",
           description: `${column.title} stage has been deleted successfully`

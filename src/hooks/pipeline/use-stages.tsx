@@ -187,11 +187,27 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
       throw new Error("Cannot delete the last stage in a pipeline");
     }
     
-    // Check if any leads are in this stage - add null check for lead.status
+    // Improved check: Perform case-insensitive comparison of lead status to column title
+    // Also add additional logging to help debug issues
+    console.log(`Checking for leads in stage "${column.title}" (pipeline ${pipelineId})`);
+    console.log(`Total leads count: ${leads.length}`);
+    
+    // Log each lead's status to help debug
+    leads.forEach(lead => {
+      if (lead.pipeline_id === pipelineId) {
+        console.log(`Lead ${lead.id}: pipeline=${lead.pipeline_id}, status="${lead.status}"`);
+      }
+    });
+    
+    // Filter leads to only include those in this pipeline and stage (case-insensitive)
     const leadsInStage = leads.filter(lead => 
-      lead.status && column.title &&
+      lead.pipeline_id === pipelineId && 
+      lead.status && 
+      column.title && 
       lead.status.toLowerCase() === column.title.toLowerCase()
     );
+    
+    console.log(`Found ${leadsInStage.length} leads in stage "${column.title}"`);
     
     if (leadsInStage.length > 0) {
       toast({
