@@ -20,6 +20,17 @@ export function useColumnMutations() {
     console.log("Updating column title...", { columnId, newTitle });
     const newColumns = [...pipeline.columns];
     const index = newColumns.findIndex(c => c.id === columnId);
+    
+    if (index === -1) {
+      console.error("Column not found:", columnId);
+      toast({
+        title: "Error",
+        description: "Column not found",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const oldTitle = newColumns[index].title;
     newColumns[index] = { ...newColumns[index], title: newTitle };
 
@@ -40,11 +51,12 @@ export function useColumnMutations() {
 
       if (error) throw error;
 
-      // Then update lead statuses
+      // Then update lead statuses - make sure we use case-insensitive matching
+      // This is critical for the leads to stay visible after a stage rename
       const { error: leadsError } = await supabase
         .from("leads")
         .update({ status: newTitle })
-        .eq("status", oldTitle)
+        .filter('status', 'ilike', oldTitle)
         .eq('pipeline_id', pipeline.id);
 
       if (leadsError) throw leadsError;
@@ -63,11 +75,14 @@ export function useColumnMutations() {
         );
       });
 
-      // Also update the leads cache
-      queryClient.setQueryData(["leads", pipeline.id], (oldLeads: any[] | undefined) => {
+      // Also update the leads cache to reflect the new status
+      queryClient.setQueryData(["leads"], (oldLeads: any[] | undefined) => {
         if (!oldLeads) return oldLeads;
         return oldLeads.map(lead => 
-          lead.status === oldTitle ? { ...lead, status: newTitle } : lead
+          (lead.pipeline_id === pipeline.id && 
+           lead.status.toLowerCase() === oldTitle.toLowerCase()) 
+            ? { ...lead, status: newTitle } 
+            : lead
         );
       });
 
