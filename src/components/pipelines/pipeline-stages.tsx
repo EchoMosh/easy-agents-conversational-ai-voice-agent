@@ -66,7 +66,18 @@ export function PipelineStages({
   };
 
   // Filter out leads that don't belong to this pipeline
-  const pipelineLeads = leads.filter(lead => lead.pipeline_id === selectedPipeline.id);
+  const pipelineLeads = leads.filter(lead => {
+    const belongsToPipeline = lead.pipeline_id === selectedPipeline.id;
+    
+    // Log for debugging
+    if (belongsToPipeline) {
+      console.log(`Lead "${lead.name}" (${lead.id}) with status "${lead.status}" belongs to pipeline "${selectedPipeline.name}"`);
+    }
+    
+    return belongsToPipeline;
+  });
+  
+  console.log(`Selected pipeline "${selectedPipeline.name}" has ${pipelineLeads.length} leads (from ${leads.length} total leads)`);
 
   return (
     <>

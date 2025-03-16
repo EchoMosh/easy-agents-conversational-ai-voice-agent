@@ -56,20 +56,27 @@ export default function LeadsPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [emailError, setEmailError] = useState("");
 
+  // Load all leads on first render
+  useEffect(() => {
+    // Force a refetch of all leads when the component mounts
+    invalidateAndRefetch();
+  }, []);
+
   // Set up form when a lead is selected for editing
   useEffect(() => {
     if (editingLead) {
       setEditName(editingLead.name);
       setEditEmail(editingLead.email || "");
       setEditPhone(editingLead.phone || "");
-      setEditStatus(editingLead.status);
-      setEditPipelineId(editingLead.pipeline_id);
+      setEditStatus(editingLead.status || "New");
+      setEditPipelineId(editingLead.pipeline_id || "");
       setEmailError("");
     }
   }, [editingLead]);
 
   // Validate email
   const validateEmail = (email: string) => {
+    if (!email) return true; // Empty email is valid
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
@@ -99,8 +106,8 @@ export default function LeadsPage() {
         name: editName,
         email: editEmail || null,
         phone: editPhone || null,
-        status: editStatus,
-        pipeline_id: editPipelineId,
+        status: editStatus || "New",
+        pipeline_id: editPipelineId || null,
         updated_at: new Date().toISOString()
       };
       
@@ -146,12 +153,18 @@ export default function LeadsPage() {
   const filteredLeads = leads.filter(lead => {
     const query = searchQuery.toLowerCase();
     return (
-      lead.name.toLowerCase().includes(query) ||
-      (lead.email && lead.email.toLowerCase().includes(query)) ||
-      (lead.phone && lead.phone.toLowerCase().includes(query)) ||
-      lead.status.toLowerCase().includes(query)
+      (lead.name || '').toLowerCase().includes(query) ||
+      (lead.email || '').toLowerCase().includes(query) ||
+      (lead.phone || '').toLowerCase().includes(query) ||
+      (lead.status || '').toLowerCase().includes(query)
     );
   });
+
+  // Log counts for debugging
+  console.log(`Total leads: ${leads.length}, Filtered leads: ${filteredLeads.length}`);
+  // Log unique lead names to debug duplicate issues
+  const uniqueNames = new Set(leads.map(lead => lead.name));
+  console.log(`Unique lead names: ${uniqueNames.size}, Names: ${Array.from(uniqueNames).join(', ')}`);
 
   return (
     <div className="p-6 space-y-6">
@@ -176,20 +189,47 @@ export default function LeadsPage() {
 
       <Separator className="my-6" />
 
-      {/* Search bar */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search leads..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Pipeline filter select */}
+      <div className="flex gap-4 mb-4">
+        <div className="w-64">
+          <Label htmlFor="pipelineFilter">Filter by Pipeline</Label>
+          <Select 
+            value={selectedPipelineId || ''} 
+            onValueChange={(value) => setSelectedPipelineId(value === '' ? undefined : value)}
+          >
+            <SelectTrigger id="pipelineFilter">
+              <SelectValue placeholder="All Pipelines" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Pipelines</SelectItem>
+              {pipelines.map((pipeline) => (
+                <SelectItem key={pipeline.id} value={pipeline.id}>
+                  {pipeline.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Search bar */}
+        <div className="flex-1">
+          <Label htmlFor="searchLeads">Search Leads</Label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="searchLeads"
+              placeholder="Search leads..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
       </div>
 
       {filteredLeads.length === 0 && (
         <div className="text-center py-10">
-          {searchQuery ? (
+          {searchQuery || selectedPipelineId ? (
             <p className="text-muted-foreground">No leads matching your search criteria.</p>
           ) : (
             <>
@@ -230,13 +270,15 @@ export default function LeadsPage() {
                 
                 return (
                   <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.name}</TableCell>
+                    <TableCell className="font-medium">{lead.name || 'Unnamed Lead'}</TableCell>
                     <TableCell>{lead.email || '-'}</TableCell>
                     <TableCell>{lead.phone || '-'}</TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300">
-                        {lead.status}
-                      </span>
+                      {lead.status ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300">
+                          {lead.status}
+                        </span>
+                      ) : '-'}
                     </TableCell>
                     <TableCell>{pipelineName}</TableCell>
                     <TableCell>{createdAt}</TableCell>
@@ -277,7 +319,7 @@ export default function LeadsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email" 
@@ -289,10 +331,13 @@ export default function LeadsPage() {
                   }
                 }}
                 onBlur={() => {
-                  setEmailError(validateEmail(editEmail) ? "" : "Please enter a valid email address");
+                  if (editEmail) {
+                    setEmailError(validateEmail(editEmail) ? "" : "Please enter a valid email address");
+                  } else {
+                    setEmailError("");
+                  }
                 }}
                 placeholder="Email address"
-                required
                 className={emailError ? "border-red-500" : ""}
               />
               {emailError && <p className="text-sm text-red-500">{emailError}</p>}
@@ -307,7 +352,7 @@ export default function LeadsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={editStatus} onValueChange={setEditStatus}>
+              <Select value={editStatus || "New"} onValueChange={setEditStatus}>
                 <SelectTrigger id="status">
                   <SelectValue placeholder="Select a status" />
                 </SelectTrigger>
@@ -319,16 +364,18 @@ export default function LeadsPage() {
                   <SelectItem value="Negotiation">Negotiation</SelectItem>
                   <SelectItem value="Won">Won</SelectItem>
                   <SelectItem value="Lost">Lost</SelectItem>
+                  <SelectItem value="New Stage">New Stage</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="pipeline">Pipeline</Label>
-              <Select value={editPipelineId} onValueChange={setEditPipelineId}>
+              <Select value={editPipelineId || ""} onValueChange={setEditPipelineId}>
                 <SelectTrigger id="pipeline">
                   <SelectValue placeholder="Select a pipeline" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">No Pipeline</SelectItem>
                   {pipelines.map((pipeline) => (
                     <SelectItem key={pipeline.id} value={pipeline.id}>
                       {pipeline.name}
