@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Pipeline } from "@/types/pipeline";
+import { useNavigate } from "react-router-dom";
 
 interface PipelineHeaderProps {
   pipelines: Pipeline[];
@@ -16,6 +17,15 @@ export function PipelineHeader({
   onCreatePipeline, 
   onSelectPipeline 
 }: PipelineHeaderProps) {
+  const navigate = useNavigate();
+
+  const handlePipelineClick = (pipeline: Pipeline) => {
+    // Update the URL with the selected pipeline ID
+    navigate(`/dashboard/pipelines?selected=${pipeline.id}`, { replace: true });
+    // Call the selection handler
+    onSelectPipeline(pipeline);
+  };
+
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between">
@@ -36,7 +46,7 @@ export function PipelineHeader({
             <Button
               key={pipeline.id}
               variant={selectedPipeline?.id === pipeline.id ? "default" : "outline"}
-              onClick={() => onSelectPipeline(pipeline)}
+              onClick={() => handlePipelineClick(pipeline)}
               className="gap-2"
             >
               {pipeline.name}

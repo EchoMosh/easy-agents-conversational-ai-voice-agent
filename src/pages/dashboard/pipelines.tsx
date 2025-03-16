@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useDroppable } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineHeader } from "@/components/pipelines/pipeline-header";
@@ -24,6 +23,7 @@ export default function PipelinesPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const queryClient = useQueryClient();
   const location = useLocation();
+  const navigate = useNavigate();
   
   const {
     pipelines,
@@ -64,6 +64,14 @@ export default function PipelinesPage() {
       }
     }
   }, [pipelines, location.search, setSelectedPipeline, selectedPipeline]);
+
+  // Handler for pipeline selection that updates the URL
+  const handleSelectPipeline = (pipeline: Pipeline) => {
+    console.log("Pipeline selected:", pipeline.name);
+    setSelectedPipeline(pipeline);
+    // Update URL to reflect the selected pipeline
+    navigate(`/dashboard/pipelines?selected=${pipeline.id}`, { replace: true });
+  };
 
   const {
     showDeleteDialog,
@@ -131,7 +139,7 @@ export default function PipelinesPage() {
           pipelines={pipelines || []}
           selectedPipeline={selectedPipeline}
           onCreatePipeline={() => setShowNewPipelineDialog(true)}
-          onSelectPipeline={setSelectedPipeline}
+          onSelectPipeline={handleSelectPipeline}
         />
 
         {selectedPipeline && (
