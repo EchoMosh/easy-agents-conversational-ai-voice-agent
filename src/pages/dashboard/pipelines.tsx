@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useDroppable } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineHeader } from "@/components/pipelines/pipeline-header";
@@ -22,6 +23,7 @@ export function DroppableColumn({ id, children }: { id: string; children: React.
 export default function PipelinesPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const queryClient = useQueryClient();
+  const location = useLocation();
   
   const {
     pipelines,
@@ -38,11 +40,30 @@ export default function PipelinesPage() {
     refetchLeads,
   } = usePipeline();
 
+  // Extract the selected pipeline ID from the URL query parameters
   useEffect(() => {
-    if (pipelines?.length > 0 && !selectedPipeline) {
-      setSelectedPipeline(pipelines[0]);
+    if (pipelines?.length > 0) {
+      // Get the 'selected' query parameter from the URL
+      const params = new URLSearchParams(location.search);
+      const selectedPipelineId = params.get('selected');
+      
+      if (selectedPipelineId) {
+        // Find the pipeline with the matching ID
+        const pipelineToSelect = pipelines.find(p => p.id === selectedPipelineId);
+        if (pipelineToSelect) {
+          console.log("Setting selected pipeline from URL parameter:", pipelineToSelect.name);
+          setSelectedPipeline(pipelineToSelect);
+          return;
+        }
+      }
+      
+      // If no pipeline is selected or the selected pipeline doesn't exist,
+      // default to the first pipeline
+      if (!selectedPipeline) {
+        setSelectedPipeline(pipelines[0]);
+      }
     }
-  }, [pipelines, selectedPipeline, setSelectedPipeline]);
+  }, [pipelines, location.search, setSelectedPipeline, selectedPipeline]);
 
   const {
     showDeleteDialog,
