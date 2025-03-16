@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,7 +42,6 @@ export function BulkActionsDialog({
   const [selectedPipeline, setSelectedPipeline] = useState<string | undefined>(undefined);
   const [fullPipelines, setFullPipelines] = useState<Pipeline[]>([]);
   
-  // Fetch full pipeline data when opened
   useEffect(() => {
     if (isOpen) {
       fetchFullPipelineData();
@@ -67,23 +65,19 @@ export function BulkActionsDialog({
   
   const handlePipelineChange = (value: string) => {
     setSelectedPipeline(value);
-    // Fix: toast.success only accepts a single string argument
     toast.success(value === "none" ? "No Pipeline selected" : `Pipeline selected: ${pipelines.find(p => p.id === value)?.name || value}`);
   };
   
   const handleMoveLeads = () => {
     if (selectedPipeline) {
-      // Get the target pipeline to determine first stage
       const targetPipeline = fullPipelines.find(p => p.id === selectedPipeline);
       let firstStage = "New"; // Default fallback
       
-      // If the pipeline has columns, use the first one's title
       if (targetPipeline && targetPipeline.columns.length > 0) {
         firstStage = targetPipeline.columns[0].title;
       }
       
       onMoveToPipeline(selectedPipeline, firstStage);
-      // Fix: toast.success with single argument
       toast.success(`${selectedCount} lead${selectedCount !== 1 ? 's' : ''} moved successfully`);
       onOpenChange(false);
     } else {
@@ -154,7 +148,6 @@ export function BulkActionsDialog({
                   type="button"
                   onClick={() => {
                     onAddVariables();
-                    // Fix: toast.success with single argument
                     toast.success(`Adding variables to ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
                     onOpenChange(false);
                   }}

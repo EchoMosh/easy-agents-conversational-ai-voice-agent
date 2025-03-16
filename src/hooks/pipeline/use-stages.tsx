@@ -96,12 +96,25 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     try {
       setIsAddingStage(true);
       
+      // Default new stage name
+      const defaultStageName = "New Stage";
+      
+      // Check if there's already a stage with the default name
+      let newStageName = defaultStageName;
+      let counter = 1;
+      
+      // Check for duplicates and generate a unique name
+      while (columns.some(col => col.title.toLowerCase() === newStageName.toLowerCase())) {
+        newStageName = `${defaultStageName} ${counter}`;
+        counter++;
+      }
+      
       // Generate a truly unique ID
       const newId = crypto.randomUUID();
       
       const newStage: PipelineColumn = {
         id: newId,
-        title: "New Stage",
+        title: newStageName,
         color: "bg-gray-500",
       };
       
@@ -130,7 +143,7 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
       
       // Set the new stage for editing
       setEditingColumnId(newId);
-      setEditingColumnTitle("New Stage");
+      setEditingColumnTitle(newStageName);
       
       toast({
         title: "Stage added",

@@ -31,6 +31,21 @@ export function useColumnMutations() {
       return;
     }
     
+    // Check if the new title already exists (case insensitive)
+    const duplicateTitle = newColumns.some((col, idx) => 
+      idx !== index && col.title.toLowerCase() === newTitle.toLowerCase()
+    );
+    
+    if (duplicateTitle) {
+      console.error("Duplicate column title:", newTitle);
+      toast({
+        title: "Error",
+        description: "A stage with this name already exists",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const oldTitle = newColumns[index].title;
     newColumns[index] = { ...newColumns[index], title: newTitle };
 
