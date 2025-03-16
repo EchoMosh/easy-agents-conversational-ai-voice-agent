@@ -1,7 +1,7 @@
+
 import { Mail, MessageCircle, StickyNote } from "lucide-react";
 import { Lead } from "@/pages/dashboard/leads";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { LeadProgress } from "./lead-progress";
 import { MessageComposer } from "./message-composer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,15 +96,6 @@ export function ChatArea({
               </p>
             </div>
           </div>
-          {pipeline && (
-            <LeadProgress 
-              currentStage={selectedLead.status} 
-              stages={pipeline.columns.map(col => ({
-                id: col.id,
-                label: col.title
-              }))}
-            />
-          )}
         </div>
       </div>
 
