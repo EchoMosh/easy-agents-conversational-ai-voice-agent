@@ -86,18 +86,57 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
   };
 
   const handleAddNewStage = (pipelineId: string, columns: PipelineColumn[], onAddStage: (stage: PipelineColumn) => void) => {
+    // Generate a truly unique ID
+    const newId = crypto.randomUUID();
+    
     const newStage: PipelineColumn = {
-      id: crypto.randomUUID(),
+      id: newId,
       title: "New Stage",
       color: "bg-gray-500",
     };
     
-    const newColumns = [...columns, newStage];
-    onAddStage(newStage);
-    onReorderColumns(newColumns);
-    
-    setEditingColumnId(newStage.id);
-    setEditingColumnTitle("New Stage");
+    try {
+      // Add the new stage to the local state immediately
+      onAddStage(newStage);
+      
+      // Also update the columns in the database
+      const columnsForDb = [...columns, newStage].map(col => ({
+        id: col.id,
+        title: col.title,
+        color: col.color
+      }));
+      
+      // Update the database (don't await here as we've already updated UI)
+      supabase
+        .from("pipelines")
+        .update({
+          columns: columnsForDb
+        })
+        .eq("id", pipelineId)
+        .then(({ error }) => {
+          if (error) throw error;
+        })
+        .catch(error => {
+          console.error("Error saving new stage:", error);
+          toast({
+            title: "Error",
+            description: "Failed to save new stage. Please refresh and try again.",
+            variant: "destructive"
+          });
+        });
+      
+      // Set the new stage for editing
+      setEditingColumnId(newId);
+      setEditingColumnTitle("New Stage");
+      
+    } catch (error) {
+      console.error("Error adding new stage:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add new stage",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDeleteStage = async (

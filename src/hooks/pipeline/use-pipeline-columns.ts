@@ -13,6 +13,15 @@ export function usePipelineColumns(
 
   const handleAddStage = (newStage: PipelineColumn) => {
     setEditedColumns(prev => [...prev, newStage]);
+    
+    // Update the selected pipeline with the new column
+    setSelectedPipeline(prev => {
+      if (!prev) return null;
+      return { 
+        ...prev, 
+        columns: [...(prev.columns || []), newStage] 
+      };
+    });
   };
 
   const handleReorderColumns = async (newColumns: PipelineColumn[]) => {
