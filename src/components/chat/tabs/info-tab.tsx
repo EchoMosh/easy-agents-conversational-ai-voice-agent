@@ -21,6 +21,9 @@ interface InfoTabProps {
 }
 
 export function InfoTab({ pipeline, lead }: InfoTabProps) {
+  console.log("InfoTab render - lead:", lead);
+  console.log("InfoTab render - pipeline:", pipeline);
+  
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -31,6 +34,7 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
   });
 
   if (!lead) {
+    console.log("InfoTab - No lead information available");
     return (
       <div className="p-4 text-center text-muted-foreground">
         No lead information available
@@ -47,10 +51,12 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
   };
 
   const getStatusColor = (status: string) => {
+    console.log("Getting status color for:", status);
     return statusColors[status as keyof typeof statusColors] || "text-gray-500 bg-gray-50 border-gray-100";
   };
 
   const handleEdit = () => {
+    console.log("Edit button clicked");
     setEditableData({
       name: lead.name,
       email: lead.email || "",
@@ -60,10 +66,12 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
   };
 
   const handleCancel = () => {
+    console.log("Cancel edit clicked");
     setIsEditing(false);
   };
 
   const handleSave = async () => {
+    console.log("Save clicked with data:", editableData);
     try {
       const { error } = await supabase
         .from("leads")
@@ -74,7 +82,10 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
         })
         .eq("id", lead.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error updating lead:", error);
+        throw error;
+      }
 
       // Invalidate the lead query to refetch updated data
       queryClient.invalidateQueries({
@@ -86,6 +97,7 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
         queryKey: ["lead_activities", lead.id],
       });
 
+      console.log("Lead updated successfully");
       toast.success("Customer information updated successfully");
       setIsEditing(false);
     } catch (error) {
@@ -93,6 +105,10 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
       toast.error("Failed to update customer information");
     }
   };
+
+  console.log("Rendering info tab content for lead:", lead.name);
+  console.log("Lead status:", lead.status);
+  console.log("Lead variables:", lead.variables);
 
   return (
     <div className="space-y-6 px-1 py-4">
@@ -230,6 +246,7 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
         leadId={lead.id}
         variables={lead.variables || []}
         onVariablesUpdated={() => {
+          console.log("Variables updated, invalidating queries");
           queryClient.invalidateQueries({
             queryKey: ["leads"],
           });
