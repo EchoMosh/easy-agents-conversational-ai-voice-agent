@@ -15,8 +15,14 @@ export const statusColors = {
   'Lost': "bg-red-500",
 } as const;
 
+// Extend Lead with optional click handlers
+export interface LeadWithHandlers extends Lead {
+  onVariableClick?: (lead: Lead) => void;
+  onEditClick?: (lead: Lead) => void;
+}
+
 export interface LeadRowProps {
-  lead: Lead;
+  lead: LeadWithHandlers;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
   onLeadUpdated: () => void;

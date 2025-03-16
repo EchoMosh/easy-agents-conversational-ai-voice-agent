@@ -8,7 +8,7 @@ import { SelectionHeader } from "@/components/agents/table/selection-header";
 import { useQuery } from "@tanstack/react-query";
 import { LeadTableHeader } from "./components/lead-table-header";
 import { LeadRow } from "./components/lead-row";
-import { LeadsTableProps } from "./types/lead-types";
+import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -210,11 +210,11 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
                 pipelines.find(p => p.id === lead.pipeline_id)?.name || 'Unknown' : 
                 'No Pipeline';
               
-              // Extend lead with click handlers
-              const leadWithHandlers = {
+              // Extend lead with click handlers - use the LeadWithHandlers type
+              const leadWithHandlers: LeadWithHandlers = {
                 ...lead,
                 onVariableClick: handleOpenVariableEditor,
-                onEditClick: (lead: any) => {
+                onEditClick: (lead) => {
                   // This would be handled by the parent component
                   if (typeof window !== 'undefined') {
                     const event = new CustomEvent('editLead', { detail: lead });

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tag, Pencil } from "lucide-react";
 import { LeadRowProps, statusColors } from "../types/lead-types";
-import { LeadActions } from "./lead-actions";
 import { useTheme } from "@/components/theme/theme-provider";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
