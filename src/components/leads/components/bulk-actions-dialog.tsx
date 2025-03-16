@@ -96,7 +96,12 @@ export function BulkActionsDialog({
                 <SelectTrigger id="movePipeline" className="w-full">
                   <SelectValue placeholder="Select a pipeline" />
                 </SelectTrigger>
-                <SelectContent position="item-aligned" sideOffset={4} className="bg-background z-[100]">
+                <SelectContent 
+                  position="popper" 
+                  sideOffset={5} 
+                  className="bg-background z-[9999]" 
+                  align="center"
+                >
                   <SelectGroup>
                     <SelectItem value="none">No Pipeline</SelectItem>
                     {pipelines.map((pipeline) => (
@@ -127,7 +132,12 @@ export function BulkActionsDialog({
                 <SelectTrigger id="changeStatus" className="w-full">
                   <SelectValue placeholder="Select a status" />
                 </SelectTrigger>
-                <SelectContent position="item-aligned" sideOffset={4} className="bg-background z-[100]">
+                <SelectContent 
+                  position="popper" 
+                  sideOffset={5} 
+                  className="bg-background z-[9999]" 
+                  align="center"
+                >
                   <SelectGroup>
                     <SelectItem value="New">New</SelectItem>
                     <SelectItem value="Contacted">Contacted</SelectItem>
