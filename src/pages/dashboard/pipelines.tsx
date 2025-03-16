@@ -85,10 +85,17 @@ export default function PipelinesPage() {
     const leadId = String(active.id);
     const newColumnId = String(over.id);
     
+    // Avoid handling stage reordering here
+    if (selectedPipeline.columns.some(col => col.id === active.id)) {
+      return;
+    }
+    
     if (leadId && newColumnId) {
+      // Make sure we're working with a proper column (not another lead)
       const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
       if (!targetColumn) return;
       
+      // Optimistically update the UI
       queryClient.setQueryData(["leads", selectedPipeline.id], (oldData: any) => {
         if (!oldData) return oldData;
         
@@ -104,6 +111,7 @@ export default function PipelinesPage() {
       });
     }
     
+    // Let the base handler take care of the actual API call
     baseHandleDragEnd(event);
   };
   

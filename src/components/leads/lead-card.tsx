@@ -89,7 +89,7 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
           {...attributes}
           {...listeners}
           className={cn(
-            "cursor-grab active:cursor-grabbing border-gray-200/70 dark:border-gray-700/50 bg-white dark:bg-gray-800 shadow-sm transition-all hover:shadow",
+            "cursor-grab active:cursor-grabbing border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 shadow-sm transition-all hover:shadow",
             "hover:border-gray-300 dark:hover:border-gray-600 rounded-lg",
             isDragging && "opacity-50 shadow-md"
           )}

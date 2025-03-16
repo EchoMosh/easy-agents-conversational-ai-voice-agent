@@ -49,7 +49,7 @@ export function PipelineStage({
         <DroppableColumn id={column.id}>
           <Card className={`h-full transition-all duration-300 ${
             isCollapsed ? "w-16" : "w-[350px]"
-          } border border-gray-200/80 dark:border-gray-800/80 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-900`}>
+          } border border-gray-200/50 dark:border-gray-800/50 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-900`}>
             <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
               <StageHeader
                 column={column}
@@ -95,7 +95,7 @@ export function PipelineStage({
       <ContextMenuContent>
         <ContextMenuItem 
           onSelect={() => setStageToDelete(column)}
-          className="text-destructive"
+          className="text-destructive flex items-center"
         >
           <Trash2 className="mr-2 h-4 w-4" />
           Delete Stage
