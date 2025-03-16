@@ -64,25 +64,25 @@ export default function ChatsPage() {
       {selectedLead && (
         <div className="w-80 border-l flex flex-col bg-background h-full overflow-hidden">
           <Tabs defaultValue="timeline" value={currentTab} onValueChange={handleTabChange} className="flex-1 flex flex-col h-full">
-            <div className="px-2 py-1 border-b">
-              <TabsList className="w-full grid grid-cols-3 bg-transparent p-0 h-14">
+            <div className="border-b">
+              <TabsList className="w-full grid grid-cols-3 bg-transparent h-14 rounded-none">
                 <TabsTrigger 
                   value="timeline" 
-                  className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 h-full"
+                  className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 rounded-none h-full"
                 >
-                  <History className="w-6 h-6 stroke-[1.5]" />
+                  <History className="w-5 h-5 stroke-[1.5]" />
                 </TabsTrigger>
                 <TabsTrigger 
                   value="details" 
-                  className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 h-full"
+                  className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 rounded-none h-full"
                 >
-                  <UserCircle2 className="w-6 h-6 stroke-[1.5]" />
+                  <UserCircle2 className="w-5 h-5 stroke-[1.5]" />
                 </TabsTrigger>
                 <TabsTrigger 
                   value="files" 
-                  className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 h-full"
+                  className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 rounded-none h-full"
                 >
-                  <Files className="w-6 h-6 stroke-[1.5]" />
+                  <Files className="w-5 h-5 stroke-[1.5]" />
                 </TabsTrigger>
               </TabsList>
             </div>
