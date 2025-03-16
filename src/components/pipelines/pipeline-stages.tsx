@@ -44,6 +44,7 @@ export function PipelineStages({
         await handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns);
       } catch (error) {
         console.error("Error deleting stage:", error);
+        // Let the DeleteStageDialog component handle the error
       }
     }
   };
@@ -70,7 +71,7 @@ export function PipelineStages({
 
       <DeleteStageDialog
         stageToDelete={stageToDelete}
-        onClose={(open) => !open && setStageToDelete(null)}
+        onClose={() => setStageToDelete(null)} // Simplified callback
         onConfirm={onConfirmDelete}
       />
     </>

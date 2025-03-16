@@ -9,7 +9,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface DeleteStageDialogProps {
   stageToDelete: PipelineColumn | null;
-  onClose: (open: boolean) => void;
+  onClose: () => void; // Simplified callback type
   onConfirm: (stage: PipelineColumn) => void;
 }
 
@@ -41,7 +41,7 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
     
     try {
       await onConfirm(stageToDelete);
-      onClose(false);
+      onClose(); // Call onClose without any parameters
     } catch (err) {
       console.error("Error deleting stage:", err);
       setError(typeof err === 'string' ? err : 'Failed to delete stage. Please try again.');
@@ -57,7 +57,7 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
         // Always allow closing the dialog, even during deletion
         if (!open) {
           setError(null);
-          onClose(false);
+          onClose(); // Call onClose without any parameters
         }
       }}
     >
@@ -82,7 +82,7 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
             variant="outline"
             onClick={() => {
               setError(null);
-              onClose(false);
+              onClose(); // Call onClose without any parameters
             }}
             disabled={isDeleting}
           >

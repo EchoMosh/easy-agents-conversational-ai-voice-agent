@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PipelineColumn } from "@/types/pipeline";
 import { supabase } from "@/integrations/supabase/client";
@@ -172,9 +171,6 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
       
       // Re-throw the error so the component can handle it
       throw error;
-    } finally {
-      // Always reset the stage to delete
-      setStageToDelete(null);
     }
   };
 
