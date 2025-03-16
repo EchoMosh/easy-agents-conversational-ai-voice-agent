@@ -4,12 +4,14 @@ import { PipelineColumn } from "@/types/pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useStageReordering(
   onReorderColumns: (newOrder: PipelineColumn[]) => void
 ) {
   const { toast } = useToast();
   const [isReordering, setIsReordering] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleStageReorder = async (
     event: DragEndEvent,
@@ -53,6 +55,21 @@ export function useStageReordering(
         .eq("id", pipelineId);
         
       if (error) throw error;
+      
+      // Also update the cached pipeline data to maintain consistency
+      queryClient.setQueryData(["pipelines"], (oldData: any) => {
+        if (!oldData) return oldData;
+        
+        return oldData.map((pipeline: any) => {
+          if (pipeline.id === pipelineId) {
+            return {
+              ...pipeline,
+              columns: newColumns
+            };
+          }
+          return pipeline;
+        });
+      });
       
       toast({
         title: "Stages reordered",
