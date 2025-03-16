@@ -1,4 +1,3 @@
-
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors, DragStartEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
@@ -49,7 +48,6 @@ export function StagesContainer({
   const { handleStageReorder, isReordering } = useStageReordering(onReorderColumns);
   const [isDraggingStage, setIsDraggingStage] = useState(false);
 
-  // Get only the leads that belong to the current pipeline
   const pipelineLeads = leads.filter(lead => lead.pipeline_id === selectedPipeline.id);
 
   const sensors = useSensors(
@@ -82,19 +80,17 @@ export function StagesContainer({
     }
   };
 
-  // This is the key fix - ensure column IDs are unique
   const uniqueColumns = Array.from(
     new Map(selectedPipeline.columns.map(col => [col.id, col])).values()
   );
   
   useEffect(() => {
-    console.log(`Pipeline ${selectedPipeline.name} has ${uniqueColumns.length} unique columns (from ${selectedPipeline.columns.length} total columns)`);
-    console.log(`Pipeline leads: ${pipelineLeads.length} (out of ${leads.length} total leads)`);
-    
-    // Log warning if duplicates found
     if (uniqueColumns.length !== selectedPipeline.columns.length) {
-      console.warn("Duplicate column IDs detected in pipeline:", selectedPipeline.id);
+      console.warn(`Found duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.length}`);
     }
+    
+    console.log(`Pipeline ${selectedPipeline.name} has ${uniqueColumns.length} unique columns`);
+    console.log(`Pipeline leads: ${pipelineLeads.length} (out of ${leads.length} total leads)`);
   }, [selectedPipeline, uniqueColumns, pipelineLeads, leads]);
   
   return (
@@ -106,13 +102,10 @@ export function StagesContainer({
       <div className="flex flex-wrap gap-6">
         <SortableContext items={uniqueColumns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
           {uniqueColumns.map((column) => {
-            // Filter leads with case-insensitive comparison
-            // Only use leads from the current pipeline
             const columnLeads = pipelineLeads.filter(lead => {
-              const statusMatches = lead.status && 
-                                    column.title && 
-                                    lead.status.toLowerCase() === column.title.toLowerCase();
-              return statusMatches;
+              return lead.status && 
+                    column.title && 
+                    lead.status.toLowerCase() === column.title.toLowerCase();
             });
             
             console.log(`Column "${column.title}" has ${columnLeads.length} leads in pipeline ${selectedPipeline.id}`);
