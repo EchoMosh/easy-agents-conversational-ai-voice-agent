@@ -110,7 +110,8 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
   const handleViewPipeline = () => {
     if (pipeline?.id) {
       console.log("Navigating to pipeline:", pipeline.id);
-      navigate(`/dashboard/pipelines`);
+      // Update the URL to include the specific pipeline ID instead of just going to pipelines page
+      navigate(`/dashboard/pipelines?selected=${pipeline.id}`);
     } else {
       console.log("No pipeline ID available for navigation");
       toast.error("Pipeline not available");
