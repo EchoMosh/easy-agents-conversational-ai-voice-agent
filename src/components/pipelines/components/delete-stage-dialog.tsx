@@ -1,6 +1,7 @@
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { PipelineColumn } from "@/types/pipeline";
+import { useState } from "react";
 
 interface DeleteStageDialogProps {
   stageToDelete: PipelineColumn | null;
@@ -9,6 +10,19 @@ interface DeleteStageDialogProps {
 }
 
 export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteStageDialogProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!stageToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await onConfirm(stageToDelete);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <AlertDialog 
       open={!!stageToDelete} 
@@ -23,12 +37,13 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => onClose(false)}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting} onClick={() => onClose(false)}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={() => stageToDelete && onConfirm(stageToDelete)}
+            onClick={handleDelete}
+            disabled={isDeleting}
           >
-            Delete Stage
+            {isDeleting ? "Deleting..." : "Delete Stage"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

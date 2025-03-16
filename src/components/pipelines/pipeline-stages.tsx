@@ -1,6 +1,5 @@
 
 import { DragEndEvent } from "@dnd-kit/core";
-import { useState } from "react";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { DeleteStageDialog } from "./components/delete-stage-dialog";
@@ -39,8 +38,10 @@ export function PipelineStages({
     handleDeleteStage
   } = useStages(onReorderColumns);
 
-  const onConfirmDelete = (column: PipelineColumn) => {
-    handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns);
+  const onConfirmDelete = async (column: PipelineColumn) => {
+    if (column && selectedPipeline) {
+      await handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns);
+    }
   };
 
   return (
@@ -60,6 +61,7 @@ export function PipelineStages({
         onAddStage={onAddStage}
         onReorderColumns={onReorderColumns}
         allPipelines={allPipelines}
+        setStageToDelete={setStageToDelete}
       />
 
       <DeleteStageDialog

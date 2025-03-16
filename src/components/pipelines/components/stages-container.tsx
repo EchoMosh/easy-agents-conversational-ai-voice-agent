@@ -20,6 +20,7 @@ interface StagesContainerProps {
   onReorderColumns: (newOrder: PipelineColumn[]) => void;
   allPipelines?: Pipeline[];
   onDeleteStage?: (column: PipelineColumn) => void;
+  setStageToDelete: (column: PipelineColumn | null) => void;
 }
 
 export function StagesContainer({
@@ -32,6 +33,7 @@ export function StagesContainer({
   onReorderColumns,
   allPipelines = [],
   onDeleteStage,
+  setStageToDelete,
 }: StagesContainerProps) {
   const {
     editingColumnId,
@@ -42,9 +44,7 @@ export function StagesContainer({
     toggleColumnCollapse,
     handleKeyDown,
     handleColorChange,
-    setStageToDelete,
-    handleAddNewStage,
-    handleDeleteStage
+    handleAddNewStage
   } = useStages(onReorderColumns);
 
   const { handleStageReorder, isReordering } = useStageReordering(onReorderColumns);
@@ -84,6 +84,7 @@ export function StagesContainer({
   };
 
   const handleStageDeleteClick = (column: PipelineColumn) => {
+    console.log("Setting stage to delete:", column.title);
     setStageToDelete(column);
   };
 

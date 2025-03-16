@@ -106,10 +106,11 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     columns: PipelineColumn[]
   ) => {
     try {
+      console.log("Deleting stage:", column.title, "from pipeline:", pipelineId);
       // Optimistically update the UI
       const newColumns = columns.filter(col => col.id !== column.id);
       
-      // Update the application state immediately
+      // Immediately update application state
       onReorderColumns(newColumns);
       
       // Update the React Query cache
@@ -142,7 +143,10 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         })
         .eq("id", pipelineId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error when deleting stage:", error);
+        throw error;
+      }
 
       // Reset the stage to delete
       setStageToDelete(null);
