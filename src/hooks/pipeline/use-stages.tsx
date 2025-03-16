@@ -166,8 +166,9 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
       throw new Error("Cannot delete the last stage in a pipeline");
     }
     
-    // Check if any leads are in this stage
+    // Check if any leads are in this stage - add null check for lead.status
     const leadsInStage = leads.filter(lead => 
+      lead.status && column.title &&
       lead.status.toLowerCase() === column.title.toLowerCase()
     );
     

@@ -1,3 +1,4 @@
+
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors, DragStartEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
@@ -89,7 +90,9 @@ export function StagesContainer({
       <div className="flex flex-wrap gap-6">
         <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
           {selectedPipeline.columns.map((column) => {
+            // Add a null/undefined check on lead.status before comparing
             const columnLeads = leads.filter((lead) => 
+              lead.status && column.title && 
               lead.status.toLowerCase() === column.title.toLowerCase()
             );
             

@@ -107,6 +107,9 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
       .substring(0, 2);
   };
 
+  // Ensure lead status exists for display
+  const leadStatus = lead.status || "Unknown";
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>
@@ -132,12 +135,12 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
               </div>
               <div className="flex-grow min-w-0">
                 <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                  {lead.name}
+                  {lead.name || "Unnamed Lead"}
                 </h3>
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex items-center">
                 <Clock size={12} className="mr-1" />
-                {formattedDate}
+                {formattedDate || "N/A"}
               </div>
             </div>
             
@@ -163,7 +166,7 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
               <div className="flex items-center text-xs">
                 <Tag size={12} className="mr-1.5 text-blue-500 dark:text-blue-400" />
                 <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {lead.status}
+                  {leadStatus}
                 </span>
               </div>
               <div className="flex items-center text-xs">
