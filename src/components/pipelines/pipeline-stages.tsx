@@ -22,6 +22,7 @@ interface PipelineStagesProps {
   onDeletePipeline: () => void;
   onEditPipelineName: (name: string) => void;
   onReorderColumns: (newOrder: PipelineColumn[]) => void;
+  allPipelines?: Pipeline[];
 }
 
 export function PipelineStages({
@@ -34,6 +35,7 @@ export function PipelineStages({
   onDeletePipeline,
   onEditPipelineName,
   onReorderColumns,
+  allPipelines = [],
 }: PipelineStagesProps) {
   const { toast } = useToast();
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
@@ -204,6 +206,8 @@ export function PipelineStages({
                     toggleColumnCollapse={toggleColumnCollapse}
                     setEditingColumnId={setEditingColumnId}
                     onLeadClick={onLeadClick}
+                    allPipelines={allPipelines}
+                    currentPipelineId={selectedPipeline.id}
                   />
                 </SortableStage>
               );

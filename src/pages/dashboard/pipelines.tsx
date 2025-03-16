@@ -139,6 +139,7 @@ export default function PipelinesPage() {
               onDeletePipeline={() => setShowDeleteDialog(true)}
               onEditPipelineName={handleEditPipelineName}
               onReorderColumns={handleReorderColumns}
+              allPipelines={pipelines || []}
             />
           </div>
         )}

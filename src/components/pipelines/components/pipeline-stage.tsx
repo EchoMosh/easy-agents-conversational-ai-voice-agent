@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { Lead } from "@/pages/dashboard/leads";
-import { PipelineColumn } from "@/types/pipeline";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { DroppableColumn } from "@/pages/dashboard/pipelines";
 import { LeadCard } from "@/components/leads/lead-card";
 import { StageHeader } from "./stage-header";
@@ -21,6 +21,8 @@ interface PipelineStageProps {
   toggleColumnCollapse: (columnId: string) => void;
   setEditingColumnId: (id: string) => void;
   onLeadClick: (lead: Lead) => void;
+  allPipelines?: Pipeline[];
+  currentPipelineId?: string;
 }
 
 export function PipelineStage({
@@ -35,7 +37,9 @@ export function PipelineStage({
   setStageToDelete,
   toggleColumnCollapse,
   setEditingColumnId,
-  onLeadClick
+  onLeadClick,
+  allPipelines = [],
+  currentPipelineId
 }: PipelineStageProps) {
   const isEditing = editingColumnId === column.id;
 
@@ -72,6 +76,8 @@ export function PipelineStage({
                     key={lead.id} 
                     lead={lead}
                     onClick={() => onLeadClick(lead)} 
+                    pipelines={allPipelines}
+                    currentPipelineId={currentPipelineId}
                   />
                 ))}
                 {columnLeads.length === 0 && (
