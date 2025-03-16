@@ -40,7 +40,11 @@ export function PipelineStages({
 
   const onConfirmDelete = async (column: PipelineColumn) => {
     if (column && selectedPipeline) {
-      await handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns);
+      try {
+        await handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns);
+      } catch (error) {
+        console.error("Error deleting stage:", error);
+      }
     }
   };
 

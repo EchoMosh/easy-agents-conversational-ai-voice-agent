@@ -148,13 +148,13 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         throw error;
       }
 
-      // Reset the stage to delete
-      setStageToDelete(null);
-
       toast({
         title: "Stage deleted",
         description: `${column.title} stage has been deleted successfully`
       });
+      
+      // Reset the stage to delete
+      setStageToDelete(null);
     } catch (error) {
       console.error("Error deleting stage:", error);
       
@@ -166,6 +166,8 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         description: "Failed to delete stage",
         variant: "destructive"
       });
+      
+      // Reset the stage to delete even on failure
       setStageToDelete(null);
     }
   };

@@ -18,6 +18,7 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
     setIsDeleting(true);
     try {
       await onConfirm(stageToDelete);
+      onClose(false); // Ensure dialog closes after deletion completes
     } finally {
       setIsDeleting(false);
     }
@@ -26,7 +27,11 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
   return (
     <AlertDialog 
       open={!!stageToDelete} 
-      onOpenChange={onClose}
+      onOpenChange={(open) => {
+        if (!isDeleting) { // Only allow closing if not deleting
+          onClose(open);
+        }
+      }}
     >
       <AlertDialogContent>
         <AlertDialogHeader>
