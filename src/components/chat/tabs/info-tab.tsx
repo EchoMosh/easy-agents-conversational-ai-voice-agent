@@ -53,7 +53,7 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
 
   const getStatusColor = (status: string) => {
     console.log("Getting status color for:", status);
-    return statusColors[status as keyof typeof statusColors] || "text-gray-500 bg-gray-50 border-gray-100";
+    return statusColors[status.toLowerCase() as keyof typeof statusColors] || "text-gray-500 bg-gray-50 border-gray-100";
   };
 
   const handleEdit = () => {
@@ -104,6 +104,16 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
     } catch (error) {
       console.error("Error updating lead:", error);
       toast.error("Failed to update customer information");
+    }
+  };
+
+  const handleViewPipeline = () => {
+    if (pipeline?.id) {
+      console.log("Navigating to pipeline:", pipeline.id);
+      navigate(`/dashboard/pipelines`);
+    } else {
+      console.log("No pipeline ID available for navigation");
+      toast.error("Pipeline not available");
     }
   };
 
@@ -229,7 +239,7 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
             <Button
               variant="ghost"
               className="w-full justify-between p-4 text-left h-auto"
-              onClick={() => navigate(`/dashboard/pipelines/${pipeline.id}`)}
+              onClick={handleViewPipeline}
             >
               <span className="font-medium">{pipeline.name}</span>
               <ExternalLink className="h-4 w-4 text-muted-foreground" />

@@ -135,7 +135,9 @@ export default function ChatsPage() {
                 <TabsTrigger 
                   value="details" 
                   className="data-[state=active]:bg-transparent data-[state=active]:text-purple-600 data-[state=active]:border-b-2 data-[state=active]:border-purple-600 rounded-none h-full"
-                  onClick={() => console.log("Details tab clicked")}
+                  onClick={() => {
+                    console.log("Details tab clicked");
+                  }}
                 >
                   <UserCircle2 className="w-5 h-5 stroke-[1.5]" />
                 </TabsTrigger>
@@ -153,7 +155,6 @@ export default function ChatsPage() {
             </TabsContent>
 
             <TabsContent value="details" className="m-0 overflow-auto">
-              {console.log("Rendering InfoTab with lead:", selectedLead, "and pipeline:", pipeline)}
               <InfoTab lead={selectedLead} pipeline={pipeline} />
             </TabsContent>
 
