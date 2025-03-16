@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Sheet,
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Lead } from "@/pages/dashboard/leads";
-import { Tag } from "@/types/tag";
+import { Tag } from "@/types/tag-types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -57,22 +58,14 @@ export function BulkActionsDialog({
     setIsLoading(true);
 
     if (activeTab === "pipeline" && !selectedPipeline) {
-      toast({
-        title: "Error",
-        description: "Please select a pipeline.",
-        variant: "destructive",
-      });
+      toast.error("Please select a pipeline.");
       setIsLoading(false);
       return;
     }
 
     if (activeTab === "status") {
       if (!selectedStatus) {
-        toast({
-          title: "Error",
-          description: "Please enter a status.",
-          variant: "destructive",
-        });
+        toast.error("Please enter a status.");
         setIsLoading(false);
         return;
       }
@@ -92,10 +85,7 @@ export function BulkActionsDialog({
           );
           toast.success(`${selectedLeads.length} lead(s) updated`);
         } else {
-          toast({
-            title: "No tags selected",
-            description: "Please select at least one tag to assign.",
-          });
+          toast.error("Please select at least one tag to assign.");
           setIsLoading(false);
           return;
         }
@@ -125,11 +115,7 @@ export function BulkActionsDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("Error in bulk action:", error);
-      toast({
-        title: "Error",
-        description: "Failed to perform bulk action",
-        variant: "destructive",
-      });
+      toast.error("Failed to perform bulk action");
     } finally {
       setIsLoading(false);
     }
@@ -156,9 +142,8 @@ export function BulkActionsDialog({
             <div className="grid gap-2">
               <Label htmlFor="tags">Select Tags</Label>
               <Select
-                multiple
                 onValueChange={(value) =>
-                  setSelectedTags(value ? (value as string[]) : [])
+                  setSelectedTags(value ? [value] : [])
                 }
               >
                 <SelectTrigger id="tags" className="w-full">

@@ -9,6 +9,7 @@ import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortabl
 import { AddStageButton } from "./add-stage-button";
 import { useStages } from "@/hooks/pipeline/use-stages";
 import { DeleteStageDialog } from "./delete-stage-dialog";
+import { toast } from "sonner";
 
 interface StagesContainerProps {
   selectedPipeline: Pipeline;
@@ -34,6 +35,7 @@ export function StagesContainer({
   onDeleteStage
 }: StagesContainerProps) {
   const [stageToDelete, setStageToDelete] = useState<PipelineColumn | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const {
     editingColumnId,
     setEditingColumnId,
@@ -99,14 +101,23 @@ export function StagesContainer({
   };
 
   const handleDeleteStageConfirm = async (column: PipelineColumn) => {
+    if (!column) {
+      toast.error("Cannot delete: Missing stage information");
+      return;
+    }
+    
+    setIsDeleting(true);
     try {
       console.log(`StagesContainer: Confirming deletion of stage ${column.title}`);
       await onDeleteStage(column);
+      toast.success(`Stage "${column.title}" deleted successfully`);
       console.log(`StagesContainer: Stage ${column.title} deleted successfully`);
+      setStageToDelete(null);
     } catch (error) {
       console.error("Error in handleDeleteStageConfirm:", error);
-      // Re-throw the error so the DeleteStageDialog can handle it
-      throw error;
+      toast.error(error instanceof Error ? error.message : "Failed to delete stage");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -160,6 +171,7 @@ export function StagesContainer({
         stageToDelete={stageToDelete}
         onClose={() => setStageToDelete(null)}
         onConfirm={handleDeleteStageConfirm}
+        isDeleting={isDeleting}
       />
     </div>
   );

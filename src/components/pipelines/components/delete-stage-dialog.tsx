@@ -1,120 +1,83 @@
 
-import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PipelineColumn } from "@/types/pipeline";
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { toast } from "sonner";
 
 interface DeleteStageDialogProps {
   stageToDelete: PipelineColumn | null;
   onClose: () => void;
   onConfirm: (stage: PipelineColumn) => Promise<void>;
+  isDeleting?: boolean;
 }
 
-export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteStageDialogProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
+export function DeleteStageDialog({
+  stageToDelete,
+  onClose,
+  onConfirm,
+  isDeleting = false,
+}: DeleteStageDialogProps) {
   const [error, setError] = useState<string | null>(null);
-  
-  // Safety timeout to prevent permanent UI lock
-  useEffect(() => {
-    let timeoutId: number | undefined;
-    
-    if (isDeleting) {
-      timeoutId = window.setTimeout(() => {
-        console.log("Delete operation timeout - resetting state");
-        setIsDeleting(false);
-        setError("Operation timed out. Please try again.");
-      }, 10000); // 10-second safety timeout
-    }
-    
-    return () => {
-      if (timeoutId) window.clearTimeout(timeoutId);
-    };
-  }, [isDeleting]);
 
-  const handleDelete = async () => {
-    if (!stageToDelete) return;
-    
-    setIsDeleting(true);
-    setError(null);
-    
+  if (!stageToDelete) return null;
+
+  const handleConfirm = async () => {
     try {
-      console.log(`Attempting to delete stage: ${stageToDelete.title} (${stageToDelete.id})`);
+      if (!stageToDelete) return;
+      setError(null);
       await onConfirm(stageToDelete);
-      toast.success(`Stage "${stageToDelete.title}" deleted successfully`);
-      onClose();
     } catch (err) {
-      console.error("Error in DeleteStageDialog:", err);
-      
-      // Improved error handling
-      const errorMessage = err instanceof Error 
-        ? err.message 
-        : typeof err === 'string'
-          ? err
-          : 'Failed to delete stage. Please try again.';
-      
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsDeleting(false);
+      console.error("Error in DeleteStageDialog confirm handler:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
     }
   };
 
   return (
-    <Dialog
-      open={!!stageToDelete}
-      onOpenChange={(open) => {
-        if (!open) {
-          setError(null);
-          onClose();
-        }
-      }}
-    >
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Delete Stage</DialogTitle>
-          <DialogDescription>
-            This will permanently delete the "{stageToDelete?.title}" stage and all its associated data.
-            This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
+    <AlertDialog open={!!stageToDelete} onOpenChange={(open) => !open && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Stage</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete the stage "{stageToDelete.title}"? 
+            This action cannot be undone. Any leads in this stage will need to be moved manually.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
         
         {error && (
-          <Alert variant="destructive" className="mt-2">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">
+            {error}
+          </div>
         )}
         
-        <DialogFooter className="flex justify-between sm:justify-between gap-4 mt-4">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setError(null);
-              onClose();
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={(e) => {
+              e.preventDefault();
+              handleConfirm();
             }}
             disabled={isDeleting}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="flex items-center gap-2"
+            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
           >
             {isDeleting ? (
-              <LoadingSpinner className="h-4 w-4" />
+              <>
+                <LoadingSpinner className="mr-2 h-4 w-4" /> Deleting...
+              </>
             ) : (
-              <Trash2 className="h-4 w-4" />
+              "Delete"
             )}
-            {isDeleting ? "Deleting..." : "Delete Stage"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Pipeline } from "@/types/pipeline";
 
 interface SelectionHeaderProps {
   selectedCount: number;
@@ -16,7 +17,7 @@ interface SelectionHeaderProps {
   isDeleting: boolean;
   onMoveToPipeline: (pipelineId: string) => void;
   onAddVariables: () => void;
-  pipelines: Array<{ id: string; name: string }>;
+  pipelines: Pipeline[];
 }
 
 export function SelectionHeader({
@@ -71,11 +72,13 @@ export function SelectionHeader({
       <BulkActionsDialog
         isOpen={isBulkActionsOpen}
         onOpenChange={setIsBulkActionsOpen}
-        selectedCount={selectedCount}
-        onDelete={onDelete}
-        isDeleting={isDeleting}
+        selectedLeads={Array(selectedCount).fill({ id: "" })}
+        onAssignTags={async () => {}}
+        onRemoveTags={async () => {}}
         onMoveToPipeline={onMoveToPipeline}
-        onAddVariables={onAddVariables}
+        onChangeStatus={async () => {}}
+        onDeleteLeads={async () => onDelete()}
+        onChangePipeline={async (leadIds, pipelineId) => onMoveToPipeline(pipelineId)}
         pipelines={pipelines}
       />
     </div>

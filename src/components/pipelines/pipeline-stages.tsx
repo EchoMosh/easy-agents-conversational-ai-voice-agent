@@ -7,6 +7,7 @@ import { StagesContainer } from "./components/stages-container";
 import { useStages } from "@/hooks/pipeline/use-stages";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
@@ -101,6 +102,7 @@ export function PipelineStages({
   const handleDeleteStageClick = async (column: PipelineColumn): Promise<void> => {
     if (!column || !cleanedPipeline) {
       console.error("Invalid deletion: missing column or pipeline", { column, pipelineId: cleanedPipeline?.id });
+      toast.error("Cannot delete: missing stage or pipeline details");
       throw new Error("Cannot delete: missing column or pipeline details");
     }
     
@@ -116,6 +118,7 @@ export function PipelineStages({
       return;
     } catch (error) {
       console.error("PipelineStages: Error deleting stage:", error);
+      toast.error(`Failed to delete stage: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error; // Re-throw to let the dialog component handle display
     }
   };
