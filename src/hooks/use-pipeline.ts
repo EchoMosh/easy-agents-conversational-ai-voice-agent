@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { usePipelineQueries } from "./pipeline/use-pipeline-queries";
 import { usePipelineMutations } from "./pipeline/use-pipeline-mutations";
@@ -24,6 +24,28 @@ export function usePipeline() {
     handleDeletePipeline: deletePipeline,
     handleEditPipelineName,
   } = usePipelineMutations(refetchPipelines, refetchLeads);
+
+  // Ensure selected pipeline has unique columns
+  useEffect(() => {
+    if (selectedPipeline) {
+      // Check for duplicate column IDs
+      const columnIds = selectedPipeline.columns.map(col => col.id);
+      const uniqueIds = new Set(columnIds);
+      
+      if (columnIds.length !== uniqueIds.size) {
+        console.warn("Fixing duplicate column IDs in selected pipeline");
+        
+        // Create a new pipeline object with unique columns
+        const uniqueColumnsMap = new Map();
+        selectedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
+        
+        setSelectedPipeline({
+          ...selectedPipeline,
+          columns: Array.from(uniqueColumnsMap.values())
+        });
+      }
+    }
+  }, [selectedPipeline]);
 
   return {
     // State

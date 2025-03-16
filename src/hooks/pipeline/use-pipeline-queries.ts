@@ -34,6 +34,12 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
         // Deduplicate columns by ID
         const uniqueColumnsMap = new Map();
         convertedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
+        
+        // Add debugging info about duplicates if they exist
+        if (convertedPipeline.columns.length !== uniqueColumnsMap.size) {
+          console.warn(`Pipeline ${convertedPipeline.id} had duplicate columns. Original: ${convertedPipeline.columns.length}, Unique: ${uniqueColumnsMap.size}`);
+        }
+        
         convertedPipeline.columns = Array.from(uniqueColumnsMap.values());
         
         return convertedPipeline;

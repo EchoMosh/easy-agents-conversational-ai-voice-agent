@@ -65,10 +65,18 @@ export function PipelineStages({
     }
   };
 
-  // Only use leads that belong to this pipeline
-  const pipelineLeads = leads.filter(lead => lead.pipeline_id === selectedPipeline.id);
+  // Ensure selectedPipeline.columns has unique IDs before rendering
+  const uniqueColumns = Array.from(
+    new Map(selectedPipeline.columns.map(col => [col.id, col])).values()
+  );
+
+  // If we had duplicate columns, update the pipeline with unique columns
+  if (uniqueColumns.length !== selectedPipeline.columns.length) {
+    console.log(`Found duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.length}`);
+    selectedPipeline.columns = uniqueColumns;
+  }
   
-  console.log(`Selected pipeline "${selectedPipeline.name}" (${selectedPipeline.id}) has ${pipelineLeads.length} leads (from ${leads.length} total leads)`);
+  console.log(`Selected pipeline "${selectedPipeline.name}" (${selectedPipeline.id}) has ${leads.length} total leads`);
 
   return (
     <>
@@ -80,7 +88,7 @@ export function PipelineStages({
 
       <StagesContainer
         selectedPipeline={selectedPipeline}
-        leads={pipelineLeads}
+        leads={leads}
         onDragEnd={onDragEnd}
         onEditColumnTitle={onEditColumnTitle}
         onLeadClick={onLeadClick}

@@ -25,14 +25,19 @@ export function useStageReordering(
     
     if (!over || active.id === over.id) return;
     
+    // First, deduplicate the columns by ID to ensure we're working with unique columns
+    const uniqueColumnsMap = new Map();
+    columns.forEach(col => uniqueColumnsMap.set(col.id, col));
+    const uniqueColumns = Array.from(uniqueColumnsMap.values());
+    
     // Find indices of the columns being reordered
-    const oldIndex = columns.findIndex(col => col.id === active.id);
-    const newIndex = columns.findIndex(col => col.id === over.id);
+    const oldIndex = uniqueColumns.findIndex(col => col.id === active.id);
+    const newIndex = uniqueColumns.findIndex(col => col.id === over.id);
     
     if (oldIndex === -1 || newIndex === -1) return;
     
     // Create a new array with the columns in the new order
-    const newColumns = [...columns];
+    const newColumns = [...uniqueColumns];
     const [movedColumn] = newColumns.splice(oldIndex, 1);
     newColumns.splice(newIndex, 0, movedColumn);
     
@@ -90,7 +95,7 @@ export function useStageReordering(
           if (pipeline.id === pipelineId) {
             return {
               ...pipeline,
-              columns
+              columns: uniqueColumns
             };
           }
           return pipeline;
@@ -98,7 +103,7 @@ export function useStageReordering(
       });
       
       // Also revert the UI
-      onReorderColumns(columns);
+      onReorderColumns(uniqueColumns);
       
       toast({
         title: "Error",
