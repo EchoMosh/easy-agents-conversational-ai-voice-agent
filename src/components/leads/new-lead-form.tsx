@@ -57,6 +57,23 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         throw new Error("No authenticated user found");
       }
 
+      // Find the selected pipeline to get the first column's title
+      const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
+      
+      // Ensure we're working with unique columns
+      let initialStatus = 'new';
+      if (selectedPipeline && selectedPipeline.columns.length > 0) {
+        // Deduplicate columns before getting the first one
+        const uniqueColumnsMap = new Map();
+        selectedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
+        const uniqueColumns = Array.from(uniqueColumnsMap.values());
+        
+        // Use the first column's title as the initial status
+        if (uniqueColumns.length > 0) {
+          initialStatus = uniqueColumns[0].title.toLowerCase();
+        }
+      }
+
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .insert([{
@@ -65,7 +82,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           phone: phone || null,
           user_id: user.id,
           pipeline_id: selectedPipelineId,
-          status: 'new'
+          status: initialStatus
         }])
         .select()
         .single();

@@ -75,17 +75,45 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
       
       console.log("All leads fetched:", data?.length);
       
+      // Get all pipelines to determine valid statuses
+      const pipelinesResponse = await supabase
+        .from("pipelines")
+        .select("*");
+      
+      const allPipelines = pipelinesResponse.data || [];
+      const pipelineStatusMap = new Map<string, string>();
+      
+      // Create a map of pipeline_id -> first column title for default status
+      allPipelines.forEach(pipeline => {
+        const pipelineObj = convertJsonToPipeline(pipeline);
+        if (pipelineObj.columns && pipelineObj.columns.length > 0) {
+          // Get unique columns first
+          const uniqueColumnsMap = new Map();
+          pipelineObj.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
+          const uniqueColumns = Array.from(uniqueColumnsMap.values());
+          
+          if (uniqueColumns.length > 0) {
+            pipelineStatusMap.set(pipelineObj.id, uniqueColumns[0].title.toLowerCase());
+          }
+        }
+      });
+      
       // Make sure status is never null, set default value
-      const processedLeads = (data || []).map(lead => ({
-        ...lead,
-        status: lead.status || 'New',
-        // Ensure all other properties have default values if needed
-        name: lead.name || 'Unnamed Lead',
-        email: lead.email || null,
-        phone: lead.phone || null,
-        // Ensure pipeline_id is valid
-        pipeline_id: lead.pipeline_id || null
-      }));
+      const processedLeads = (data || []).map(lead => {
+        // If lead has pipeline_id but no status, set to first column of that pipeline
+        const defaultStatus = lead.pipeline_id ? pipelineStatusMap.get(lead.pipeline_id) || 'new' : 'new';
+        
+        return {
+          ...lead,
+          status: lead.status || defaultStatus,
+          // Ensure all other properties have default values if needed
+          name: lead.name || 'Unnamed Lead',
+          email: lead.email || null,
+          phone: lead.phone || null,
+          // Ensure pipeline_id is valid
+          pipeline_id: lead.pipeline_id || null
+        };
+      });
       
       // Log leads by pipeline for debugging
       const leadsByPipeline = {};
