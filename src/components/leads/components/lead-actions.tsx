@@ -15,6 +15,8 @@ import { LeadActionsProps } from "../types/lead-types";
 
 export function LeadActions({ lead, onEditSuccess }: LeadActionsProps) {
   const [isEditing, setIsEditing] = useState(false);
+  // Make sure we're getting the correct count - handling null/undefined variables array
+  const variableCount = Array.isArray(lead.variables) ? lead.variables.length : 0;
 
   return (
     <div className="flex gap-2">
@@ -22,7 +24,7 @@ export function LeadActions({ lead, onEditSuccess }: LeadActionsProps) {
         <DialogTrigger asChild>
           <Button variant="ghost" size="sm">
             <Tag className="h-4 w-4 mr-2" />
-            {lead.variables?.length || 0} Variables
+            {variableCount} Variables
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-sm border-none shadow-2xl">

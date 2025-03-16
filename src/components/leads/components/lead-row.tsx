@@ -23,7 +23,8 @@ export function LeadRow({
   pipelineName 
 }: LeadRowProps) {
   const { theme } = useTheme();
-  const variableCount = lead.variables?.length || 0;
+  // Make sure we're getting the correct count - handling null/undefined variables array
+  const variableCount = Array.isArray(lead.variables) ? lead.variables.length : 0;
 
   return (
     <TableRow className={cn(
