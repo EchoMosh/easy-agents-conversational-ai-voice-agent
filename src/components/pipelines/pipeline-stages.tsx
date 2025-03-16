@@ -65,6 +65,9 @@ export function PipelineStages({
     }
   };
 
+  // Filter out leads that don't belong to this pipeline
+  const pipelineLeads = leads.filter(lead => lead.pipeline_id === selectedPipeline.id);
+
   return (
     <>
       <PipelineName
@@ -75,7 +78,7 @@ export function PipelineStages({
 
       <StagesContainer
         selectedPipeline={selectedPipeline}
-        leads={leads}
+        leads={pipelineLeads}
         onDragEnd={onDragEnd}
         onEditColumnTitle={onEditColumnTitle}
         onLeadClick={onLeadClick}

@@ -62,8 +62,15 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+      
       console.log("Pipeline leads fetched:", data?.length);
-      return data as unknown as Lead[];
+      // Make sure status is never null, set default value
+      const processedLeads = (data || []).map(lead => ({
+        ...lead,
+        status: lead.status || 'New'
+      }));
+      
+      return processedLeads as unknown as Lead[];
     },
     enabled: true, // Always enabled to fetch all leads when no pipeline is selected
     refetchOnWindowFocus: true,

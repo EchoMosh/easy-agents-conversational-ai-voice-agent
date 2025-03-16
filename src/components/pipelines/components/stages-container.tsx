@@ -90,11 +90,14 @@ export function StagesContainer({
       <div className="flex flex-wrap gap-6">
         <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
           {selectedPipeline.columns.map((column) => {
-            // Add a null/undefined check on lead.status before comparing
-            const columnLeads = leads.filter((lead) => 
-              lead.status && column.title && 
-              lead.status.toLowerCase() === column.title.toLowerCase()
-            );
+            // Fix the filtering logic to better handle case-insensitive comparisons and null values
+            const columnLeads = leads.filter((lead) => {
+              // If lead has no status or column has no title, don't include it
+              if (!lead.status || !column.title) return false;
+              
+              // Case-insensitive comparison
+              return lead.status.toLowerCase() === column.title.toLowerCase();
+            });
             
             return (
               <SortableStage 
