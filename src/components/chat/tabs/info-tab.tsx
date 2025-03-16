@@ -112,19 +112,20 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
   console.log("Lead variables:", lead.variables);
 
   return (
-    <div className="space-y-8 px-5 py-6">
+    <div className="p-6 space-y-8">
+      {/* Customer Information Section */}
       <div>
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-medium leading-6">Customer Information</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">Customer Information</h3>
           {!isEditing ? (
             <Button 
               variant="outline" 
               size="sm" 
               onClick={handleEdit} 
-              className="h-9 gap-1.5 text-xs"
+              className="h-8 px-3 gap-1.5"
             >
               <PenLine className="h-3.5 w-3.5" />
-              Edit
+              <span>Edit</span>
             </Button>
           ) : (
             <div className="flex items-center gap-2">
@@ -132,105 +133,102 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
                 variant="outline" 
                 size="sm" 
                 onClick={handleCancel}
-                className="h-9 w-9 p-0"
+                className="h-8 w-8 p-0"
               >
                 <X className="h-3.5 w-3.5" />
               </Button>
               <Button 
-                variant="outline" 
+                variant="default" 
                 size="sm" 
                 onClick={handleSave}
-                className="h-9 gap-1.5 text-xs bg-green-50 text-green-600 border-green-100 hover:bg-green-100 hover:text-green-700 dark:bg-green-900/20 dark:border-green-900/30 dark:hover:bg-green-900/30"
+                className="h-8 gap-1.5 bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle className="h-3.5 w-3.5" />
-                Save
+                <span>Save</span>
               </Button>
             </div>
           )}
         </div>
 
-        {isEditing ? (
-          <Card className="border border-border/70 shadow-sm">
-            <CardContent className="space-y-5 p-5">
-              <div className="space-y-3">
-                <Label htmlFor="name" className="text-sm font-medium text-muted-foreground">Name</Label>
+        <Card className="border shadow-sm overflow-hidden">
+          {isEditing ? (
+            <CardContent className="p-5 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
                 <Input 
                   id="name" 
                   value={editableData.name}
                   onChange={(e) => setEditableData({...editableData, name: e.target.value})}
-                  className="h-10 text-sm"
                 />
               </div>
-              <div className="space-y-3">
-                <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input 
                   id="email"
                   type="email" 
                   value={editableData.email}
                   onChange={(e) => setEditableData({...editableData, email: e.target.value})}
-                  className="h-10 text-sm"
                 />
               </div>
-              <div className="space-y-3">
-                <Label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone</Label>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
                 <Input 
                   id="phone" 
                   value={editableData.phone}
                   onChange={(e) => setEditableData({...editableData, phone: e.target.value})}
-                  className="h-10 text-sm"
                 />
               </div>
             </CardContent>
-          </Card>
-        ) : (
-          <Card className="p-5 space-y-5 border border-border/70 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 dark:bg-purple-900/30">
-                <User className="h-6 w-6" />
+          ) : (
+            <div className="p-5">
+              <div className="mb-4 flex items-start gap-4">
+                <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0 dark:bg-purple-900/30">
+                  <User className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-medium mb-1">{lead.name}</h4>
+                  {lead.status && (
+                    <Badge className={cn("text-xs px-2.5 py-0.5 font-normal border", getStatusColor(lead.status))}>
+                      {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <div>
-                <p className="text-lg font-medium">{lead.name}</p>
-                {lead.status && (
-                  <Badge className={cn("mt-2 text-xs font-normal px-2.5 py-0.5 border", getStatusColor(lead.status))}>
-                    {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
-                  </Badge>
+              
+              <div className="space-y-3">
+                {lead.email && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Mail className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    <span>{lead.email}</span>
+                  </div>
+                )}
+                
+                {lead.phone && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Phone className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    <span>{lead.phone}</span>
+                  </div>
+                )}
+                
+                {!lead.email && !lead.phone && (
+                  <p className="text-sm text-muted-foreground italic">No contact information available</p>
                 )}
               </div>
             </div>
-
-            <div className="space-y-4 pl-16">
-              {lead.email && (
-                <div className="flex items-center text-sm gap-3">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-base">{lead.email}</span>
-                </div>
-              )}
-              
-              {lead.phone && (
-                <div className="flex items-center text-sm gap-3">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-base">{lead.phone}</span>
-                </div>
-              )}
-              
-              {!lead.email && !lead.phone && (
-                <p className="text-sm text-muted-foreground">No contact information available</p>
-              )}
-            </div>
-          </Card>
-        )}
+          )}
+        </Card>
       </div>
 
-      <Separator className="my-6" />
+      <Separator />
 
       {/* Pipeline Section */}
-      <div className="space-y-4">
+      <div>
         <h3 className="text-lg font-medium mb-4">Pipeline</h3>
         {pipeline ? (
-          <Card className="border border-border/70 shadow-sm">
+          <Card className="border shadow-sm">
             <Button
               variant="ghost"
-              className="w-full justify-between p-5 text-left h-auto"
+              className="w-full justify-between p-4 text-left h-auto"
               onClick={() => navigate(`/dashboard/pipelines/${pipeline.id}`)}
             >
               <span className="font-medium">{pipeline.name}</span>
@@ -238,27 +236,30 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
             </Button>
           </Card>
         ) : (
-          <Card className="border border-dashed border-border/50 bg-muted/30 p-6 text-center">
-            <p className="text-sm text-muted-foreground">No pipeline information available</p>
+          <Card className="border border-dashed p-5 text-center bg-muted/30">
+            <p className="text-sm text-muted-foreground">No pipeline assigned</p>
           </Card>
         )}
       </div>
 
-      <Separator className="my-6" />
+      <Separator />
 
       {/* Variables Section */}
-      <Card className="border border-border/70 shadow-sm p-5">
-        <LeadVariables
-          leadId={lead.id}
-          variables={lead.variables || []}
-          onVariablesUpdated={() => {
-            console.log("Variables updated, invalidating queries");
-            queryClient.invalidateQueries({
-              queryKey: ["leads"],
-            });
-          }}
-        />
-      </Card>
+      <div>
+        <h3 className="text-lg font-medium mb-4">Custom Fields</h3>
+        <Card className="border shadow-sm p-5">
+          <LeadVariables
+            leadId={lead.id}
+            variables={lead.variables || []}
+            onVariablesUpdated={() => {
+              console.log("Variables updated, invalidating queries");
+              queryClient.invalidateQueries({
+                queryKey: ["leads"],
+              });
+            }}
+          />
+        </Card>
+      </div>
     </div>
   );
 }
