@@ -127,7 +127,7 @@ export function StagesContainer({
         collisionDetection={closestCenter}
         onDragEnd={onDragEnd}
       >
-        <div className="flex space-x-4 overflow-x-auto pb-4 px-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-1 pb-4 w-full">
           <SortableContext 
             items={selectedPipeline.columns.map((col) => col.id)}
             strategy={horizontalListSortingStrategy}
@@ -152,18 +152,19 @@ export function StagesContainer({
                 />
               </SortableStage>
             ))}
+            <div className="flex items-center justify-center h-full">
+              <AddStageButton 
+                onAddStage={() => {
+                  handleAddNewStage(
+                    selectedPipeline.id, 
+                    selectedPipeline.columns, 
+                    onAddStage
+                  );
+                }}
+                isLoading={isAddingStage}
+              />
+            </div>
           </SortableContext>
-        
-          <AddStageButton 
-            onAddStage={() => {
-              handleAddNewStage(
-                selectedPipeline.id, 
-                selectedPipeline.columns, 
-                onAddStage
-              );
-            }}
-            isLoading={isAddingStage}
-          />
         </div>
       </DndContext>
       

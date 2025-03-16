@@ -17,7 +17,7 @@ import { defaultColumns } from "@/hooks/use-pipeline";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
-  return <div ref={setNodeRef} className="h-full">{children}</div>;
+  return <div ref={setNodeRef} className="h-full w-full">{children}</div>;
 }
 
 export default function PipelinesPage() {
@@ -94,7 +94,7 @@ export default function PipelinesPage() {
 
   return (
     <div className="relative">
-      <div className="px-8 py-6 min-h-screen bg-gradient-to-b from-background to-muted/10">
+      <div className="px-4 md:px-8 py-6 min-h-screen bg-gradient-to-b from-background to-muted/10 w-full">
         <PipelineHeader 
           pipelines={pipelines || []}
           selectedPipeline={selectedPipeline}
@@ -103,7 +103,7 @@ export default function PipelinesPage() {
         />
 
         {selectedPipeline && (
-          <div className="mt-6">
+          <div className="mt-6 w-full">
             <PipelineStages
               selectedPipeline={selectedPipeline}
               leads={leads || []}

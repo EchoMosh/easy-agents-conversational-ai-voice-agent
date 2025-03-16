@@ -137,7 +137,7 @@ export function PipelineStages({
   console.log(`Selected pipeline "${cleanedPipeline.name}" (${cleanedPipeline.id}) has ${pipelineLeads.length} leads (out of ${leads.length} total leads)`);
 
   return (
-    <>
+    <div className="w-full">
       <PipelineName
         name={cleanedPipeline.name}
         onEditPipelineName={onEditPipelineName}
@@ -155,6 +155,6 @@ export function PipelineStages({
         allPipelines={allPipelines}
         onDeleteStage={handleDeleteStageClick}
       />
-    </>
+    </div>
   );
 }
