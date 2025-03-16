@@ -38,10 +38,22 @@ export function PipelineStages({
   const {
     handleDeleteStage
   } = useStages(onReorderColumns);
-  const [cleanedPipeline, setCleanedPipeline] = useState<Pipeline>(selectedPipeline);
+  const [cleanedPipeline, setCleanedPipeline] = useState<Pipeline | null>(null);
+  
+  // Check if we have a valid pipeline before proceeding
+  if (!selectedPipeline) {
+    console.warn("No pipeline selected");
+    return (
+      <div className="flex items-center justify-center h-64 w-full">
+        <p className="text-muted-foreground">No pipeline selected yet. Please select a pipeline to view its stages.</p>
+      </div>
+    );
+  }
   
   // Ensure unique columns in the pipeline every time it changes
   useEffect(() => {
+    if (!selectedPipeline) return;
+
     // Deduplicate columns by ID
     const uniqueColumnsMap = new Map();
     selectedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
@@ -115,6 +127,15 @@ export function PipelineStages({
       }
     }
   };
+
+  // If we don't have a cleaned pipeline yet, show loading
+  if (!cleanedPipeline) {
+    return (
+      <div className="flex items-center justify-center h-64 w-full">
+        <p className="text-muted-foreground">Loading pipeline data...</p>
+      </div>
+    );
+  }
 
   // Filter leads to only include those belonging to this pipeline
   const pipelineLeads = leads.filter(lead => lead.pipeline_id === cleanedPipeline.id);

@@ -49,6 +49,16 @@ export function StagesContainer({
   const { handleStageReorder, isReordering } = useStageReordering(onReorderColumns);
   const [isDraggingStage, setIsDraggingStage] = useState(false);
 
+  // Add safety check for selectedPipeline
+  if (!selectedPipeline || !selectedPipeline.columns) {
+    console.error("No pipeline selected or pipeline has no columns", selectedPipeline);
+    return (
+      <div className="flex items-center justify-center h-64 w-full">
+        <p className="text-muted-foreground">No pipeline selected or pipeline data is loading...</p>
+      </div>
+    );
+  }
+
   const pipelineLeads = leads.filter(lead => lead.pipeline_id === selectedPipeline.id);
 
   const sensors = useSensors(

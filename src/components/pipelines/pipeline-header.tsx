@@ -40,7 +40,7 @@ export function PipelineHeader({
         </Button>
       </div>
       
-      {pipelines.length > 0 ? (
+      {pipelines && pipelines.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           {pipelines.map((pipeline) => (
             <Button
