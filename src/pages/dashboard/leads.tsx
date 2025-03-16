@@ -125,7 +125,8 @@ export default function LeadsPage() {
             lead_id: editingLead.id,
             content: 'Pipeline changed',
             old_value: oldPipelineName,
-            new_value: newPipelineName
+            new_value: newPipelineName,
+            user_id: editingLead.user_id // Adding the required user_id field
           });
       }
       
