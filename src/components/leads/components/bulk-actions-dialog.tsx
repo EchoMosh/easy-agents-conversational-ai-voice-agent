@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Tabs,
@@ -25,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { MoveRight, RefreshCw, Tag } from "lucide-react";
 import { BulkActionsDialogProps } from "../types/lead-types";
 import { toast } from "sonner";
+import { useState } from "react";
 
 export function BulkActionsDialog({
   isOpen,
@@ -37,15 +39,50 @@ export function BulkActionsDialog({
   onAddVariables,
   pipelines,
 }: BulkActionsDialogProps) {
+  const [selectedPipeline, setSelectedPipeline] = useState<string | undefined>(undefined);
+  const [selectedStatus, setSelectedStatus] = useState<string | undefined>(undefined);
+  
+  const handlePipelineChange = (value: string) => {
+    setSelectedPipeline(value);
+    toast.success(`Pipeline selected: ${value === "none" ? "No Pipeline" : pipelines.find(p => p.id === value)?.name || value}`);
+  };
+  
+  const handleStatusChange = (value: string) => {
+    setSelectedStatus(value);
+    toast.success(`Status selected: ${value}`);
+  };
+  
+  const handleMoveLeads = () => {
+    if (selectedPipeline) {
+      onMoveToPipeline(selectedPipeline);
+      toast.success(`${selectedCount} lead${selectedCount !== 1 ? 's' : ''} moved successfully`);
+      onOpenChange(false);
+    } else {
+      toast.error("Please select a pipeline first");
+    }
+  };
+  
+  const handleUpdateStatus = () => {
+    if (selectedStatus) {
+      onChangeStatus(selectedStatus);
+      toast.success(`Status updated for ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
+      onOpenChange(false);
+    } else {
+      toast.error("Please select a status first");
+    }
+  };
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Bulk Actions for {selectedCount} Lead{selectedCount !== 1 ? 's' : ''}</DialogTitle>
+          <DialogDescription>
+            Apply changes to multiple leads at once
+          </DialogDescription>
         </DialogHeader>
         
-        <Tabs defaultValue="move" className="w-full">
+        <Tabs defaultValue="move" className="w-full mt-4">
           <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="move">Move</TabsTrigger>
             <TabsTrigger value="status">Status</TabsTrigger>
@@ -55,14 +92,11 @@ export function BulkActionsDialog({
           <TabsContent value="move" className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="movePipeline">Move to Pipeline</Label>
-              <Select onValueChange={(value) => {
-                onMoveToPipeline(value);
-                toast.success(`Moving ${selectedCount} lead${selectedCount !== 1 ? 's' : ''} to selected pipeline`);
-              }}>
+              <Select value={selectedPipeline} onValueChange={handlePipelineChange}>
                 <SelectTrigger id="movePipeline" className="w-full">
                   <SelectValue placeholder="Select a pipeline" />
                 </SelectTrigger>
-                <SelectContent position="popper" className="bg-background z-50">
+                <SelectContent position="item-aligned" sideOffset={4} className="bg-background z-[100]">
                   <SelectGroup>
                     <SelectItem value="none">No Pipeline</SelectItem>
                     {pipelines.map((pipeline) => (
@@ -77,10 +111,7 @@ export function BulkActionsDialog({
                 <Button 
                   className="w-full" 
                   type="button"
-                  onClick={() => {
-                    toast.success(`${selectedCount} lead${selectedCount !== 1 ? 's' : ''} moved successfully`);
-                    onOpenChange(false);
-                  }}
+                  onClick={handleMoveLeads}
                 >
                   <MoveRight className="h-4 w-4 mr-2" />
                   Move Leads
@@ -92,14 +123,11 @@ export function BulkActionsDialog({
           <TabsContent value="status" className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="changeStatus">Change Status</Label>
-              <Select onValueChange={(value) => {
-                onChangeStatus(value);
-                toast.success(`Updating status for ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
-              }}>
+              <Select value={selectedStatus} onValueChange={handleStatusChange}>
                 <SelectTrigger id="changeStatus" className="w-full">
                   <SelectValue placeholder="Select a status" />
                 </SelectTrigger>
-                <SelectContent position="popper" className="bg-background z-50">
+                <SelectContent position="item-aligned" sideOffset={4} className="bg-background z-[100]">
                   <SelectGroup>
                     <SelectItem value="New">New</SelectItem>
                     <SelectItem value="Contacted">Contacted</SelectItem>
@@ -115,10 +143,7 @@ export function BulkActionsDialog({
                 <Button 
                   className="w-full" 
                   type="button"
-                  onClick={() => {
-                    toast.success(`Status updated for ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
-                    onOpenChange(false);
-                  }}
+                  onClick={handleUpdateStatus}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Update Status
