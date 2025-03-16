@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDroppable } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
+import { Pipeline } from "@/types/pipeline";
 import { PipelineHeader } from "@/components/pipelines/pipeline-header";
 import { PipelineStages } from "@/components/pipelines/pipeline-stages";
 import { LeadDetailsDialog } from "@/components/pipelines/lead-details-dialog";
@@ -40,15 +41,12 @@ export default function PipelinesPage() {
     refetchLeads,
   } = usePipeline();
 
-  // Extract the selected pipeline ID from the URL query parameters
   useEffect(() => {
     if (pipelines?.length > 0) {
-      // Get the 'selected' query parameter from the URL
       const params = new URLSearchParams(location.search);
       const selectedPipelineId = params.get('selected');
       
       if (selectedPipelineId) {
-        // Find the pipeline with the matching ID
         const pipelineToSelect = pipelines.find(p => p.id === selectedPipelineId);
         if (pipelineToSelect) {
           console.log("Setting selected pipeline from URL parameter:", pipelineToSelect.name);
@@ -57,19 +55,15 @@ export default function PipelinesPage() {
         }
       }
       
-      // If no pipeline is selected or the selected pipeline doesn't exist,
-      // default to the first pipeline
       if (!selectedPipeline) {
         setSelectedPipeline(pipelines[0]);
       }
     }
   }, [pipelines, location.search, setSelectedPipeline, selectedPipeline]);
 
-  // Handler for pipeline selection that updates the URL
   const handleSelectPipeline = (pipeline: Pipeline) => {
     console.log("Pipeline selected:", pipeline.name);
     setSelectedPipeline(pipeline);
-    // Update URL to reflect the selected pipeline
     navigate(`/dashboard/pipelines?selected=${pipeline.id}`, { replace: true });
   };
 
@@ -80,7 +74,6 @@ export default function PipelinesPage() {
     onDelete,
   } = useDeletePipeline(handleDeletePipeline, selectedPipeline?.id);
 
-  // Custom drag handler with optimistic updates
   const { handleDragEnd: baseHandleDragEnd } = usePipelineDrag(selectedPipeline, leads, refetchLeads);
   
   const handleDragEnd = (event: any) => {
@@ -91,12 +84,10 @@ export default function PipelinesPage() {
     const leadId = String(active.id);
     const newColumnId = String(over.id);
     
-    // Apply optimistic update
     if (leadId && newColumnId) {
       const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
       if (!targetColumn) return;
       
-      // Optimistically update the cache
       queryClient.setQueryData(["leads", selectedPipeline.id], (oldData: any) => {
         if (!oldData) return oldData;
         
@@ -112,7 +103,6 @@ export default function PipelinesPage() {
       });
     }
     
-    // Call the original handler for database updates
     baseHandleDragEnd(event);
   };
   
@@ -122,17 +112,14 @@ export default function PipelinesPage() {
     handleReorderColumns,
   } = usePipelineColumns(setSelectedPipeline);
 
-  // Get other pipelines (excluding the selected one)
   const otherPipelines = pipelines?.filter(p => p.id !== selectedPipeline?.id) || [];
   
-  // Check if the selected pipeline has any leads
   const hasLeads = leads?.some(lead => lead.pipeline_id === selectedPipeline?.id) || false;
 
   return (
     <div className="relative">
       <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
         <div className="mb-6">
-          {/* Removed the RefreshButton and its container */}
         </div>
         
         <PipelineHeader 
