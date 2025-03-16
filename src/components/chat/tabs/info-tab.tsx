@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Phone, Mail, User, ExternalLink, PenLine, CheckCircle, X } from "lucide-react";
 import { LeadVariables } from "@/components/leads/lead-variables";
@@ -36,7 +37,7 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
   if (!lead) {
     console.log("InfoTab - No lead information available");
     return (
-      <div className="p-4 text-center text-muted-foreground">
+      <div className="p-6 text-center text-muted-foreground">
         No lead information available
       </div>
     );
@@ -111,16 +112,16 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
   console.log("Lead variables:", lead.variables);
 
   return (
-    <div className="space-y-6 px-1 py-4">
+    <div className="space-y-8 px-5 py-6">
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-medium leading-6">Customer Information</h3>
           {!isEditing ? (
             <Button 
               variant="outline" 
               size="sm" 
               onClick={handleEdit} 
-              className="h-8 gap-1.5 text-xs"
+              className="h-9 gap-1.5 text-xs"
             >
               <PenLine className="h-3.5 w-3.5" />
               Edit
@@ -131,7 +132,7 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
                 variant="outline" 
                 size="sm" 
                 onClick={handleCancel}
-                className="h-8 w-8 p-0"
+                className="h-9 w-9 p-0"
               >
                 <X className="h-3.5 w-3.5" />
               </Button>
@@ -139,7 +140,7 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
                 variant="outline" 
                 size="sm" 
                 onClick={handleSave}
-                className="h-8 gap-1.5 text-xs bg-green-50 text-green-600 border-green-100 hover:bg-green-100 hover:text-green-700 dark:bg-green-900/20 dark:border-green-900/30 dark:hover:bg-green-900/30"
+                className="h-9 gap-1.5 text-xs bg-green-50 text-green-600 border-green-100 hover:bg-green-100 hover:text-green-700 dark:bg-green-900/20 dark:border-green-900/30 dark:hover:bg-green-900/30"
               >
                 <CheckCircle className="h-3.5 w-3.5" />
                 Save
@@ -149,64 +150,66 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
         </div>
 
         {isEditing ? (
-          <div className="space-y-4 px-1">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-muted-foreground">Name</Label>
-              <Input 
-                id="name" 
-                value={editableData.name}
-                onChange={(e) => setEditableData({...editableData, name: e.target.value})}
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email</Label>
-              <Input 
-                id="email"
-                type="email" 
-                value={editableData.email}
-                onChange={(e) => setEditableData({...editableData, email: e.target.value})}
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone</Label>
-              <Input 
-                id="phone" 
-                value={editableData.phone}
-                onChange={(e) => setEditableData({...editableData, phone: e.target.value})}
-                className="h-9 text-sm"
-              />
-            </div>
-          </div>
+          <Card className="border border-border/70 shadow-sm">
+            <CardContent className="space-y-5 p-5">
+              <div className="space-y-3">
+                <Label htmlFor="name" className="text-sm font-medium text-muted-foreground">Name</Label>
+                <Input 
+                  id="name" 
+                  value={editableData.name}
+                  onChange={(e) => setEditableData({...editableData, name: e.target.value})}
+                  className="h-10 text-sm"
+                />
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email</Label>
+                <Input 
+                  id="email"
+                  type="email" 
+                  value={editableData.email}
+                  onChange={(e) => setEditableData({...editableData, email: e.target.value})}
+                  className="h-10 text-sm"
+                />
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone</Label>
+                <Input 
+                  id="phone" 
+                  value={editableData.phone}
+                  onChange={(e) => setEditableData({...editableData, phone: e.target.value})}
+                  className="h-10 text-sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="rounded-lg border border-border/50 bg-background p-4 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 dark:bg-purple-900/30">
-                <User className="h-5 w-5" />
+          <Card className="p-5 space-y-5 border border-border/70 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 dark:bg-purple-900/30">
+                <User className="h-6 w-6" />
               </div>
               <div>
-                <p className="font-medium">{lead.name}</p>
+                <p className="text-lg font-medium">{lead.name}</p>
                 {lead.status && (
-                  <Badge className={cn("mt-1 text-xs font-normal px-2 py-0.5 border", getStatusColor(lead.status))}>
+                  <Badge className={cn("mt-2 text-xs font-normal px-2.5 py-0.5 border", getStatusColor(lead.status))}>
                     {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
                   </Badge>
                 )}
               </div>
             </div>
 
-            <div className="space-y-3 pl-12">
+            <div className="space-y-4 pl-16">
               {lead.email && (
-                <div className="flex items-center text-sm gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{lead.email}</span>
+                <div className="flex items-center text-sm gap-3">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-base">{lead.email}</span>
                 </div>
               )}
               
               {lead.phone && (
-                <div className="flex items-center text-sm gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{lead.phone}</span>
+                <div className="flex items-center text-sm gap-3">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-base">{lead.phone}</span>
                 </div>
               )}
               
@@ -214,44 +217,48 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
                 <p className="text-sm text-muted-foreground">No contact information available</p>
               )}
             </div>
-          </div>
+          </Card>
         )}
       </div>
 
-      <Separator />
+      <Separator className="my-6" />
 
       {/* Pipeline Section */}
-      <div>
+      <div className="space-y-4">
         <h3 className="text-lg font-medium mb-4">Pipeline</h3>
         {pipeline ? (
-          <Button
-            variant="outline"
-            className="w-full justify-between bg-background border-border/50 hover:bg-muted/50"
-            onClick={() => navigate(`/dashboard/pipelines/${pipeline.id}`)}
-          >
-            {pipeline.name}
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+          <Card className="border border-border/70 shadow-sm">
+            <Button
+              variant="ghost"
+              className="w-full justify-between p-5 text-left h-auto"
+              onClick={() => navigate(`/dashboard/pipelines/${pipeline.id}`)}
+            >
+              <span className="font-medium">{pipeline.name}</span>
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </Card>
         ) : (
-          <div className="rounded-lg border border-dashed border-border/50 bg-muted/30 p-4 text-center">
+          <Card className="border border-dashed border-border/50 bg-muted/30 p-6 text-center">
             <p className="text-sm text-muted-foreground">No pipeline information available</p>
-          </div>
+          </Card>
         )}
       </div>
 
-      <Separator />
+      <Separator className="my-6" />
 
       {/* Variables Section */}
-      <LeadVariables
-        leadId={lead.id}
-        variables={lead.variables || []}
-        onVariablesUpdated={() => {
-          console.log("Variables updated, invalidating queries");
-          queryClient.invalidateQueries({
-            queryKey: ["leads"],
-          });
-        }}
-      />
+      <Card className="border border-border/70 shadow-sm p-5">
+        <LeadVariables
+          leadId={lead.id}
+          variables={lead.variables || []}
+          onVariablesUpdated={() => {
+            console.log("Variables updated, invalidating queries");
+            queryClient.invalidateQueries({
+              queryKey: ["leads"],
+            });
+          }}
+        />
+      </Card>
     </div>
   );
 }
