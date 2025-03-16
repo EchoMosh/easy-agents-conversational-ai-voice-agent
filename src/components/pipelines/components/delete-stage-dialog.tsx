@@ -8,12 +8,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface DeleteStageDialogProps {
-  stageToDelete: PipelineColumn | null;
-  onClose: () => void; // Simplified callback type
-  onConfirm: (stage: PipelineColumn) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDelete: () => void;
 }
 
-export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteStageDialogProps) {
+export function DeleteStageDialog({ open, onOpenChange, onDelete }: DeleteStageDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -34,14 +34,12 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
   }, [isDeleting]);
 
   const handleDelete = async () => {
-    if (!stageToDelete) return;
-    
     setIsDeleting(true);
     setError(null);
     
     try {
-      await onConfirm(stageToDelete);
-      onClose(); // Call onClose without any parameters
+      await onDelete();
+      onOpenChange(false);
     } catch (err) {
       console.error("Error deleting stage:", err);
       setError(typeof err === 'string' ? err : 'Failed to delete stage. Please try again.');
@@ -52,12 +50,12 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
 
   return (
     <Dialog
-      open={!!stageToDelete}
-      onOpenChange={(open) => {
+      open={open}
+      onOpenChange={(isOpen) => {
         // Always allow closing the dialog, even during deletion
-        if (!open) {
+        if (!isOpen) {
           setError(null);
-          onClose(); // Call onClose without any parameters
+          onOpenChange(false);
         }
       }}
     >
@@ -65,7 +63,7 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
         <DialogHeader>
           <DialogTitle>Delete Stage</DialogTitle>
           <DialogDescription>
-            This will permanently delete the "{stageToDelete?.title}" stage and all its associated data.
+            This will permanently delete this stage and all its associated data.
             This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
@@ -82,7 +80,7 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
             variant="outline"
             onClick={() => {
               setError(null);
-              onClose(); // Call onClose without any parameters
+              onOpenChange(false);
             }}
             disabled={isDeleting}
           >
