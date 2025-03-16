@@ -1,172 +1,240 @@
-
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
-import { MoveRight, Tag } from "lucide-react";
-import { BulkActionsDialogProps } from "../types/lead-types";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Lead } from "@/pages/dashboard/leads";
+import { Tag } from "@/types/tag";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Pipeline } from "@/types/pipeline";
+
+interface BulkActionsDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedLeads: Lead[];
+  onAssignTags: (leadIds: string[], tagIds: string[]) => Promise<void>;
+  onRemoveTags: (leadIds: string[], tagIds: string[]) => Promise<void>;
+  onChangePipeline: (leadIds: string[], pipelineId: string) => Promise<void>;
+  onChangeStatus: (leadIds: string[], status: string) => Promise<void>;
+  onDeleteLeads: (leadIds: string[]) => Promise<void>;
+  pipelines: Pipeline[];
+}
 
 export function BulkActionsDialog({
   isOpen,
   onOpenChange,
-  selectedCount,
-  onDelete,
-  isDeleting,
-  onMoveToPipeline,
-  onAddVariables,
+  selectedLeads,
+  onAssignTags,
+  onRemoveTags,
+  onChangePipeline,
+  onChangeStatus,
+  onDeleteLeads,
   pipelines,
 }: BulkActionsDialogProps) {
-  const [selectedPipeline, setSelectedPipeline] = useState<string | undefined>(undefined);
-  const [fullPipelines, setFullPipelines] = useState<Pipeline[]>([]);
-  
-  useEffect(() => {
-    if (isOpen) {
-      fetchFullPipelineData();
-    }
-  }, [isOpen]);
-  
-  const fetchFullPipelineData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*");
-        
-      if (error) throw error;
-      
-      const processedPipelines = (data || []).map(convertJsonToPipeline);
-      setFullPipelines(processedPipelines);
-    } catch (error) {
-      console.error("Error fetching pipeline data:", error);
-    }
+  const [activeTab, setActiveTab] = useState("tags");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedPipeline, setSelectedPipeline] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [isStatusValid, setIsStatusValid] = useState(true);
+
+  const validateStatus = (status: string) => {
+    return status.trim() !== "";
   };
-  
-  const handlePipelineChange = (value: string) => {
-    setSelectedPipeline(value);
-    toast.success(value === "none" ? "No Pipeline selected" : `Pipeline selected: ${pipelines.find(p => p.id === value)?.name || value}`);
-  };
-  
-  const handleMoveLeads = () => {
-    if (selectedPipeline) {
-      const targetPipeline = fullPipelines.find(p => p.id === selectedPipeline);
-      let firstStage = "New"; // Default fallback
-      
-      if (targetPipeline && targetPipeline.columns.length > 0) {
-        firstStage = targetPipeline.columns[0].title;
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+
+    if (activeTab === "pipeline" && !selectedPipeline) {
+      toast({
+        title: "Error",
+        description: "Please select a pipeline.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (activeTab === "status") {
+      if (!selectedStatus) {
+        toast({
+          title: "Error",
+          description: "Please enter a status.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
       }
-      
-      onMoveToPipeline(selectedPipeline, firstStage);
-      toast.success(`${selectedCount} lead${selectedCount !== 1 ? 's' : ''} moved successfully`);
+
+      if (!isStatusValid) {
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    try {
+      if (activeTab === "tags") {
+        if (selectedTags.length > 0) {
+          await onAssignTags(
+            selectedLeads.map((lead) => lead.id),
+            selectedTags
+          );
+          toast.success(`${selectedLeads.length} lead(s) updated`);
+        } else {
+          toast({
+            title: "No tags selected",
+            description: "Please select at least one tag to assign.",
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (activeTab === "pipeline") {
+        await onChangePipeline(
+          selectedLeads.map((lead) => lead.id),
+          selectedPipeline
+        );
+        toast.success(`${selectedLeads.length} lead(s) updated`);
+      }
+
+      if (activeTab === "status") {
+        await onChangeStatus(
+          selectedLeads.map((lead) => lead.id),
+          selectedStatus
+        );
+        toast.success(`${selectedLeads.length} lead(s) updated`);
+      }
+
+      if (activeTab === "delete") {
+        await onDeleteLeads(selectedLeads.map((lead) => lead.id));
+        toast.success(`${selectedLeads.length} lead(s) deleted`);
+      }
+
       onOpenChange(false);
-    } else {
-      toast.error("Please select a pipeline first");
+    } catch (error) {
+      console.error("Error in bulk action:", error);
+      toast({
+        title: "Error",
+        description: "Failed to perform bulk action",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Bulk Actions for {selectedCount} Lead{selectedCount !== 1 ? 's' : ''}</DialogTitle>
-          <DialogDescription>
-            Apply changes to multiple leads at once
-          </DialogDescription>
-        </DialogHeader>
-        
-        <Tabs defaultValue="move" className="w-full mt-4">
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="move">Move</TabsTrigger>
-            <TabsTrigger value="variables">Variables</TabsTrigger>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Bulk Actions</SheetTitle>
+          <SheetDescription>
+            Apply actions to {selectedLeads.length} selected leads.
+          </SheetDescription>
+        </SheetHeader>
+
+        <Tabs defaultValue="tags" className="mt-4" onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="tags">Tags</TabsTrigger>
+            <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+            <TabsTrigger value="status">Status</TabsTrigger>
+            <TabsTrigger value="delete">Delete</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="move" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="movePipeline">Move to Pipeline</Label>
-              <Select value={selectedPipeline} onValueChange={handlePipelineChange}>
-                <SelectTrigger id="movePipeline" className="w-full">
-                  <SelectValue placeholder="Select a pipeline" />
+          <TabsContent value="tags" className="pt-4">
+            <div className="grid gap-2">
+              <Label htmlFor="tags">Select Tags</Label>
+              <Select
+                multiple
+                onValueChange={(value) =>
+                  setSelectedTags(value ? (value as string[]) : [])
+                }
+              >
+                <SelectTrigger id="tags" className="w-full">
+                  <SelectValue placeholder="Select tag" />
                 </SelectTrigger>
-                <SelectContent 
-                  position="popper" 
-                  sideOffset={5} 
-                  className="bg-background z-[9999]" 
-                  align="center"
-                >
-                  <SelectGroup>
-                    <SelectItem value="none">No Pipeline</SelectItem>
-                    {pipelines.map((pipeline) => (
-                      <SelectItem key={pipeline.id} value={pipeline.id}>
-                        {pipeline.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
+                <SelectContent>
+                  <SelectItem value="1">Tag 1</SelectItem>
+                  <SelectItem value="2">Tag 2</SelectItem>
+                  <SelectItem value="3">Tag 3</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="pt-2">
-                <Button 
-                  className="w-full" 
-                  type="button"
-                  onClick={handleMoveLeads}
-                >
-                  <MoveRight className="h-4 w-4 mr-2" />
-                  Move Leads
-                </Button>
-              </div>
             </div>
           </TabsContent>
-          
-          <TabsContent value="variables" className="space-y-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Add variables to all selected leads at once
-              </p>
-              <div className="pt-2">
-                <Button 
-                  className="w-full" 
-                  type="button"
-                  onClick={() => {
-                    onAddVariables();
-                    toast.success(`Adding variables to ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
-                    onOpenChange(false);
-                  }}
-                >
-                  <Tag className="h-4 w-4 mr-2" />
-                  Add Variables
-                </Button>
-              </div>
+
+          <TabsContent value="pipeline" className="pt-4">
+            <div className="grid gap-2">
+              <Label htmlFor="pipeline">Select Pipeline</Label>
+              <Select onValueChange={setSelectedPipeline}>
+                <SelectTrigger id="pipeline" className="w-full">
+                  <SelectValue placeholder="Select pipeline" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pipelines.map((pipeline) => (
+                    <SelectItem key={pipeline.id} value={pipeline.id}>
+                      {pipeline.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </TabsContent>
+
+          <TabsContent value="status" className="pt-4">
+            <div className="grid gap-2">
+              <Label htmlFor="status">Enter Status</Label>
+              <Input
+                id="status"
+                placeholder="Enter status"
+                value={selectedStatus}
+                onChange={(e) => {
+                  const status = e.target.value;
+                  setSelectedStatus(status);
+                  setIsStatusValid(validateStatus(status));
+                }}
+              />
+              {!isStatusValid && (
+                <p className="text-sm text-red-500">Status cannot be empty.</p>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="delete" className="pt-4">
+            <p>Are you sure you want to delete these leads?</p>
           </TabsContent>
         </Tabs>
-        
-        <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+
+        <SheetFooter className="mt-4">
+          <div className="flex justify-end gap-4">
+            <SheetClose asChild>
+              <Button variant="outline" disabled={isLoading}>
+                Cancel
+              </Button>
+            </SheetClose>
+            <Button onClick={handleSubmit} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <LoadingSpinner className="mr-2 h-4 w-4" />
+                  Loading
+                </>
+              ) : (
+                "Submit"
+              )}
+            </Button>
+          </div>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

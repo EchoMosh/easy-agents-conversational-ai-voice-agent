@@ -9,7 +9,6 @@ import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortabl
 import { AddStageButton } from "./add-stage-button";
 import { useStages } from "@/hooks/pipeline/use-stages";
 import { DeleteStageDialog } from "./delete-stage-dialog";
-import { toast } from "sonner";
 
 interface StagesContainerProps {
   selectedPipeline: Pipeline;
@@ -106,7 +105,7 @@ export function StagesContainer({
       console.log(`StagesContainer: Stage ${column.title} deleted successfully`);
     } catch (error) {
       console.error("Error in handleDeleteStageConfirm:", error);
-      // Let the DeleteStageDialog component handle the error display
+      // Re-throw the error so the DeleteStageDialog can handle it
       throw error;
     }
   };

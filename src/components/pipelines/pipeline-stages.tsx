@@ -5,7 +5,6 @@ import { Lead } from "@/pages/dashboard/leads";
 import { PipelineName } from "./components/pipeline-name";
 import { StagesContainer } from "./components/stages-container";
 import { useStages } from "@/hooks/pipeline/use-stages";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
