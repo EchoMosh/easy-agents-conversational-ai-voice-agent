@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   CheckSquare,
-  ChevronDown,
+  Trash2,
 } from "lucide-react";
 import { BulkActionsDialog } from "@/components/leads/components/bulk-actions-dialog";
 
@@ -36,6 +36,16 @@ export function SelectionHeader({
         {selectedCount} lead{selectedCount > 1 ? 's' : ''} selected
       </span>
       <div className="flex items-center gap-2">
+        <Button
+          onClick={onDelete}
+          variant="destructive"
+          className="gap-2"
+          disabled={isDeleting}
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete Leads
+        </Button>
+        
         <Button
           onClick={() => setIsBulkActionsOpen(true)}
           className="gap-2"

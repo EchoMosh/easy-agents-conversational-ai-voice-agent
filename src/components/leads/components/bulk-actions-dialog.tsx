@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Trash2, MoveRight, RefreshCw, Tag, ClipboardCheck, MailPlus } from "lucide-react";
+import { MoveRight, RefreshCw, Tag } from "lucide-react";
 import { BulkActionsDialogProps } from "../types/lead-types";
 import { toast } from "sonner";
 
@@ -38,16 +38,6 @@ export function BulkActionsDialog({
   pipelines,
 }: BulkActionsDialogProps) {
   
-  const handleCopyEmails = () => {
-    // This would be implemented in the parent component
-    toast.success("Emails copied to clipboard");
-  };
-
-  const handleSendEmail = () => {
-    // This would open an email composition dialog
-    toast.info("Email composition feature coming soon");
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -56,11 +46,10 @@ export function BulkActionsDialog({
         </DialogHeader>
         
         <Tabs defaultValue="move" className="w-full">
-          <TabsList className="grid grid-cols-4 mb-4">
+          <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="move">Move</TabsTrigger>
             <TabsTrigger value="status">Status</TabsTrigger>
             <TabsTrigger value="variables">Variables</TabsTrigger>
-            <TabsTrigger value="other">Other</TabsTrigger>
           </TabsList>
           
           <TabsContent value="move" className="space-y-4">
@@ -145,33 +134,6 @@ export function BulkActionsDialog({
                   Add Variables
                 </Button>
               </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="other" className="space-y-4">
-            <div className="grid grid-cols-1 gap-3">
-              <Button onClick={handleCopyEmails} variant="outline">
-                <ClipboardCheck className="h-4 w-4 mr-2" />
-                Copy Emails
-              </Button>
-              
-              <Button onClick={handleSendEmail} variant="outline">
-                <MailPlus className="h-4 w-4 mr-2" />
-                Send Email
-              </Button>
-              
-              <Button 
-                onClick={() => {
-                  onDelete();
-                  onOpenChange(false);
-                }} 
-                variant="destructive"
-                disabled={isDeleting}
-                className="mt-4"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Selected
-              </Button>
             </div>
           </TabsContent>
         </Tabs>
