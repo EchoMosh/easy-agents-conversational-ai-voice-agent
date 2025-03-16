@@ -1,5 +1,5 @@
 
-import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors, DragStartEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
@@ -8,6 +8,7 @@ import { PipelineStage } from "./pipeline-stage";
 import { AddStageButton } from "./add-stage-button";
 import { useStageReordering } from "@/hooks/pipeline/use-stage-reordering";
 import { useStages } from "@/hooks/pipeline/use-stages";
+import { useState } from "react";
 
 interface StagesContainerProps {
   selectedPipeline: Pipeline;
@@ -44,11 +45,12 @@ export function StagesContainer({
   } = useStages(onReorderColumns);
 
   const { handleStageReorder, isReordering } = useStageReordering(onReorderColumns);
+  const [isDraggingStage, setIsDraggingStage] = useState(false);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 5, // Adjust as needed for your use case
       },
     }),
     useSensor(TouchSensor, {
@@ -59,7 +61,17 @@ export function StagesContainer({
     })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    // Check if the dragged item is a stage
+    if (selectedPipeline.columns.some(col => col.id === event.active.id)) {
+      setIsDraggingStage(true);
+    }
+  };
+
   const handleDragEndWrapper = (event: DragEndEvent) => {
+    // Reset the dragging stage state
+    setIsDraggingStage(false);
+    
     // Determine if this is a stage reordering or a lead movement
     if (selectedPipeline.columns.some(col => col.id === event.active.id)) {
       handleStageReorder(event, selectedPipeline.id, selectedPipeline.columns);
@@ -70,7 +82,8 @@ export function StagesContainer({
 
   return (
     <DndContext 
-      sensors={sensors} 
+      sensors={sensors}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEndWrapper}
     >
       <div className="flex flex-wrap gap-6">

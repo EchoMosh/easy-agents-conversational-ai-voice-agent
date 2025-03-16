@@ -16,6 +16,7 @@ export function SortableStage({ column, children, disabled = false }: SortableSt
     setNodeRef,
     transform,
     transition,
+    isDragging,
   } = useSortable({ 
     id: column.id,
     disabled
@@ -23,11 +24,22 @@ export function SortableStage({ column, children, disabled = false }: SortableSt
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: transition || "transform 200ms cubic-bezier(0.2, 0, 0, 1)",
+    // Apply a smoother transition, but only when not actively dragging
+    transition: isDragging 
+      ? undefined 
+      : transition || "transform 200ms cubic-bezier(0.2, 0, 0, 1)",
+    zIndex: isDragging ? 50 : 1, // Ensure dragged item stays on top
+    position: "relative" as const,
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      {...listeners}
+      className={`sortable-stage ${isDragging ? 'is-dragging' : ''}`}
+    >
       {children}
     </div>
   );
