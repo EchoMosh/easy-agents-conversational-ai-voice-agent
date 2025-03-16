@@ -4,7 +4,7 @@ import { Lead } from "@/pages/dashboard/leads";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme/theme-provider";
-import { Mail, Phone, MoveRight, Globe } from "lucide-react";
+import { Mail, Phone, MoveRight, Globe, User } from "lucide-react";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,7 +20,6 @@ interface LeadCardProps {
 }
 
 export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: LeadCardProps) {
-  const { theme } = useTheme();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isMoving, setIsMoving] = useState(false);
@@ -101,38 +100,46 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
           {...listeners}
           className={cn(
             "cursor-grab active:cursor-grabbing transition-all hover:shadow-md",
-            "rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800",
-            "hover:border-gray-300 dark:hover:border-gray-600",
-            isDragging && "opacity-70 shadow-lg"
+            "rounded-lg border border-gray-200 dark:border-gray-700",
+            "hover:border-blue-300 dark:hover:border-blue-500",
+            isDragging && "opacity-80 shadow-lg rotate-1"
           )}
           onClick={onClick}
         >
-          <CardContent className="p-3.5">
-            <div className="flex flex-col space-y-2.5">
-              <div className={cn(
-                "font-semibold text-base",
-                theme === "light" ? "text-gray-900" : "text-gray-100"
-              )}>
-                {lead.name}
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-full h-8 w-8 flex items-center justify-center">
+                <User size={16} className="text-blue-600 dark:text-blue-400" />
               </div>
-              
-              {lead.email && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                  <Mail className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                  <span className="truncate">{lead.email}</span>
+              <div className="flex-grow min-w-0">
+                <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+                  {lead.name}
+                </h3>
+                
+                <div className="flex items-center gap-3 mt-1">
+                  {lead.email && (
+                    <div className="flex items-center text-xs text-gray-600 dark:text-gray-400 truncate">
+                      <Mail className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <span className="truncate max-w-[100px]">{lead.email}</span>
+                    </div>
+                  )}
+                  
+                  {lead.phone && (
+                    <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                      <Phone className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <span className="truncate max-w-[60px]">{lead.phone}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              
-              {lead.phone && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                  <Phone className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                  <span className="truncate">{lead.phone}</span>
-                </div>
-              )}
-              
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300 mt-1 pt-1.5 border-t border-gray-100 dark:border-gray-700">
-                <Globe className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                <span className="truncate font-medium">{getLeadSource()}</span>
+              </div>
+            </div>
+            
+            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <div className="flex items-center text-xs font-medium">
+                <Globe className="h-3 w-3 mr-1 text-gray-500 dark:text-gray-400" />
+                <span className="text-blue-600 dark:text-blue-400 capitalize">
+                  {getLeadSource()}
+                </span>
               </div>
             </div>
           </CardContent>
