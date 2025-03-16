@@ -83,6 +83,7 @@ export function BulkActionsDialog({
       }
       
       onMoveToPipeline(selectedPipeline, firstStage);
+      // Fix: toast.success with single argument
       toast.success(`${selectedCount} lead${selectedCount !== 1 ? 's' : ''} moved successfully`);
       onOpenChange(false);
     } else {
@@ -153,6 +154,7 @@ export function BulkActionsDialog({
                   type="button"
                   onClick={() => {
                     onAddVariables();
+                    // Fix: toast.success with single argument
                     toast.success(`Adding variables to ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
                     onOpenChange(false);
                   }}
