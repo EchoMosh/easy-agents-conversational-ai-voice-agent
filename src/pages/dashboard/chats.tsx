@@ -41,6 +41,29 @@ export default function ChatsPage() {
     }
   });
 
+  // Fetch pipeline information if we have a selected lead
+  const { data: pipeline } = useQuery({
+    queryKey: ['pipeline', selectedLeadId],
+    queryFn: async () => {
+      const selectedLead = leads?.find(lead => lead.id === selectedLeadId);
+      if (!selectedLead || !selectedLead.pipeline_id) return null;
+      
+      const { data, error } = await supabase
+        .from('pipelines')
+        .select('*')
+        .eq('id', selectedLead.pipeline_id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching pipeline:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!selectedLeadId && !!leads?.find(lead => lead.id === selectedLeadId)?.pipeline_id
+  });
+
   const selectedLead = leads?.find(lead => lead.id === selectedLeadId);
 
   const handleTabChange = (value: string) => {
@@ -91,8 +114,8 @@ export default function ChatsPage() {
               <TimelineTab leadId={selectedLead.id} />
             </TabsContent>
 
-            <TabsContent value="details" className="m-0 p-4 overflow-auto">
-              <InfoTab lead={selectedLead} />
+            <TabsContent value="details" className="m-0 overflow-auto">
+              <InfoTab lead={selectedLead} pipeline={pipeline} />
             </TabsContent>
 
             <TabsContent value="files" className="m-0 p-4 overflow-auto">
