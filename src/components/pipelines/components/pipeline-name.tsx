@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2 } from "lucide-react";
+import { Trash, Edit2, Check } from "lucide-react";
 
 interface PipelineNameProps {
   name: string;
@@ -11,59 +11,60 @@ interface PipelineNameProps {
 }
 
 export function PipelineName({ name, onEditPipelineName, onDeletePipeline }: PipelineNameProps) {
-  const [editingPipelineName, setEditingPipelineName] = useState(false);
-  const [pipelineName, setPipelineName] = useState(name);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState(name);
 
-  const handleSavePipelineName = () => {
-    if (pipelineName.trim()) {
-      onEditPipelineName(pipelineName);
-      setEditingPipelineName(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSavePipelineName();
-    } else if (e.key === 'Escape') {
-      setEditingPipelineName(false);
-      setPipelineName(name);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editedName.trim()) {
+      onEditPipelineName(editedName);
+      setIsEditing(false);
     }
   };
 
   return (
-    <div className="flex justify-between items-center mb-6">
-      <div className="flex items-center gap-4">
-        {editingPipelineName ? (
-          <div className="flex items-center gap-2">
-            <Input
-              value={pipelineName}
-              onChange={(e) => setPipelineName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="text-2xl font-semibold h-10"
-              autoFocus
-            />
-            <Button onClick={handleSavePipelineName}>Save</Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => {
-                setEditingPipelineName(false);
-                setPipelineName(name);
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <h2 
-            className="text-2xl font-semibold cursor-pointer hover:text-muted-foreground transition-colors"
-            onClick={() => setEditingPipelineName(true)}
+    <div className="flex items-center justify-between py-4 mb-6 border-b">
+      {isEditing ? (
+        <form onSubmit={handleSubmit} className="flex items-center gap-2 flex-1">
+          <Input
+            value={editedName}
+            onChange={(e) => setEditedName(e.target.value)}
+            className="text-xl font-semibold max-w-md"
+            autoFocus
+          />
+          <Button 
+            type="submit" 
+            size="sm"
+            variant="success"
+            className="h-8 w-8 p-0"
           >
-            {name}
-          </h2>
-        )}
-      </div>
-      <Button variant="destructive" onClick={onDeletePipeline}>
-        <Trash2 className="w-4 h-4 mr-2" />
+            <Check className="h-4 w-4" />
+          </Button>
+        </form>
+      ) : (
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-semibold">{name}</h2>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => {
+              setEditedName(name);
+              setIsEditing(true);
+            }}
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      <Button
+        variant="danger"
+        onClick={onDeletePipeline}
+        size="sm"
+        className="h-9 shadow-sm"
+      >
+        <Trash className="w-4 h-4 mr-2" />
         Delete Pipeline
       </Button>
     </div>

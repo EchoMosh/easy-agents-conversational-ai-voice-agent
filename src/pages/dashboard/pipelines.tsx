@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDroppable } from "@dnd-kit/core";
@@ -118,10 +119,7 @@ export default function PipelinesPage() {
 
   return (
     <div className="relative">
-      <div className="p-8 min-h-screen bg-gradient-to-b from-background to-muted/50">
-        <div className="mb-6">
-        </div>
-        
+      <div className="px-8 py-6 min-h-screen bg-gradient-to-b from-background to-muted/20">
         <PipelineHeader 
           pipelines={pipelines || []}
           selectedPipeline={selectedPipeline}
@@ -130,17 +128,19 @@ export default function PipelinesPage() {
         />
 
         {selectedPipeline && (
-          <PipelineStages
-            selectedPipeline={selectedPipeline}
-            leads={leads || []}
-            onDragEnd={handleDragEnd}
-            onEditColumnTitle={handleEditColumnTitle}
-            onLeadClick={setSelectedLead}
-            onAddStage={handleAddStage}
-            onDeletePipeline={() => setShowDeleteDialog(true)}
-            onEditPipelineName={handleEditPipelineName}
-            onReorderColumns={handleReorderColumns}
-          />
+          <div className="mt-6">
+            <PipelineStages
+              selectedPipeline={selectedPipeline}
+              leads={leads || []}
+              onDragEnd={handleDragEnd}
+              onEditColumnTitle={handleEditColumnTitle}
+              onLeadClick={setSelectedLead}
+              onAddStage={handleAddStage}
+              onDeletePipeline={() => setShowDeleteDialog(true)}
+              onEditPipelineName={handleEditPipelineName}
+              onReorderColumns={handleReorderColumns}
+            />
+          </div>
         )}
 
         <NewPipelineDialog
