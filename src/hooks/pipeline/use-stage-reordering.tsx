@@ -3,11 +3,13 @@ import { DragEndEvent } from "@dnd-kit/core";
 import { PipelineColumn } from "@/types/pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export function useStageReordering(
   onReorderColumns: (newOrder: PipelineColumn[]) => void
 ) {
   const { toast } = useToast();
+  const [isReordering, setIsReordering] = useState(false);
 
   const handleStageReorder = async (
     event: DragEndEvent,
@@ -29,6 +31,12 @@ export function useStageReordering(
     const [movedColumn] = newColumns.splice(oldIndex, 1);
     newColumns.splice(newIndex, 0, movedColumn);
     
+    // Important: Update the UI first to prevent the jumping
+    onReorderColumns(newColumns);
+    
+    // Set reordering state to prevent multiple concurrent reorderings
+    setIsReordering(true);
+    
     // Update the pipeline with the new column order
     const columnsForDb = newColumns.map(col => ({
       id: col.id,
@@ -46,22 +54,25 @@ export function useStageReordering(
         
       if (error) throw error;
       
-      // Update the UI
-      onReorderColumns(newColumns);
-      
       toast({
         title: "Stages reordered",
         description: "Pipeline stages have been reordered successfully"
       });
     } catch (error) {
       console.error("Error reordering stages:", error);
+      
+      // In case of error, revert back to original order
+      onReorderColumns(columns);
+      
       toast({
         title: "Error",
         description: "Failed to reorder stages",
         variant: "destructive"
       });
+    } finally {
+      setIsReordering(false);
     }
   };
 
-  return { handleStageReorder };
+  return { handleStageReorder, isReordering };
 }

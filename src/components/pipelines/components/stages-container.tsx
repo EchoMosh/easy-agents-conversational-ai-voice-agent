@@ -43,7 +43,7 @@ export function StagesContainer({
     handleAddNewStage
   } = useStages(onReorderColumns);
 
-  const { handleStageReorder } = useStageReordering(onReorderColumns);
+  const { handleStageReorder, isReordering } = useStageReordering(onReorderColumns);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -81,7 +81,11 @@ export function StagesContainer({
             );
             
             return (
-              <SortableStage key={column.id} column={column}>
+              <SortableStage 
+                key={column.id} 
+                column={column}
+                disabled={isReordering}
+              >
                 <PipelineStage
                   column={column}
                   columnLeads={columnLeads}
