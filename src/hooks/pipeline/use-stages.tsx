@@ -106,24 +106,29 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         color: col.color
       }));
       
-      // Update the database (don't await here as we've already updated UI)
-      supabase
-        .from("pipelines")
-        .update({
-          columns: columnsForDb
-        })
-        .eq("id", pipelineId)
-        .then(({ error }) => {
+      // Update the database using async/await pattern instead of Promise chain
+      const updateDatabase = async () => {
+        try {
+          const { error } = await supabase
+            .from("pipelines")
+            .update({
+              columns: columnsForDb
+            })
+            .eq("id", pipelineId);
+            
           if (error) throw error;
-        })
-        .catch(error => {
+        } catch (error) {
           console.error("Error saving new stage:", error);
           toast({
             title: "Error",
             description: "Failed to save new stage. Please refresh and try again.",
             variant: "destructive"
           });
-        });
+        }
+      };
+      
+      // Execute the async function
+      updateDatabase();
       
       // Set the new stage for editing
       setEditingColumnId(newId);
