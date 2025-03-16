@@ -82,8 +82,13 @@ export function StagesContainer({
     }
   };
 
+  // Deduplicate columns by ID to ensure we don't render duplicate columns
+  const uniqueColumns = Array.from(
+    new Map(selectedPipeline.columns.map(col => [col.id, col])).values()
+  );
+  
   // Log the columns and leads for debugging
-  console.log(`Pipeline ${selectedPipeline.name} has ${selectedPipeline.columns.length} columns`);
+  console.log(`Pipeline ${selectedPipeline.name} has ${uniqueColumns.length} columns (from ${selectedPipeline.columns.length} total columns)`);
   console.log(`Total leads for pipeline: ${leads.length}`);
   
   return (
@@ -93,8 +98,8 @@ export function StagesContainer({
       onDragEnd={handleDragEndWrapper}
     >
       <div className="flex flex-wrap gap-6">
-        <SortableContext items={selectedPipeline.columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
-          {selectedPipeline.columns.map((column) => {
+        <SortableContext items={uniqueColumns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
+          {uniqueColumns.map((column) => {
             // Improved filtering logic to better handle case-insensitive comparisons and null values
             const columnLeads = leads.filter((lead) => {
               // If lead has no status, don't include it anywhere

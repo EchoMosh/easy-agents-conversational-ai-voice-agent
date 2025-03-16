@@ -8,11 +8,12 @@ import { Lead } from "@/pages/dashboard/leads";
 
 export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[], refetchLeads: () => void) {
   const { toast } = useToast();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over || !selectedPipeline) return;
+    if (!over || !selectedPipeline || isUpdating) return;
 
     const leadId = String(active.id);
     const newColumnId = String(over.id);
@@ -25,10 +26,13 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     
     if (lead?.status === newStatus) return;
 
-    // Optimistically update UI without waiting for the server response
-    // This will be handled by the query client below
+    // Set updating state to prevent multiple simultaneous updates
+    setIsUpdating(true);
 
     try {
+      console.log(`Moving lead ${leadId} to status ${newStatus}`);
+      
+      // Update the database
       const { error } = await supabase
         .from("leads")
         .update({ 
@@ -56,8 +60,10 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       });
       // Force refetch to revert to correct state in case of error
       refetchLeads();
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  return { handleDragEnd };
+  return { handleDragEnd, isUpdating };
 }

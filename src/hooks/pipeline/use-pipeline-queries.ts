@@ -23,8 +23,23 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      console.log("Pipelines fetched:", data?.length);
-      return (data || []).map(convertJsonToPipeline);
+      
+      const rawPipelines = data || [];
+      console.log("Pipelines fetched:", rawPipelines.length);
+      
+      // Process pipelines and ensure each column is unique by ID
+      const processedPipelines = rawPipelines.map(pipeline => {
+        const convertedPipeline = convertJsonToPipeline(pipeline);
+        
+        // Deduplicate columns by ID
+        const uniqueColumnsMap = new Map();
+        convertedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
+        convertedPipeline.columns = Array.from(uniqueColumnsMap.values());
+        
+        return convertedPipeline;
+      });
+      
+      return processedPipelines;
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,

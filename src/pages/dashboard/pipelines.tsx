@@ -75,45 +75,7 @@ export default function PipelinesPage() {
     onDelete,
   } = useDeletePipeline(handleDeletePipeline, selectedPipeline?.id);
 
-  const { handleDragEnd: baseHandleDragEnd } = usePipelineDrag(selectedPipeline, leads, refetchLeads);
-  
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    
-    if (!over || !selectedPipeline) return;
-    
-    const leadId = String(active.id);
-    const newColumnId = String(over.id);
-    
-    // Avoid handling stage reordering here
-    if (selectedPipeline.columns.some(col => col.id === active.id)) {
-      return;
-    }
-    
-    if (leadId && newColumnId) {
-      // Make sure we're working with a proper column (not another lead)
-      const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
-      if (!targetColumn) return;
-      
-      // Optimistically update the UI
-      queryClient.setQueryData(["leads", selectedPipeline.id], (oldData: any) => {
-        if (!oldData) return oldData;
-        
-        return oldData.map((lead: Lead) => {
-          if (lead.id === leadId) {
-            return {
-              ...lead,
-              status: targetColumn.title
-            };
-          }
-          return lead;
-        });
-      });
-    }
-    
-    // Let the base handler take care of the actual API call
-    baseHandleDragEnd(event);
-  };
+  const { handleDragEnd, isUpdating } = usePipelineDrag(selectedPipeline, leads, refetchLeads);
   
   const {
     editedColumns,
