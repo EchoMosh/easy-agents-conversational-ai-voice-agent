@@ -80,6 +80,7 @@ export function BulkActionsDialog({
       }
       
       onMoveToPipeline(selectedPipeline, firstStage);
+      // Fix: toast.success with only one argument here as well
       toast.success(`${selectedCount} lead${selectedCount !== 1 ? 's' : ''} moved successfully`);
       onOpenChange(false);
     } else {
