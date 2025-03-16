@@ -4,7 +4,7 @@ import { CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, MoreVertical, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreVertical, Trash2, Pencil } from "lucide-react";
 import { colorOptions } from "../constants/color-options";
 import { PipelineColumn } from "@/types/pipeline";
 
@@ -69,17 +69,22 @@ export function StageHeader({
                 </div>
               </PopoverContent>
             </Popover>
-            <CardTitle 
-              className={`text-xl font-medium cursor-pointer transition-all ${
-                isCollapsed ? "transform writing-mode-vertical-lr mt-2 whitespace-nowrap" : ""
-              }`}
+            <div 
+              className="group flex items-center gap-1 cursor-pointer"
               onClick={() => {
                 setEditingColumnId(column.id);
                 setEditingColumnTitle(column.title);
               }}
             >
-              {column.title}
-            </CardTitle>
+              <CardTitle 
+                className={`text-xl font-medium transition-all ${
+                  isCollapsed ? "transform writing-mode-vertical-lr mt-2 whitespace-nowrap" : ""
+                }`}
+              >
+                {column.title}
+              </CardTitle>
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
           </>
         )}
       </div>
