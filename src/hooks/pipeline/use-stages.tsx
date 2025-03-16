@@ -155,6 +155,17 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
       throw new Error("Cannot delete: invalid stage or pipeline");
     }
     
+    // Check if this is the last stage in the pipeline
+    if (columns.length <= 1) {
+      toast({
+        title: "Cannot delete stage",
+        description: "A pipeline must have at least one stage. Create a new stage before deleting this one.",
+        variant: "destructive"
+      });
+      
+      throw new Error("Cannot delete the last stage in a pipeline");
+    }
+    
     // Check if any leads are in this stage
     const leadsInStage = leads.filter(lead => 
       lead.status.toLowerCase() === column.title.toLowerCase()
@@ -213,8 +224,9 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         throw error;
       }
     } catch (error) {
-      if ((error as Error).message === "Cannot delete stage with leads") {
-        // This error was already handled with a toast, no need to invalidate
+      if ((error as Error).message === "Cannot delete stage with leads" || 
+          (error as Error).message === "Cannot delete the last stage in a pipeline") {
+        // These errors were already handled with a toast, no need to invalidate
         return;
       }
       
