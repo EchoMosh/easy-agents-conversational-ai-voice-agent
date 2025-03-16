@@ -10,7 +10,6 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnTitle, setEditingColumnTitle] = useState("");
   const [collapsedColumns, setCollapsedColumns] = useState<Map<string, Set<string>>>(new Map());
-  const [stageToDelete, setStageToDelete] = useState<PipelineColumn | null>(null);
 
   const isColumnCollapsed = (pipelineId: string, columnId: string) => {
     const pipelineCollapsed = collapsedColumns.get(pipelineId);
@@ -106,7 +105,6 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
   ) => {
     if (!column || !pipelineId) {
       console.error("Invalid stage deletion attempt:", { column, pipelineId });
-      setStageToDelete(null);
       throw new Error("Cannot delete: invalid stage or pipeline");
     }
     
@@ -152,22 +150,11 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         console.error("Database error when deleting stage:", error);
         throw error;
       }
-
-      toast({
-        title: "Stage deleted",
-        description: `${column.title} stage has been deleted successfully`
-      });
     } catch (error) {
       console.error("Error deleting stage:", error);
       
       // Revert changes in case of error
       queryClient.invalidateQueries({ queryKey: ["pipelines"] });
-      
-      toast({
-        title: "Error",
-        description: "Failed to delete stage",
-        variant: "destructive"
-      });
       
       // Re-throw the error so the component can handle it
       throw error;
@@ -179,8 +166,6 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     setEditingColumnId,
     editingColumnTitle,
     setEditingColumnTitle,
-    stageToDelete,
-    setStageToDelete,
     isColumnCollapsed,
     toggleColumnCollapse,
     handleKeyDown,

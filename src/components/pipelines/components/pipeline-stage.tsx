@@ -17,7 +17,7 @@ interface PipelineStageProps {
   onEditColumnTitle: (e: React.KeyboardEvent) => void;
   setEditingColumnTitle: (title: string) => void;
   handleColorChange: (columnId: string, color: string) => void;
-  setStageToDelete: (column: PipelineColumn) => void;
+  onDeleteStage: (column: PipelineColumn) => void;
   toggleColumnCollapse: (columnId: string) => void;
   setEditingColumnId: (id: string) => void;
   onLeadClick: (lead: Lead) => void;
@@ -34,7 +34,7 @@ export function PipelineStage({
   onEditColumnTitle,
   setEditingColumnTitle,
   handleColorChange,
-  setStageToDelete,
+  onDeleteStage,
   toggleColumnCollapse,
   setEditingColumnId,
   onLeadClick,
@@ -46,7 +46,7 @@ export function PipelineStage({
   // Handler for the delete context menu option
   const handleDeleteClick = () => {
     console.log("Delete stage clicked:", column.title);
-    setStageToDelete(column);
+    onDeleteStage(column);
   };
 
   return (
@@ -65,7 +65,7 @@ export function PipelineStage({
                 onEditColumnTitle={onEditColumnTitle}
                 setEditingColumnTitle={setEditingColumnTitle}
                 handleColorChange={handleColorChange}
-                setStageToDelete={setStageToDelete}
+                onDeleteStage={onDeleteStage}
                 toggleColumnCollapse={toggleColumnCollapse}
                 setEditingColumnId={setEditingColumnId}
               />

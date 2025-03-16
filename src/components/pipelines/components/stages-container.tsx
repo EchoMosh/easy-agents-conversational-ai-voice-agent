@@ -1,4 +1,3 @@
-
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors, DragStartEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
@@ -19,8 +18,7 @@ interface StagesContainerProps {
   onAddStage: (stage: PipelineColumn) => void;
   onReorderColumns: (newOrder: PipelineColumn[]) => void;
   allPipelines?: Pipeline[];
-  onDeleteStage?: (column: PipelineColumn) => void;
-  setStageToDelete: (column: PipelineColumn | null) => void;
+  onDeleteStage: (column: PipelineColumn) => void;
 }
 
 export function StagesContainer({
@@ -33,7 +31,6 @@ export function StagesContainer({
   onReorderColumns,
   allPipelines = [],
   onDeleteStage,
-  setStageToDelete,
 }: StagesContainerProps) {
   const {
     editingColumnId,
@@ -83,11 +80,6 @@ export function StagesContainer({
     }
   };
 
-  const handleStageDeleteClick = (column: PipelineColumn) => {
-    console.log("Setting stage to delete:", column.title);
-    setStageToDelete(column);
-  };
-
   return (
     <DndContext 
       sensors={sensors}
@@ -118,7 +110,7 @@ export function StagesContainer({
                   handleColorChange={(columnId, color) => 
                     handleColorChange(selectedPipeline.id, columnId, color, selectedPipeline.columns)
                   }
-                  setStageToDelete={handleStageDeleteClick}
+                  onDeleteStage={onDeleteStage}
                   toggleColumnCollapse={(columnId) => toggleColumnCollapse(selectedPipeline.id, columnId)}
                   setEditingColumnId={setEditingColumnId}
                   onLeadClick={onLeadClick}

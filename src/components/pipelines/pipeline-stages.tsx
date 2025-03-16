@@ -2,10 +2,10 @@
 import { DragEndEvent } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
-import { DeleteStageDialog } from "./components/delete-stage-dialog";
 import { PipelineName } from "./components/pipeline-name";
 import { StagesContainer } from "./components/stages-container";
 import { useStages } from "@/hooks/pipeline/use-stages";
+import { useToast } from "@/hooks/use-toast";
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
@@ -32,19 +32,26 @@ export function PipelineStages({
   onReorderColumns,
   allPipelines = [],
 }: PipelineStagesProps) {
+  const { toast } = useToast();
   const {
-    stageToDelete,
-    setStageToDelete,
     handleDeleteStage
   } = useStages(onReorderColumns);
 
-  const onConfirmDelete = async (column: PipelineColumn) => {
+  const handleDeleteStageClick = async (column: PipelineColumn) => {
     if (column && selectedPipeline) {
       try {
         await handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns);
+        toast({
+          title: "Stage deleted",
+          description: `${column.title} stage has been deleted successfully`
+        });
       } catch (error) {
         console.error("Error deleting stage:", error);
-        // Let the DeleteStageDialog component handle the error
+        toast({
+          title: "Error",
+          description: "Failed to delete stage",
+          variant: "destructive"
+        });
       }
     }
   };
@@ -66,13 +73,7 @@ export function PipelineStages({
         onAddStage={onAddStage}
         onReorderColumns={onReorderColumns}
         allPipelines={allPipelines}
-        setStageToDelete={setStageToDelete}
-      />
-
-      <DeleteStageDialog
-        stageToDelete={stageToDelete}
-        onClose={() => setStageToDelete(null)} // Simplified callback
-        onConfirm={onConfirmDelete}
+        onDeleteStage={handleDeleteStageClick}
       />
     </>
   );

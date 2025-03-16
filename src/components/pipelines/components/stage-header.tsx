@@ -16,7 +16,7 @@ interface StageHeaderProps {
   onEditColumnTitle: (e: React.KeyboardEvent) => void;
   setEditingColumnTitle: (title: string) => void;
   handleColorChange: (columnId: string, color: string) => void;
-  setStageToDelete: (column: PipelineColumn) => void;
+  onDeleteStage: (column: PipelineColumn) => void;
   toggleColumnCollapse: (columnId: string) => void;
   setEditingColumnId: (id: string) => void;
 }
@@ -29,7 +29,7 @@ export function StageHeader({
   onEditColumnTitle,
   setEditingColumnTitle,
   handleColorChange,
-  setStageToDelete,
+  onDeleteStage,
   toggleColumnCollapse,
   setEditingColumnId,
 }: StageHeaderProps) {
@@ -94,7 +94,7 @@ export function StageHeader({
             <DropdownMenuContent align="end">
               <DropdownMenuItem 
                 className="text-destructive"
-                onClick={() => setStageToDelete(column)}
+                onClick={() => onDeleteStage(column)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Stage
