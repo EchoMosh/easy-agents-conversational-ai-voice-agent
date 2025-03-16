@@ -55,11 +55,14 @@ export function BulkActionsDialog({
           <TabsContent value="move" className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="movePipeline">Move to Pipeline</Label>
-              <Select onValueChange={onMoveToPipeline}>
+              <Select onValueChange={(value) => {
+                onMoveToPipeline(value);
+                toast.success(`Moving ${selectedCount} lead${selectedCount !== 1 ? 's' : ''} to selected pipeline`);
+              }}>
                 <SelectTrigger id="movePipeline" className="w-full">
                   <SelectValue placeholder="Select a pipeline" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="bg-background z-50">
                   <SelectGroup>
                     <SelectItem value="none">No Pipeline</SelectItem>
                     {pipelines.map((pipeline) => (
@@ -73,7 +76,9 @@ export function BulkActionsDialog({
               <div className="pt-2">
                 <Button 
                   className="w-full" 
+                  type="button"
                   onClick={() => {
+                    toast.success(`${selectedCount} lead${selectedCount !== 1 ? 's' : ''} moved successfully`);
                     onOpenChange(false);
                   }}
                 >
@@ -87,11 +92,14 @@ export function BulkActionsDialog({
           <TabsContent value="status" className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="changeStatus">Change Status</Label>
-              <Select onValueChange={onChangeStatus}>
+              <Select onValueChange={(value) => {
+                onChangeStatus(value);
+                toast.success(`Updating status for ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
+              }}>
                 <SelectTrigger id="changeStatus" className="w-full">
                   <SelectValue placeholder="Select a status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="bg-background z-50">
                   <SelectGroup>
                     <SelectItem value="New">New</SelectItem>
                     <SelectItem value="Contacted">Contacted</SelectItem>
@@ -106,7 +114,9 @@ export function BulkActionsDialog({
               <div className="pt-2">
                 <Button 
                   className="w-full" 
+                  type="button"
                   onClick={() => {
+                    toast.success(`Status updated for ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
                     onOpenChange(false);
                   }}
                 >
@@ -125,8 +135,10 @@ export function BulkActionsDialog({
               <div className="pt-2">
                 <Button 
                   className="w-full" 
+                  type="button"
                   onClick={() => {
                     onAddVariables();
+                    toast.success(`Adding variables to ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
                     onOpenChange(false);
                   }}
                 >
