@@ -11,6 +11,7 @@ import { ChatArea } from "@/components/chat/chat-area";
 import { TimelineTab } from "@/components/chat/tabs/timeline-tab";
 import { InfoTab } from "@/components/chat/tabs/info-tab";
 import { History, UserCircle2, Files, PlusCircle } from "lucide-react";
+import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 
 type TabType = "timeline" | "details" | "files";
 
@@ -59,7 +60,8 @@ export default function ChatsPage() {
         return null;
       }
       
-      return data;
+      // Convert the raw pipeline data to our expected Pipeline type
+      return convertJsonToPipeline(data);
     },
     enabled: !!selectedLeadId && !!leads?.find(lead => lead.id === selectedLeadId)?.pipeline_id
   });
