@@ -1,10 +1,66 @@
-
 import { useState } from "react";
 import { PipelineColumn } from "@/types/pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Lead } from "@/pages/dashboard/leads";
+
+// Helper functions for stage validation
+const validateStageForDeletion = (
+  column: PipelineColumn | null, 
+  pipelineId: string | null, 
+  columns: PipelineColumn[]
+): { isValid: boolean; error?: string } => {
+  // Check if we have valid column and pipeline
+  if (!column || !pipelineId) {
+    console.error("Invalid stage deletion attempt:", { column, pipelineId });
+    return {
+      isValid: false,
+      error: "Cannot delete: invalid stage or pipeline"
+    };
+  }
+  
+  // Check if this is the last stage in the pipeline
+  if (columns.length <= 1) {
+    return {
+      isValid: false,
+      error: "Cannot delete the last stage in a pipeline"
+    };
+  }
+  
+  return { isValid: true };
+};
+
+const checkForLeadsInStage = (
+  column: PipelineColumn,
+  pipelineId: string,
+  leads: Lead[]
+): { hasLeads: boolean; leadsCount: number } => {
+  console.log(`Checking for leads in stage "${column.title}" (pipeline ${pipelineId})`);
+  console.log(`Total leads count: ${leads.length}`);
+  
+  // Log each lead's status to help debug
+  leads.forEach(lead => {
+    if (lead.pipeline_id === pipelineId) {
+      console.log(`Lead ${lead.id}: pipeline=${lead.pipeline_id}, status="${lead.status}"`);
+    }
+  });
+  
+  // Filter leads to only include those in this pipeline and stage (case-insensitive)
+  const leadsInStage = leads.filter(lead => 
+    lead.pipeline_id === pipelineId && 
+    lead.status && 
+    column.title && 
+    lead.status.toLowerCase() === column.title.toLowerCase()
+  );
+  
+  console.log(`Found ${leadsInStage.length} leads in stage "${column.title}"`);
+  
+  return {
+    hasLeads: leadsInStage.length > 0,
+    leadsCount: leadsInStage.length
+  };
+};
 
 export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void) {
   const { toast } = useToast();
@@ -87,7 +143,6 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
   };
 
   const handleAddNewStage = async (pipelineId: string, columns: PipelineColumn[], onAddStage: (stage: PipelineColumn) => void) => {
-    // Prevent multiple clicks
     if (isAddingStage) {
       console.log("Already adding a stage, please wait...");
       return;
@@ -96,20 +151,16 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     try {
       setIsAddingStage(true);
       
-      // Default new stage name
       const defaultStageName = "New Stage";
       
-      // Check if there's already a stage with the default name
       let newStageName = defaultStageName;
       let counter = 1;
       
-      // Check for duplicates and generate a unique name
       while (columns.some(col => col.title.toLowerCase() === newStageName.toLowerCase())) {
         newStageName = `${defaultStageName} ${counter}`;
         counter++;
       }
       
-      // Generate a truly unique ID
       const newId = crypto.randomUUID();
       
       const newStage: PipelineColumn = {
@@ -118,17 +169,14 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         color: "bg-gray-500",
       };
       
-      // Add the new stage to the local state immediately
       onAddStage(newStage);
       
-      // Also update the columns in the database
       const columnsForDb = [...columns, newStage].map(col => ({
         id: col.id,
         title: col.title,
         color: col.color
       }));
       
-      // Update the database
       const { error } = await supabase
         .from("pipelines")
         .update({
@@ -141,7 +189,6 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         throw error;
       }
       
-      // Set the new stage for editing
       setEditingColumnId(newId);
       setEditingColumnTitle(newStageName);
       
@@ -150,7 +197,6 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         description: "New pipeline stage has been added successfully"
       });
       
-      // Update React Query cache
       queryClient.invalidateQueries({ queryKey: ["pipelines"] });
       
     } catch (error) {
@@ -171,48 +217,24 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     columns: PipelineColumn[],
     leads: Lead[]
   ) => {
-    if (!column || !pipelineId) {
-      console.error("Invalid stage deletion attempt:", { column, pipelineId });
-      throw new Error("Cannot delete: invalid stage or pipeline");
-    }
-    
-    // Check if this is the last stage in the pipeline
-    if (columns.length <= 1) {
+    const validation = validateStageForDeletion(column, pipelineId, columns);
+    if (!validation.isValid) {
       toast({
         title: "Cannot delete stage",
-        description: "A pipeline must have at least one stage. Create a new stage before deleting this one.",
+        description: validation.error,
         variant: "destructive"
       });
       
-      throw new Error("Cannot delete the last stage in a pipeline");
+      throw new Error(validation.error);
     }
     
-    // Improved check: Perform case-insensitive comparison of lead status to column title
-    // Also add additional logging to help debug issues
-    console.log(`Checking for leads in stage "${column.title}" (pipeline ${pipelineId})`);
-    console.log(`Total leads count: ${leads.length}`);
+    const { hasLeads, leadsCount } = checkForLeadsInStage(column, pipelineId, leads);
     
-    // Log each lead's status to help debug
-    leads.forEach(lead => {
-      if (lead.pipeline_id === pipelineId) {
-        console.log(`Lead ${lead.id}: pipeline=${lead.pipeline_id}, status="${lead.status}"`);
-      }
-    });
-    
-    // Filter leads to only include those in this pipeline and stage (case-insensitive)
-    const leadsInStage = leads.filter(lead => 
-      lead.pipeline_id === pipelineId && 
-      lead.status && 
-      column.title && 
-      lead.status.toLowerCase() === column.title.toLowerCase()
-    );
-    
-    console.log(`Found ${leadsInStage.length} leads in stage "${column.title}"`);
-    
-    if (leadsInStage.length > 0) {
+    if (hasLeads) {
+      const errorMessage = `This stage contains ${leadsCount} lead${leadsCount > 1 ? 's' : ''}. Please move or delete them first.`;
       toast({
         title: "Cannot delete stage",
-        description: `This stage contains ${leadsInStage.length} lead${leadsInStage.length > 1 ? 's' : ''}. Please move or delete them first.`,
+        description: errorMessage,
         variant: "destructive"
       });
       
@@ -221,13 +243,10 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     
     try {
       console.log("Deleting stage:", column.title, "from pipeline:", pipelineId);
-      // Optimistically update the UI
       const newColumns = columns.filter(col => col.id !== column.id);
       
-      // Immediately update application state
       onReorderColumns(newColumns);
       
-      // Update the React Query cache
       queryClient.setQueryData(["pipelines"], (oldData: any) => {
         if (!oldData) return oldData;
         
@@ -242,14 +261,12 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         });
       });
       
-      // Format columns for database update
       const columnsForDb = newColumns.map(col => ({
         id: col.id,
         title: col.title,
         color: col.color
       }));
       
-      // Update the database
       const { error } = await supabase
         .from("pipelines")
         .update({
@@ -264,16 +281,13 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     } catch (error) {
       if ((error as Error).message === "Cannot delete stage with leads" || 
           (error as Error).message === "Cannot delete the last stage in a pipeline") {
-        // These errors were already handled with a toast, no need to invalidate
         return;
       }
       
       console.error("Error deleting stage:", error);
       
-      // Revert changes in case of error
       queryClient.invalidateQueries({ queryKey: ["pipelines"] });
       
-      // Re-throw the error so the component can handle it
       throw error;
     }
   };
