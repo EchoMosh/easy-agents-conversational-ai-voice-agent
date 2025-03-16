@@ -2,7 +2,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BulkActionsDialog } from "@/components/leads/components/bulk-actions-dialog";
-import { CircleX, ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, Trash2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SelectionHeaderProps {
   selectedCount: number;
@@ -43,15 +49,24 @@ export function SelectionHeader({
             Bulk Actions
           </Button>
           
-          <Button
-            variant="subtleDanger"
-            size="sm"
-            onClick={onDelete}
-            disabled={isDeleting}
-          >
-            <CircleX className="h-4 w-4 mr-2" />
-            Delete Leads
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="subtleDanger"
+                  size="sm"
+                  onClick={onDelete}
+                  disabled={isDeleting}
+                  className="w-9 px-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Delete selected leads</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
