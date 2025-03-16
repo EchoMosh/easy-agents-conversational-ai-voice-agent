@@ -47,10 +47,14 @@ export function PipelineStage({
   console.log(`Column "${column.title}" has ${columnLeads.length} leads in pipeline ${currentPipelineId}`);
 
   // Handler for the delete context menu option
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    // Stop event propagation to prevent triggering drag handlers
-    e.stopPropagation();
-    e.preventDefault();
+  const handleDeleteClick = (e?: React.MouseEvent | Event) => {
+    // If we have an event, stop propagation to prevent triggering drag handlers
+    if (e) {
+      e.stopPropagation();
+      if ('preventDefault' in e) {
+        e.preventDefault();
+      }
+    }
     
     console.log("Delete stage clicked:", column.title, column.id);
     onDeleteStage(column);
@@ -107,10 +111,7 @@ export function PipelineStage({
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem 
-          onSelect={(e) => {
-            // Call handleDeleteClick with the event
-            handleDeleteClick(e);
-          }}
+          onSelect={() => handleDeleteClick()}
           className="text-destructive flex items-center"
         >
           <Trash2 className="mr-2 h-4 w-4" />
