@@ -171,9 +171,11 @@ export function InfoTab({ pipeline, lead }: InfoTabProps) {
               </div>
               <div>
                 <p className="font-medium">{lead.name}</p>
-                <Badge className={cn("mt-1 text-xs font-normal px-2 py-0.5 border", getStatusColor(lead.status))}>
-                  {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
-                </Badge>
+                {lead.status && (
+                  <Badge className={cn("mt-1 text-xs font-normal px-2 py-0.5 border", getStatusColor(lead.status))}>
+                    {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
+                  </Badge>
+                )}
               </div>
             </div>
 
