@@ -15,7 +15,6 @@ interface SelectionHeaderProps {
   onDelete: () => void;
   isDeleting: boolean;
   onMoveToPipeline: (pipelineId: string) => void;
-  onChangeStatus: (status: string) => void;
   onAddVariables: () => void;
   pipelines: Array<{ id: string; name: string }>;
 }
@@ -25,7 +24,6 @@ export function SelectionHeader({
   onDelete,
   isDeleting,
   onMoveToPipeline,
-  onChangeStatus,
   onAddVariables,
   pipelines,
 }: SelectionHeaderProps) {
@@ -77,7 +75,6 @@ export function SelectionHeader({
         onDelete={onDelete}
         isDeleting={isDeleting}
         onMoveToPipeline={onMoveToPipeline}
-        onChangeStatus={onChangeStatus}
         onAddVariables={onAddVariables}
         pipelines={pipelines}
       />

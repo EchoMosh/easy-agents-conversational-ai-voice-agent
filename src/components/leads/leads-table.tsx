@@ -96,26 +96,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
     }
   };
 
-  const handleChangeStatus = async (status: string) => {
-    try {
-      const { error } = await supabase
-        .from('leads')
-        .update({ 
-          status,
-          updated_at: new Date().toISOString()
-        })
-        .in('id', selectedLeads);
-
-      if (error) throw error;
-
-      toast.success(`Updated status for ${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''}`);
-      onLeadUpdated();
-    } catch (error) {
-      console.error('Error updating lead status:', error);
-      toast.error('Failed to update lead status');
-    }
-  };
-
   const handleAddVariable = () => {
     setNewVariables([...newVariables, { name: '', value: '' }]);
   };
@@ -187,7 +167,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
         onDelete={() => setIsDeleteDialogOpen(true)}
         isDeleting={isDeleting}
         onMoveToPipeline={handleMoveToPipeline}
-        onChangeStatus={handleChangeStatus}
         onAddVariables={() => setIsBulkVariablesOpen(true)}
         pipelines={pipelines}
       />

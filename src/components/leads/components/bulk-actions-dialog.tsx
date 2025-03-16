@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { MoveRight, RefreshCw, Tag } from "lucide-react";
+import { MoveRight, Tag } from "lucide-react";
 import { BulkActionsDialogProps } from "../types/lead-types";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -35,21 +35,14 @@ export function BulkActionsDialog({
   onDelete,
   isDeleting,
   onMoveToPipeline,
-  onChangeStatus,
   onAddVariables,
   pipelines,
 }: BulkActionsDialogProps) {
   const [selectedPipeline, setSelectedPipeline] = useState<string | undefined>(undefined);
-  const [selectedStatus, setSelectedStatus] = useState<string | undefined>(undefined);
   
   const handlePipelineChange = (value: string) => {
     setSelectedPipeline(value);
     toast.success(`Pipeline selected: ${value === "none" ? "No Pipeline" : pipelines.find(p => p.id === value)?.name || value}`);
-  };
-  
-  const handleStatusChange = (value: string) => {
-    setSelectedStatus(value);
-    toast.success(`Status selected: ${value}`);
   };
   
   const handleMoveLeads = () => {
@@ -59,16 +52,6 @@ export function BulkActionsDialog({
       onOpenChange(false);
     } else {
       toast.error("Please select a pipeline first");
-    }
-  };
-  
-  const handleUpdateStatus = () => {
-    if (selectedStatus) {
-      onChangeStatus(selectedStatus);
-      toast.success(`Status updated for ${selectedCount} lead${selectedCount !== 1 ? 's' : ''}`);
-      onOpenChange(false);
-    } else {
-      toast.error("Please select a status first");
     }
   };
   
@@ -83,9 +66,8 @@ export function BulkActionsDialog({
         </DialogHeader>
         
         <Tabs defaultValue="move" className="w-full mt-4">
-          <TabsList className="grid grid-cols-3 mb-4">
+          <TabsList className="grid grid-cols-2 mb-4">
             <TabsTrigger value="move">Move</TabsTrigger>
-            <TabsTrigger value="status">Status</TabsTrigger>
             <TabsTrigger value="variables">Variables</TabsTrigger>
           </TabsList>
           
@@ -120,43 +102,6 @@ export function BulkActionsDialog({
                 >
                   <MoveRight className="h-4 w-4 mr-2" />
                   Move Leads
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="status" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="changeStatus">Change Status</Label>
-              <Select value={selectedStatus} onValueChange={handleStatusChange}>
-                <SelectTrigger id="changeStatus" className="w-full">
-                  <SelectValue placeholder="Select a status" />
-                </SelectTrigger>
-                <SelectContent 
-                  position="popper" 
-                  sideOffset={5} 
-                  className="bg-background z-[9999]" 
-                  align="center"
-                >
-                  <SelectGroup>
-                    <SelectItem value="New">New</SelectItem>
-                    <SelectItem value="Contacted">Contacted</SelectItem>
-                    <SelectItem value="Qualified">Qualified</SelectItem>
-                    <SelectItem value="Proposal">Proposal</SelectItem>
-                    <SelectItem value="Negotiation">Negotiation</SelectItem>
-                    <SelectItem value="Won">Won</SelectItem>
-                    <SelectItem value="Lost">Lost</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <div className="pt-2">
-                <Button 
-                  className="w-full" 
-                  type="button"
-                  onClick={handleUpdateStatus}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Update Status
                 </Button>
               </div>
             </div>
