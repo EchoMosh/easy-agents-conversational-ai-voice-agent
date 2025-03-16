@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,43 +7,40 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronLeft, ChevronRight, MoreVertical, Trash2, Pencil } from "lucide-react";
 import { colorOptions } from "../constants/color-options";
 import { PipelineColumn } from "@/types/pipeline";
-import { Lead } from "@/pages/dashboard/leads";
 
 interface StageHeaderProps {
   column: PipelineColumn;
-  columnLeads: Lead[];
+  isEditing: boolean;
   isCollapsed: boolean;
-  editingColumnId: string | null;
   editingColumnTitle: string;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-  onTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onEditColumnTitle: (e: React.KeyboardEvent) => void;
+  setEditingColumnTitle: (title: string) => void;
   handleColorChange: (columnId: string, color: string) => void;
-  onDeleteStage: () => void;
-  toggleCollapse: () => void;
-  handleEditTitleClick: () => void;
+  onDeleteStage: (column: PipelineColumn) => void;
+  toggleColumnCollapse: (columnId: string) => void;
+  setEditingColumnId: (id: string) => void;
 }
 
 export function StageHeader({
   column,
-  columnLeads,
+  isEditing,
   isCollapsed,
-  editingColumnId,
   editingColumnTitle,
-  onKeyDown,
-  onTitleChange,
+  onEditColumnTitle,
+  setEditingColumnTitle,
   handleColorChange,
   onDeleteStage,
-  toggleCollapse,
-  handleEditTitleClick,
+  toggleColumnCollapse,
+  setEditingColumnId,
 }: StageHeaderProps) {
   return (
     <div className={`flex items-center ${isCollapsed ? "flex-col" : "justify-between"}`}>
       <div className={`flex items-center ${isCollapsed ? "flex-col" : "space-x-3"} flex-1`}>
-        {editingColumnId === column.id ? (
+        {isEditing ? (
           <Input
             value={editingColumnTitle}
-            onChange={onTitleChange}
-            onKeyDown={onKeyDown}
+            onChange={(e) => setEditingColumnTitle(e.target.value)}
+            onKeyDown={onEditColumnTitle}
             className="h-8 text-base"
             autoFocus
           />
@@ -73,7 +71,10 @@ export function StageHeader({
             </Popover>
             <div 
               className="group flex items-center gap-1 cursor-pointer"
-              onClick={handleEditTitleClick}
+              onClick={() => {
+                setEditingColumnId(column.id);
+                setEditingColumnTitle(column.title);
+              }}
             >
               <CardTitle 
                 className={`text-xl font-medium transition-all ${
@@ -98,7 +99,7 @@ export function StageHeader({
             <DropdownMenuContent align="end">
               <DropdownMenuItem 
                 className="text-destructive"
-                onClick={onDeleteStage}
+                onClick={() => onDeleteStage(column)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Stage
@@ -110,7 +111,7 @@ export function StageHeader({
           variant="ghost"
           size="icon"
           className={`h-8 w-8 text-muted-foreground ${isCollapsed ? "mt-2" : ""}`}
-          onClick={toggleCollapse}
+          onClick={() => toggleColumnCollapse(column.id)}
         >
           {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
