@@ -77,6 +77,16 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
         phone: lead.phone || null,
       }));
       
+      // Log leads by pipeline for debugging
+      const leadsByPipeline = {};
+      processedLeads.forEach(lead => {
+        if (!leadsByPipeline[lead.pipeline_id]) {
+          leadsByPipeline[lead.pipeline_id] = 0;
+        }
+        leadsByPipeline[lead.pipeline_id]++;
+      });
+      console.log("Leads by pipeline:", leadsByPipeline);
+      
       return processedLeads as Lead[];
     },
     enabled: true, // Always enabled to fetch all leads
@@ -98,6 +108,8 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
   const filteredLeads = selectedPipelineId 
     ? leads.filter(lead => lead.pipeline_id === selectedPipelineId)
     : leads;
+
+  console.log(`Filtered leads for pipeline ${selectedPipelineId}: ${filteredLeads.length} out of ${leads.length} total leads`);
 
   const invalidateAndRefetch = async () => {
     console.log("Starting invalidation and refetch...");

@@ -14,7 +14,6 @@ import { useDeletePipeline } from "@/hooks/pipeline/use-delete-pipeline";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
 import { usePipelineColumns } from "@/hooks/pipeline/use-pipeline-columns";
 import { defaultColumns } from "@/hooks/use-pipeline";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
@@ -23,7 +22,6 @@ export function DroppableColumn({ id, children }: { id: string; children: React.
 
 export default function PipelinesPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -40,6 +38,7 @@ export default function PipelinesPage() {
     createNewPipeline,
     refetchPipelines,
     refetchLeads,
+    invalidateAndRefetch,
   } = usePipeline();
 
   useEffect(() => {
@@ -66,6 +65,11 @@ export default function PipelinesPage() {
     console.log("Pipeline selected:", pipeline.name);
     setSelectedPipeline(pipeline);
     navigate(`/dashboard/pipelines?selected=${pipeline.id}`, { replace: true });
+    
+    // This forces a re-render with the updated pipeline selection
+    setTimeout(() => {
+      invalidateAndRefetch();
+    }, 100);
   };
 
   const {
@@ -75,16 +79,17 @@ export default function PipelinesPage() {
     onDelete,
   } = useDeletePipeline(handleDeletePipeline, selectedPipeline?.id);
 
-  const { handleDragEnd, isUpdating } = usePipelineDrag(selectedPipeline, leads, refetchLeads);
+  // When we change a lead's pipeline or status, make sure to refetch the data
+  const { handleDragEnd, isUpdating } = usePipelineDrag(selectedPipeline, leads, invalidateAndRefetch);
   
   const {
-    editedColumns,
     handleAddStage,
     handleReorderColumns,
   } = usePipelineColumns(setSelectedPipeline);
 
   const otherPipelines = pipelines?.filter(p => p.id !== selectedPipeline?.id) || [];
   
+  // Check if the selected pipeline has any leads
   const hasLeads = leads?.some(lead => lead.pipeline_id === selectedPipeline?.id) || false;
 
   return (

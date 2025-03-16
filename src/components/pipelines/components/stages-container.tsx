@@ -87,7 +87,6 @@ export function StagesContainer({
     new Map(selectedPipeline.columns.map(col => [col.id, col])).values()
   );
   
-  // Log the columns and leads for debugging
   console.log(`Pipeline ${selectedPipeline.name} has ${uniqueColumns.length} unique columns (from ${selectedPipeline.columns.length} total columns)`);
   console.log(`Total leads for pipeline: ${leads.length}`);
   
@@ -100,23 +99,15 @@ export function StagesContainer({
       <div className="flex flex-wrap gap-6">
         <SortableContext items={uniqueColumns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
           {uniqueColumns.map((column) => {
-            // Filter leads that match this column's status AND belong to this pipeline
-            const columnLeads = leads.filter((lead) => {
-              // Only process leads that belong to this pipeline
-              if (lead.pipeline_id !== selectedPipeline.id) {
-                return false;
-              }
+            // Filter leads that belong to this pipeline AND match this column's status
+            const columnLeads = leads.filter(lead => {
+              const statusMatches = lead.status?.toLowerCase() === column.title?.toLowerCase();
               
-              // Handle null/undefined status cases
-              if (!lead.status || !column.title) {
-                return false;
-              }
-              
-              // Case-insensitive status matching
-              return lead.status.toLowerCase() === column.title.toLowerCase();
+              // We only want leads that belong to this pipeline
+              return statusMatches && lead.pipeline_id === selectedPipeline.id;
             });
             
-            console.log(`Column "${column.title}" has ${columnLeads.length} leads from this pipeline`);
+            console.log(`Column "${column.title}" has ${columnLeads.length} leads from pipeline ${selectedPipeline.id}`);
             
             return (
               <SortableStage 

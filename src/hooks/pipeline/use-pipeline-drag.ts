@@ -17,21 +17,34 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
 
     const leadId = String(active.id);
     const newColumnId = String(over.id);
+    
+    // Find the lead being dragged
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) {
+      console.error("Lead not found:", leadId);
+      return;
+    }
 
+    // Find the target column in the selected pipeline
     const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
-    if (!targetColumn) return;
+    if (!targetColumn) {
+      console.error("Target column not found:", newColumnId);
+      return;
+    }
 
     const newStatus = targetColumn.title;
-    const lead = leads.find(l => l.id === leadId);
     
-    // Check if the lead is already in the target status (column)
-    if (lead?.status === newStatus) return;
+    // Check if the lead is already in the target status and pipeline
+    if (lead.status === newStatus && lead.pipeline_id === selectedPipeline.id) {
+      console.log("Lead already in the target status and pipeline");
+      return;
+    }
 
     // Set updating state to prevent multiple simultaneous updates
     setIsUpdating(true);
 
     try {
-      console.log(`Moving lead ${leadId} to status ${newStatus}`);
+      console.log(`Moving lead ${leadId} to pipeline ${selectedPipeline.id}, status ${newStatus}`);
       
       // Update the database
       const { error } = await supabase

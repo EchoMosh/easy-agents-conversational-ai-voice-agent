@@ -65,10 +65,10 @@ export function PipelineStages({
     }
   };
 
-  // Filter leads strictly by pipeline_id to ensure we only show leads that belong to this pipeline
+  // Only use leads that belong to this pipeline
   const pipelineLeads = leads.filter(lead => lead.pipeline_id === selectedPipeline.id);
   
-  console.log(`Selected pipeline "${selectedPipeline.name}" has ${pipelineLeads.length} leads (from ${leads.length} total leads)`);
+  console.log(`Selected pipeline "${selectedPipeline.name}" (${selectedPipeline.id}) has ${pipelineLeads.length} leads (from ${leads.length} total leads)`);
 
   return (
     <>

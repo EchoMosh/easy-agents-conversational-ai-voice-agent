@@ -49,11 +49,6 @@ export function PipelineStage({
     onDeleteStage(column);
   };
 
-  // Deduplicate the leads by ID to ensure we don't render duplicate leads
-  const uniqueLeads = Array.from(
-    new Map(columnLeads.map(lead => [lead.id, lead])).values()
-  );
-
   return (
     <ContextMenu>
       <ContextMenuTrigger>
@@ -76,13 +71,13 @@ export function PipelineStage({
               />
               {!isCollapsed && (
                 <div className="text-sm text-muted-foreground/80 font-medium">
-                  {uniqueLeads.length} lead{uniqueLeads.length !== 1 ? 's' : ''}
+                  {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
                 </div>
               )}
             </CardHeader>
             {!isCollapsed && (
               <CardContent className="space-y-3 pt-2">
-                {uniqueLeads.map((lead) => (
+                {columnLeads.map((lead) => (
                   <LeadCard 
                     key={lead.id} 
                     lead={lead}
@@ -91,7 +86,7 @@ export function PipelineStage({
                     currentPipelineId={currentPipelineId}
                   />
                 ))}
-                {uniqueLeads.length === 0 && (
+                {columnLeads.length === 0 && (
                   <div className="min-h-[200px] flex items-center justify-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/20">
                     <p className="text-sm text-muted-foreground/70 text-center px-4">
                       Drop leads here

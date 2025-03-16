@@ -41,6 +41,7 @@ export function usePipeline() {
     // Queries
     refetchPipelines,
     refetchLeads,
+    invalidateAndRefetch,
 
     // Actions
     handleEditColumnTitle: (columnId: string, newTitle: string) => {
