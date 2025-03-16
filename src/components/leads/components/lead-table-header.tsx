@@ -2,25 +2,42 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LeadTableHeaderProps } from "../types/lead-types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 
 export function LeadTableHeader({ onToggleSelectAll, isAllSelected, isDeleting }: LeadTableHeaderProps) {
   return (
-    <TableHeader>
+    <TableHeader className="bg-muted/30">
       <TableRow>
         <TableHead className="w-12">
           <Checkbox
             checked={isAllSelected}
             onCheckedChange={onToggleSelectAll}
             disabled={isDeleting}
-            className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+            className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground rounded-sm"
+            aria-label="Select all leads"
           />
         </TableHead>
-        <TableHead>Name</TableHead>
-        <TableHead>Email</TableHead>
-        <TableHead>Phone</TableHead>
-        <TableHead>Status</TableHead>
-        <TableHead>Pipeline</TableHead>
-        <TableHead>Actions</TableHead>
+        <TableHead className="font-medium">Name</TableHead>
+        <TableHead className="font-medium">Email</TableHead>
+        <TableHead className="font-medium">Phone</TableHead>
+        <TableHead className="font-medium">
+          <div className="flex items-center gap-1">
+            Status
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs text-xs">Lead status indicates where they are in your sales process</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </TableHead>
+        <TableHead className="font-medium">Pipeline</TableHead>
+        <TableHead className="font-medium">Actions</TableHead>
       </TableRow>
     </TableHeader>
   );
