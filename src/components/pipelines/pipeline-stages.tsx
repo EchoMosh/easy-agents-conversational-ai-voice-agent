@@ -6,7 +6,8 @@ import { PipelineName } from "./components/pipeline-name";
 import { StagesContainer } from "./components/stages-container";
 import { useStages } from "@/hooks/pipeline/use-stages";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
@@ -37,22 +38,60 @@ export function PipelineStages({
   const {
     handleDeleteStage
   } = useStages(onReorderColumns);
-
-  // Ensure unique columns when rendering
+  const [cleanedPipeline, setCleanedPipeline] = useState<Pipeline>(selectedPipeline);
+  
+  // Ensure unique columns in the pipeline every time it changes
   useEffect(() => {
-    // Check if there are duplicate columns
-    const columnIds = selectedPipeline.columns.map(col => col.id);
-    const uniqueIds = new Set(columnIds);
+    // Deduplicate columns by ID
+    const uniqueColumnsMap = new Map();
+    selectedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
+    const uniqueColumns = Array.from(uniqueColumnsMap.values());
     
-    if (columnIds.length !== uniqueIds.size) {
-      console.warn(`Pipeline ${selectedPipeline.name} has duplicate column IDs. Found ${columnIds.length} IDs but only ${uniqueIds.size} are unique.`);
+    // Check if cleanup is needed
+    if (uniqueColumns.length !== selectedPipeline.columns.length) {
+      console.warn(`Fixing duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.length}`);
+      
+      // Create a cleaned version of the pipeline with unique columns
+      setCleanedPipeline({
+        ...selectedPipeline,
+        columns: uniqueColumns
+      });
+      
+      // Optionally save the clean version back to the database
+      saveDedupedColumnsToDatabase(selectedPipeline.id, uniqueColumns);
+    } else {
+      setCleanedPipeline(selectedPipeline);
     }
   }, [selectedPipeline]);
 
+  // Helper function to save deduplicated columns to the database
+  const saveDedupedColumnsToDatabase = async (pipelineId: string, uniqueColumns: PipelineColumn[]) => {
+    try {
+      const columnsForDb = uniqueColumns.map(col => ({
+        id: col.id,
+        title: col.title,
+        color: col.color
+      }));
+      
+      const { error } = await supabase
+        .from("pipelines")
+        .update({
+          columns: columnsForDb
+        })
+        .eq("id", pipelineId);
+        
+      if (error) throw error;
+      
+      console.log("Successfully saved deduplicated columns to database");
+    } catch (error) {
+      console.error("Error saving deduplicated columns:", error);
+    }
+  };
+
   const handleDeleteStageClick = async (column: PipelineColumn) => {
-    if (column && selectedPipeline) {
+    if (column && cleanedPipeline) {
       try {
-        await handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns, leads);
+        await handleDeleteStage(cleanedPipeline.id, column, cleanedPipeline.columns, leads);
         toast({
           title: "Stage deleted",
           description: `${column.title} stage has been deleted successfully`
@@ -77,31 +116,20 @@ export function PipelineStages({
     }
   };
 
-  // Ensure selectedPipeline.columns has unique IDs before rendering
-  const uniqueColumns = Array.from(
-    new Map(selectedPipeline.columns.map(col => [col.id, col])).values()
-  );
-
-  // If we had duplicate columns, update the pipeline with unique columns
-  if (uniqueColumns.length !== selectedPipeline.columns.length) {
-    console.log(`Found duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.length}`);
-    selectedPipeline.columns = uniqueColumns;
-  }
-  
   // Filter leads to only include those belonging to this pipeline
-  const pipelineLeads = leads.filter(lead => lead.pipeline_id === selectedPipeline.id);
-  console.log(`Selected pipeline "${selectedPipeline.name}" (${selectedPipeline.id}) has ${pipelineLeads.length} leads (out of ${leads.length} total leads)`);
+  const pipelineLeads = leads.filter(lead => lead.pipeline_id === cleanedPipeline.id);
+  console.log(`Selected pipeline "${cleanedPipeline.name}" (${cleanedPipeline.id}) has ${pipelineLeads.length} leads (out of ${leads.length} total leads)`);
 
   return (
     <>
       <PipelineName
-        name={selectedPipeline.name}
+        name={cleanedPipeline.name}
         onEditPipelineName={onEditPipelineName}
         onDeletePipeline={onDeletePipeline}
       />
 
       <StagesContainer
-        selectedPipeline={selectedPipeline}
+        selectedPipeline={cleanedPipeline}
         leads={leads}
         onDragEnd={onDragEnd}
         onEditColumnTitle={onEditColumnTitle}
