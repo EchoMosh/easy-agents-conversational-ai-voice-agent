@@ -1,7 +1,6 @@
 
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckSquare, Square } from "lucide-react";
 import { LeadTableHeaderProps } from "../types/lead-types";
 
 export function LeadTableHeader({ onToggleSelectAll, isAllSelected, isDeleting }: LeadTableHeaderProps) {
@@ -9,19 +8,12 @@ export function LeadTableHeader({ onToggleSelectAll, isAllSelected, isDeleting }
     <TableHeader>
       <TableRow>
         <TableHead className="w-12">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleSelectAll}
-            className="h-8 w-8"
+          <Checkbox
+            checked={isAllSelected}
+            onCheckedChange={onToggleSelectAll}
             disabled={isDeleting}
-          >
-            {isAllSelected ? (
-              <CheckSquare className="h-4 w-4" />
-            ) : (
-              <Square className="h-4 w-4" />
-            )}
-          </Button>
+            className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+          />
         </TableHead>
         <TableHead>Name</TableHead>
         <TableHead>Email</TableHead>

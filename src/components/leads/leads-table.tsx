@@ -67,7 +67,10 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
     try {
       const { error } = await supabase
         .from('leads')
-        .update({ pipeline_id: pipelineId })
+        .update({ 
+          pipeline_id: pipelineId,
+          updated_at: new Date().toISOString() // Add timestamp to ensure trigger fires
+        })
         .in('id', selectedLeads);
 
       if (error) throw error;
@@ -111,17 +114,23 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
             isDeleting={isDeleting}
           />
           <TableBody>
-            {leads.map((lead: any) => (
-              <LeadRow
-                key={lead.id}
-                lead={lead}
-                isSelected={selectedLeads.includes(lead.id)}
-                onToggleSelect={handleToggleSelect}
-                onLeadUpdated={onLeadUpdated}
-                isDeleting={isDeleting}
-                pipelineName={lead.pipelineName}
-              />
-            ))}
+            {leads.map((lead) => {
+              const pipelineName = lead.pipeline_id ? 
+                pipelines.find(p => p.id === lead.pipeline_id)?.name || 'Unknown' : 
+                'No Pipeline';
+                
+              return (
+                <LeadRow
+                  key={lead.id}
+                  lead={lead}
+                  isSelected={selectedLeads.includes(lead.id)}
+                  onToggleSelect={handleToggleSelect}
+                  onLeadUpdated={onLeadUpdated}
+                  isDeleting={isDeleting}
+                  pipelineName={pipelineName}
+                />
+              );
+            })}
           </TableBody>
         </Table>
       </div>

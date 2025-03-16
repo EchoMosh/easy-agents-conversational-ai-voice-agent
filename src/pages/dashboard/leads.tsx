@@ -1,20 +1,18 @@
-
 import { useState, useEffect } from "react";
 import { NewLeadForm } from "@/components/leads/new-lead-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Pencil } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Textarea } from "@/components/ui/textarea";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { LeadsTable } from "@/components/leads/leads-table";
 
 export interface LeadVariable {
   id: string;
@@ -35,7 +33,7 @@ export interface Lead {
   created_at: string;
   user_id: string;
   updated_at: string;
-  source?: string; // Added the source property as optional
+  source?: string;
   variables?: LeadVariable[];
   tags?: any[];
 }
@@ -168,9 +166,6 @@ export default function LeadsPage() {
     );
   });
 
-  // Log counts for debugging
-  console.log(`Total leads: ${leads.length}, Filtered leads: ${filteredLeads.length}`);
-  
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -232,79 +227,12 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {filteredLeads.length === 0 && (
-        <div className="text-center py-10">
-          {searchQuery || selectedPipelineId ? (
-            <p className="text-muted-foreground">No leads matching your search criteria.</p>
-          ) : (
-            <>
-              <p className="text-muted-foreground">No leads found.</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => setIsNewLeadOpen(true)}
-              >
-                Add your first lead
-              </Button>
-            </>
-          )}
-        </div>
-      )}
-
-      {filteredLeads.length > 0 && (
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[200px]">Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Pipeline</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLeads.map((lead) => {
-                const pipelineName = lead.pipeline_id ? 
-                  pipelines.find(p => p.id === lead.pipeline_id)?.name || 'Unknown' : 
-                  'No Pipeline';
-                  
-                const createdAt = new Date(lead.created_at).toLocaleDateString();
-                
-                return (
-                  <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.name || 'Unnamed Lead'}</TableCell>
-                    <TableCell>{lead.email || '-'}</TableCell>
-                    <TableCell>{lead.phone || '-'}</TableCell>
-                    <TableCell>
-                      {lead.status ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300">
-                          {lead.status}
-                        </span>
-                      ) : '-'}
-                    </TableCell>
-                    <TableCell>{pipelineName}</TableCell>
-                    <TableCell>{createdAt}</TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0"
-                        onClick={() => setEditingLead(lead)}
-                      >
-                        <span className="sr-only">Edit</span>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      {/* Using the improved LeadsTable component */}
+      <LeadsTable 
+        leads={filteredLeads} 
+        isLoading={false} 
+        onLeadUpdated={invalidateAndRefetch} 
+      />
 
       {/* Edit Lead Slide-in Panel */}
       <Sheet open={!!editingLead} onOpenChange={(open) => !open && setEditingLead(null)}>
