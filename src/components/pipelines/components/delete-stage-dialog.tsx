@@ -6,11 +6,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Trash2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { toast } from "sonner";
 
 interface DeleteStageDialogProps {
   stageToDelete: PipelineColumn | null;
-  onClose: () => void; // Simplified callback type
-  onConfirm: (stage: PipelineColumn) => void;
+  onClose: () => void;
+  onConfirm: (stage: PipelineColumn) => Promise<void>;
 }
 
 export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteStageDialogProps) {
@@ -25,6 +26,7 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
       timeoutId = window.setTimeout(() => {
         console.log("Delete operation timeout - resetting state");
         setIsDeleting(false);
+        setError("Operation timed out. Please try again.");
       }, 10000); // 10-second safety timeout
     }
     
@@ -40,11 +42,22 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
     setError(null);
     
     try {
+      console.log(`Attempting to delete stage: ${stageToDelete.title} (${stageToDelete.id})`);
       await onConfirm(stageToDelete);
-      onClose(); // Call onClose without any parameters
+      toast.success(`Stage "${stageToDelete.title}" deleted successfully`);
+      onClose();
     } catch (err) {
-      console.error("Error deleting stage:", err);
-      setError(typeof err === 'string' ? err : 'Failed to delete stage. Please try again.');
+      console.error("Error in DeleteStageDialog:", err);
+      
+      // Improved error handling
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : typeof err === 'string'
+          ? err
+          : 'Failed to delete stage. Please try again.';
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
     }
@@ -54,10 +67,9 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
     <Dialog
       open={!!stageToDelete}
       onOpenChange={(open) => {
-        // Always allow closing the dialog, even during deletion
         if (!open) {
           setError(null);
-          onClose(); // Call onClose without any parameters
+          onClose();
         }
       }}
     >
@@ -82,7 +94,7 @@ export function DeleteStageDialog({ stageToDelete, onClose, onConfirm }: DeleteS
             variant="outline"
             onClick={() => {
               setError(null);
-              onClose(); // Call onClose without any parameters
+              onClose();
             }}
             disabled={isDeleting}
           >

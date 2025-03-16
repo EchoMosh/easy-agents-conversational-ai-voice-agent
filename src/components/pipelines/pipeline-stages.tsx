@@ -5,7 +5,7 @@ import { Lead } from "@/pages/dashboard/leads";
 import { PipelineName } from "./components/pipeline-name";
 import { StagesContainer } from "./components/stages-container";
 import { useStages } from "@/hooks/pipeline/use-stages";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,7 +34,6 @@ export function PipelineStages({
   onReorderColumns,
   allPipelines = [],
 }: PipelineStagesProps) {
-  const { toast } = useToast();
   const {
     handleDeleteStage
   } = useStages(onReorderColumns);
@@ -100,35 +99,25 @@ export function PipelineStages({
     }
   };
 
-  const handleDeleteStageClick = async (column: PipelineColumn) => {
-    if (column && cleanedPipeline) {
-      try {
-        // Get only the leads for this pipeline
-        const pipelineLeads = leads.filter(lead => lead.pipeline_id === cleanedPipeline.id);
-        console.log(`Attempting to delete stage "${column.title}" - checking ${pipelineLeads.length} leads in this pipeline`);
-        
-        await handleDeleteStage(cleanedPipeline.id, column, cleanedPipeline.columns, pipelineLeads);
-        toast({
-          title: "Stage deleted",
-          description: `${column.title} stage has been deleted successfully`
-        });
-      } catch (error) {
-        // Show the actual error message from the deleteStage function
-        if (error instanceof Error) {
-          console.error("Error deleting stage:", error);
-          toast({
-            title: "Cannot delete stage",
-            description: error.message || "Failed to delete stage",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to delete stage",
-            variant: "destructive"
-          });
-        }
-      }
+  const handleDeleteStageClick = async (column: PipelineColumn): Promise<void> => {
+    if (!column || !cleanedPipeline) {
+      console.error("Invalid deletion: missing column or pipeline", { column, pipelineId: cleanedPipeline?.id });
+      throw new Error("Cannot delete: missing column or pipeline details");
+    }
+    
+    try {
+      console.log(`PipelineStages: Attempting to delete stage "${column.title}" (${column.id})`);
+      
+      // Get only the leads for this pipeline
+      const pipelineLeads = leads.filter(lead => lead.pipeline_id === cleanedPipeline.id);
+      console.log(`Found ${pipelineLeads.length} leads in pipeline ${cleanedPipeline.id}`);
+      
+      await handleDeleteStage(cleanedPipeline.id, column, cleanedPipeline.columns, pipelineLeads);
+      console.log(`PipelineStages: Stage "${column.title}" deleted successfully`);
+      return;
+    } catch (error) {
+      console.error("PipelineStages: Error deleting stage:", error);
+      throw error; // Re-throw to let the dialog component handle display
     }
   };
 

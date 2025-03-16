@@ -9,6 +9,7 @@ import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortabl
 import { AddStageButton } from "./add-stage-button";
 import { useStages } from "@/hooks/pipeline/use-stages";
 import { DeleteStageDialog } from "./delete-stage-dialog";
+import { toast } from "sonner";
 
 interface StagesContainerProps {
   selectedPipeline: Pipeline;
@@ -19,7 +20,7 @@ interface StagesContainerProps {
   onAddStage: (stage: PipelineColumn) => void;
   onReorderColumns: (newOrder: PipelineColumn[]) => void;
   allPipelines?: Pipeline[];
-  onDeleteStage: (column: PipelineColumn) => void;
+  onDeleteStage: (column: PipelineColumn) => Promise<void>;
 }
 
 export function StagesContainer({
@@ -98,9 +99,16 @@ export function StagesContainer({
     handleColorChange(selectedPipeline.id, columnId, color, selectedPipeline.columns);
   };
 
-  const handleDeleteStageConfirm = (column: PipelineColumn) => {
-    onDeleteStage(column);
-    setStageToDelete(null);
+  const handleDeleteStageConfirm = async (column: PipelineColumn) => {
+    try {
+      console.log(`StagesContainer: Confirming deletion of stage ${column.title}`);
+      await onDeleteStage(column);
+      console.log(`StagesContainer: Stage ${column.title} deleted successfully`);
+    } catch (error) {
+      console.error("Error in handleDeleteStageConfirm:", error);
+      // Let the DeleteStageDialog component handle the error display
+      throw error;
+    }
   };
 
   return (

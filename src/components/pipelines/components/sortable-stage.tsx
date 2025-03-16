@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 interface SortableStageProps {
   children: React.ReactNode;
-  id: string; // Add the id prop to fix the TypeScript error
+  id: string;
   disabled?: boolean;
 }
 

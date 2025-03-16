@@ -66,7 +66,6 @@ export function BulkActionsDialog({
   
   const handlePipelineChange = (value: string) => {
     setSelectedPipeline(value);
-    // Fix: toast.success with only one argument
     toast.success(value === "none" ? "No Pipeline selected" : `Pipeline selected: ${pipelines.find(p => p.id === value)?.name || value}`);
   };
   
@@ -80,7 +79,6 @@ export function BulkActionsDialog({
       }
       
       onMoveToPipeline(selectedPipeline, firstStage);
-      // Fix: toast.success with only one argument here as well
       toast.success(`${selectedCount} lead${selectedCount !== 1 ? 's' : ''} moved successfully`);
       onOpenChange(false);
     } else {
