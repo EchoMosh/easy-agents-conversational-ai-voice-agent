@@ -85,7 +85,7 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     }
   };
 
-  const handleAddNewStage = (pipelineId: string, columns: PipelineColumn[], onAddStage: (stage: PipelineColumn) => void) => {
+  const handleAddNewStage = async (pipelineId: string, columns: PipelineColumn[], onAddStage: (stage: PipelineColumn) => void) => {
     // Generate a truly unique ID
     const newId = crypto.randomUUID();
     
@@ -106,33 +106,27 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         color: col.color
       }));
       
-      // Update the database using async/await pattern instead of Promise chain
-      const updateDatabase = async () => {
-        try {
-          const { error } = await supabase
-            .from("pipelines")
-            .update({
-              columns: columnsForDb
-            })
-            .eq("id", pipelineId);
-            
-          if (error) throw error;
-        } catch (error) {
-          console.error("Error saving new stage:", error);
-          toast({
-            title: "Error",
-            description: "Failed to save new stage. Please refresh and try again.",
-            variant: "destructive"
-          });
-        }
-      };
-      
-      // Execute the async function
-      updateDatabase();
+      // Update the database
+      const { error } = await supabase
+        .from("pipelines")
+        .update({
+          columns: columnsForDb
+        })
+        .eq("id", pipelineId);
+        
+      if (error) {
+        console.error("Error saving new stage:", error);
+        throw error;
+      }
       
       // Set the new stage for editing
       setEditingColumnId(newId);
       setEditingColumnTitle("New Stage");
+      
+      toast({
+        title: "Stage added",
+        description: "New pipeline stage has been added successfully"
+      });
       
     } catch (error) {
       console.error("Error adding new stage:", error);
