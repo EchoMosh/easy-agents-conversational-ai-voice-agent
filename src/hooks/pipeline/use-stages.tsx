@@ -1,8 +1,10 @@
+
 import { useState } from "react";
 import { PipelineColumn } from "@/types/pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { Lead } from "@/pages/dashboard/leads";
 
 export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void) {
   const { toast } = useToast();
@@ -101,11 +103,27 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
   const handleDeleteStage = async (
     pipelineId: string, 
     column: PipelineColumn, 
-    columns: PipelineColumn[]
+    columns: PipelineColumn[],
+    leads: Lead[]
   ) => {
     if (!column || !pipelineId) {
       console.error("Invalid stage deletion attempt:", { column, pipelineId });
       throw new Error("Cannot delete: invalid stage or pipeline");
+    }
+    
+    // Check if any leads are in this stage
+    const leadsInStage = leads.filter(lead => 
+      lead.status.toLowerCase() === column.title.toLowerCase()
+    );
+    
+    if (leadsInStage.length > 0) {
+      toast({
+        title: "Cannot delete stage",
+        description: `This stage contains ${leadsInStage.length} lead${leadsInStage.length > 1 ? 's' : ''}. Please move or delete them first.`,
+        variant: "destructive"
+      });
+      
+      throw new Error("Cannot delete stage with leads");
     }
     
     try {
@@ -151,6 +169,11 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         throw error;
       }
     } catch (error) {
+      if ((error as Error).message === "Cannot delete stage with leads") {
+        // This error was already handled with a toast, no need to invalidate
+        return;
+      }
+      
       console.error("Error deleting stage:", error);
       
       // Revert changes in case of error

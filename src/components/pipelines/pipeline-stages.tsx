@@ -40,18 +40,20 @@ export function PipelineStages({
   const handleDeleteStageClick = async (column: PipelineColumn) => {
     if (column && selectedPipeline) {
       try {
-        await handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns);
+        await handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns, leads);
         toast({
           title: "Stage deleted",
           description: `${column.title} stage has been deleted successfully`
         });
       } catch (error) {
-        console.error("Error deleting stage:", error);
-        toast({
-          title: "Error",
-          description: "Failed to delete stage",
-          variant: "destructive"
-        });
+        if ((error as Error).message !== "Cannot delete stage with leads") {
+          console.error("Error deleting stage:", error);
+          toast({
+            title: "Error",
+            description: "Failed to delete stage",
+            variant: "destructive"
+          });
+        }
       }
     }
   };
