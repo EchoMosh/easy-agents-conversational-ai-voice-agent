@@ -89,31 +89,36 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
           {...attributes}
           {...listeners}
           className={cn(
-            "cursor-grab active:cursor-grabbing border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 shadow-sm transition-all hover:shadow",
-            "hover:border-gray-300 dark:hover:border-gray-600 rounded-lg",
-            isDragging && "opacity-50 shadow-md"
+            "cursor-grab active:cursor-grabbing transition-all hover:shadow-md",
+            "rounded-lg border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800",
+            "hover:border-gray-200 dark:hover:border-gray-700",
+            isDragging && "opacity-70 shadow-lg"
           )}
           onClick={onClick}
         >
-          <CardContent className="p-4 space-y-2">
-            <div className={cn(
-              "font-medium text-base",
-              theme === "light" ? "text-gray-800" : "text-gray-200"
-            )}>
-              {lead.name}
+          <CardContent className="p-3.5">
+            <div className="flex flex-col space-y-2">
+              <div className={cn(
+                "font-medium text-base mb-1",
+                theme === "light" ? "text-gray-800" : "text-gray-200"
+              )}>
+                {lead.name}
+              </div>
+              
+              {lead.email && (
+                <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                  <Mail className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                  <span className="truncate">{lead.email}</span>
+                </div>
+              )}
+              
+              {lead.phone && (
+                <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                  <Phone className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                  <span className="truncate">{lead.phone}</span>
+                </div>
+              )}
             </div>
-            {lead.email && (
-              <div className="text-sm text-muted-foreground/80 flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-gray-400" />
-                <span className="truncate">{lead.email}</span>
-              </div>
-            )}
-            {lead.phone && (
-              <div className="text-sm text-muted-foreground/80 flex items-center gap-1.5">
-                <Phone className="h-3.5 w-3.5 text-gray-400" />
-                <span>{lead.phone}</span>
-              </div>
-            )}
           </CardContent>
         </Card>
       </ContextMenuTrigger>
