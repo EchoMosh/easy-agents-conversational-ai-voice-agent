@@ -105,6 +105,12 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     column: PipelineColumn, 
     columns: PipelineColumn[]
   ) => {
+    if (!column || !pipelineId) {
+      console.error("Invalid stage deletion attempt:", { column, pipelineId });
+      setStageToDelete(null);
+      throw new Error("Cannot delete: invalid stage or pipeline");
+    }
+    
     try {
       console.log("Deleting stage:", column.title, "from pipeline:", pipelineId);
       // Optimistically update the UI
@@ -152,9 +158,6 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         title: "Stage deleted",
         description: `${column.title} stage has been deleted successfully`
       });
-      
-      // Reset the stage to delete
-      setStageToDelete(null);
     } catch (error) {
       console.error("Error deleting stage:", error);
       
@@ -167,7 +170,10 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         variant: "destructive"
       });
       
-      // Reset the stage to delete even on failure
+      // Re-throw the error so the component can handle it
+      throw error;
+    } finally {
+      // Always reset the stage to delete
       setStageToDelete(null);
     }
   };
