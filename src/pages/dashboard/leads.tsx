@@ -35,6 +35,7 @@ export interface Lead {
   created_at: string;
   user_id: string;
   updated_at: string;
+  source?: string; // Added the source property as optional
   variables?: LeadVariable[];
   tags?: any[];
 }
