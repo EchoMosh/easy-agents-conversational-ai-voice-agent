@@ -35,6 +35,15 @@ export function SelectionHeader({
         </div>
         <div className="flex gap-3">
           <Button
+            variant="default"
+            size="sm"
+            onClick={() => setIsBulkActionsOpen(true)}
+          >
+            <ClipboardCheck className="h-4 w-4 mr-2" />
+            Bulk Actions
+          </Button>
+          
+          <Button
             variant="subtleDanger"
             size="sm"
             onClick={onDelete}
@@ -42,15 +51,6 @@ export function SelectionHeader({
           >
             <CircleX className="h-4 w-4 mr-2" />
             Delete Leads
-          </Button>
-          
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => setIsBulkActionsOpen(true)}
-          >
-            <ClipboardCheck className="h-4 w-4 mr-2" />
-            Bulk Actions
           </Button>
         </div>
       </div>
