@@ -23,6 +23,7 @@ const buttonVariants = cva(
         success: "bg-green-500 text-white hover:bg-green-600",
         subtle: "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700",
         clean: "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800",
+        subtleDanger: "text-red-500 hover:text-red-700 bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20",
       },
       size: {
         default: "h-10 px-4 py-2",

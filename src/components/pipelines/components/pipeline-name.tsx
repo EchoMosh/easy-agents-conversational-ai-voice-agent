@@ -59,13 +59,13 @@ export function PipelineName({ name, onEditPipelineName, onDeletePipeline }: Pip
       )}
 
       <Button
-        variant="danger"
+        variant="subtleDanger"
         onClick={onDeletePipeline}
         size="sm"
-        className="h-9 rounded-full"
+        className="h-8 w-8 p-0 ml-2"
+        title="Delete Pipeline"
       >
-        <Trash className="w-4 h-4 mr-2" />
-        Delete Pipeline
+        <Trash className="h-4 w-4" />
       </Button>
     </div>
   );

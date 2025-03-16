@@ -49,8 +49,8 @@ export function StageHeader({
             <Popover>
               <PopoverTrigger asChild>
                 <div 
-                  className={`${column.color} cursor-pointer rounded transition-all ring-offset-2 hover:ring-2 ring-offset-background ring-gray-200 dark:ring-gray-700 ${
-                    isCollapsed ? "w-8 h-8 mb-2" : "w-3 h-3"
+                  className={`${column.color} cursor-pointer rounded-md transition-all ring-offset-2 hover:ring-2 ring-offset-background ring-gray-200 dark:ring-gray-700 ${
+                    isCollapsed ? "w-6 h-6 mb-2" : "w-4 h-4"
                   }`}
                 />
               </PopoverTrigger>
@@ -59,7 +59,7 @@ export function StageHeader({
                   {colorOptions.map((option) => (
                     <button
                       key={option.value}
-                      className={`w-8 h-8 rounded-full ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
+                      className={`w-8 h-8 rounded-md ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
                         column.color === option.value ? "ring-2" : ""
                       }`}
                       onClick={() => handleColorChange(column.id, option.value)}
@@ -70,7 +70,7 @@ export function StageHeader({
               </PopoverContent>
             </Popover>
             <CardTitle 
-              className={`text-xl font-semibold cursor-pointer transition-all ${
+              className={`text-xl font-medium cursor-pointer transition-all ${
                 isCollapsed ? "transform writing-mode-vertical-lr mt-2 whitespace-nowrap" : ""
               }`}
               onClick={() => {
@@ -105,7 +105,7 @@ export function StageHeader({
         <Button
           variant="ghost"
           size="icon"
-          className={`h-8 w-8 ${isCollapsed ? "mt-2" : ""}`}
+          className={`h-8 w-8 text-muted-foreground ${isCollapsed ? "mt-2" : ""}`}
           onClick={() => toggleColumnCollapse(column.id)}
         >
           {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}

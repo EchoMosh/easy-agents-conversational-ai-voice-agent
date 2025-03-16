@@ -4,6 +4,7 @@ import { Lead } from "@/pages/dashboard/leads";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme/theme-provider";
+import { Mail, Phone } from "lucide-react";
 
 interface LeadCardProps {
   lead: Lead;
@@ -31,24 +32,30 @@ export function LeadCard({ lead, onClick }: LeadCardProps) {
       {...attributes}
       {...listeners}
       className={cn(
-        "cursor-grab active:cursor-grabbing border-border/50 bg-card shadow-sm transition-[shadow,opacity]",
-        "hover:shadow-md",
-        isDragging && "opacity-50 shadow-lg"
+        "cursor-grab active:cursor-grabbing border-gray-200/70 dark:border-gray-700/50 bg-white dark:bg-gray-800 shadow-sm transition-all hover:shadow",
+        "hover:border-gray-300 dark:hover:border-gray-600 rounded-lg",
+        isDragging && "opacity-50 shadow-md"
       )}
       onClick={onClick}
     >
       <CardContent className="p-4 space-y-2">
         <div className={cn(
-          "font-medium",
-          theme === "light" ? "text-black" : "text-white"
+          "font-medium text-base",
+          theme === "light" ? "text-gray-800" : "text-gray-200"
         )}>
           {lead.name}
         </div>
         {lead.email && (
-          <div className="text-sm text-muted-foreground/80">{lead.email}</div>
+          <div className="text-sm text-muted-foreground/80 flex items-center gap-1.5">
+            <Mail className="h-3.5 w-3.5 text-gray-400" />
+            <span className="truncate">{lead.email}</span>
+          </div>
         )}
         {lead.phone && (
-          <div className="text-sm text-muted-foreground/80">{lead.phone}</div>
+          <div className="text-sm text-muted-foreground/80 flex items-center gap-1.5">
+            <Phone className="h-3.5 w-3.5 text-gray-400" />
+            <span>{lead.phone}</span>
+          </div>
         )}
       </CardContent>
     </Card>
