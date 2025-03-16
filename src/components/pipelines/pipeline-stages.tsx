@@ -39,6 +39,10 @@ export function PipelineStages({
     handleDeleteStage
   } = useStages(onReorderColumns);
 
+  const onConfirmDelete = (column: PipelineColumn) => {
+    handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns);
+  };
+
   return (
     <>
       <PipelineName
@@ -61,7 +65,7 @@ export function PipelineStages({
       <DeleteStageDialog
         stageToDelete={stageToDelete}
         onClose={(open) => !open && setStageToDelete(null)}
-        onConfirm={(column) => handleDeleteStage(selectedPipeline.id, column, selectedPipeline.columns)}
+        onConfirm={onConfirmDelete}
       />
     </>
   );

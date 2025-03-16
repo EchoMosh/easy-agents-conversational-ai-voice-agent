@@ -19,6 +19,7 @@ interface StagesContainerProps {
   onAddStage: (stage: PipelineColumn) => void;
   onReorderColumns: (newOrder: PipelineColumn[]) => void;
   allPipelines?: Pipeline[];
+  onDeleteStage?: (column: PipelineColumn) => void;
 }
 
 export function StagesContainer({
@@ -30,6 +31,7 @@ export function StagesContainer({
   onAddStage,
   onReorderColumns,
   allPipelines = [],
+  onDeleteStage,
 }: StagesContainerProps) {
   const {
     editingColumnId,
@@ -41,7 +43,8 @@ export function StagesContainer({
     handleKeyDown,
     handleColorChange,
     setStageToDelete,
-    handleAddNewStage
+    handleAddNewStage,
+    handleDeleteStage
   } = useStages(onReorderColumns);
 
   const { handleStageReorder, isReordering } = useStageReordering(onReorderColumns);
@@ -80,6 +83,10 @@ export function StagesContainer({
     }
   };
 
+  const handleStageDeleteClick = (column: PipelineColumn) => {
+    setStageToDelete(column);
+  };
+
   return (
     <DndContext 
       sensors={sensors}
@@ -110,7 +117,7 @@ export function StagesContainer({
                   handleColorChange={(columnId, color) => 
                     handleColorChange(selectedPipeline.id, columnId, color, selectedPipeline.columns)
                   }
-                  setStageToDelete={setStageToDelete}
+                  setStageToDelete={handleStageDeleteClick}
                   toggleColumnCollapse={(columnId) => toggleColumnCollapse(selectedPipeline.id, columnId)}
                   setEditingColumnId={setEditingColumnId}
                   onLeadClick={onLeadClick}

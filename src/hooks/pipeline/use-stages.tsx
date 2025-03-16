@@ -3,9 +3,11 @@ import { useState } from "react";
 import { PipelineColumn } from "@/types/pipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnTitle, setEditingColumnTitle] = useState("");
   const [collapsedColumns, setCollapsedColumns] = useState<Map<string, Set<string>>>(new Map());
@@ -104,13 +106,35 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     columns: PipelineColumn[]
   ) => {
     try {
+      // Optimistically update the UI
       const newColumns = columns.filter(col => col.id !== column.id);
+      
+      // Update the application state immediately
+      onReorderColumns(newColumns);
+      
+      // Update the React Query cache
+      queryClient.setQueryData(["pipelines"], (oldData: any) => {
+        if (!oldData) return oldData;
+        
+        return oldData.map((pipeline: any) => {
+          if (pipeline.id === pipelineId) {
+            return {
+              ...pipeline,
+              columns: newColumns
+            };
+          }
+          return pipeline;
+        });
+      });
+      
+      // Format columns for database update
       const columnsForDb = newColumns.map(col => ({
         id: col.id,
         title: col.title,
         color: col.color
       }));
       
+      // Update the database
       const { error } = await supabase
         .from("pipelines")
         .update({
@@ -120,7 +144,7 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
 
       if (error) throw error;
 
-      onReorderColumns(newColumns);
+      // Reset the stage to delete
       setStageToDelete(null);
 
       toast({
@@ -129,6 +153,10 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
       });
     } catch (error) {
       console.error("Error deleting stage:", error);
+      
+      // Revert changes in case of error
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+      
       toast({
         title: "Error",
         description: "Failed to delete stage",

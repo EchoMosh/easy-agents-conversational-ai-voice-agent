@@ -43,6 +43,12 @@ export function PipelineStage({
 }: PipelineStageProps) {
   const isEditing = editingColumnId === column.id;
 
+  // Handler for the delete context menu option
+  const handleDeleteClick = () => {
+    console.log("Delete stage clicked:", column.title);
+    setStageToDelete(column);
+  };
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>
@@ -94,7 +100,7 @@ export function PipelineStage({
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem 
-          onSelect={() => setStageToDelete(column)}
+          onSelect={handleDeleteClick}
           className="text-destructive flex items-center"
         >
           <Trash2 className="mr-2 h-4 w-4" />
