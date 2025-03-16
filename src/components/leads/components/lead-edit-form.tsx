@@ -9,6 +9,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Lead } from "@/pages/dashboard/leads";
+import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 
 interface LeadEditFormProps {
   editingLead: Lead | null;
@@ -30,6 +31,7 @@ export function LeadEditForm({
   const [editPipelineId, setEditPipelineId] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [pipelineStages, setPipelineStages] = useState<string[]>([]);
 
   // Set up form when a lead is selected for editing
   useEffect(() => {
@@ -40,8 +42,51 @@ export function LeadEditForm({
       setEditStatus(editingLead.status || "New");
       setEditPipelineId(editingLead.pipeline_id || "");
       setEmailError("");
+
+      // Load pipeline stages if a pipeline is selected
+      if (editingLead.pipeline_id) {
+        loadPipelineStages(editingLead.pipeline_id);
+      } else {
+        setPipelineStages([]);
+      }
     }
   }, [editingLead]);
+
+  // Watch for pipeline changes to update available stages
+  useEffect(() => {
+    if (editPipelineId && editPipelineId !== "none") {
+      loadPipelineStages(editPipelineId);
+    } else {
+      setPipelineStages([]);
+    }
+  }, [editPipelineId]);
+
+  // Load stages for a specific pipeline
+  const loadPipelineStages = async (pipelineId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("id", pipelineId)
+        .single();
+
+      if (error) {
+        console.error("Error loading pipeline:", error);
+        return;
+      }
+
+      const pipeline = convertJsonToPipeline(data);
+      const stages = pipeline.columns.map(col => col.title);
+      setPipelineStages(stages);
+
+      // If the current status isn't in the new pipeline's stages, set it to the first stage
+      if (stages.length > 0 && !stages.includes(editStatus)) {
+        setEditStatus(stages[0]);
+      }
+    } catch (error) {
+      console.error("Error processing pipeline data:", error);
+    }
+  };
 
   // Validate email
   const validateEmail = (email: string) => {
@@ -168,24 +213,6 @@ export function LeadEditForm({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={editStatus || "New"} onValueChange={setEditStatus}>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Select a status" />
-              </SelectTrigger>
-              <SelectContent position="popper" className="bg-background z-50">
-                <SelectItem value="New">New</SelectItem>
-                <SelectItem value="Contacted">Contacted</SelectItem>
-                <SelectItem value="Qualified">Qualified</SelectItem>
-                <SelectItem value="Proposal">Proposal</SelectItem>
-                <SelectItem value="Negotiation">Negotiation</SelectItem>
-                <SelectItem value="Won">Won</SelectItem>
-                <SelectItem value="Lost">Lost</SelectItem>
-                <SelectItem value="New Stage">New Stage</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="pipeline">Pipeline</Label>
             <Select value={editPipelineId || "none"} onValueChange={setEditPipelineId}>
               <SelectTrigger id="pipeline">
@@ -201,6 +228,26 @@ export function LeadEditForm({
               </SelectContent>
             </Select>
           </div>
+          
+          {/* Only show status dropdown if a pipeline is selected */}
+          {editPipelineId && editPipelineId !== "none" && (
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={editStatus} onValueChange={setEditStatus}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="bg-background z-50">
+                  {pipelineStages.map((stage) => (
+                    <SelectItem key={stage} value={stage}>
+                      {stage}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="pt-4">
             <Button 
               className="w-full"

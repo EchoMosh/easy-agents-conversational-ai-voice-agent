@@ -26,7 +26,9 @@ import { Label } from "@/components/ui/label";
 import { MoveRight, Tag } from "lucide-react";
 import { BulkActionsDialogProps } from "../types/lead-types";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 
 export function BulkActionsDialog({
   isOpen,
@@ -39,6 +41,29 @@ export function BulkActionsDialog({
   pipelines,
 }: BulkActionsDialogProps) {
   const [selectedPipeline, setSelectedPipeline] = useState<string | undefined>(undefined);
+  const [fullPipelines, setFullPipelines] = useState<Pipeline[]>([]);
+  
+  // Fetch full pipeline data when opened
+  useEffect(() => {
+    if (isOpen) {
+      fetchFullPipelineData();
+    }
+  }, [isOpen]);
+  
+  const fetchFullPipelineData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*");
+        
+      if (error) throw error;
+      
+      const processedPipelines = (data || []).map(convertJsonToPipeline);
+      setFullPipelines(processedPipelines);
+    } catch (error) {
+      console.error("Error fetching pipeline data:", error);
+    }
+  };
   
   const handlePipelineChange = (value: string) => {
     setSelectedPipeline(value);
@@ -47,7 +72,16 @@ export function BulkActionsDialog({
   
   const handleMoveLeads = () => {
     if (selectedPipeline) {
-      onMoveToPipeline(selectedPipeline);
+      // Get the target pipeline to determine first stage
+      const targetPipeline = fullPipelines.find(p => p.id === selectedPipeline);
+      let firstStage = "New"; // Default fallback
+      
+      // If the pipeline has columns, use the first one's title
+      if (targetPipeline && targetPipeline.columns.length > 0) {
+        firstStage = targetPipeline.columns[0].title;
+      }
+      
+      onMoveToPipeline(selectedPipeline, firstStage);
       toast.success(`${selectedCount} lead${selectedCount !== 1 ? 's' : ''} moved successfully`);
       onOpenChange(false);
     } else {

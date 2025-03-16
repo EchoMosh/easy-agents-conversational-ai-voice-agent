@@ -57,21 +57,14 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         throw new Error("No authenticated user found");
       }
 
-      // Find the selected pipeline to get the first column's title
+      // Find the selected pipeline
       const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
       
-      // Ensure we're working with unique columns
+      // Get the first column's title to use as the initial status
       let initialStatus = 'new';
       if (selectedPipeline && selectedPipeline.columns.length > 0) {
-        // Deduplicate columns before getting the first one
-        const uniqueColumnsMap = new Map();
-        selectedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
-        const uniqueColumns = Array.from(uniqueColumnsMap.values());
-        
-        // Use the first column's title as the initial status
-        if (uniqueColumns.length > 0) {
-          initialStatus = uniqueColumns[0].title.toLowerCase();
-        }
+        // Get the first column's title
+        initialStatus = selectedPipeline.columns[0].title;
       }
 
       const { data: leadData, error: leadError } = await supabase

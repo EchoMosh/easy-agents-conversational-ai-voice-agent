@@ -1,12 +1,20 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Pipeline } from "@/types/pipeline";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function useColumnMutations() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Helper function to get the first column/stage of a pipeline
+  const getFirstColumnTitle = (pipeline: Pipeline): string => {
+    if (pipeline.columns && pipeline.columns.length > 0) {
+      return pipeline.columns[0].title;
+    }
+    return "New"; // Fallback in case there are no columns (shouldn't happen)
+  };
 
   const handleEditColumnTitle = async (pipeline: Pipeline, columnId: string, newTitle: string) => {
     console.log("Updating column title...", { columnId, newTitle });
@@ -78,5 +86,5 @@ export function useColumnMutations() {
     }
   };
 
-  return { handleEditColumnTitle };
+  return { handleEditColumnTitle, getFirstColumnTitle };
 }
