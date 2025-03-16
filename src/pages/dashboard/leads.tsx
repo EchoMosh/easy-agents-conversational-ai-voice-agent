@@ -78,26 +78,56 @@ export default function LeadsPage() {
     if (!editingLead) return;
     
     // Validate email
-    if (!validateEmail(editEmail)) {
+    if (editEmail && !validateEmail(editEmail)) {
       setEmailError("Please enter a valid email address");
       return;
     }
     
     setIsUpdating(true);
     try {
+      // Store original values for activity tracking
+      const originalData = {
+        name: editingLead.name,
+        email: editingLead.email,
+        phone: editingLead.phone,
+        status: editingLead.status,
+        pipeline_id: editingLead.pipeline_id
+      };
+      
+      const updatedData = {
+        name: editName,
+        email: editEmail || null,
+        phone: editPhone || null,
+        status: editStatus,
+        pipeline_id: editPipelineId,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Update the lead
       const { error } = await supabase
         .from("leads")
-        .update({
-          name: editName,
-          email: editEmail || null,
-          phone: editPhone || null,
-          status: editStatus,
-          pipeline_id: editPipelineId,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatedData)
         .eq("id", editingLead.id);
 
       if (error) throw error;
+      
+      // The triggers in Supabase will handle tracking activities for most fields
+      // But we need to manually track pipeline change since it's not covered by triggers
+      if (originalData.pipeline_id !== updatedData.pipeline_id) {
+        // Get old and new pipeline names
+        const oldPipelineName = pipelines.find(p => p.id === originalData.pipeline_id)?.name || 'No Pipeline';
+        const newPipelineName = pipelines.find(p => p.id === updatedData.pipeline_id)?.name || 'No Pipeline';
+        
+        // Create activity for pipeline change
+        await supabase
+          .from("lead_activities")
+          .insert({
+            lead_id: editingLead.id,
+            content: 'Pipeline changed',
+            old_value: oldPipelineName,
+            new_value: newPipelineName
+          });
+      }
       
       toast.success("Lead updated successfully");
       invalidateAndRefetch();
