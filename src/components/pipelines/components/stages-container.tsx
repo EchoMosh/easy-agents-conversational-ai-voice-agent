@@ -108,7 +108,7 @@ export function StagesContainer({
     
     setIsDeleting(true);
     try {
-      console.log(`StagesContainer: Confirming deletion of stage ${column.title}`);
+      console.log(`StagesContainer: Confirming deletion of stage ${column.title} (${column.id})`);
       await onDeleteStage(column);
       toast.success(`Stage "${column.title}" deleted successfully`);
       console.log(`StagesContainer: Stage ${column.title} deleted successfully`);

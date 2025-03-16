@@ -48,7 +48,7 @@ export function PipelineStage({
 
   // Handler for the delete context menu option
   const handleDeleteClick = () => {
-    console.log("Delete stage clicked:", column.title);
+    console.log("Delete stage clicked:", column.title, column.id);
     onDeleteStage(column);
   };
 
