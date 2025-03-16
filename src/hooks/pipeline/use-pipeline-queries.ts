@@ -53,35 +53,19 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
     isFetching: isLeadsFetching,
     isPending: isLeadsPending 
   } = useQuery({
-    queryKey: ["leads", selectedPipelineId],
+    queryKey: ["leads"],
     queryFn: async () => {
-      console.log("Fetching leads for pipeline:", selectedPipelineId);
+      console.log("Fetching all leads...");
       
-      let query;
-      
-      // If no pipeline is selected, fetch all leads
-      if (!selectedPipelineId) {
-        query = supabase
-          .from("leads")
-          .select("*")
-          .order("created_at", { ascending: false });
-      } else {
-        // If a pipeline is selected, fetch leads for that pipeline
-        query = supabase
-          .from("leads")
-          .select("*")
-          .eq('pipeline_id', selectedPipelineId)
-          .order("created_at", { ascending: false });
-      }
-      
-      const { data, error } = await query;
+      // Always fetch all leads regardless of the selected pipeline
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
       
       if (error) throw error;
       
-      const logMessage = selectedPipelineId 
-        ? "Pipeline leads fetched:" 
-        : "All leads fetched:";
-      console.log(logMessage, data?.length);
+      console.log("All leads fetched:", data?.length);
       
       // Make sure status is never null, set default value
       const processedLeads = (data || []).map(lead => ({
@@ -91,12 +75,11 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
         name: lead.name || 'Unnamed Lead',
         email: lead.email || null,
         phone: lead.phone || null,
-        pipeline_id: lead.pipeline_id || null,
       }));
       
       return processedLeads as Lead[];
     },
-    enabled: true, // Always enabled to fetch all leads when no pipeline is selected
+    enabled: true, // Always enabled to fetch all leads
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
@@ -110,6 +93,11 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
     isLeadsFetching,
     isLeadsPending
   });
+
+  // Filter leads for the selected pipeline if needed (for convenience but not essential)
+  const filteredLeads = selectedPipelineId 
+    ? leads.filter(lead => lead.pipeline_id === selectedPipelineId)
+    : leads;
 
   const invalidateAndRefetch = async () => {
     console.log("Starting invalidation and refetch...");
@@ -137,7 +125,8 @@ export function usePipelineQueries(selectedPipelineId: string | undefined) {
 
   return {
     pipelines,
-    leads,
+    leads, // Return all leads, not just filtered ones
+    filteredLeads, // Also provide pre-filtered leads if needed
     refetchPipelines,
     refetchLeads,
     invalidateAndRefetch,

@@ -88,7 +88,7 @@ export function StagesContainer({
   );
   
   // Log the columns and leads for debugging
-  console.log(`Pipeline ${selectedPipeline.name} has ${uniqueColumns.length} columns (from ${selectedPipeline.columns.length} total columns)`);
+  console.log(`Pipeline ${selectedPipeline.name} has ${uniqueColumns.length} unique columns (from ${selectedPipeline.columns.length} total columns)`);
   console.log(`Total leads for pipeline: ${leads.length}`);
   
   return (
@@ -100,32 +100,23 @@ export function StagesContainer({
       <div className="flex flex-wrap gap-6">
         <SortableContext items={uniqueColumns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
           {uniqueColumns.map((column) => {
-            // Improved filtering logic to better handle case-insensitive comparisons and null values
+            // Filter leads that match this column's status AND belong to this pipeline
             const columnLeads = leads.filter((lead) => {
-              // If lead has no status, don't include it anywhere
-              if (!lead.status) {
-                console.log(`Lead ${lead.id} (${lead.name}) has no status`);
+              // Only process leads that belong to this pipeline
+              if (lead.pipeline_id !== selectedPipeline.id) {
                 return false;
               }
               
-              // If column has no title, don't include any leads here
-              if (!column.title) {
-                console.log(`Column ${column.id} has no title`);
+              // Handle null/undefined status cases
+              if (!lead.status || !column.title) {
                 return false;
               }
               
-              // Case-insensitive comparison
-              const matchesStatus = lead.status.toLowerCase() === column.title.toLowerCase();
-              
-              // Log for debugging
-              if (matchesStatus) {
-                console.log(`Lead "${lead.name}" (${lead.id}) with status "${lead.status}" matched to column "${column.title}"`);
-              }
-              
-              return matchesStatus;
+              // Case-insensitive status matching
+              return lead.status.toLowerCase() === column.title.toLowerCase();
             });
             
-            console.log(`Column "${column.title}" has ${columnLeads.length} leads`);
+            console.log(`Column "${column.title}" has ${columnLeads.length} leads from this pipeline`);
             
             return (
               <SortableStage 

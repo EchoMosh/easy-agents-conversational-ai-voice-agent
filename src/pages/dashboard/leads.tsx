@@ -107,7 +107,7 @@ export default function LeadsPage() {
         email: editEmail || null,
         phone: editPhone || null,
         status: editStatus || "New",
-        pipeline_id: editPipelineId || null,
+        pipeline_id: editPipelineId === "none" ? null : editPipelineId,
         updated_at: new Date().toISOString()
       };
       
@@ -149,8 +149,16 @@ export default function LeadsPage() {
     }
   };
 
-  // Filter leads based on search query
+  // Filter leads based on search query and selected pipeline
   const filteredLeads = leads.filter(lead => {
+    // Filter by pipeline if one is selected
+    if (selectedPipelineId && selectedPipelineId !== "all") {
+      if (lead.pipeline_id !== selectedPipelineId) {
+        return false;
+      }
+    }
+    
+    // Then filter by search query
     const query = searchQuery.toLowerCase();
     return (
       (lead.name || '').toLowerCase().includes(query) ||
@@ -162,10 +170,7 @@ export default function LeadsPage() {
 
   // Log counts for debugging
   console.log(`Total leads: ${leads.length}, Filtered leads: ${filteredLeads.length}`);
-  // Log unique lead names to debug duplicate issues
-  const uniqueNames = new Set(leads.map(lead => lead.name));
-  console.log(`Unique lead names: ${uniqueNames.size}, Names: ${Array.from(uniqueNames).join(', ')}`);
-
+  
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -194,8 +199,8 @@ export default function LeadsPage() {
         <div className="w-64">
           <Label htmlFor="pipelineFilter">Filter by Pipeline</Label>
           <Select 
-            value={selectedPipelineId || ''} 
-            onValueChange={(value) => setSelectedPipelineId(value === '' ? undefined : value)}
+            value={selectedPipelineId || "all"} 
+            onValueChange={(value) => setSelectedPipelineId(value === "all" ? undefined : value)}
           >
             <SelectTrigger id="pipelineFilter">
               <SelectValue placeholder="All Pipelines" />
@@ -370,7 +375,7 @@ export default function LeadsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="pipeline">Pipeline</Label>
-              <Select value={editPipelineId || ""} onValueChange={setEditPipelineId}>
+              <Select value={editPipelineId || "none"} onValueChange={setEditPipelineId}>
                 <SelectTrigger id="pipeline">
                   <SelectValue placeholder="Select a pipeline" />
                 </SelectTrigger>

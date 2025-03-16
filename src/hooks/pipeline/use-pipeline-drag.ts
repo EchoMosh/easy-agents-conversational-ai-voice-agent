@@ -24,6 +24,7 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     const newStatus = targetColumn.title;
     const lead = leads.find(l => l.id === leadId);
     
+    // Check if the lead is already in the target status (column)
     if (lead?.status === newStatus) return;
 
     // Set updating state to prevent multiple simultaneous updates
@@ -37,7 +38,8 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
         .from("leads")
         .update({ 
           status: newStatus,
-          pipeline_id: selectedPipeline.id
+          pipeline_id: selectedPipeline.id,
+          updated_at: new Date().toISOString() // Add timestamp to ensure trigger fires
         })
         .eq("id", leadId);
 
@@ -61,7 +63,10 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       // Force refetch to revert to correct state in case of error
       refetchLeads();
     } finally {
-      setIsUpdating(false);
+      // Delay resetting isUpdating to prevent quick double-updates
+      setTimeout(() => {
+        setIsUpdating(false);
+      }, 500);
     }
   };
 
