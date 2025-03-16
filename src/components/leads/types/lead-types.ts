@@ -48,7 +48,6 @@ export interface BulkActionsDialogProps {
   onDelete: () => void;
   isDeleting: boolean;
   onMoveToPipeline: (pipelineId: string) => void;
-  onChangeStatus: (status: string) => void;
   onAddVariables: () => void;
   pipelines: Array<{ id: string; name: string }>;
 }
