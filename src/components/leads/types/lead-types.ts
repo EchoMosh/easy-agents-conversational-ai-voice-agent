@@ -40,3 +40,15 @@ export interface LeadActionsProps {
   lead: Lead;
   onEditSuccess: () => void;
 }
+
+export interface BulkActionsDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedCount: number;
+  onDelete: () => void;
+  isDeleting: boolean;
+  onMoveToPipeline: (pipelineId: string) => void;
+  onChangeStatus: (status: string) => void;
+  onAddVariables: () => void;
+  pipelines: Array<{ id: string; name: string }>;
+}

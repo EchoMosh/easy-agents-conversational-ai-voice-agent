@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +13,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { NewVariableForm } from "./variables/new-variable-form";
-import { LeadVariables } from "./lead-variables";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
 
 export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps) {
@@ -26,7 +24,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
   const [editingLead, setEditingLead] = useState<any>(null);
   const [isEditVariablesOpen, setIsEditVariablesOpen] = useState(false);
 
-  // Fetch available pipelines
   const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
@@ -136,14 +133,12 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
   };
 
   const handleBulkAddVariables = async () => {
-    // Validate variables
     if (newVariables.some(v => !v.name.trim())) {
       toast.error("Variable names cannot be empty");
       return;
     }
 
     try {
-      // For each selected lead, add each variable
       const variablesToAdd = selectedLeads.flatMap(leadId => 
         newVariables.map(v => ({
           lead_id: leadId,
@@ -210,12 +205,10 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
                 pipelines.find(p => p.id === lead.pipeline_id)?.name || 'Unknown' : 
                 'No Pipeline';
               
-              // Extend lead with click handlers - use the LeadWithHandlers type
               const leadWithHandlers: LeadWithHandlers = {
                 ...lead,
                 onVariableClick: handleOpenVariableEditor,
                 onEditClick: (lead) => {
-                  // This would be handled by the parent component
                   if (typeof window !== 'undefined') {
                     const event = new CustomEvent('editLead', { detail: lead });
                     window.dispatchEvent(event);
@@ -239,7 +232,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
         </Table>
       </div>
 
-      {/* Bulk Add Variables Dialog */}
       <Dialog open={isBulkVariablesOpen} onOpenChange={setIsBulkVariablesOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -296,7 +288,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
         </DialogContent>
       </Dialog>
 
-      {/* Edit Variables Dialog */}
       {editingLead && (
         <EditVariablesDialog
           lead={editingLead}
@@ -306,7 +297,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
       <DeleteDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
