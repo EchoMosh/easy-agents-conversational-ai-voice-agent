@@ -42,7 +42,8 @@ export function StagesContainer({
     toggleColumnCollapse,
     handleKeyDown,
     handleColorChange,
-    handleAddNewStage
+    handleAddNewStage,
+    isAddingStage
   } = useStages(onReorderColumns);
 
   const { handleStageReorder, isReordering } = useStageReordering(onReorderColumns);
@@ -130,6 +131,7 @@ export function StagesContainer({
         
         <AddStageButton 
           onAddStage={() => handleAddNewStage(selectedPipeline.id, selectedPipeline.columns, onAddStage)} 
+          isLoading={isAddingStage}
         />
       </div>
     </DndContext>

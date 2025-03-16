@@ -12,6 +12,7 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnTitle, setEditingColumnTitle] = useState("");
   const [collapsedColumns, setCollapsedColumns] = useState<Map<string, Set<string>>>(new Map());
+  const [isAddingStage, setIsAddingStage] = useState(false);
 
   const isColumnCollapsed = (pipelineId: string, columnId: string) => {
     const pipelineCollapsed = collapsedColumns.get(pipelineId);
@@ -86,16 +87,24 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
   };
 
   const handleAddNewStage = async (pipelineId: string, columns: PipelineColumn[], onAddStage: (stage: PipelineColumn) => void) => {
-    // Generate a truly unique ID
-    const newId = crypto.randomUUID();
-    
-    const newStage: PipelineColumn = {
-      id: newId,
-      title: "New Stage",
-      color: "bg-gray-500",
-    };
+    // Prevent multiple clicks
+    if (isAddingStage) {
+      console.log("Already adding a stage, please wait...");
+      return;
+    }
     
     try {
+      setIsAddingStage(true);
+      
+      // Generate a truly unique ID
+      const newId = crypto.randomUUID();
+      
+      const newStage: PipelineColumn = {
+        id: newId,
+        title: "New Stage",
+        color: "bg-gray-500",
+      };
+      
       // Add the new stage to the local state immediately
       onAddStage(newStage);
       
@@ -128,6 +137,9 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         description: "New pipeline stage has been added successfully"
       });
       
+      // Update React Query cache
+      queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+      
     } catch (error) {
       console.error("Error adding new stage:", error);
       toast({
@@ -135,6 +147,8 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         description: "Failed to add new stage",
         variant: "destructive"
       });
+    } finally {
+      setIsAddingStage(false);
     }
   };
 
@@ -245,6 +259,7 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     handleKeyDown,
     handleColorChange,
     handleAddNewStage,
-    handleDeleteStage
+    handleDeleteStage,
+    isAddingStage
   };
 }
