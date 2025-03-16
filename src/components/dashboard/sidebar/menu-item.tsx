@@ -1,10 +1,10 @@
 
 import { NavLink } from "react-router-dom";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
-import { MenuItem } from "./types";
+import type { MenuItem as MenuItemType } from "./types";
 
 interface MenuItemProps {
-  item: MenuItem;
+  item: MenuItemType;
 }
 
 export function MenuItem({ item }: MenuItemProps) {

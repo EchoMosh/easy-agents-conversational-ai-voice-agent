@@ -40,8 +40,10 @@ export function useCustomMenu() {
       );
       
       if (customItem) {
-        const IconComponent = customItem.icon && iconComponents[customItem.icon as keyof typeof iconComponents] 
-          ? iconComponents[customItem.icon as keyof typeof iconComponents] 
+        const iconKey = customItem.icon as keyof typeof iconComponents;
+        // Make sure we're getting a valid icon
+        const IconComponent = customItem.icon && iconComponents[iconKey] 
+          ? iconComponents[iconKey] 
           : menuItem.icon;
         
         const mappedSubItems = menuItem.subItems?.map(subItem => {
@@ -57,7 +59,9 @@ export function useCustomMenu() {
           
         return {
           ...menuItem,
-          icon: IconComponent,
+          icon: typeof IconComponent === 'function' 
+            ? IconComponent 
+            : menuItem.icon, // Only use static icons
           visible: customItem.visible,
           subItems: mappedSubItems
         };
@@ -75,7 +79,8 @@ export function useCustomMenu() {
       return aIndex - bIndex;
     });
 
-    setDisplayedItems(newDisplayedItems);
+    // Ensure we're setting an array of MenuItem
+    setDisplayedItems(newDisplayedItems as MenuItem[]);
   }, [customizedItems]);
 
   return { displayedItems };
