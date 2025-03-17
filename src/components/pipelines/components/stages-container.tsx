@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
@@ -58,9 +57,9 @@ export function StagesContainer({
     console.log("Setting stage to delete:", stage?.title);
     setStageToDelete(stage);
     
-    // Disable dragging when delete dialog is open
+    // Disable dragging when delete dialog is open to prevent event conflicts
     setIsDraggingDisabled(!!stage);
-  }, 300);
+  }, 50);
   
   // Re-filter leads whenever the selectedPipeline changes
   useEffect(() => {
@@ -89,7 +88,7 @@ export function StagesContainer({
     }
   }, [selectedPipeline]);
   
-  // Get leads for each column - use case-insensitive comparison
+  // Get leads for each column
   const getColumnLeads = (column: PipelineColumn) => {
     if (!column?.title) return [];
     
@@ -111,7 +110,14 @@ export function StagesContainer({
   };
 
   const handleDeleteStageClick = (column: PipelineColumn) => {
-    // Prevent deletion for columns with leads
+    if (isDeleting) {
+      console.log("Already processing a delete operation, please wait");
+      return;
+    }
+    
+    console.log(`Initiating delete for stage: ${column.title}`);
+    
+    // Check for leads in the stage
     const leadsInColumn = getColumnLeads(column);
     if (leadsInColumn.length > 0) {
       console.warn(`Cannot delete stage "${column.title}" with ${leadsInColumn.length} leads`);
@@ -119,6 +125,14 @@ export function StagesContainer({
       return;
     }
     
+    // Check if this is the last stage
+    if (selectedPipeline.columns.length <= 1) {
+      console.warn("Cannot delete the last stage in a pipeline");
+      toast.error("Cannot delete the last stage in a pipeline");
+      return;
+    }
+    
+    // Set the stage to delete after validations pass
     debouncedSetStageToDelete(column);
   };
 
@@ -128,21 +142,9 @@ export function StagesContainer({
       return;
     }
     
-    // Double-check no leads in this stage
-    const leadsInColumn = getColumnLeads(column);
-    if (leadsInColumn.length > 0) {
-      const error = `Cannot delete stage "${column.title}" with ${leadsInColumn.length} leads`;
-      console.error(error);
-      toast.error(error);
-      throw new Error(error);
-    }
-    
-    // Double-check we're not deleting the last stage
-    if (selectedPipeline.columns.length <= 1) {
-      const error = "Cannot delete the last stage in a pipeline";
-      console.error(error);
-      toast.error(error);
-      throw new Error(error);
+    if (isDeleting) {
+      console.log("Already processing a delete operation, please wait");
+      return;
     }
     
     setIsDeleting(true);
@@ -154,10 +156,15 @@ export function StagesContainer({
     } catch (error) {
       console.error("Error in handleDeleteStageConfirm:", error);
       toast.error(error instanceof Error ? error.message : "Failed to delete stage");
-      throw error; // Re-throw to let the dialog component handle display
     } finally {
+      // Keep these in the finally block to ensure they run even if there's an error
       setIsDeleting(false);
       setIsDraggingDisabled(false);
+      
+      // Add a delay before allowing another delete operation
+      setTimeout(() => {
+        setStageToDelete(null);
+      }, 300);
     }
   };
 
@@ -215,6 +222,7 @@ export function StagesContainer({
       <DeleteStageDialog
         stageToDelete={stageToDelete}
         onClose={() => {
+          console.log("Closing delete dialog");
           setStageToDelete(null);
           setIsDraggingDisabled(false);
         }}

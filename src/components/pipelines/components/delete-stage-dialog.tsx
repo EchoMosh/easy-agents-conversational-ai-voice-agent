@@ -56,8 +56,19 @@ export function DeleteStageDialog({
   };
 
   return (
-    <AlertDialog open={!!stageToDelete} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+    <AlertDialog 
+      open={!!stageToDelete} 
+      onOpenChange={(open) => {
+        if (!open) {
+          console.log("Dialog closing by onOpenChange");
+          onClose();
+        }
+      }}
+    >
+      <AlertDialogContent 
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Stage</AlertDialogTitle>
           <AlertDialogDescription>

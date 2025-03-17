@@ -33,12 +33,16 @@ export function StageHeader({
   toggleColumnCollapse,
   setEditingColumnId,
 }: StageHeaderProps) {
-  // Handle delete with proper event stopping
+  // Handle delete with proper event stopping and delay
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Delete stage clicked from stage header:", column.title);
-    onDeleteStage(column);
+    
+    // Use timeout to avoid conflict with drag events
+    setTimeout(() => {
+      console.log("Delete stage clicked from stage header:", column.title);
+      onDeleteStage(column);
+    }, 50);
   };
 
   // Handle color change with proper event stopping
@@ -130,10 +134,17 @@ export function StageHeader({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuContent 
+              align="end" 
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()} 
+            >
               <DropdownMenuItem 
                 className="text-destructive"
-                onClick={handleDeleteClick}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleDeleteClick(e as any);
+                }}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Stage
