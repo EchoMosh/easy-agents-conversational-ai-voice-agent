@@ -1,19 +1,21 @@
 
-import { useState, useRef, useCallback } from "react";
-import { 
-  DragEndEvent, 
-  DragOverEvent, 
-  DragStartEvent, 
-  UniqueIdentifier 
+import { useState, useRef } from "react";
+import {
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent,
+  UniqueIdentifier,
+  Active,
+  Over,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { Lead } from "@/pages/dashboard/leads";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 
-export type ActiveDragItem = {
+export interface ActiveItem {
   id: UniqueIdentifier;
   type: "Column" | "Task";
-};
+}
 
 interface UseKanbanDragProps {
   pipeline: Pipeline;
@@ -30,27 +32,25 @@ export function useKanbanDrag({
   onDragOver: onExternalDragOver,
   onReorderColumns,
 }: UseKanbanDragProps) {
-  const [activeItem, setActiveItem] = useState<ActiveDragItem | null>(null);
+  const [activeItem, setActiveItem] = useState<ActiveItem | null>(null);
   const [previewLead, setPreviewLead] = useState<Lead | null>(null);
   const pickedUpLeadColumn = useRef<string | null>(null);
-
-  // Filter leads for the current pipeline
-  const pipelineLeads = leads.filter(lead => lead.pipeline_id === pipeline.id);
-
-  // Get leads for a specific column
-  const getColumnLeads = useCallback((columnId: string) => {
+  
+  // Get leads for each column
+  const getColumnLeads = (columnId: string) => {
     const column = pipeline.columns.find(col => col.id === columnId);
     if (!column?.title) return [];
     
-    return pipelineLeads.filter(
+    return leads.filter(
       lead => lead.status && 
              column.title && 
-             lead.status.toLowerCase() === column.title.toLowerCase()
+             lead.status.toLowerCase() === column.title.toLowerCase() &&
+             lead.pipeline_id === pipeline.id
     );
-  }, [pipeline.columns, pipelineLeads]);
+  };
 
   // Helper function to get data about the dragging lead
-  const getDraggingLeadData = useCallback((leadId: UniqueIdentifier, columnId: string) => {
+  function getDraggingLeadData(leadId: UniqueIdentifier, columnId: string) {
     const leadsInColumn = getColumnLeads(columnId);
     const leadPosition = leadsInColumn.findIndex((lead) => lead.id === leadId);
     const column = pipeline.columns.find((col) => col.id === columnId);
@@ -59,93 +59,82 @@ export function useKanbanDrag({
       leadPosition,
       column,
     };
-  }, [getColumnLeads, pipeline.columns]);
+  }
 
   // Handle drag start
-  const handleDragStart = useCallback((event: DragStartEvent) => {
+  const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
+    if (!active.data.current) return;
     
-    // Check for Column type drag
-    if (active.data?.current?.type === "Column") {
+    const activeData = active.data.current;
+    
+    if (activeData.type === "Column") {
       setActiveItem({
         id: active.id,
         type: "Column",
       });
-      return;
     } 
-    
-    // Check for Task/Lead type drag
-    if (active.data?.current?.type === "Task") {
-      const taskColumnId = active.data.current.columnId || active.data.current.task?.columnId;
-      
-      if (taskColumnId) {
-        // Store the column ID that the lead is being picked up from
-        pickedUpLeadColumn.current = taskColumnId;
-      }
-      
+    else if (activeData.type === "Task") {
       setActiveItem({
         id: active.id,
         type: "Task",
       });
       
-      // If it's a lead, create a preview version
+      // For tasks, we need to know which column they were picked up from
+      pickedUpLeadColumn.current = activeData.columnId || activeData.task?.columnId || null;
+      
+      // For preview when dragging over columns
       const leadId = String(active.id);
       const lead = leads.find(l => l.id === leadId);
       if (lead) {
         setPreviewLead(lead);
       }
     }
-  }, [leads]);
+  };
 
-  // Handle drag over
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    // Call external drag over handler if provided
+  // Handle drag over - for reordering columns
+  const handleDragOver = (event: DragOverEvent) => {
     if (onExternalDragOver) {
       onExternalDragOver(event);
     }
     
     const { active, over } = event;
     
-    if (!active || !over) return;
+    if (!over || !active.data.current || !over.data.current) return;
     
     const activeId = active.id;
     const overId = over.id;
     
     if (activeId === overId) return;
     
-    // Get data types
-    const activeType = active.data?.current?.type;
-    const overType = over.data?.current?.type;
+    const activeData = active.data.current;
+    const overData = over.data.current;
     
-    // Handle column reordering
-    if (activeType === "Column" && overType === "Column") {
+    // If columns are being reordered
+    if (activeData.type === "Column" && overData.type === "Column") {
       const activeColumnIndex = pipeline.columns.findIndex(col => col.id === activeId);
       const overColumnIndex = pipeline.columns.findIndex(col => col.id === overId);
       
       if (activeColumnIndex !== -1 && overColumnIndex !== -1) {
-        // Create a new array with the updated order
         const newColumns = arrayMove(
           pipeline.columns,
           activeColumnIndex,
           overColumnIndex
         );
         
-        // Update the pipeline with the new column order
         onReorderColumns(newColumns);
       }
     }
-  }, [pipeline.columns, onReorderColumns, onExternalDragOver]);
+  };
 
   // Handle drag end
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    // Reset active states
+  const handleDragEnd = (event: DragEndEvent) => {
     setActiveItem(null);
     setPreviewLead(null);
     pickedUpLeadColumn.current = null;
     
-    // Forward to external handler
     onExternalDragEnd(event);
-  }, [onExternalDragEnd]);
+  };
 
   return {
     activeItem,
@@ -155,6 +144,6 @@ export function useKanbanDrag({
     handleDragStart,
     handleDragOver,
     handleDragEnd,
-    getDraggingLeadData
+    getDraggingLeadData,
   };
 }

@@ -1,114 +1,110 @@
 
-import { UniqueIdentifier, Announcements } from "@dnd-kit/core";
-import { hasDraggableData } from "./utils";
+import { type Announcements, UniqueIdentifier } from "@dnd-kit/core";
+import { Lead } from "@/pages/dashboard/leads";
+import { PipelineColumn } from "@/types/pipeline";
 
-export interface BoardAccessibilityProps {
+interface BoardAccessibilityProps {
   columnsId: string[];
   columnTitles: Record<string, string>;
-  getDraggingLeadData: (leadId: UniqueIdentifier, columnId: string) => {
-    leadsInColumn: any[];
-    leadPosition: number;
-    column: any;
-  };
   pickedUpLeadColumn: string | null;
+  getDraggingLeadData: (leadId: UniqueIdentifier, columnId: string) => {
+    leadsInColumn: Lead[];
+    leadPosition: number;
+    column: PipelineColumn | undefined;
+  };
 }
 
 export function useBoardAccessibility({
   columnsId,
   columnTitles,
+  pickedUpLeadColumn,
   getDraggingLeadData,
-  pickedUpLeadColumn
 }: BoardAccessibilityProps): Announcements {
-  // Accessibility announcements
   return {
     onDragStart({ active }) {
-      if (!hasDraggableData(active)) return "";
+      if (!active.data.current) return "";
       
-      if (active.data.current?.type === "Column") {
+      if (active.data.current.type === "Column") {
         const startColumnIdx = columnsId.findIndex((id) => id === active.id);
-        const columnTitle = columnTitles[active.id as string] || "Unknown column";
-        return `Picked up Column ${columnTitle} at position: ${startColumnIdx + 1} of ${columnsId.length}`;
+        return `Picked up column ${columnTitles[active.id as string]} at position: ${startColumnIdx + 1} of ${columnsId.length}`;
       } 
-      else if (active.data.current?.type === "Task") {
+      else if (active.data.current.type === "Task") {
         const task = active.data.current.task;
+        const columnId = active.data.current.columnId || task.columnId;
         
-        if (!task.columnId) return "";
+        if (!columnId) return "";
         
         const { leadsInColumn, leadPosition, column } = getDraggingLeadData(
           active.id,
-          task.columnId
+          columnId
         );
         
-        const columnTitle = column?.title || "Unknown column";
-        
-        return `Picked up Lead at position: ${leadPosition + 1} of ${leadsInColumn.length} in column ${columnTitle}`;
+        return `Picked up Lead at position: ${leadPosition + 1} of ${leadsInColumn.length} in column ${column?.title || "Unknown"}`;
       }
       return "";
     },
-    
     onDragOver({ active, over }) {
-      if (!hasDraggableData(active) || !hasDraggableData(over)) return "";
+      if (!active.data.current || !over?.data.current) return "";
       
-      if (active.data.current?.type === "Column" && over.data.current?.type === "Column") {
+      if (active.data.current.type === "Column" && over.data.current.type === "Column") {
         const overColumnIdx = columnsId.findIndex((id) => id === over.id);
-        const activeColumnTitle = columnTitles[active.id as string] || "Unknown column";
-        const overColumnTitle = columnTitles[over.id as string] || "Unknown column";
-        
-        return `Column ${activeColumnTitle} was moved over ${overColumnTitle} at position ${overColumnIdx + 1} of ${columnsId.length}`;
+        return `Column ${columnTitles[active.id as string]} was moved over ${columnTitles[over.id as string]} at position ${overColumnIdx + 1} of ${columnsId.length}`;
       } 
-      else if (active.data.current?.type === "Task" && over.data.current?.type === "Task") {
-        const task = over.data.current.task;
+      else if (active.data.current.type === "Task" && over.data.current.type === "Task") {
+        const overColumnId = over.data.current.columnId || over.data.current.task.columnId;
+        
+        if (!overColumnId) return "";
+        
         const { leadsInColumn, leadPosition, column } = getDraggingLeadData(
           over.id,
-          task.columnId
+          overColumnId
         );
         
-        const columnTitle = column?.title || "Unknown column";
+        const activeColumnId = active.data.current.columnId || active.data.current.task.columnId;
         
-        if (task.columnId !== pickedUpLeadColumn) {
-          return `Lead was moved over column ${columnTitle} in position ${leadPosition + 1} of ${leadsInColumn.length}`;
+        if (overColumnId !== activeColumnId && pickedUpLeadColumn !== overColumnId) {
+          return `Lead was moved over column ${column?.title || "Unknown"} in position ${leadPosition + 1} of ${leadsInColumn.length}`;
         }
         
-        return `Lead was moved over position ${leadPosition + 1} of ${leadsInColumn.length} in column ${columnTitle}`;
+        return `Lead was moved over position ${leadPosition + 1} of ${leadsInColumn.length} in column ${column?.title || "Unknown"}`;
       }
       
       return "";
     },
-    
     onDragEnd({ active, over }) {
-      if (!hasDraggableData(active) || !over || !hasDraggableData(over)) {
+      if (!active.data.current || !over?.data.current) {
         return "";
       }
       
-      if (active.data.current?.type === "Column" && over.data.current?.type === "Column") {
+      if (active.data.current.type === "Column" && over.data.current.type === "Column") {
         const overColumnPosition = columnsId.findIndex((id) => id === over.id);
-        const activeColumnTitle = columnTitles[active.id as string] || "Unknown column";
-        
-        return `Column ${activeColumnTitle} was dropped into position ${overColumnPosition + 1} of ${columnsId.length}`;
+        return `Column ${columnTitles[active.id as string]} was dropped into position ${overColumnPosition + 1} of ${columnsId.length}`;
       } 
-      else if (active.data.current?.type === "Task" && over.data.current?.type === "Task") {
-        const task = over.data.current.task;
+      else if (active.data.current.type === "Task" && over.data.current.type === "Task") {
+        const overColumnId = over.data.current.columnId || over.data.current.task.columnId;
+        
+        if (!overColumnId) return "";
+        
         const { leadsInColumn, leadPosition, column } = getDraggingLeadData(
           over.id,
-          task.columnId
+          overColumnId
         );
         
-        const columnTitle = column?.title || "Unknown column";
+        const activeColumnId = active.data.current.columnId || active.data.current.task.columnId;
         
-        if (task.columnId !== pickedUpLeadColumn) {
-          return `Lead was dropped into column ${columnTitle} in position ${leadPosition + 1} of ${leadsInColumn.length}`;
+        if (overColumnId !== activeColumnId && pickedUpLeadColumn !== overColumnId) {
+          return `Lead was dropped into column ${column?.title || "Unknown"} in position ${leadPosition + 1} of ${leadsInColumn.length}`;
         }
         
-        return `Lead was dropped into position ${leadPosition + 1} of ${leadsInColumn.length} in column ${columnTitle}`;
+        return `Lead was dropped into position ${leadPosition + 1} of ${leadsInColumn.length} in column ${column?.title || "Unknown"}`;
       }
       
       return "";
     },
-    
     onDragCancel({ active }) {
-      if (!hasDraggableData(active)) return "";
+      if (!active.data.current) return "";
       
-      return `Dragging ${active.data.current?.type} cancelled.`;
+      return `Dragging ${active.data.current.type} cancelled.`;
     },
   };
 }

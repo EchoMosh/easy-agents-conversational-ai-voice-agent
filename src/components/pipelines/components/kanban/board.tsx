@@ -117,7 +117,7 @@ export function KanbanBoard({
     columnsId,
     columnTitles,
     getDraggingLeadData,
-    pickedUpLeadColumn
+    pickedUpLeadColumn: pickedUpLeadColumn.current
   });
 
   // Find active column and lead based on the active item
