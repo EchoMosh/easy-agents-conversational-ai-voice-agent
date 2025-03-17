@@ -85,6 +85,9 @@ export function KanbanColumn({
   const style = {
     transition,
     transform: CSS.Translate.toString(transform),
+    minWidth: "300px", // Ensure minimum width
+    width: "350px",    // Fixed width for consistency
+    flex: "0 0 350px", // Prevent shrinking
   };
 
   // Get color class for the column header
@@ -95,7 +98,7 @@ export function KanbanColumn({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "h-full w-[350px] flex flex-col bg-card rounded-lg border shadow-sm",
+        "h-full flex flex-col bg-card rounded-lg border shadow-sm",
         isDragging ? "opacity-50 border-dashed" : "",
         isPreview ? "column-preview-target" : ""
       )}
@@ -122,7 +125,7 @@ export function KanbanColumn({
               className="h-7 text-sm"
             />
           ) : (
-            <h3 className="text-sm font-medium">{displayTitle}</h3>
+            <h3 className="text-sm font-medium truncate max-w-[150px]">{displayTitle}</h3>
           )}
         </div>
 

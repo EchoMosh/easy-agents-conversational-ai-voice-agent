@@ -52,17 +52,17 @@ export function PipelineStage({
   const displayTitle = column.title || "Untitled Stage";
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full min-w-[300px] w-[350px] flex-shrink-0 flex-grow-0">
       <Card className="h-full w-full transition-all duration-300 border-t-4 border-x border-b rounded-lg shadow-sm overflow-hidden bg-white dark:bg-gray-900"
         style={{ 
-          borderTopColor: `var(--${colorClass.replace('-', '-')})` 
+          borderTopColor: `var(--${colorClass})` 
         }}
       >
         <CardHeader className="flex flex-row items-center justify-between p-4 pb-3 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
             {!isEditing ? (
-              <h3 className="text-lg font-semibold">{displayTitle}</h3>
+              <h3 className="text-lg font-semibold truncate max-w-[150px]">{displayTitle}</h3>
             ) : (
               <StageHeader
                 column={column}
