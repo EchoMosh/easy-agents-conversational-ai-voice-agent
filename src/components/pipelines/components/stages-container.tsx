@@ -52,16 +52,13 @@ export function StagesContainer({
 
   const [pipelineLeads, setPipelineLeads] = useState<Lead[]>([]);
   
-  // Use debounced state setter to prevent multiple rapid changes
   const debouncedSetStageToDelete = useDebounce((stage: PipelineColumn | null) => {
     console.log("Setting stage to delete:", stage?.title);
     setStageToDelete(stage);
     
-    // Disable dragging when delete dialog is open to prevent event conflicts
     setIsDraggingDisabled(!!stage);
   }, 50);
   
-  // Re-filter leads whenever the selectedPipeline changes
   useEffect(() => {
     if (!selectedPipeline) return;
     
@@ -73,22 +70,18 @@ export function StagesContainer({
     setPipelineLeads(filteredLeads);
   }, [selectedPipeline, leads]);
 
-  // Log the unique columns in the pipeline
   useEffect(() => {
     if (!selectedPipeline?.columns) return;
     
-    // Check for unique columns
     const uniqueColumnIds = new Set(selectedPipeline.columns.map(col => col.id));
     console.log(`Pipeline ${selectedPipeline.name} has ${uniqueColumnIds.size} unique columns`);
     
-    // If there are duplicates, log them
     if (uniqueColumnIds.size !== selectedPipeline.columns.length) {
       console.warn(`Pipeline has duplicate columns: ${selectedPipeline.columns.length} total vs ${uniqueColumnIds.size} unique`);
       console.warn(selectedPipeline.columns.map(c => ({ id: c.id, title: c.title })));
     }
   }, [selectedPipeline]);
   
-  // Get leads for each column
   const getColumnLeads = (column: PipelineColumn) => {
     if (!column?.title) return [];
     
@@ -117,7 +110,6 @@ export function StagesContainer({
     
     console.log(`Initiating delete for stage: ${column.title}`);
     
-    // Check for leads in the stage
     const leadsInColumn = getColumnLeads(column);
     if (leadsInColumn.length > 0) {
       console.warn(`Cannot delete stage "${column.title}" with ${leadsInColumn.length} leads`);
@@ -125,14 +117,12 @@ export function StagesContainer({
       return;
     }
     
-    // Check if this is the last stage
     if (selectedPipeline.columns.length <= 1) {
       console.warn("Cannot delete the last stage in a pipeline");
       toast.error("Cannot delete the last stage in a pipeline");
       return;
     }
     
-    // Set the stage to delete after validations pass
     debouncedSetStageToDelete(column);
   };
 
@@ -157,11 +147,9 @@ export function StagesContainer({
       console.error("Error in handleDeleteStageConfirm:", error);
       toast.error(error instanceof Error ? error.message : "Failed to delete stage");
     } finally {
-      // Keep these in the finally block to ensure they run even if there's an error
       setIsDeleting(false);
       setIsDraggingDisabled(false);
       
-      // Add a delay before allowing another delete operation
       setTimeout(() => {
         setStageToDelete(null);
       }, 300);

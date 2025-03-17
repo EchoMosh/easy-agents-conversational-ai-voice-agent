@@ -2,7 +2,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Lead } from "@/pages/dashboard/leads";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
-import { DroppableColumn } from "@/pages/dashboard/pipelines";
 import { LeadCard } from "@/components/leads/lead-card";
 import { StageHeader } from "./stage-header";
 
@@ -45,7 +44,7 @@ export function PipelineStage({
   console.log(`Column "${column.title}" has ${columnLeads.length} leads in pipeline ${currentPipelineId}`);
 
   return (
-    <DroppableColumn id={column.id}>
+    <div className="h-full w-full">
       <Card className={`h-full w-full transition-all duration-300 ${
         isCollapsed ? "w-16" : ""
       } border border-gray-200/50 dark:border-gray-800/50 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-900`}>
@@ -89,6 +88,6 @@ export function PipelineStage({
           </CardContent>
         )}
       </Card>
-    </DroppableColumn>
+    </div>
   );
 }
