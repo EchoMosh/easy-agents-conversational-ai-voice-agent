@@ -19,10 +19,19 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     const leadId = String(active.id);
     const newColumnId = String(over.id);
     
-    // Validate that we have a proper lead ID (not a stage ID or other element)
-    // Lead IDs should be UUIDs, so they should be alphanumeric with dashes
-    if (!leadId.match(/^[0-9a-f-]+$/i) || leadId === 'new') {
-      console.log(`Invalid lead ID or stage operation detected: ${leadId}, skipping drag operation`);
+    // First check if this is a stage reordering operation (both IDs match column IDs)
+    const isActiveIdAColumn = selectedPipeline.columns.some(col => col.id === leadId);
+    const isTargetIdAColumn = selectedPipeline.columns.some(col => col.id === newColumnId);
+    
+    // If this appears to be a stage operation rather than a lead drag, exit early
+    if (isActiveIdAColumn || (leadId === 'new')) {
+      console.log(`Stage operation detected: ${leadId} -> ${newColumnId}, skipping lead drag handler`);
+      return;
+    }
+    
+    // At this point, we expect a valid lead ID (UUID format)
+    if (!leadId.match(/^[0-9a-f-]+$/i)) {
+      console.log(`Invalid lead ID format: ${leadId}, skipping drag operation`);
       return;
     }
 
