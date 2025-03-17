@@ -194,6 +194,7 @@ export function KanbanColumn({
             <TaskCard
               lead={previewLead}
               isPreview={true}
+              columnId={column.id}
             />
           </div>
         )}
@@ -208,6 +209,7 @@ export function KanbanColumn({
               key={lead.id} 
               lead={lead} 
               onClick={() => onLeadClick(lead)} 
+              columnId={column.id}
             />
           ))
         )}

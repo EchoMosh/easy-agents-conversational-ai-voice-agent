@@ -53,7 +53,7 @@ export function KanbanBoard({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3, // 3px
+        distance: 3, // 3px - lower value means easier to start dragging
       },
     })
   );

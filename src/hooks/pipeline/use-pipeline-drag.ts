@@ -117,9 +117,11 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
           setIsUpdating(false);
         }, 500);
       }
-    } else if (overType === "Task") {
-      // We're dropping a task on another task - not currently supported
-      // Could implement ordering within a column in the future
+    } 
+    // Check if this is a drop on another task in the same column
+    else if (overType === "Task") {
+      // Currently not handling reordering within a column
+      // Could implement order tracking in the future
     }
   };
 

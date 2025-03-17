@@ -18,6 +18,8 @@ export interface Task {
 export interface TaskDragData {
   type: "Task";
   task: Task;
+  columnId?: string; // Added to help track source column
+  lead?: Lead;
 }
 
 export interface TaskCardProps {
@@ -26,13 +28,14 @@ export interface TaskCardProps {
   isOverlay?: boolean;
   isPreview?: boolean;
   onClick?: () => void;
+  columnId?: string; // Added to pass current column ID
 }
 
-export function TaskCard({ task, lead, isOverlay, isPreview, onClick }: TaskCardProps) {
+export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId }: TaskCardProps) {
   // Use either the task from props or create one from the lead
   const taskData = task || (lead ? {
     id: lead.id,
-    columnId: lead.status || "",
+    columnId: columnId || lead.status || "",
     content: lead.name || "Unnamed Lead"
   } : undefined);
 
@@ -50,6 +53,8 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick }: TaskCard
     data: {
       type: "Task",
       task: taskData,
+      columnId: columnId || lead?.status, // Pass column ID to the drag context
+      lead: lead,
     } as TaskDragData,
     attributes: {
       roleDescription: `Task: ${taskData.content}`,

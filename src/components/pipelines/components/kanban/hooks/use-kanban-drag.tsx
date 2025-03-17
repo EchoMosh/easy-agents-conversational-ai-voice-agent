@@ -1,20 +1,22 @@
 
-import { useState, useRef } from "react";
-import { DragStartEvent, DragEndEvent, DragOverEvent } from "@dnd-kit/core";
+import { useState, useRef, useCallback } from "react";
+import { 
+  DragEndEvent, 
+  DragOverEvent, 
+  DragStartEvent, 
+  UniqueIdentifier 
+} from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { Lead } from "@/pages/dashboard/leads";
-import { PipelineColumn } from "@/types/pipeline";
-import { hasDraggableData } from "../utils";
-import { useToast } from "@/hooks/use-toast";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
 
 export type ActiveDragItem = {
-  id: string;
+  id: UniqueIdentifier;
   type: "Column" | "Task";
-  data: any;
 };
 
 interface UseKanbanDragProps {
-  pipeline: { id: string; columns: PipelineColumn[] };
+  pipeline: Pipeline;
   leads: Lead[];
   onDragEnd: (event: DragEndEvent) => void;
   onDragOver?: (event: DragOverEvent) => void;
@@ -26,28 +28,29 @@ export function useKanbanDrag({
   leads,
   onDragEnd: onExternalDragEnd,
   onDragOver: onExternalDragOver,
-  onReorderColumns
+  onReorderColumns,
 }: UseKanbanDragProps) {
   const [activeItem, setActiveItem] = useState<ActiveDragItem | null>(null);
   const [previewLead, setPreviewLead] = useState<Lead | null>(null);
   const pickedUpLeadColumn = useRef<string | null>(null);
-  const { toast } = useToast();
 
-  // Get column leads
-  const getColumnLeads = (columnId: string) => {
+  // Filter leads for the current pipeline
+  const pipelineLeads = leads.filter(lead => lead.pipeline_id === pipeline.id);
+
+  // Get leads for a specific column
+  const getColumnLeads = useCallback((columnId: string) => {
     const column = pipeline.columns.find(col => col.id === columnId);
     if (!column?.title) return [];
     
-    return leads.filter(
-      lead => lead.pipeline_id === pipeline.id && 
-              lead.status && 
-              column.title && 
-              lead.status.toLowerCase() === column.title.toLowerCase()
+    return pipelineLeads.filter(
+      lead => lead.status && 
+             column.title && 
+             lead.status.toLowerCase() === column.title.toLowerCase()
     );
-  };
+  }, [pipeline.columns, pipelineLeads]);
 
   // Helper function to get data about the dragging lead
-  function getDraggingLeadData(leadId: string, columnId: string) {
+  const getDraggingLeadData = useCallback((leadId: UniqueIdentifier, columnId: string) => {
     const leadsInColumn = getColumnLeads(columnId);
     const leadPosition = leadsInColumn.findIndex((lead) => lead.id === leadId);
     const column = pipeline.columns.find((col) => col.id === columnId);
@@ -56,113 +59,98 @@ export function useKanbanDrag({
       leadPosition,
       column,
     };
-  }
+  }, [getColumnLeads, pipeline.columns]);
 
   // Handle drag start
-  const handleDragStart = (event: DragStartEvent) => {
-    if (!hasDraggableData(event.active)) return;
-    
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
-    const data = active.data.current;
     
-    if (data?.type === "Column") {
+    // Check for Column type drag
+    if (active.data?.current?.type === "Column") {
       setActiveItem({
-        id: String(active.id),
+        id: active.id,
         type: "Column",
-        data: data
       });
+      return;
     } 
-    else if (data?.type === "Task") {
-      const taskId = String(active.id);
-      const lead = leads.find(l => l.id === taskId);
+    
+    // Check for Task/Lead type drag
+    if (active.data?.current?.type === "Task") {
+      const taskColumnId = active.data.current.columnId || active.data.current.task?.columnId;
+      
+      if (taskColumnId) {
+        // Store the column ID that the lead is being picked up from
+        pickedUpLeadColumn.current = taskColumnId;
+      }
+      
+      setActiveItem({
+        id: active.id,
+        type: "Task",
+      });
+      
+      // If it's a lead, create a preview version
+      const leadId = String(active.id);
+      const lead = leads.find(l => l.id === leadId);
       if (lead) {
-        setActiveItem({
-          id: taskId,
-          type: "Task",
-          data: data
-        });
-        
-        pickedUpLeadColumn.current = data.task.columnId;
+        setPreviewLead(lead);
       }
     }
-  };
+  }, [leads]);
 
   // Handle drag over
-  const handleDragOver = (event: DragOverEvent) => {
-    // Call the external drag over handler if provided
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    // Call external drag over handler if provided
     if (onExternalDragOver) {
       onExternalDragOver(event);
     }
     
     const { active, over } = event;
     
-    if (!over || !hasDraggableData(active) || !hasDraggableData(over)) {
-      setPreviewLead(null);
-      return;
-    }
+    if (!active || !over) return;
     
     const activeId = active.id;
     const overId = over.id;
     
-    if (activeId === overId) {
-      setPreviewLead(null);
-      return;
-    }
+    if (activeId === overId) return;
     
-    const activeData = active.data.current;
-    const overData = over.data.current;
+    // Get data types
+    const activeType = active.data?.current?.type;
+    const overType = over.data?.current?.type;
     
-    // If columns are being reordered
-    if (activeData?.type === "Column" && overData?.type === "Column") {
+    // Handle column reordering
+    if (activeType === "Column" && overType === "Column") {
       const activeColumnIndex = pipeline.columns.findIndex(col => col.id === activeId);
       const overColumnIndex = pipeline.columns.findIndex(col => col.id === overId);
       
       if (activeColumnIndex !== -1 && overColumnIndex !== -1) {
+        // Create a new array with the updated order
         const newColumns = arrayMove(
           pipeline.columns,
           activeColumnIndex,
           overColumnIndex
         );
         
+        // Update the pipeline with the new column order
         onReorderColumns(newColumns);
       }
-      setPreviewLead(null);
     }
-    
-    // If task is being dragged over a column, show preview
-    if (activeData?.type === "Task" && overData?.type === "Column") {
-      const leadId = String(activeId);
-      const lead = leads.find(l => l.id === leadId);
-      if (lead) {
-        const targetColumn = pipeline.columns.find(col => col.id === overId);
-        if (targetColumn) {
-          setPreviewLead({
-            ...lead,
-            status: targetColumn.title || lead.status,
-            pipeline_id: pipeline.id
-          });
-        }
-      }
-    } else if (activeData?.type === "Task" && overData?.type !== "Column") {
-      // Not over a column, clear preview
-      setPreviewLead(null);
-    }
-  };
+  }, [pipeline.columns, onReorderColumns, onExternalDragOver]);
 
   // Handle drag end
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    // Reset active states
     setActiveItem(null);
     setPreviewLead(null);
     pickedUpLeadColumn.current = null;
     
-    // Use the external handler for most cases
+    // Forward to external handler
     onExternalDragEnd(event);
-  };
+  }, [onExternalDragEnd]);
 
   return {
     activeItem,
     previewLead,
-    pickedUpLeadColumn: pickedUpLeadColumn.current,
+    pickedUpLeadColumn,
     getColumnLeads,
     handleDragStart,
     handleDragOver,
