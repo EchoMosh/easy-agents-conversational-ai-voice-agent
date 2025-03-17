@@ -123,7 +123,7 @@
 }
 
 .column-header {
-  @apply p-4 font-semibold border-b-2 text-left flex flex-row space-between items-center;
+  @apply p-4 font-semibold border-b-2 text-left flex flex-row justify-between items-center;
 }
 
 .column-container {
