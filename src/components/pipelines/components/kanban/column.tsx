@@ -33,6 +33,9 @@ interface KanbanColumnProps {
   columnLeads: Lead[];
   isEditing?: boolean;
   isCollapsed?: boolean;
+  isOverlay?: boolean;
+  isPreviewTarget?: boolean;
+  previewLead?: Lead | null;
   editingColumnTitle?: string;
   onEditColumnTitle?: (e: React.KeyboardEvent) => void;
   setEditingColumnTitle?: (title: string) => void;
@@ -41,7 +44,6 @@ interface KanbanColumnProps {
   toggleColumnCollapse?: () => void;
   setEditingColumnId?: (id: string | null) => void;
   onLeadClick?: (lead: Lead) => void;
-  isPreview?: boolean;
   currentPipelineId?: string;
 }
 
@@ -50,6 +52,9 @@ export function KanbanColumn({
   columnLeads,
   isEditing = false,
   isCollapsed = false,
+  isOverlay = false,
+  isPreviewTarget = false,
+  previewLead = null,
   editingColumnTitle = "",
   onEditColumnTitle = () => {},
   setEditingColumnTitle = () => {},
@@ -58,7 +63,6 @@ export function KanbanColumn({
   toggleColumnCollapse = () => {},
   setEditingColumnId = () => {},
   onLeadClick = () => {},
-  isPreview = false,
   currentPipelineId,
 }: KanbanColumnProps) {
   const [isLocked, setIsLocked] = useState(false);
@@ -79,7 +83,7 @@ export function KanbanColumn({
       type: "Column",
       column,
     } as ColumnDragData,
-    disabled: isLocked || isEditing || isPreview,
+    disabled: isLocked || isEditing || isOverlay,
   });
 
   const style = {
@@ -100,7 +104,8 @@ export function KanbanColumn({
       className={cn(
         "h-full flex flex-col bg-card rounded-lg border shadow-sm",
         isDragging ? "opacity-50 border-dashed" : "",
-        isPreview ? "column-preview-target" : ""
+        isOverlay ? "ring-2 ring-primary shadow-lg" : "",
+        isPreviewTarget ? "ring-2 ring-blue-400" : ""
       )}
       {...attributes}
     >
@@ -182,6 +187,17 @@ export function KanbanColumn({
       </div>
       
       <div className="p-2 flex-1 overflow-y-auto space-y-2 min-h-[400px]">
+        {/* If we have a preview lead, show it with a highlight */}
+        {previewLead && (
+          <div className="relative pb-1">
+            <div className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-md opacity-50" />
+            <TaskCard
+              lead={previewLead}
+              isPreview={true}
+            />
+          </div>
+        )}
+        
         {columnLeads.length === 0 ? (
           <div className="min-h-[100px] flex items-center justify-center border border-dashed rounded-lg bg-muted/30">
             <p className="text-sm text-muted-foreground">Drop leads here</p>
