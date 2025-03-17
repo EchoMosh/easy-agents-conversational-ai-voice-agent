@@ -69,11 +69,12 @@ export function StageHeader({
     toggleColumnCollapse(column.id);
   };
 
-  // Handle options button click
+  // Handle options button click with proper event stopping
   const handleOptionsClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setShowOptionsDialog(true);
+    console.log("Options button clicked, dialog should open:", !showOptionsDialog);
   };
 
   return (
@@ -151,15 +152,21 @@ export function StageHeader({
         </Button>
       </div>
 
-      {/* Options Dialog */}
-      <Dialog open={showOptionsDialog} onOpenChange={setShowOptionsDialog}>
+      {/* Options Dialog - Changed from conditional rendering to controlled by open prop */}
+      <Dialog 
+        open={showOptionsDialog} 
+        onOpenChange={(open) => {
+          console.log("Dialog open state changing to:", open);
+          setShowOptionsDialog(open);
+        }}
+      >
         <DialogContent 
           className="sm:max-w-[320px]"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         >
           <DialogHeader>
-            <DialogTitle>Stage Options</DialogTitle>
+            <DialogTitle>Stage Options: {column.title}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3 py-4">
             <Button 
