@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import {
   DndContext,
   DragEndEvent,
+  DragOverEvent,
   PointerSensor,
   useSensor,
   useSensors,
