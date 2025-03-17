@@ -61,7 +61,7 @@ export function PipelineStages({
     
     // Check if cleanup is needed
     if (uniqueColumns.length !== selectedPipeline.columns.length) {
-      console.warn(`Fixing duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.size}`);
+      console.warn(`Fixing duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.length}`);
       
       // Create a cleaned version of the pipeline with unique columns
       setCleanedPipeline({
