@@ -49,11 +49,11 @@ export function KanbanBoard({
   onReorderColumns,
   isAddingStage = false,
 }: KanbanBoardProps) {
-  // Setup drag and drop sensors
+  // Setup drag and drop sensors with lower activation constraint for easier dragging
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3, // 3px - lower value means easier to start dragging
+        distance: 1, // Reduced to make dragging easier to start
       },
     })
   );

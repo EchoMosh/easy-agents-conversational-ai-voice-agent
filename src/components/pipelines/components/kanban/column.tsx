@@ -1,39 +1,22 @@
 
+import { useId } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { UniqueIdentifier } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Lead } from "@/pages/dashboard/leads";
-import { MoreHorizontal, ChevronLeft, Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { PipelineColumn } from "@/types/pipeline";
 import { TaskCard } from "./TaskCard";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { MoreVertical } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { colorOptions } from "../../constants/color-options";
-
-export interface ColumnDragData {
-  type: "Column";
-  column: PipelineColumn;
-}
 
 interface KanbanColumnProps {
   column: PipelineColumn;
-  columnLeads: Lead[];
+  columnLeads?: Lead[];
+  isOverlay?: boolean;
   isEditing?: boolean;
   isCollapsed?: boolean;
-  isOverlay?: boolean;
   isPreviewTarget?: boolean;
   previewLead?: Lead | null;
   editingColumnTitle?: string;
@@ -49,10 +32,10 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({
   column,
-  columnLeads,
+  columnLeads = [],
+  isOverlay = false,
   isEditing = false,
   isCollapsed = false,
-  isOverlay = false,
   isPreviewTarget = false,
   previewLead = null,
   editingColumnTitle = "",
@@ -65,15 +48,12 @@ export function KanbanColumn({
   onLeadClick = () => {},
   currentPipelineId,
 }: KanbanColumnProps) {
-  const [isLocked, setIsLocked] = useState(false);
+  const headerId = useId();
   
-  // Make sure column title is never empty
-  const displayTitle = column.title || "Untitled Stage";
-
   const {
-    setNodeRef,
     attributes,
     listeners,
+    setNodeRef,
     transform,
     transition,
     isDragging,
@@ -82,138 +62,97 @@ export function KanbanColumn({
     data: {
       type: "Column",
       column,
-    } as ColumnDragData,
-    disabled: isLocked || isEditing || isOverlay,
+    },
   });
 
   const style = {
-    transition,
     transform: CSS.Translate.toString(transform),
-    minWidth: "300px", // Ensure minimum width
-    width: "350px",    // Fixed width for consistency
-    flex: "0 0 350px", // Prevent shrinking
+    transition,
   };
 
-  // Get color class for the column header
-  const colorClass = column.color || "bg-gray-500";
-
+  // Extract color without the bg- prefix for styling
+  const colorClass = column.color.replace('bg-', '');
+  
   return (
-    <div
+    <Card 
       ref={setNodeRef}
       style={style}
       className={cn(
-        "h-full flex flex-col bg-card rounded-lg border shadow-sm",
-        isDragging ? "opacity-50 border-dashed" : "",
+        "h-full min-w-[300px] w-[350px] flex-shrink-0 flex-grow-0 border rounded-md flex flex-col",
+        isDragging ? "opacity-50" : "opacity-100",
         isOverlay ? "ring-2 ring-primary shadow-lg" : "",
         isPreviewTarget ? "ring-2 ring-blue-400" : ""
       )}
-      {...attributes}
     >
-      <div 
-        className="py-2 px-4 font-medium border-b text-left flex flex-row justify-between items-center"
-        style={{ 
-          borderTopWidth: "4px", 
-          borderTopStyle: "solid",
-          borderTopColor: `var(--${colorClass.replace('bg-', '')})` 
-        }}
+      <CardHeader 
+        className="p-3 flex flex-row items-center justify-between border-b"
+        style={{ borderTopColor: `var(--${colorClass})`, borderTopWidth: '4px' }}
       >
-        <div className="flex items-center gap-2" {...listeners}>
-          <Menu className="h-4 w-4 text-muted-foreground cursor-grab" />
-          <div className={`w-3 h-3 rounded-full ${colorClass}`} />
-          
-          {isEditing ? (
-            <Input
-              value={editingColumnTitle}
-              onChange={(e) => setEditingColumnTitle(e.target.value)}
-              onKeyDown={onEditColumnTitle}
-              autoFocus
-              className="h-7 text-sm"
-            />
-          ) : (
-            <h3 className="text-sm font-medium truncate max-w-[150px]">{displayTitle}</h3>
-          )}
+        <div className="flex items-center">
+          <div className={`${column.color} w-3 h-3 rounded-full mr-2`} />
+          <h3 className="text-base font-medium">{column.title}</h3>
         </div>
-
-        <div className="flex items-center gap-1">
-          <span className="text-sm">{columnLeads.length}</span>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setEditingColumnId(column.id)}>
-                Rename
-              </DropdownMenuItem>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    Change Color
-                  </DropdownMenuItem>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-2" align="end">
-                  <div className="flex flex-wrap gap-2 max-w-[220px]">
-                    {colorOptions.map((color) => (
-                      <button
-                        key={color.value}
-                        className={`w-5 h-5 rounded-full ${color.value} hover:ring-2 ring-offset-1`}
-                        onClick={() => handleColorChange(column.id, color.value)}
-                        aria-label={`Select ${color.name} color`}
-                      />
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <DropdownMenuItem 
-                className="text-destructive"
-                onClick={() => onDeleteStage(column)}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
+        <div className="flex items-center space-x-1">
+          <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
+            {columnLeads.length}
+          </span>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
-            onClick={toggleColumnCollapse}
+            className="h-7 w-7"
+            onClick={() => setEditingColumnId(column.id)}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 cursor-grab touch-manipulation"
+            {...attributes}
+            {...listeners}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 4H8M4 8H8M4 12H8M12 4H12.01M12 8H12.01M12 12H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="sr-only">Drag to reorder</span>
           </Button>
         </div>
-      </div>
+      </CardHeader>
       
-      <div className="p-2 flex-1 overflow-y-auto space-y-2 min-h-[400px]">
-        {/* If we have a preview lead, show it with a highlight */}
+      <CardContent className="p-2 overflow-auto flex-1 flex flex-col gap-2">
+        {/* If we have a preview lead, show it at the top with a highlight */}
         {previewLead && (
           <div className="relative pb-1">
             <div className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-md opacity-50" />
             <TaskCard
               lead={previewLead}
+              columnId={column.id}
               isPreview={true}
-              columnId={column.id}
             />
           </div>
         )}
-        
-        {columnLeads.length === 0 ? (
-          <div className="min-h-[100px] flex items-center justify-center border border-dashed rounded-lg bg-muted/30">
-            <p className="text-sm text-muted-foreground">Drop leads here</p>
-          </div>
-        ) : (
-          columnLeads.map((lead) => (
-            <TaskCard 
-              key={lead.id} 
-              lead={lead} 
-              onClick={() => onLeadClick(lead)} 
-              columnId={column.id}
-            />
-          ))
-        )}
-      </div>
-    </div>
+
+        {/* Map and render all the leads for this column */}
+        <SortableContext
+          items={columnLeads.map((lead) => lead.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {columnLeads.length > 0 ? (
+            columnLeads.map((lead) => (
+              <TaskCard
+                key={lead.id}
+                lead={lead}
+                columnId={column.id}
+                onClick={() => onLeadClick(lead)}
+              />
+            ))
+          ) : (
+            <div className="flex items-center justify-center h-24 border border-dashed rounded-md p-4 mt-2">
+              <p className="text-sm text-muted-foreground">Drop leads here</p>
+            </div>
+          )}
+        </SortableContext>
+      </CardContent>
+    </Card>
   );
 }
