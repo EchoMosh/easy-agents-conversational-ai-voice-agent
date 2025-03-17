@@ -2,54 +2,81 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+ 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
+ 
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
+ 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
+ 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
+ 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+ 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
+ 
     --radius: 0.5rem;
+
+    /* Colors for pipeline columns */
+    --gray-500: #6B7280;
+    --red-500: #EF4444;
+    --orange-500: #F97316;
+    --yellow-500: #EAB308;
+    --green-500: #22C55E;
+    --blue-500: #3B82F6;
+    --purple-500: #A855F7;
+    --pink-500: #EC4899;
   }
  
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
+ 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
+ 
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
+ 
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
+ 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
+ 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
+ 
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
+ 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
+ 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
@@ -59,124 +86,25 @@
   }
 }
 
-/* React Flow Dark Mode Styles */
-.react-flow__controls {
-  @apply bg-background border-border;
-}
-
-.react-flow__controls button {
-  @apply bg-background border-border text-foreground hover:bg-accent;
-}
-
-.react-flow__controls button path {
-  @apply fill-foreground;
-}
-
-.react-flow__panel.react-flow__attribution {
-  @apply bg-background text-foreground;
-}
-
-.react-flow__minimap {
-  @apply bg-background;
-}
-
-.react-flow__minimap-mask {
-  @apply fill-muted;
-}
-
-.react-flow__minimap-node {
-  @apply fill-foreground;
-}
-
-.react-flow__node {
-  @apply bg-background border-border text-foreground;
-}
-
-.react-flow__handle {
-  @apply bg-foreground border-background;
-}
-
-.react-flow__edge-path {
-  @apply stroke-foreground;
-}
-
-.react-flow__background {
-  @apply bg-background;
-}
-
-.react-flow__background-pattern path {
-  @apply stroke-border;
-}
-
-/* Node type specific styles */
-.react-flow__node-greetingNode,
-.react-flow__node-speakNode {
-  @apply bg-white dark:bg-gray-800 border-border text-foreground shadow-sm;
-}
-
-.writing-mode-vertical-rl {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-}
-
 .writing-mode-vertical-lr {
   writing-mode: vertical-lr;
-  text-orientation: mixed;
-  transform: rotate(180deg);
 }
 
-/* Variable styling */
-.editor-variable {
-  display: inline-block;
-  background-color: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-  border-radius: 0.25rem;
-  padding: 0 0.25rem;
-  font-weight: 500;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+.pointer-events-none {
+  pointer-events: none;
 }
 
-.dark .editor-variable {
-  background-color: rgba(99, 102, 241, 0.2);
-  color: #818cf8;
+.pointer-events-auto {
+  pointer-events: auto;
 }
 
-/* Variable badge style */
-.editor-variable-badge {
-  background-color: rgba(37, 99, 235, 0.1);
-  color: #3b82f6;
-  border-radius: 9999px;
-  padding: 0.125rem 0.375rem;
+/* Make sure scroll containers have proper padding for overflows */
+.scroll-container {
+  padding-bottom: 1rem;
+  margin-bottom: -1rem;
 }
 
-.dark .editor-variable-badge {
-  background-color: rgba(37, 99, 235, 0.2);
-  color: #60a5fa;
-}
-
-/* Variable code style */
-.editor-variable-code {
-  font-family: monospace;
-  background-color: rgba(55, 65, 81, 0.1);
-  color: #374151;
-  border-radius: 0.25rem;
-  padding: 0.125rem 0.25rem;
-}
-
-.dark .editor-variable-code {
-  background-color: rgba(209, 213, 219, 0.1);
-  color: #d1d5db;
-}
-
-/* Variable tag style */
-.editor-variable-tag {
-  background-color: transparent;
-  color: #3b82f6;
-  font-weight: 600;
-  box-shadow: none;
-  padding: 0;
-}
-
-.dark .editor-variable-tag {
-  color: #60a5fa;
+/* Touch manipulation ensures better performance on mobile devices */
+.touch-manipulation {
+  touch-action: manipulation;
 }

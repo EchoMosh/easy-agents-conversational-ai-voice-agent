@@ -1,13 +1,13 @@
 
-import { DragEndEvent } from "@dnd-kit/core";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineName } from "./components/pipeline-name";
-import { StagesContainer } from "./components/stages-container";
 import { useStages } from "@/hooks/pipeline/use-stages";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { KanbanBoard } from "./components/kanban/board";
+import { DragEndEvent } from "@dnd-kit/core";
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
@@ -38,6 +38,7 @@ export function PipelineStages({
     handleDeleteStage
   } = useStages(onReorderColumns);
   const [cleanedPipeline, setCleanedPipeline] = useState<Pipeline | null>(null);
+  const [isAddingStage, setIsAddingStage] = useState(false);
   
   // Check if we have a valid pipeline before proceeding
   if (!selectedPipeline) {
@@ -60,7 +61,7 @@ export function PipelineStages({
     
     // Check if cleanup is needed
     if (uniqueColumns.length !== selectedPipeline.columns.length) {
-      console.warn(`Fixing duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.length}`);
+      console.warn(`Fixing duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.size}`);
       
       // Create a cleaned version of the pipeline with unique columns
       setCleanedPipeline({
@@ -153,10 +154,6 @@ export function PipelineStages({
     );
   }
 
-  // Filter leads to only include those belonging to this pipeline
-  const pipelineLeads = leads.filter(lead => lead.pipeline_id === cleanedPipeline.id);
-  console.log(`Selected pipeline "${cleanedPipeline.name}" (${cleanedPipeline.id}) has ${pipelineLeads.length} leads (out of ${leads.length} total leads)`);
-
   return (
     <div className="w-full">
       <PipelineName
@@ -165,17 +162,23 @@ export function PipelineStages({
         onDeletePipeline={onDeletePipeline}
       />
 
-      <StagesContainer
-        selectedPipeline={cleanedPipeline}
-        leads={leads}
-        onDragEnd={onDragEnd}
-        onEditColumnTitle={onEditColumnTitle}
-        onLeadClick={onLeadClick}
-        onAddStage={onAddStage}
-        onReorderColumns={onReorderColumns}
-        allPipelines={allPipelines}
-        onDeleteStage={handleDeleteStageClick}
-      />
+      <div className="mt-4 h-[calc(100vh-200px)]">
+        <KanbanBoard
+          pipeline={cleanedPipeline}
+          leads={leads}
+          onDragEnd={onDragEnd}
+          onEditColumnTitle={onEditColumnTitle}
+          onLeadClick={onLeadClick}
+          onAddStage={(stage) => {
+            setIsAddingStage(true);
+            onAddStage(stage);
+            setTimeout(() => setIsAddingStage(false), 1000);
+          }}
+          onDeleteStage={handleDeleteStageClick}
+          onReorderColumns={onReorderColumns}
+          isAddingStage={isAddingStage}
+        />
+      </div>
     </div>
   );
 }

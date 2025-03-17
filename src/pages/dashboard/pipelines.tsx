@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useDroppable } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
 import { Pipeline } from "@/types/pipeline";
 import { PipelineHeader } from "@/components/pipelines/pipeline-header";
@@ -14,11 +13,6 @@ import { useDeletePipeline } from "@/hooks/pipeline/use-delete-pipeline";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
 import { usePipelineColumns } from "@/hooks/pipeline/use-pipeline-columns";
 import { defaultColumns } from "@/hooks/use-pipeline";
-
-export function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
-  const { setNodeRef } = useDroppable({ id });
-  return <div ref={setNodeRef} className="h-full w-full">{children}</div>;
-}
 
 export default function PipelinesPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
