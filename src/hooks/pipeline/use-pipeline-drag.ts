@@ -21,12 +21,20 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     const activeType = active.data?.current?.type;
     const overType = over.data?.current?.type;
     
+    console.log("Drag Over:", { 
+      activeId: String(active.id),
+      activeType, 
+      overId: String(over.id), 
+      overType,
+      overData: over.data?.current
+    });
+    
     // If we're dragging a task over a column, show preview
     if (activeType === "Task" && overType === "Column") {
       setPreviewColumnId(String(over.id));
     } else if (activeType === "Task" && overType === "Task") {
       // If dragging over another task, get its column
-      const overColumnId = over.data?.current?.columnId || over.data?.current?.task?.columnId;
+      const overColumnId = over.data?.current?.columnId;
       if (overColumnId) {
         setPreviewColumnId(overColumnId);
       }
@@ -51,6 +59,14 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     const activeType = active.data?.current?.type;
     const overType = over.data?.current?.type;
     
+    console.log("Drag End:", { 
+      activeId, 
+      activeType, 
+      overId, 
+      overType,
+      overData: over.data?.current
+    });
+    
     // If we're not dragging a task, return
     if (activeType !== "Task") return;
     
@@ -62,9 +78,9 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       targetColumnId = overId;
     } else if (overType === "Task") {
       // Drop on another task - get its column
-      targetColumnId = over.data?.current?.columnId || over.data?.current?.task?.columnId;
+      targetColumnId = over.data?.current?.columnId;
       if (!targetColumnId) {
-        console.error("Target task has no column information");
+        console.error("Target task has no column information", over.data?.current);
         return;
       }
     } else {

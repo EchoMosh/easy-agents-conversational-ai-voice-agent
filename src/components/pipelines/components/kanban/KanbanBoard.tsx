@@ -14,6 +14,10 @@ import {
   useSensors,
   UniqueIdentifier,
   Announcements,
+  pointerWithin,
+  rectIntersection,
+  closestCenter,
+  DragMoveEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { Lead } from "@/pages/dashboard/leads";
@@ -54,6 +58,7 @@ export function KanbanBoard({
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnTitle, setEditingColumnTitle] = useState("");
   const pickedUpLeadColumn = useRef<string | null>(null);
+  const [currentOver, setCurrentOver] = useState<UniqueIdentifier | null>(null);
 
   // Get all leads for this pipeline
   const pipelineLeads = useMemo(() => {
@@ -64,15 +69,17 @@ export function KanbanBoard({
     pipeline.columns.map((col) => col.id), 
   [pipeline.columns]);
 
+  // Use more sensitive sensors for easier drag/drop
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 3, // Reduced for more sensitive dragging
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        distance: 5,
+        delay: 100, // Small delay to prevent accidental touches
+        tolerance: 5, // Allow some movement during press before canceling
       },
     }),
     useSensor(KeyboardSensor, {
@@ -130,7 +137,7 @@ export function KanbanBoard({
   // Accessibility announcements
   const announcements: Announcements = {
     onDragStart({ active }) {
-      if (!hasDraggableData(active)) return;
+      if (!hasDraggableData(active)) return "";
       
       if (active.data.current?.type === "Column") {
         const startColumnIdx = columnsId.findIndex((id) => id === active.id);
@@ -155,55 +162,57 @@ export function KanbanBoard({
     onDragOver({ active, over }) {
       if (!hasDraggableData(active) || !hasDraggableData(over)) return "";
       
+      setCurrentOver(over.id);
+      
       if (active.data.current?.type === "Column" && over.data.current?.type === "Column") {
         const overColumnIdx = columnsId.findIndex((id) => id === over.id);
         return `Column ${active.data.current.column.title} was moved over ${over.data.current.column.title} at position ${overColumnIdx + 1} of ${columnsId.length}`;
       } 
-      else if (active.data.current?.type === "Task" && over.data.current?.type === "Task") {
-        const task = over.data.current.task;
-        const { leadsInColumn, leadPosition, column } = getDraggingLeadData(
-          over.id,
-          task.columnId
-        );
+      else if (active.data.current?.type === "Task") {
+        const columnId = over.data.current?.type === "Column" 
+          ? String(over.id)
+          : over.data.current?.columnId || over.data.current?.task?.columnId;
+          
+        if (!columnId) return "";
         
-        if (task.columnId !== pickedUpLeadColumn.current) {
-          return `Lead was moved over column ${column?.title} in position ${leadPosition + 1} of ${leadsInColumn.length}`;
-        }
+        const column = pipeline.columns.find(col => col.id === columnId);
+        if (!column) return "";
         
-        return `Lead was moved over position ${leadPosition + 1} of ${leadsInColumn.length} in column ${column?.title}`;
+        return `Lead was moved over column ${column.title}`;
       }
       
       return "";
     },
     onDragEnd({ active, over }) {
       pickedUpLeadColumn.current = null;
+      setCurrentOver(null);
       
       if (!hasDraggableData(active) || !over || !hasDraggableData(over)) {
-        return "";
+        return "Drag cancelled.";
       }
       
       if (active.data.current?.type === "Column" && over.data.current?.type === "Column") {
         const overColumnPosition = columnsId.findIndex((id) => id === over.id);
         return `Column ${active.data.current.column.title} was dropped into position ${overColumnPosition + 1} of ${columnsId.length}`;
       } 
-      else if (active.data.current?.type === "Task" && over.data.current?.type === "Task") {
-        const task = over.data.current.task;
-        const { leadsInColumn, leadPosition, column } = getDraggingLeadData(
-          over.id,
-          task.columnId
-        );
+      else if (active.data.current?.type === "Task") {
+        const columnId = over.data.current?.type === "Column" 
+          ? String(over.id)
+          : over.data.current?.columnId || over.data.current?.task?.columnId;
+          
+        if (!columnId) return "Lead was dropped.";
         
-        if (task.columnId !== pickedUpLeadColumn.current) {
-          return `Lead was dropped into column ${column?.title} in position ${leadPosition + 1} of ${leadsInColumn.length}`;
-        }
+        const column = pipeline.columns.find(col => col.id === columnId);
+        if (!column) return "Lead was dropped.";
         
-        return `Lead was dropped into position ${leadPosition + 1} of ${leadsInColumn.length} in column ${column?.title}`;
+        return `Lead was dropped into column ${column.title}`;
       }
       
-      return "";
+      return "Drop completed.";
     },
     onDragCancel({ active }) {
       pickedUpLeadColumn.current = null;
+      setCurrentOver(null);
       
       if (!hasDraggableData(active)) return "";
       
@@ -226,8 +235,21 @@ export function KanbanBoard({
       const lead = leads.find(l => l.id === taskId);
       if (lead) {
         setActiveLead(lead);
+        // Store the column ID for this lead
+        pickedUpLeadColumn.current = data.columnId || data.task?.columnId;
+        console.log("Started dragging lead from column:", pickedUpLeadColumn.current);
       }
     }
+  };
+
+  // Handle drag move for additional feedback
+  const handleDragMove = (event: DragMoveEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+    
+    // Update current over element for visual feedback
+    setCurrentOver(over.id);
   };
 
   // Handle drag over
@@ -239,7 +261,9 @@ export function KanbanBoard({
     
     const { active, over } = event;
     
-    if (!over || !hasDraggableData(active) || !hasDraggableData(over)) return;
+    if (!over || !hasDraggableData(active)) return;
+    
+    setCurrentOver(over.id);
     
     const activeId = active.id;
     const overId = over.id;
@@ -247,10 +271,9 @@ export function KanbanBoard({
     if (activeId === overId) return;
     
     const activeData = active.data.current;
-    const overData = over.data.current;
     
-    // If columns are being reordered
-    if (activeData?.type === "Column" && overData?.type === "Column") {
+    // Only handle column reordering here
+    if (activeData?.type === "Column" && hasDraggableData(over) && over.data.current?.type === "Column") {
       const activeColumnIndex = pipeline.columns.findIndex(col => col.id === activeId);
       const overColumnIndex = pipeline.columns.findIndex(col => col.id === overId);
       
@@ -270,8 +293,16 @@ export function KanbanBoard({
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveColumn(null);
     setActiveLead(null);
+    setCurrentOver(null);
     
-    // Use the external handler for most cases
+    console.log("Drag ended:", {
+      activeId: event.active.id,
+      activeData: event.active.data.current,
+      overId: event.over?.id,
+      overData: event.over?.data.current
+    });
+    
+    // Use the external handler for task drops
     onExternalDragEnd(event);
   };
 
@@ -289,8 +320,21 @@ export function KanbanBoard({
       }}
       sensors={sensors}
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      collisionDetection={(args) => {
+        // First try pointer within for better targeting of columns
+        const pointerCollisions = pointerWithin(args);
+        if (pointerCollisions.length) return pointerCollisions;
+        
+        // Then try rectangle intersection
+        const rectCollisions = rectIntersection(args);
+        if (rectCollisions.length) return rectCollisions;
+        
+        // Finally fall back to closest center
+        return closestCenter(args);
+      }}
     >
       <BoardContainer>
         <SortableContext items={columnsId}>
@@ -306,7 +350,7 @@ export function KanbanBoard({
               handleColorChange={handleColorChange}
               setEditingColumnId={setEditingColumnId}
               onLeadClick={onLeadClick}
-              isPreviewTarget={previewColumnId === column.id}
+              isPreviewTarget={previewColumnId === column.id || currentOver === column.id}
               previewLead={column.id === previewColumnId ? previewLead : null}
             />
           ))}
@@ -338,6 +382,7 @@ export function KanbanBoard({
             {activeLead && (
               <TaskCard
                 lead={activeLead}
+                columnId={pickedUpLeadColumn.current || ""}
                 isOverlay
               />
             )}

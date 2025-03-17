@@ -73,9 +73,11 @@ export function BoardColumn({
           "h-full border rounded-md flex flex-col",
           isDragging ? "opacity-50" : "opacity-100",
           isOverlay ? "ring-2 ring-primary shadow-lg" : "",
-          isPreviewTarget ? "ring-2 ring-blue-400" : ""
+          isPreviewTarget ? "ring-2 ring-blue-400" : "",
+          "drop-target" // Add a class for targeting
         )}
         style={{ borderTopColor: colorVar, borderTopWidth: '4px' }}
+        data-column-id={id} // Add data attribute for easier targeting
       >
         <CardHeader className="p-3 flex flex-row items-center justify-between border-b">
           <div className="flex items-center">
@@ -109,13 +111,18 @@ export function BoardColumn({
           </div>
         </CardHeader>
         
-        <CardContent className="p-2 overflow-auto flex-1 flex flex-col gap-2">
+        <CardContent 
+          className="p-2 overflow-auto flex-1 flex flex-col gap-2"
+          data-droppable="true"
+          data-column-id={id}
+        >
           {/* If we have a preview lead, show it at the top with a highlight */}
           {previewLead && (
             <div className="relative pb-1">
               <div className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-md opacity-50" />
               <TaskCard
                 lead={previewLead}
+                columnId={id} // Pass column ID
                 isPreview={true}
               />
             </div>
@@ -131,6 +138,7 @@ export function BoardColumn({
                 <TaskCard
                   key={lead.id}
                   lead={lead}
+                  columnId={id} // Pass column ID
                   onClick={() => onLeadClick(lead)}
                 />
               ))
@@ -148,7 +156,7 @@ export function BoardColumn({
 
 export function BoardContainer({ children }: { children: React.ReactNode }) {
   return (
-    <div className="column-container pb-4 touch-manipulation">
+    <div className="column-container flex flex-row gap-4 h-full overflow-x-auto pb-4 pt-2 px-2 touch-manipulation">
       {children}
     </div>
   );

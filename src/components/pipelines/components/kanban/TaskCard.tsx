@@ -18,7 +18,7 @@ export interface Task {
 export interface TaskDragData {
   type: "Task";
   task: Task;
-  columnId?: string; // Added to help track source column
+  columnId: string; // Always include column ID
   lead?: Lead;
 }
 
@@ -41,6 +41,13 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId }
 
   if (!taskData) return null;
 
+  // Ensure columnId is always present
+  const actualColumnId = columnId || taskData.columnId;
+  
+  if (!actualColumnId) {
+    console.warn("Missing columnId for task", taskData);
+  }
+
   const {
     setNodeRef,
     attributes,
@@ -52,8 +59,11 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId }
     id: taskData.id,
     data: {
       type: "Task",
-      task: taskData,
-      columnId: columnId || lead?.status, // Pass column ID to the drag context
+      task: {
+        ...taskData,
+        columnId: actualColumnId, // Ensure column ID is set
+      },
+      columnId: actualColumnId, // Explicitly set for easy access
       lead: lead,
     } as TaskDragData,
     attributes: {
@@ -79,7 +89,8 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId }
         "bg-card border shadow-sm",
         isDragging ? "opacity-50" : "opacity-100",
         isOverlay ? "ring-2 ring-primary shadow-md" : "",
-        previewStyles
+        previewStyles,
+        "cursor-grab active:cursor-grabbing"
       )}
       onClick={onClick}
     >
@@ -90,7 +101,7 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId }
             variant="ghost"
             {...attributes}
             {...listeners}
-            className="p-1 text-primary/50 h-auto cursor-grab -mr-2 -mt-1"
+            className="p-1 text-primary/50 h-auto cursor-grab active:cursor-grabbing -mr-2 -mt-1"
           >
             <span className="sr-only">{`Move task: ${taskData.content}`}</span>
             <GripVertical className="h-4 w-4" />
