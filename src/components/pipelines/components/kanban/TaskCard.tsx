@@ -1,0 +1,105 @@
+
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Lead } from "@/pages/dashboard/leads";
+import { UniqueIdentifier } from "@dnd-kit/core";
+import { Mail, Phone } from "lucide-react";
+
+export interface Task {
+  id: UniqueIdentifier;
+  columnId: string;
+  content: string;
+}
+
+export interface TaskDragData {
+  type: "Task";
+  task: Task;
+}
+
+export interface TaskCardProps {
+  task?: Task;
+  lead?: Lead;
+  isOverlay?: boolean;
+  onClick?: () => void;
+}
+
+export function TaskCard({ task, lead, isOverlay, onClick }: TaskCardProps) {
+  // Use either the task from props or create one from the lead
+  const taskData = task || (lead ? {
+    id: lead.id,
+    columnId: lead.status || "",
+    content: lead.name || "Unnamed Lead"
+  } : undefined);
+
+  if (!taskData) return null;
+
+  const {
+    setNodeRef,
+    attributes,
+    listeners,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: taskData.id,
+    data: {
+      type: "Task",
+      task: taskData,
+    } as TaskDragData,
+    attributes: {
+      roleDescription: `Task: ${taskData.content}`,
+    },
+  });
+
+  const style = {
+    transition,
+    transform: CSS.Translate.toString(transform),
+  };
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={`bg-card border border-border/50 shadow-sm ${
+        isDragging ? "opacity-50" : "opacity-100"
+      } ${isOverlay ? "ring-2 ring-primary" : ""}`}
+      onClick={onClick}
+    >
+      <CardContent className="p-3 flex flex-col gap-2">
+        <div className="flex items-start justify-between">
+          <div className="font-medium text-sm">{taskData.content}</div>
+          <Button
+            variant="ghost"
+            {...attributes}
+            {...listeners}
+            className="p-1 text-primary/50 h-auto cursor-grab -mr-2 -mt-1"
+          >
+            <span className="sr-only">{`Move task: ${taskData.content}`}</span>
+            <GripVertical className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {lead && (
+          <div className="space-y-1">
+            {lead.email && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Mail className="h-3 w-3" />
+                <span className="truncate max-w-[200px]">{lead.email}</span>
+              </div>
+            )}
+            
+            {lead.phone && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Phone className="h-3 w-3" />
+                <span>{lead.phone}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

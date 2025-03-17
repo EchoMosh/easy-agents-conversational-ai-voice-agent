@@ -108,3 +108,40 @@
 .touch-manipulation {
   touch-action: manipulation;
 }
+
+/* Kanban board styles */
+.board-column {
+  @apply h-[500px] max-h-[500px] w-[350px] max-w-full bg-primary-foreground flex flex-col flex-shrink-0 snap-center;
+}
+
+.board-column-dragging {
+  @apply ring-2 opacity-30;
+}
+
+.board-column-overlay {
+  @apply ring-2 ring-primary;
+}
+
+.column-header {
+  @apply p-4 font-semibold border-b-2 text-left flex flex-row space-between items-center;
+}
+
+.column-container {
+  @apply px-2 md:px-0 flex lg:justify-center pb-4 snap-x snap-mandatory;
+}
+
+.column-container-dragging {
+  @apply snap-none;
+}
+
+.task-card {
+  @apply bg-card border border-border/50 shadow-sm;
+}
+
+.task-card-dragging {
+  @apply opacity-50;
+}
+
+.task-card-overlay {
+  @apply ring-2 ring-primary;
+}

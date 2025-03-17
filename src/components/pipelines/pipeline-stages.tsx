@@ -6,7 +6,7 @@ import { useStages } from "@/hooks/pipeline/use-stages";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { KanbanBoard } from "./components/kanban/board";
+import { KanbanBoard } from "./components/kanban/KanbanBoard";
 import { DragEndEvent } from "@dnd-kit/core";
 
 interface PipelineStagesProps {
