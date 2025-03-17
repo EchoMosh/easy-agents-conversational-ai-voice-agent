@@ -115,6 +115,9 @@ export function PipelineStages({
       
       await handleDeleteStage(cleanedPipeline.id, column, cleanedPipeline.columns, pipelineLeads);
       console.log(`PipelineStages: Stage "${column.title}" deleted successfully`);
+      
+      // Toast confirmation
+      toast.success(`Stage "${column.title}" deleted successfully`);
       return;
     } catch (error) {
       console.error("PipelineStages: Error deleting stage:", error);

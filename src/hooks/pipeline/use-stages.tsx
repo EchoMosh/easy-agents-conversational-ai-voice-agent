@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PipelineColumn } from "@/types/pipeline";
 import { supabase } from "@/integrations/supabase/client";
@@ -217,36 +218,55 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
     columns: PipelineColumn[],
     leads: Lead[]
   ) => {
-    const validation = validateStageForDeletion(column, pipelineId, columns);
-    if (!validation.isValid) {
-      toast({
-        title: "Cannot delete stage",
-        description: validation.error,
-        variant: "destructive"
-      });
-      
-      throw new Error(validation.error);
-    }
-    
-    const { hasLeads, leadsCount } = checkForLeadsInStage(column, pipelineId, leads);
-    
-    if (hasLeads) {
-      const errorMessage = `This stage contains ${leadsCount} lead${leadsCount > 1 ? 's' : ''}. Please move or delete them first.`;
-      toast({
-        title: "Cannot delete stage",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      
-      throw new Error("Cannot delete stage with leads");
-    }
+    console.log("Starting handleDeleteStage process...");
+    console.log("Params:", { 
+      pipelineId, 
+      columnId: column?.id, 
+      columnTitle: column?.title, 
+      columnsCount: columns.length,
+      leadsCount: leads.length
+    });
     
     try {
-      console.log("Deleting stage:", column.title, "from pipeline:", pipelineId);
+      // First validate the deletion
+      const validation = validateStageForDeletion(column, pipelineId, columns);
+      if (!validation.isValid) {
+        console.warn("Stage validation failed:", validation.error);
+        toast({
+          title: "Cannot delete stage",
+          description: validation.error,
+          variant: "destructive"
+        });
+        
+        throw new Error(validation.error);
+      }
+      
+      // Check for leads in this stage
+      const { hasLeads, leadsCount } = checkForLeadsInStage(column, pipelineId, leads);
+      
+      if (hasLeads) {
+        const errorMessage = `This stage contains ${leadsCount} lead${leadsCount > 1 ? 's' : ''}. Please move or delete them first.`;
+        console.warn(errorMessage);
+        
+        toast({
+          title: "Cannot delete stage",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        
+        throw new Error("Cannot delete stage with leads");
+      }
+      
+      // Proceed with stage deletion since validation passed
+      console.log("Validation passed, deleting stage:", column.title, "from pipeline:", pipelineId);
+      
+      // Create a new array of columns without the one being deleted
       const newColumns = columns.filter(col => col.id !== column.id);
       
+      // Update local state immediately for better UX
       onReorderColumns(newColumns);
       
+      // Update the query cache to reflect changes
       queryClient.setQueryData(["pipelines"], (oldData: any) => {
         if (!oldData) return oldData;
         
@@ -261,12 +281,14 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         });
       });
       
+      // Format columns for database update
       const columnsForDb = newColumns.map(col => ({
         id: col.id,
         title: col.title,
         color: col.color
       }));
       
+      // Update the database
       const { error } = await supabase
         .from("pipelines")
         .update({
@@ -278,16 +300,25 @@ export function useStages(onReorderColumns: (newOrder: PipelineColumn[]) => void
         console.error("Database error when deleting stage:", error);
         throw error;
       }
+      
+      // Success - we don't need a toast here as the component will show its own
+      console.log("Stage deleted successfully:", column.title);
+      
+      // Return void to indicate success
+      return;
     } catch (error) {
+      console.error("Error in handleDeleteStage:", error);
+      
+      // Don't throw again if it's one of our expected validation errors
       if ((error as Error).message === "Cannot delete stage with leads" || 
           (error as Error).message === "Cannot delete the last stage in a pipeline") {
         return;
       }
       
-      console.error("Error deleting stage:", error);
-      
+      // If it's another error, refresh the state and throw
       queryClient.invalidateQueries({ queryKey: ["pipelines"] });
       
+      // Re-throw for the component to handle
       throw error;
     }
   };

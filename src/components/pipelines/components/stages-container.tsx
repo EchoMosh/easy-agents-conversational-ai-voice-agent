@@ -82,6 +82,8 @@ export function StagesContainer({
   
   // Get leads for each column - use case-insensitive comparison
   const getColumnLeads = (column: PipelineColumn) => {
+    if (!column?.title) return [];
+    
     const columnLeads = pipelineLeads.filter(
       lead => lead.status && 
              column.title && 
@@ -110,8 +112,6 @@ export function StagesContainer({
     try {
       console.log(`StagesContainer: Confirming deletion of stage ${column.title} (${column.id})`);
       await onDeleteStage(column);
-      toast.success(`Stage "${column.title}" deleted successfully`);
-      console.log(`StagesContainer: Stage ${column.title} deleted successfully`);
       setStageToDelete(null);
     } catch (error) {
       console.error("Error in handleDeleteStageConfirm:", error);
