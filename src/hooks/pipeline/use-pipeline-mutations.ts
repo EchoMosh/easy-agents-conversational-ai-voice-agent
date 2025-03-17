@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { defaultColumns } from "./default-columns";
+import { Json } from "@/integrations/supabase/types";
 
 // Helper to ensure no column has an empty title
 const ensureValidTitles = (columns: PipelineColumn[]): PipelineColumn[] => {
@@ -11,6 +12,11 @@ const ensureValidTitles = (columns: PipelineColumn[]): PipelineColumn[] => {
     ...col,
     title: col.title || "Untitled Stage" // Provide default title if empty
   }));
+};
+
+// Helper to convert PipelineColumn[] to a JSON-compatible format
+const columnsToJson = (columns: PipelineColumn[]): Json => {
+  return columns as unknown as Json;
 };
 
 export function usePipelineMutations(
@@ -34,7 +40,8 @@ export function usePipelineMutations(
         .insert([
           {
             name,
-            columns: ensureValidTitles(columns),
+            columns: columnsToJson(ensureValidTitles(columns)),
+            user_id: (await supabase.auth.getUser()).data.user?.id,
           },
         ])
         .select()
@@ -81,7 +88,7 @@ export function usePipelineMutations(
       const { error } = await supabase
         .from("pipelines")
         .update({
-          columns: ensureValidTitles(updatedColumns)
+          columns: columnsToJson(ensureValidTitles(updatedColumns))
         })
         .eq("id", pipeline.id);
 

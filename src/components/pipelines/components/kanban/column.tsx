@@ -152,7 +152,7 @@ export function KanbanColumn({
                         key={color.value}
                         className={`w-5 h-5 rounded-full ${color.value} hover:ring-2 ring-offset-1`}
                         onClick={() => handleColorChange(column.id, color.value)}
-                        aria-label={`Select ${color.label} color`}
+                        aria-label={`Select ${color.name} color`}
                       />
                     ))}
                   </div>
