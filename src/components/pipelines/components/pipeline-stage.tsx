@@ -47,6 +47,9 @@ export function PipelineStage({
 
   // Extract color without the bg- prefix for the dot
   const colorClass = column.color.replace('bg-', '');
+  
+  // Make sure column title is never empty
+  const displayTitle = column.title || "Untitled Stage";
 
   return (
     <div className="h-full w-full">
@@ -59,7 +62,7 @@ export function PipelineStage({
           <div className="flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
             {!isEditing ? (
-              <h3 className="text-lg font-semibold">{column.title}</h3>
+              <h3 className="text-lg font-semibold">{displayTitle}</h3>
             ) : (
               <StageHeader
                 column={column}

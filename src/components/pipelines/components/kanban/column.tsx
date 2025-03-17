@@ -1,56 +1,75 @@
 
-import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Pencil, ChevronLeft, ChevronRight, MoreVertical, Trash2 } from "lucide-react";
+import { UniqueIdentifier } from "@dnd-kit/core";
+import { Lead } from "@/pages/dashboard/leads";
+import { MoreHorizontal, ChevronLeft, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PipelineColumn } from "@/types/pipeline";
-import { Lead } from "@/pages/dashboard/leads";
+import { TaskCard } from "./TaskCard";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { colorOptions } from "../../constants/color-options";
-import { KanbanTask } from "./task";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+
+export interface ColumnDragData {
+  type: "Column";
+  column: PipelineColumn;
+}
 
 interface KanbanColumnProps {
   column: PipelineColumn;
   columnLeads: Lead[];
-  isEditing: boolean;
-  isCollapsed: boolean;
-  editingColumnTitle: string;
-  onEditColumnTitle: (e: React.KeyboardEvent) => void;
-  setEditingColumnTitle: (title: string) => void;
-  handleColorChange: (columnId: string, color: string) => void;
-  onDeleteStage: (column: PipelineColumn) => void;
-  toggleColumnCollapse: (columnId: string) => void;
-  setEditingColumnId: (id: string) => void;
-  onLeadClick: (lead: Lead) => void;
+  isEditing?: boolean;
+  isCollapsed?: boolean;
+  editingColumnTitle?: string;
+  onEditColumnTitle?: (e: React.KeyboardEvent) => void;
+  setEditingColumnTitle?: (title: string) => void;
+  handleColorChange?: (columnId: string, color: string) => void;
+  onDeleteStage?: (column: PipelineColumn) => void;
+  toggleColumnCollapse?: () => void;
+  setEditingColumnId?: (id: string | null) => void;
+  onLeadClick?: (lead: Lead) => void;
+  isPreview?: boolean;
   currentPipelineId?: string;
 }
 
 export function KanbanColumn({
   column,
   columnLeads,
-  isEditing,
-  isCollapsed,
-  editingColumnTitle,
-  onEditColumnTitle,
-  setEditingColumnTitle,
-  handleColorChange,
-  onDeleteStage,
-  toggleColumnCollapse,
-  setEditingColumnId,
-  onLeadClick,
-  currentPipelineId
+  isEditing = false,
+  isCollapsed = false,
+  editingColumnTitle = "",
+  onEditColumnTitle = () => {},
+  setEditingColumnTitle = () => {},
+  handleColorChange = () => {},
+  onDeleteStage = () => {},
+  toggleColumnCollapse = () => {},
+  setEditingColumnId = () => {},
+  onLeadClick = () => {},
+  isPreview = false,
+  currentPipelineId,
 }: KanbanColumnProps) {
-  const [showOptionsDialog, setShowOptionsDialog] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
   
+  // Make sure column title is never empty
+  const displayTitle = column.title || "Untitled Stage";
+
   const {
+    setNodeRef,
     attributes,
     listeners,
-    setNodeRef,
     transform,
     transition,
     isDragging,
@@ -59,214 +78,121 @@ export function KanbanColumn({
     data: {
       type: "Column",
       column,
-    },
+    } as ColumnDragData,
+    disabled: isLocked || isEditing || isPreview,
   });
-  
+
   const style = {
-    transform: CSS.Transform.toString(transform),
     transition,
+    transform: CSS.Translate.toString(transform),
   };
 
-  // Handlers with proper event stopping
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Delete stage clicked from options dialog:", column.title);
-    setShowOptionsDialog(false);
-    onDeleteStage(column);
-  };
-
-  const handleColorChangeClick = (e: React.MouseEvent, color: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleColorChange(column.id, color);
-  };
-
-  const handleEditTitleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowOptionsDialog(false);
-    setEditingColumnId(column.id);
-    setEditingColumnTitle(column.title);
-  };
-
-  const handleCollapseToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleColumnCollapse(column.id);
-  };
-
-  const handleOptionsClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowOptionsDialog(true);
-    console.log("Options button clicked, dialog should open:", !showOptionsDialog);
-  };
+  // Get color class for the column header
+  const colorClass = column.color || "bg-gray-500";
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`touch-manipulation ${isDragging ? "opacity-50" : "opacity-100"}`}
+      className={cn(
+        "h-full w-[350px] flex flex-col bg-card rounded-lg border shadow-sm",
+        isDragging ? "opacity-50 border-dashed" : "",
+        isPreview ? "column-preview-target" : ""
+      )}
       {...attributes}
     >
-      <Card className={`h-full flex flex-col bg-muted/30 ${
-        isCollapsed ? "w-16" : "w-[300px]"
-      } border-t-4 rounded-lg overflow-hidden`}
-      style={{ borderTopColor: column.color.replace("bg-", "").includes("-") ? 
-        `var(--${column.color.replace("bg-", "").replace("-", "-")})` : 
-        `var(--${column.color.replace("bg-", "")})` }}
+      <div 
+        className="py-2 px-4 font-medium border-b text-left flex flex-row justify-between items-center"
+        style={{ 
+          borderTopWidth: "4px", 
+          borderTopStyle: "solid",
+          borderTopColor: `var(--${colorClass.replace('bg-', '')})` 
+        }}
       >
-        <CardHeader 
-          className={`p-3 flex items-center ${isCollapsed ? "flex-col" : "justify-between"} gap-2 bg-background/60`}
-          {...listeners}
-        >
-          <div className={`flex items-center ${isCollapsed ? "flex-col" : "space-x-3"} flex-1`}>
-            {isEditing ? (
-              <Input
-                value={editingColumnTitle}
-                onChange={(e) => setEditingColumnTitle(e.target.value)}
-                onKeyDown={onEditColumnTitle}
-                className="h-8 text-base"
-                autoFocus
-                onClick={(e) => e.stopPropagation()}
-              />
-            ) : (
-              <>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <div 
-                      className={`${column.color} cursor-pointer rounded-md transition-all ring-offset-2 hover:ring-2 ring-offset-background ring-gray-200 dark:ring-gray-700 ${
-                        isCollapsed ? "w-6 h-6 mb-2" : "w-4 h-4"
-                      }`}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-2" onClick={(e) => e.stopPropagation()}>
-                    <div className="grid grid-cols-4 gap-1">
-                      {colorOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          className={`w-8 h-8 rounded-md ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
-                            column.color === option.value ? "ring-2" : ""
-                          }`}
-                          onClick={(e) => handleColorChangeClick(e, option.value)}
-                          title={option.name}
-                        />
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <div 
-                  className="group flex items-center gap-1 cursor-pointer"
-                  onClick={handleEditTitleClick}
-                >
-                  <h3 
-                    className={`text-lg font-medium transition-all ${
-                      isCollapsed ? "transform writing-mode-vertical-lr mt-2 whitespace-nowrap" : ""
-                    }`}
-                  >
-                    {column.title}
-                  </h3>
-                  <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            {!isCollapsed && (
-              <>
-                <div className="flex items-center">
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {columnLeads.length}
-                  </span>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={handleOptionsClick}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-8 w-8 text-muted-foreground ${isCollapsed ? "mt-2" : ""}`}
-              onClick={handleCollapseToggle}
-            >
-              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Button>
-          </div>
-        </CardHeader>
+        <div className="flex items-center gap-2" {...listeners}>
+          <Menu className="h-4 w-4 text-muted-foreground cursor-grab" />
+          <div className={`w-3 h-3 rounded-full ${colorClass}`} />
+          
+          {isEditing ? (
+            <Input
+              value={editingColumnTitle}
+              onChange={(e) => setEditingColumnTitle(e.target.value)}
+              onKeyDown={onEditColumnTitle}
+              autoFocus
+              className="h-7 text-sm"
+            />
+          ) : (
+            <h3 className="text-sm font-medium">{displayTitle}</h3>
+          )}
+        </div>
 
-        {!isCollapsed && (
-          <CardContent className="p-3 flex-grow overflow-auto">
-            <SortableContext 
-              items={columnLeads.map(lead => lead.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="flex flex-col gap-2">
-                {columnLeads.length > 0 ? (
-                  columnLeads.map((lead) => (
-                    <KanbanTask 
-                      key={lead.id} 
-                      lead={lead}
-                      columnId={column.id}
-                      onClick={() => onLeadClick(lead)}
-                    />
-                  ))
-                ) : (
-                  <div className="flex items-center justify-center h-24 border border-dashed rounded-md border-muted-foreground/20">
-                    <p className="text-sm text-muted-foreground">
-                      Drop leads here
-                    </p>
+        <div className="flex items-center gap-1">
+          <span className="text-sm">{columnLeads.length}</span>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setEditingColumnId(column.id)}>
+                Rename
+              </DropdownMenuItem>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    Change Color
+                  </DropdownMenuItem>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2" align="end">
+                  <div className="flex flex-wrap gap-2 max-w-[220px]">
+                    {colorOptions.map((color) => (
+                      <button
+                        key={color.value}
+                        className={`w-5 h-5 rounded-full ${color.value} hover:ring-2 ring-offset-1`}
+                        onClick={() => handleColorChange(column.id, color.value)}
+                        aria-label={`Select ${color.label} color`}
+                      />
+                    ))}
                   </div>
-                )}
-              </div>
-            </SortableContext>
-          </CardContent>
-        )}
-
-        {/* Options Dialog */}
-        <Dialog 
-          open={showOptionsDialog} 
-          onOpenChange={(open) => {
-            console.log("Dialog open state changing to:", open);
-            setShowOptionsDialog(open);
-          }}
-        >
-          <DialogContent 
-            className="sm:max-w-[320px]"
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
+                </PopoverContent>
+              </Popover>
+              <DropdownMenuItem 
+                className="text-destructive"
+                onClick={() => onDeleteStage(column)}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={toggleColumnCollapse}
           >
-            <DialogHeader>
-              <DialogTitle>Stage Options: {column.title}</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-3 py-4">
-              <Button 
-                variant="outline" 
-                className="justify-start text-left"
-                onClick={handleEditTitleClick}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Stage Name
-              </Button>
-              <Button 
-                variant="outline" 
-                className="justify-start text-left text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={handleDeleteClick}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Stage
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </Card>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      
+      <div className="p-2 flex-1 overflow-y-auto space-y-2 min-h-[400px]">
+        {columnLeads.length === 0 ? (
+          <div className="min-h-[100px] flex items-center justify-center border border-dashed rounded-lg bg-muted/30">
+            <p className="text-sm text-muted-foreground">Drop leads here</p>
+          </div>
+        ) : (
+          columnLeads.map((lead) => (
+            <TaskCard 
+              key={lead.id} 
+              lead={lead} 
+              onClick={() => onLeadClick(lead)} 
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 }
