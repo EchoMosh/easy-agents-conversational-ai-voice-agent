@@ -19,14 +19,13 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     const leadId = String(active.id);
     const newColumnId = String(over.id);
     
-    // First check if this is a stage reordering operation (both IDs match column IDs)
-    const isActiveIdAColumn = selectedPipeline.columns.some(col => col.id === leadId);
-    const isTargetIdAColumn = selectedPipeline.columns.some(col => col.id === newColumnId);
-    
-    // If this appears to be a stage operation rather than a lead drag, exit early
-    if (isActiveIdAColumn || (leadId === 'new')) {
-      console.log(`Stage operation detected: ${leadId} -> ${newColumnId}, skipping lead drag handler`);
-      return;
+    // Check if this is a drag operation between stages (for reordering)
+    const allColumnIds = selectedPipeline.columns.map(col => col.id);
+    const isStageReordering = allColumnIds.includes(leadId) && allColumnIds.includes(newColumnId);
+
+    if (isStageReordering) {
+      console.log(`Stage reordering detected: ${leadId} -> ${newColumnId}`);
+      return; // Let the stage reordering handler take care of this
     }
     
     // At this point, we expect a valid lead ID (UUID format)
@@ -43,12 +42,7 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     }
 
     // Find the target column in the selected pipeline
-    // First, ensure we're working with unique columns
-    const uniqueColumnsMap = new Map();
-    selectedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
-    const uniqueColumns = Array.from(uniqueColumnsMap.values());
-    
-    const targetColumn = uniqueColumns.find(col => col.id === newColumnId);
+    const targetColumn = selectedPipeline.columns.find(col => col.id === newColumnId);
     if (!targetColumn) {
       console.error("Target column not found:", newColumnId);
       return;

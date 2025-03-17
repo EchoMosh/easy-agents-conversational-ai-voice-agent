@@ -1,12 +1,10 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { Lead } from "@/pages/dashboard/leads";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { DroppableColumn } from "@/pages/dashboard/pipelines";
 import { LeadCard } from "@/components/leads/lead-card";
 import { StageHeader } from "./stage-header";
-import { Trash2 } from "lucide-react";
 
 interface PipelineStageProps {
   column: PipelineColumn;
@@ -46,80 +44,51 @@ export function PipelineStage({
   // Log the leads for this column to help with debugging
   console.log(`Column "${column.title}" has ${columnLeads.length} leads in pipeline ${currentPipelineId}`);
 
-  // Separate handler for context menu delete option to completely isolate it from drag events
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Add a delay to ensure we're not conflicting with any drag events
-    setTimeout(() => {
-      console.log("Delete stage clicked from context menu:", column.title, column.id);
-      onDeleteStage(column);
-    }, 50);
-  };
-
   return (
-    <ContextMenu>
-      <ContextMenuTrigger>
-        <DroppableColumn id={column.id}>
-          <Card className={`h-full w-full transition-all duration-300 ${
-            isCollapsed ? "w-16" : ""
-          } border border-gray-200/50 dark:border-gray-800/50 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-900`}>
-            <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
-              <StageHeader
-                column={column}
-                isEditing={isEditing}
-                isCollapsed={isCollapsed}
-                editingColumnTitle={editingColumnTitle}
-                onEditColumnTitle={onEditColumnTitle}
-                setEditingColumnTitle={setEditingColumnTitle}
-                handleColorChange={handleColorChange}
-                onDeleteStage={onDeleteStage}
-                toggleColumnCollapse={toggleColumnCollapse}
-                setEditingColumnId={setEditingColumnId}
+    <DroppableColumn id={column.id}>
+      <Card className={`h-full w-full transition-all duration-300 ${
+        isCollapsed ? "w-16" : ""
+      } border border-gray-200/50 dark:border-gray-800/50 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-900`}>
+        <CardHeader className={`space-y-2 pb-4 ${isCollapsed ? "p-2" : ""}`}>
+          <StageHeader
+            column={column}
+            isEditing={isEditing}
+            isCollapsed={isCollapsed}
+            editingColumnTitle={editingColumnTitle}
+            onEditColumnTitle={onEditColumnTitle}
+            setEditingColumnTitle={setEditingColumnTitle}
+            handleColorChange={handleColorChange}
+            onDeleteStage={onDeleteStage}
+            toggleColumnCollapse={toggleColumnCollapse}
+            setEditingColumnId={setEditingColumnId}
+          />
+          {!isCollapsed && (
+            <div className="text-sm text-muted-foreground/80 font-medium">
+              {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
+            </div>
+          )}
+        </CardHeader>
+        {!isCollapsed && (
+          <CardContent className="space-y-3 pt-2">
+            {columnLeads.map((lead) => (
+              <LeadCard 
+                key={lead.id} 
+                lead={lead}
+                onClick={() => onLeadClick(lead)} 
+                pipelines={allPipelines}
+                currentPipelineId={currentPipelineId}
               />
-              {!isCollapsed && (
-                <div className="text-sm text-muted-foreground/80 font-medium">
-                  {columnLeads.length} lead{columnLeads.length !== 1 ? 's' : ''}
-                </div>
-              )}
-            </CardHeader>
-            {!isCollapsed && (
-              <CardContent className="space-y-3 pt-2">
-                {columnLeads.map((lead) => (
-                  <LeadCard 
-                    key={lead.id} 
-                    lead={lead}
-                    onClick={() => onLeadClick(lead)} 
-                    pipelines={allPipelines}
-                    currentPipelineId={currentPipelineId}
-                  />
-                ))}
-                {columnLeads.length === 0 && (
-                  <div className="min-h-[200px] flex items-center justify-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/20">
-                    <p className="text-sm text-muted-foreground/70 text-center px-4">
-                      Drop leads here
-                    </p>
-                  </div>
-                )}
-              </CardContent>
+            ))}
+            {columnLeads.length === 0 && (
+              <div className="min-h-[200px] flex items-center justify-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/20">
+                <p className="text-sm text-muted-foreground/70 text-center px-4">
+                  Drop leads here
+                </p>
+              </div>
             )}
-          </Card>
-        </DroppableColumn>
-      </ContextMenuTrigger>
-      <ContextMenuContent onClick={(e) => e.stopPropagation()}>
-        <ContextMenuItem 
-          onSelect={(e) => {
-            // Prevent default to stop the automatic closing
-            e.preventDefault();
-            handleDeleteClick(e as any);
-          }}
-          className="text-destructive flex items-center"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete Stage
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+          </CardContent>
+        )}
+      </Card>
+    </DroppableColumn>
   );
 }

@@ -37,8 +37,12 @@ export function DeleteStageDialog({
     e.stopPropagation();
     
     try {
-      if (!stageToDelete) return;
       setError(null);
+      
+      if (!stageToDelete) {
+        console.error("Stage to delete is null");
+        return;
+      }
       
       console.log("DeleteStageDialog: Confirming deletion of stage", stageToDelete.title);
       await onConfirm(stageToDelete);
@@ -52,6 +56,7 @@ export function DeleteStageDialog({
   const handleCancel = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setError(null);
     onClose();
   };
 
@@ -61,6 +66,7 @@ export function DeleteStageDialog({
       onOpenChange={(open) => {
         if (!open) {
           console.log("Dialog closing by onOpenChange");
+          setError(null);
           onClose();
         }
       }}
@@ -68,6 +74,7 @@ export function DeleteStageDialog({
       <AlertDialogContent 
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
+        className="z-[100]"
       >
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Stage</AlertDialogTitle>

@@ -3,8 +3,14 @@ import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, MoreVertical, Trash2, Pencil } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { ChevronLeft, ChevronRight, MoreVertical, Trash2, Pencil, ArrowRightLeft } from "lucide-react";
 import { colorOptions } from "../constants/color-options";
 import { PipelineColumn } from "@/types/pipeline";
 
@@ -33,16 +39,13 @@ export function StageHeader({
   toggleColumnCollapse,
   setEditingColumnId,
 }: StageHeaderProps) {
-  // Handle delete with proper event stopping and delay
+  // Handle delete with proper event stopping
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Use timeout to avoid conflict with drag events
-    setTimeout(() => {
-      console.log("Delete stage clicked from stage header:", column.title);
-      onDeleteStage(column);
-    }, 50);
+    console.log("Delete stage clicked from dropdown menu:", column.title);
+    onDeleteStage(column);
   };
 
   // Handle color change with proper event stopping
@@ -138,13 +141,21 @@ export function StageHeader({
               align="end" 
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()} 
+              className="min-w-[180px] bg-background" // Ensure it has a background
             >
               <DropdownMenuItem 
-                className="text-destructive"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  handleDeleteClick(e as any);
-                }}
+                onClick={handleEditTitleClick}
+                className="flex items-center"
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Stage Name
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem 
+                className="text-destructive flex items-center"
+                onClick={handleDeleteClick}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Stage
