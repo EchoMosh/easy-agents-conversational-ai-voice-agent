@@ -1,15 +1,17 @@
 
-import { DragEndEvent, DragOverEvent } from "@dnd-kit/core";
+import { DragEndEvent, DragOverEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Pipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
+import { toast } from "sonner";
 
 export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[], refetchLeads: () => void) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [previewColumnId, setPreviewColumnId] = useState<string | null>(null);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   // Handle drag over (preview)
   const handleDragOver = (event: DragOverEvent) => {
@@ -30,22 +32,35 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     });
     
     // If we're dragging a task over a column, show preview
-    if (activeType === "Task" && overType === "Column") {
-      setPreviewColumnId(String(over.id));
-    } else if (activeType === "Task" && overType === "Task") {
-      // If dragging over another task, get its column
-      const overColumnId = over.data?.current?.columnId;
-      if (overColumnId) {
-        setPreviewColumnId(overColumnId);
+    if (activeType === "Task") {
+      if (overType === "Column") {
+        // Direct drop on column
+        setPreviewColumnId(String(over.id));
+        // Reset index for drop at the end
+        setPreviewIndex(null);
+      } else if (overType === "Task") {
+        // Dropping over another task
+        const overColumnId = over.data?.current?.columnId;
+        const overIndex = over.data?.current?.index;
+        
+        if (overColumnId) {
+          setPreviewColumnId(overColumnId);
+          if (typeof overIndex === 'number') {
+            setPreviewIndex(overIndex);
+          }
+        }
       }
     } else {
+      // Reset preview
       setPreviewColumnId(null);
+      setPreviewIndex(null);
     }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     // Clear preview state
     setPreviewColumnId(null);
+    setPreviewIndex(null);
     
     const { active, over } = event;
     
@@ -154,5 +169,11 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     }
   };
 
-  return { handleDragEnd, handleDragOver, isUpdating, previewColumnId };
+  return { 
+    handleDragEnd, 
+    handleDragOver, 
+    isUpdating, 
+    previewColumnId,
+    previewIndex 
+  };
 }

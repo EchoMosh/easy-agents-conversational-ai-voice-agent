@@ -15,6 +15,7 @@ interface PipelineStagesProps {
   onDragEnd: (event: DragEndEvent) => void;
   onDragOver?: (event: DragOverEvent) => void;
   previewColumnId?: string | null;
+  previewIndex?: number | null;
   onEditColumnTitle: (columnId: string, newTitle: string) => void;
   onLeadClick: (lead: Lead) => void;
   onAddStage: (stage: PipelineColumn) => void;
@@ -30,6 +31,7 @@ export function PipelineStages({
   onDragEnd,
   onDragOver,
   previewColumnId,
+  previewIndex,
   onEditColumnTitle,
   onLeadClick,
   onAddStage,
@@ -173,6 +175,7 @@ export function PipelineStages({
           onDragEnd={onDragEnd}
           onDragOver={onDragOver}
           previewColumnId={previewColumnId}
+          previewIndex={previewIndex}
           onEditColumnTitle={onEditColumnTitle}
           onLeadClick={onLeadClick}
           onAddStage={(stage) => {

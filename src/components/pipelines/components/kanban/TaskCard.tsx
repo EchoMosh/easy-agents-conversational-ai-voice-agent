@@ -20,6 +20,7 @@ export interface TaskDragData {
   task: Task;
   columnId: string; // Always include column ID
   lead?: Lead;
+  index?: number; // Add index for position tracking
 }
 
 export interface TaskCardProps {
@@ -29,9 +30,10 @@ export interface TaskCardProps {
   isPreview?: boolean;
   onClick?: () => void;
   columnId?: string; // Added to pass current column ID
+  index?: number; // Add index for position tracking
 }
 
-export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId }: TaskCardProps) {
+export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId, index = 0 }: TaskCardProps) {
   // Use either the task from props or create one from the lead
   const taskData = task || (lead ? {
     id: lead.id,
@@ -65,6 +67,7 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId }
       },
       columnId: actualColumnId, // Explicitly set for easy access
       lead: lead,
+      index: index, // Pass the index for sorting
     } as TaskDragData,
     attributes: {
       roleDescription: `Task: ${taskData.content}`,
@@ -86,13 +89,14 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId }
       ref={setNodeRef}
       style={style}
       className={cn(
-        "bg-card border shadow-sm",
-        isDragging ? "opacity-50" : "opacity-100",
-        isOverlay ? "ring-2 ring-primary shadow-md" : "",
+        "bg-card border shadow-sm relative", // Added relative positioning
+        isDragging ? "opacity-50 z-10" : "opacity-100",
+        isOverlay ? "ring-2 ring-primary shadow-md z-50" : "", // Higher z-index for overlay
         previewStyles,
         "cursor-grab active:cursor-grabbing"
       )}
       onClick={onClick}
+      data-task-id={taskData.id} // Add data attribute for easier targeting
     >
       <CardContent className="p-3 flex flex-col gap-2">
         <div className="flex items-start justify-between">

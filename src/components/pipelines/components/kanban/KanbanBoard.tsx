@@ -33,6 +33,7 @@ export interface KanbanBoardProps {
   onDragEnd: (event: DragEndEvent) => void;
   onDragOver?: (event: DragOverEvent) => void;
   previewColumnId?: string | null;
+  previewIndex?: number | null;
   onEditColumnTitle: (columnId: string, newTitle: string) => void;
   onLeadClick: (lead: Lead) => void;
   onAddStage: (stage: PipelineColumn) => void;
@@ -47,6 +48,7 @@ export function KanbanBoard({
   onDragEnd: onExternalDragEnd,
   onDragOver: onExternalDragOver,
   previewColumnId,
+  previewIndex,
   onEditColumnTitle,
   onLeadClick,
   onAddStage,
@@ -73,12 +75,12 @@ export function KanbanBoard({
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 3, // Reduced for more sensitive dragging
+        distance: 2, // Reduced for more sensitive dragging
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 100, // Small delay to prevent accidental touches
+        delay: 50, // Reduced delay for more responsive touch
         tolerance: 5, // Allow some movement during press before canceling
       },
     }),
@@ -352,6 +354,7 @@ export function KanbanBoard({
               onLeadClick={onLeadClick}
               isPreviewTarget={previewColumnId === column.id || currentOver === column.id}
               previewLead={column.id === previewColumnId ? previewLead : null}
+              previewIndex={column.id === previewColumnId ? previewIndex : null}
             />
           ))}
         </SortableContext>

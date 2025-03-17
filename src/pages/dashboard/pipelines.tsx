@@ -74,7 +74,7 @@ export default function PipelinesPage() {
   } = useDeletePipeline(handleDeletePipeline, selectedPipeline?.id);
 
   // When we change a lead's pipeline or status, make sure to refetch the data
-  const { handleDragEnd, handleDragOver, isUpdating, previewColumnId } = usePipelineDrag(selectedPipeline, leads, invalidateAndRefetch);
+  const { handleDragEnd, handleDragOver, isUpdating, previewColumnId, previewIndex } = usePipelineDrag(selectedPipeline, leads, invalidateAndRefetch);
   
   const {
     handleAddStage,
@@ -104,6 +104,7 @@ export default function PipelinesPage() {
               onDragEnd={handleDragEnd}
               onDragOver={handleDragOver}
               previewColumnId={previewColumnId}
+              previewIndex={previewIndex}
               onEditColumnTitle={handleEditColumnTitle}
               onLeadClick={setSelectedLead}
               onAddStage={handleAddStage}

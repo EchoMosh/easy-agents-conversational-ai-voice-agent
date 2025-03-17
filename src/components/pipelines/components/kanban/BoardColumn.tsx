@@ -16,12 +16,16 @@ interface BoardColumnProps {
   columnLeads?: Lead[];
   isOverlay?: boolean;
   isEditing?: boolean;
+  isCollapsed?: boolean;
   isPreviewTarget?: boolean;
   previewLead?: Lead | null;
+  previewIndex?: number | null;
   editingColumnTitle?: string;
   onEditColumnTitle?: (e: React.KeyboardEvent) => void;
   setEditingColumnTitle?: (title: string) => void;
   handleColorChange?: (columnId: string, color: string) => void;
+  onDeleteStage?: (column: PipelineColumn) => void;
+  toggleColumnCollapse?: () => void;
   setEditingColumnId?: (id: string) => void;
   onLeadClick?: (lead: Lead) => void;
 }
@@ -31,12 +35,16 @@ export function BoardColumn({
   columnLeads = [],
   isOverlay,
   isEditing,
+  isCollapsed,
   isPreviewTarget,
   previewLead,
+  previewIndex,
   editingColumnTitle = "",
   onEditColumnTitle = () => {},
   setEditingColumnTitle = () => {},
   handleColorChange = () => {},
+  onDeleteStage = () => {},
+  toggleColumnCollapse = () => {},
   setEditingColumnId = () => {},
   onLeadClick = () => {},
 }: BoardColumnProps) {
@@ -65,6 +73,32 @@ export function BoardColumn({
 
   // Get the color as a CSS variable (e.g., var(--blue-500))
   const colorVar = `var(--${color.replace('bg-', '').replace('-', '-')})`;
+
+  // Determine where to show the preview lead
+  const leadNodes = columnLeads.map((lead, index) => (
+    <TaskCard
+      key={lead.id}
+      lead={lead}
+      columnId={id}
+      index={index}
+      onClick={() => onLeadClick(lead)}
+    />
+  ));
+
+  // Insert preview at specific index if provided
+  if (previewLead && typeof previewIndex === 'number' && previewIndex < leadNodes.length) {
+    leadNodes.splice(previewIndex, 0, (
+      <div key="preview" className="relative pb-1 animate-pulse">
+        <div className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-md opacity-50" />
+        <TaskCard
+          lead={previewLead}
+          columnId={id}
+          isPreview={true}
+          index={previewIndex}
+        />
+      </div>
+    ));
+  }
 
   return (
     <div className="pipeline-stage h-full" ref={setNodeRef} style={style}>
@@ -116,13 +150,13 @@ export function BoardColumn({
           data-droppable="true"
           data-column-id={id}
         >
-          {/* If we have a preview lead, show it at the top with a highlight */}
-          {previewLead && (
-            <div className="relative pb-1">
+          {/* If we have a preview lead at the top of the column (no specific index) */}
+          {previewLead && (previewIndex === null) && (
+            <div className="relative pb-1 animate-pulse">
               <div className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-md opacity-50" />
               <TaskCard
                 lead={previewLead}
-                columnId={id} // Pass column ID
+                columnId={id}
                 isPreview={true}
               />
             </div>
@@ -134,14 +168,7 @@ export function BoardColumn({
             strategy={verticalListSortingStrategy}
           >
             {columnLeads.length > 0 ? (
-              columnLeads.map((lead) => (
-                <TaskCard
-                  key={lead.id}
-                  lead={lead}
-                  columnId={id} // Pass column ID
-                  onClick={() => onLeadClick(lead)}
-                />
-              ))
+              leadNodes
             ) : (
               <div className="flex items-center justify-center h-24 border border-dashed rounded-md p-4 mt-2">
                 <p className="text-sm text-muted-foreground">Drop leads here</p>
