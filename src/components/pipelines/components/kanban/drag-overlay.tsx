@@ -5,10 +5,10 @@ import { Lead } from "@/pages/dashboard/leads";
 import { PipelineColumn } from "@/types/pipeline";
 import { KanbanColumn } from "./column";
 import { TaskCard } from "./TaskCard";
-import { type ActiveDragItem } from "./hooks/use-kanban-drag";
+import { type ActiveItem } from "./hooks/use-kanban-drag";
 
 interface DragOverlayContainerProps {
-  activeItem: ActiveDragItem | null;
+  activeItem: ActiveItem | null;
   activeLead?: Lead | null;
   activeColumn?: PipelineColumn | null;
   getColumnLeads?: (columnId: string) => Lead[];
