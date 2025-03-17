@@ -3,16 +3,11 @@ import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, MoreVertical, Trash2, Pencil, ArrowRightLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, MoreVertical, Trash2, Pencil } from "lucide-react";
 import { colorOptions } from "../constants/color-options";
 import { PipelineColumn } from "@/types/pipeline";
+import { useState } from "react";
 
 interface StageHeaderProps {
   column: PipelineColumn;
@@ -39,12 +34,15 @@ export function StageHeader({
   toggleColumnCollapse,
   setEditingColumnId,
 }: StageHeaderProps) {
+  const [showOptionsDialog, setShowOptionsDialog] = useState(false);
+  
   // Handle delete with proper event stopping
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("Delete stage clicked from dropdown menu:", column.title);
+    console.log("Delete stage clicked from options dialog:", column.title);
+    setShowOptionsDialog(false);
     onDeleteStage(column);
   };
 
@@ -59,6 +57,7 @@ export function StageHeader({
   const handleEditTitleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setShowOptionsDialog(false);
     setEditingColumnId(column.id);
     setEditingColumnTitle(column.title);
   };
@@ -68,6 +67,13 @@ export function StageHeader({
     e.preventDefault();
     e.stopPropagation();
     toggleColumnCollapse(column.id);
+  };
+
+  // Handle options button click
+  const handleOptionsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowOptionsDialog(true);
   };
 
   return (
@@ -126,42 +132,14 @@ export function StageHeader({
       </div>
       <div className="flex items-center gap-1">
         {!isCollapsed && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()} 
-              className="min-w-[180px] bg-background" // Ensure it has a background
-            >
-              <DropdownMenuItem 
-                onClick={handleEditTitleClick}
-                className="flex items-center"
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Stage Name
-              </DropdownMenuItem>
-              
-              <DropdownMenuSeparator />
-              
-              <DropdownMenuItem 
-                className="text-destructive flex items-center"
-                onClick={handleDeleteClick}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Stage
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={handleOptionsClick}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
         )}
         <Button
           variant="ghost"
@@ -172,6 +150,37 @@ export function StageHeader({
           {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
+
+      {/* Options Dialog */}
+      <Dialog open={showOptionsDialog} onOpenChange={setShowOptionsDialog}>
+        <DialogContent 
+          className="sm:max-w-[320px]"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <DialogHeader>
+            <DialogTitle>Stage Options</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 py-4">
+            <Button 
+              variant="outline" 
+              className="justify-start text-left"
+              onClick={handleEditTitleClick}
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Stage Name
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start text-left text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={handleDeleteClick}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Stage
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
