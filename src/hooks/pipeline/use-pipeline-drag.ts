@@ -1,5 +1,5 @@
 
-import { DragEndEvent } from "@dnd-kit/core";
+import { DragEndEvent, DragOverEvent } from "@dnd-kit/core";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +9,30 @@ import { Lead } from "@/pages/dashboard/leads";
 export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[], refetchLeads: () => void) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [previewColumnId, setPreviewColumnId] = useState<string | null>(null);
+
+  // Handle drag over (preview)
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    
+    if (!over || !selectedPipeline) return;
+
+    // Get data from the event
+    const activeType = active.data?.current?.type;
+    const overType = over.data?.current?.type;
+    
+    // If we're dragging a task over a column, show preview
+    if (activeType === "Task" && overType === "Column") {
+      setPreviewColumnId(String(over.id));
+    } else {
+      setPreviewColumnId(null);
+    }
+  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    // Clear preview state
+    setPreviewColumnId(null);
+    
     const { active, over } = event;
     
     if (!over || !selectedPipeline || isUpdating) return;
@@ -101,5 +123,5 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     }
   };
 
-  return { handleDragEnd, isUpdating };
+  return { handleDragEnd, handleDragOver, isUpdating, previewColumnId };
 }

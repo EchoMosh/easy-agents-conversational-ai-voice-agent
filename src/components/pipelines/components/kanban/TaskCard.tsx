@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Lead } from "@/pages/dashboard/leads";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { Mail, Phone } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface Task {
   id: UniqueIdentifier;
@@ -23,10 +24,11 @@ export interface TaskCardProps {
   task?: Task;
   lead?: Lead;
   isOverlay?: boolean;
+  isPreview?: boolean;
   onClick?: () => void;
 }
 
-export function TaskCard({ task, lead, isOverlay, onClick }: TaskCardProps) {
+export function TaskCard({ task, lead, isOverlay, isPreview, onClick }: TaskCardProps) {
   // Use either the task from props or create one from the lead
   const taskData = task || (lead ? {
     id: lead.id,
@@ -59,13 +61,21 @@ export function TaskCard({ task, lead, isOverlay, onClick }: TaskCardProps) {
     transform: CSS.Translate.toString(transform),
   };
 
+  // When a card is in preview mode, we show it with a blue highlight
+  const previewStyles = isPreview
+    ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-md"
+    : "";
+
   return (
     <Card
       ref={setNodeRef}
       style={style}
-      className={`bg-card border border-border/50 shadow-sm ${
-        isDragging ? "opacity-50" : "opacity-100"
-      } ${isOverlay ? "ring-2 ring-primary" : ""}`}
+      className={cn(
+        "bg-card border shadow-sm",
+        isDragging ? "opacity-50" : "opacity-100",
+        isOverlay ? "ring-2 ring-primary shadow-md" : "",
+        previewStyles
+      )}
       onClick={onClick}
     >
       <CardContent className="p-3 flex flex-col gap-2">

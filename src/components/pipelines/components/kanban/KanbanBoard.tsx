@@ -14,7 +14,6 @@ import {
   useSensors,
   UniqueIdentifier,
   Announcements,
-  Active,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { Lead } from "@/pages/dashboard/leads";
@@ -28,6 +27,8 @@ export interface KanbanBoardProps {
   pipeline: Pipeline;
   leads: Lead[];
   onDragEnd: (event: DragEndEvent) => void;
+  onDragOver?: (event: DragOverEvent) => void;
+  previewColumnId?: string | null;
   onEditColumnTitle: (columnId: string, newTitle: string) => void;
   onLeadClick: (lead: Lead) => void;
   onAddStage: (stage: PipelineColumn) => void;
@@ -40,6 +41,8 @@ export function KanbanBoard({
   pipeline,
   leads,
   onDragEnd: onExternalDragEnd,
+  onDragOver: onExternalDragOver,
+  previewColumnId,
   onEditColumnTitle,
   onLeadClick,
   onAddStage,
@@ -229,6 +232,11 @@ export function KanbanBoard({
 
   // Handle drag over
   const handleDragOver = (event: DragOverEvent) => {
+    // Call the external drag over handler if provided
+    if (onExternalDragOver) {
+      onExternalDragOver(event);
+    }
+    
     const { active, over } = event;
     
     if (!over || !hasDraggableData(active) || !hasDraggableData(over)) return;
@@ -267,6 +275,13 @@ export function KanbanBoard({
     onExternalDragEnd(event);
   };
 
+  // Find preview lead if there's a preview column
+  const previewLead = activeLead && previewColumnId ? {
+    ...activeLead,
+    status: pipeline.columns.find(col => col.id === previewColumnId)?.title || activeLead.status,
+    pipeline_id: pipeline.id
+  } : null;
+
   return (
     <DndContext
       accessibility={{
@@ -291,6 +306,8 @@ export function KanbanBoard({
               handleColorChange={handleColorChange}
               setEditingColumnId={setEditingColumnId}
               onLeadClick={onLeadClick}
+              isPreviewTarget={previewColumnId === column.id}
+              previewLead={column.id === previewColumnId ? previewLead : null}
             />
           ))}
         </SortableContext>

@@ -7,12 +7,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { KanbanBoard } from "./components/kanban/KanbanBoard";
-import { DragEndEvent } from "@dnd-kit/core";
+import { DragEndEvent, DragOverEvent } from "@dnd-kit/core";
 
 interface PipelineStagesProps {
   selectedPipeline: Pipeline;
   leads: Lead[];
   onDragEnd: (event: DragEndEvent) => void;
+  onDragOver?: (event: DragOverEvent) => void;
+  previewColumnId?: string | null;
   onEditColumnTitle: (columnId: string, newTitle: string) => void;
   onLeadClick: (lead: Lead) => void;
   onAddStage: (stage: PipelineColumn) => void;
@@ -26,6 +28,8 @@ export function PipelineStages({
   selectedPipeline,
   leads,
   onDragEnd,
+  onDragOver,
+  previewColumnId,
   onEditColumnTitle,
   onLeadClick,
   onAddStage,
@@ -167,6 +171,8 @@ export function PipelineStages({
           pipeline={cleanedPipeline}
           leads={leads}
           onDragEnd={onDragEnd}
+          onDragOver={onDragOver}
+          previewColumnId={previewColumnId}
           onEditColumnTitle={onEditColumnTitle}
           onLeadClick={onLeadClick}
           onAddStage={(stage) => {
