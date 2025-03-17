@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
@@ -10,6 +11,7 @@ import { useStages } from "@/hooks/pipeline/use-stages";
 import { DeleteStageDialog } from "./delete-stage-dialog";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface StagesContainerProps {
   selectedPipeline: Pipeline;
@@ -162,49 +164,52 @@ export function StagesContainer({
         collisionDetection={closestCenter}
         onDragEnd={onDragEnd}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-1 pb-4 w-full">
-          <SortableContext 
-            items={selectedPipeline.columns.map((col) => col.id)}
-            strategy={horizontalListSortingStrategy}
-          >
-            {selectedPipeline.columns.map((column) => (
-              <SortableStage 
-                key={column.id} 
-                id={column.id}
-                disabled={isDeleting || isDraggingDisabled}
-              >
-                <PipelineStage
-                  column={column}
-                  columnLeads={getColumnLeads(column)}
-                  isCollapsed={isColumnCollapsed(selectedPipeline.id, column.id)}
-                  editingColumnId={editingColumnId}
-                  editingColumnTitle={editingColumnTitle}
-                  onEditColumnTitle={(e) => handleKeyDown(e, onEditColumnTitle)}
-                  setEditingColumnTitle={setEditingColumnTitle}
-                  handleColorChange={handleStageColorChange}
-                  onDeleteStage={handleDeleteStageClick}
-                  toggleColumnCollapse={() => toggleColumnCollapse(selectedPipeline.id, column.id)}
-                  setEditingColumnId={setEditingColumnId}
-                  onLeadClick={onLeadClick}
-                  allPipelines={allPipelines}
-                  currentPipelineId={selectedPipeline.id}
+        <ScrollArea className="w-full">
+          <div className="pipeline-stages-container">
+            <SortableContext 
+              items={selectedPipeline.columns.map((col) => col.id)}
+              strategy={horizontalListSortingStrategy}
+            >
+              {selectedPipeline.columns.map((column) => (
+                <SortableStage 
+                  key={column.id} 
+                  id={column.id}
+                  disabled={isDeleting || isDraggingDisabled}
+                >
+                  <PipelineStage
+                    column={column}
+                    columnLeads={getColumnLeads(column)}
+                    isCollapsed={isColumnCollapsed(selectedPipeline.id, column.id)}
+                    editingColumnId={editingColumnId}
+                    editingColumnTitle={editingColumnTitle}
+                    onEditColumnTitle={(e) => handleKeyDown(e, onEditColumnTitle)}
+                    setEditingColumnTitle={setEditingColumnTitle}
+                    handleColorChange={handleStageColorChange}
+                    onDeleteStage={handleDeleteStageClick}
+                    toggleColumnCollapse={() => toggleColumnCollapse(selectedPipeline.id, column.id)}
+                    setEditingColumnId={setEditingColumnId}
+                    onLeadClick={onLeadClick}
+                    allPipelines={allPipelines}
+                    currentPipelineId={selectedPipeline.id}
+                  />
+                </SortableStage>
+              ))}
+              <div className="flex items-center justify-center h-full pipeline-stage">
+                <AddStageButton 
+                  onAddStage={() => {
+                    handleAddNewStage(
+                      selectedPipeline.id, 
+                      selectedPipeline.columns, 
+                      onAddStage
+                    );
+                  }}
+                  isLoading={isAddingStage}
                 />
-              </SortableStage>
-            ))}
-            <div className="flex items-center justify-center h-full">
-              <AddStageButton 
-                onAddStage={() => {
-                  handleAddNewStage(
-                    selectedPipeline.id, 
-                    selectedPipeline.columns, 
-                    onAddStage
-                  );
-                }}
-                isLoading={isAddingStage}
-              />
-            </div>
-          </SortableContext>
-        </div>
+              </div>
+            </SortableContext>
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </DndContext>
       
       <DeleteStageDialog
