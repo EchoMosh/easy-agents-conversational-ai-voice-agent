@@ -10,6 +10,7 @@ import { AddStageButton } from "./add-stage-button";
 import { useStages } from "@/hooks/pipeline/use-stages";
 import { DeleteStageDialog } from "./delete-stage-dialog";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface StagesContainerProps {
   selectedPipeline: Pipeline;
@@ -36,6 +37,7 @@ export function StagesContainer({
 }: StagesContainerProps) {
   const [stageToDelete, setStageToDelete] = useState<PipelineColumn | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDraggingDisabled, setIsDraggingDisabled] = useState(false);
   const {
     editingColumnId,
     setEditingColumnId,
@@ -50,6 +52,15 @@ export function StagesContainer({
   } = useStages(onReorderColumns);
 
   const [pipelineLeads, setPipelineLeads] = useState<Lead[]>([]);
+  
+  // Use debounced state setter to prevent multiple rapid changes
+  const debouncedSetStageToDelete = useDebounce((stage: PipelineColumn | null) => {
+    console.log("Setting stage to delete:", stage?.title);
+    setStageToDelete(stage);
+    
+    // Disable dragging when delete dialog is open
+    setIsDraggingDisabled(!!stage);
+  }, 300);
   
   // Re-filter leads whenever the selectedPipeline changes
   useEffect(() => {
@@ -78,8 +89,6 @@ export function StagesContainer({
     }
   }, [selectedPipeline]);
   
-  console.log("Pipeline leads:", pipelineLeads.length, `(out of ${leads.length} total leads)`);
-  
   // Get leads for each column - use case-insensitive comparison
   const getColumnLeads = (column: PipelineColumn) => {
     if (!column?.title) return [];
@@ -90,7 +99,6 @@ export function StagesContainer({
              lead.status.toLowerCase() === column.title.toLowerCase()
     );
     
-    console.log(`Column "${column.title}" has ${columnLeads.length} leads in pipeline ${selectedPipeline.id}`);
     return columnLeads;
   };
 
@@ -102,22 +110,54 @@ export function StagesContainer({
     handleColorChange(selectedPipeline.id, columnId, color, selectedPipeline.columns);
   };
 
+  const handleDeleteStageClick = (column: PipelineColumn) => {
+    // Prevent deletion for columns with leads
+    const leadsInColumn = getColumnLeads(column);
+    if (leadsInColumn.length > 0) {
+      console.warn(`Cannot delete stage "${column.title}" with ${leadsInColumn.length} leads`);
+      toast.error(`Cannot delete stage "${column.title}" with ${leadsInColumn.length} leads. Please move them first.`);
+      return;
+    }
+    
+    debouncedSetStageToDelete(column);
+  };
+
   const handleDeleteStageConfirm = async (column: PipelineColumn) => {
     if (!column) {
       toast.error("Cannot delete: Missing stage information");
       return;
     }
     
+    // Double-check no leads in this stage
+    const leadsInColumn = getColumnLeads(column);
+    if (leadsInColumn.length > 0) {
+      const error = `Cannot delete stage "${column.title}" with ${leadsInColumn.length} leads`;
+      console.error(error);
+      toast.error(error);
+      throw new Error(error);
+    }
+    
+    // Double-check we're not deleting the last stage
+    if (selectedPipeline.columns.length <= 1) {
+      const error = "Cannot delete the last stage in a pipeline";
+      console.error(error);
+      toast.error(error);
+      throw new Error(error);
+    }
+    
     setIsDeleting(true);
     try {
       console.log(`StagesContainer: Confirming deletion of stage ${column.title} (${column.id})`);
       await onDeleteStage(column);
+      toast.success(`Stage "${column.title}" deleted successfully`);
       setStageToDelete(null);
     } catch (error) {
       console.error("Error in handleDeleteStageConfirm:", error);
       toast.error(error instanceof Error ? error.message : "Failed to delete stage");
+      throw error; // Re-throw to let the dialog component handle display
     } finally {
       setIsDeleting(false);
+      setIsDraggingDisabled(false);
     }
   };
 
@@ -133,7 +173,11 @@ export function StagesContainer({
             strategy={horizontalListSortingStrategy}
           >
             {selectedPipeline.columns.map((column) => (
-              <SortableStage key={column.id} id={column.id}>
+              <SortableStage 
+                key={column.id} 
+                id={column.id}
+                disabled={isDeleting || isDraggingDisabled}
+              >
                 <PipelineStage
                   column={column}
                   columnLeads={getColumnLeads(column)}
@@ -143,7 +187,7 @@ export function StagesContainer({
                   onEditColumnTitle={(e) => handleKeyDown(e, onEditColumnTitle)}
                   setEditingColumnTitle={setEditingColumnTitle}
                   handleColorChange={handleStageColorChange}
-                  onDeleteStage={setStageToDelete}
+                  onDeleteStage={handleDeleteStageClick}
                   toggleColumnCollapse={() => toggleColumnCollapse(selectedPipeline.id, column.id)}
                   setEditingColumnId={setEditingColumnId}
                   onLeadClick={onLeadClick}
@@ -170,7 +214,10 @@ export function StagesContainer({
       
       <DeleteStageDialog
         stageToDelete={stageToDelete}
-        onClose={() => setStageToDelete(null)}
+        onClose={() => {
+          setStageToDelete(null);
+          setIsDraggingDisabled(false);
+        }}
         onConfirm={handleDeleteStageConfirm}
         isDeleting={isDeleting}
       />

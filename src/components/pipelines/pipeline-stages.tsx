@@ -109,9 +109,27 @@ export function PipelineStages({
     try {
       console.log(`PipelineStages: Attempting to delete stage "${column.title}" (${column.id})`);
       
+      // Check if this is the last stage
+      if (cleanedPipeline.columns.length <= 1) {
+        const error = "Cannot delete the last stage in a pipeline";
+        toast.error(error);
+        throw new Error(error);
+      }
+      
       // Get only the leads for this pipeline
       const pipelineLeads = leads.filter(lead => lead.pipeline_id === cleanedPipeline.id);
       console.log(`Found ${pipelineLeads.length} leads in pipeline ${cleanedPipeline.id}`);
+      
+      // Check if there are leads in this stage
+      const leadsInStage = pipelineLeads.filter(lead => 
+        lead.status && column.title && lead.status.toLowerCase() === column.title.toLowerCase()
+      );
+      
+      if (leadsInStage.length > 0) {
+        const error = `Cannot delete stage with ${leadsInStage.length} leads. Move them first.`;
+        toast.error(error);
+        throw new Error(error);
+      }
       
       await handleDeleteStage(cleanedPipeline.id, column, cleanedPipeline.columns, pipelineLeads);
       console.log(`PipelineStages: Stage "${column.title}" deleted successfully`);

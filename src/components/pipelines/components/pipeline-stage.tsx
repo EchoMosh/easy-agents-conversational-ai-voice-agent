@@ -109,9 +109,9 @@ export function PipelineStage({
           </Card>
         </DroppableColumn>
       </ContextMenuTrigger>
-      <ContextMenuContent>
+      <ContextMenuContent onClick={(e) => e.stopPropagation()}>
         <ContextMenuItem 
-          onSelect={() => handleDeleteClick()}
+          onSelect={handleDeleteClick}
           className="text-destructive flex items-center"
         >
           <Trash2 className="mr-2 h-4 w-4" />

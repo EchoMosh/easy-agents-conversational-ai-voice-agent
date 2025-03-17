@@ -12,6 +12,8 @@ import {
 import { PipelineColumn } from "@/types/pipeline";
 import { useState } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface DeleteStageDialogProps {
   stageToDelete: PipelineColumn | null;
@@ -47,9 +49,15 @@ export function DeleteStageDialog({
     }
   };
 
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+  };
+
   return (
     <AlertDialog open={!!stageToDelete} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent>
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Stage</AlertDialogTitle>
           <AlertDialogDescription>
@@ -59,13 +67,19 @@ export function DeleteStageDialog({
         </AlertDialogHeader>
         
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">
-            {error}
-          </div>
+          <Alert variant="destructive" className="my-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
         
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel 
+            disabled={isDeleting} 
+            onClick={handleCancel}
+          >
+            Cancel
+          </AlertDialogCancel>
           <AlertDialogAction 
             onClick={handleConfirm}
             disabled={isDeleting}

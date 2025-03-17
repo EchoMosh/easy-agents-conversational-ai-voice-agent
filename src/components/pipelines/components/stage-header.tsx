@@ -33,6 +33,36 @@ export function StageHeader({
   toggleColumnCollapse,
   setEditingColumnId,
 }: StageHeaderProps) {
+  // Handle delete with proper event stopping
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Delete stage clicked from stage header:", column.title);
+    onDeleteStage(column);
+  };
+
+  // Handle color change with proper event stopping
+  const handleColorChangeClick = (e: React.MouseEvent, color: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleColorChange(column.id, color);
+  };
+
+  // Handle edit title click with proper event stopping
+  const handleEditTitleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingColumnId(column.id);
+    setEditingColumnTitle(column.title);
+  };
+
+  // Handle collapse toggle with proper event stopping
+  const handleCollapseToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleColumnCollapse(column.id);
+  };
+
   return (
     <div className={`flex items-center ${isCollapsed ? "flex-col" : "justify-between"}`}>
       <div className={`flex items-center ${isCollapsed ? "flex-col" : "space-x-3"} flex-1`}>
@@ -43,6 +73,7 @@ export function StageHeader({
             onKeyDown={onEditColumnTitle}
             className="h-8 text-base"
             autoFocus
+            onClick={(e) => e.stopPropagation()}
           />
         ) : (
           <>
@@ -52,9 +83,10 @@ export function StageHeader({
                   className={`${column.color} cursor-pointer rounded-md transition-all ring-offset-2 hover:ring-2 ring-offset-background ring-gray-200 dark:ring-gray-700 ${
                     isCollapsed ? "w-6 h-6 mb-2" : "w-4 h-4"
                   }`}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </PopoverTrigger>
-              <PopoverContent className="w-48 p-2">
+              <PopoverContent className="w-48 p-2" onClick={(e) => e.stopPropagation()}>
                 <div className="grid grid-cols-4 gap-1">
                   {colorOptions.map((option) => (
                     <button
@@ -62,7 +94,7 @@ export function StageHeader({
                       className={`w-8 h-8 rounded-md ${option.value} hover:ring-2 ring-offset-2 ring-offset-background ring-ring transition-all ${
                         column.color === option.value ? "ring-2" : ""
                       }`}
-                      onClick={() => handleColorChange(column.id, option.value)}
+                      onClick={(e) => handleColorChangeClick(e, option.value)}
                       title={option.name}
                     />
                   ))}
@@ -71,10 +103,7 @@ export function StageHeader({
             </Popover>
             <div 
               className="group flex items-center gap-1 cursor-pointer"
-              onClick={() => {
-                setEditingColumnId(column.id);
-                setEditingColumnTitle(column.title);
-              }}
+              onClick={handleEditTitleClick}
             >
               <CardTitle 
                 className={`text-xl font-medium transition-all ${
@@ -92,14 +121,19 @@ export function StageHeader({
         {!isCollapsed && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem 
                 className="text-destructive"
-                onClick={() => onDeleteStage(column)}
+                onClick={handleDeleteClick}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Stage
@@ -111,7 +145,7 @@ export function StageHeader({
           variant="ghost"
           size="icon"
           className={`h-8 w-8 text-muted-foreground ${isCollapsed ? "mt-2" : ""}`}
-          onClick={() => toggleColumnCollapse(column.id)}
+          onClick={handleCollapseToggle}
         >
           {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
