@@ -4,21 +4,19 @@ import { MessageComposer } from "./message-composer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ChatMessages } from "./chat-messages";
 import { ActivityMonitor } from "./activity-monitor";
 import useChatStore from "@/hooks/use-chat-store";
-import { Mail, ChevronLeft } from "lucide-react";
+import { ChevronLeft, BarChart2, X } from "lucide-react";
 import { fetchLeadActivities } from "@/utils/supabase-activity-utils";
 import { ActivityType } from "./types/activity-types";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 
 interface ChatAreaProps {
   selectedLead: Lead | undefined;
@@ -36,6 +34,7 @@ export function ChatArea({
   const { toast } = useToast();
   const { setSelectedLeadId, setMessageType } = useChatStore();
   const isMobile = useIsMobile();
+  const [showActivityMonitor, setShowActivityMonitor] = useState(false);
 
   useEffect(() => {
     if (selectedLead) {
@@ -147,7 +146,9 @@ export function ChatArea({
     return (
       <div className="flex-1 flex items-center justify-center h-full">
         <div className="text-center space-y-2">
-          <Mail className="h-12 w-12 mx-auto text-muted-foreground/50" />
+          <Button variant="ghost" className="size-12 rounded-full mx-auto">
+            <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+          </Button>
           <p className="text-muted-foreground">
             Select a lead to start messaging
           </p>
@@ -161,28 +162,66 @@ export function ChatArea({
     return (
       <div className="flex flex-col h-full overflow-hidden">
         <div className="border-b p-3 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            {onBack && (
-              <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            )}
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
-              {selectedLead.name[0].toUpperCase()}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {onBack && (
+                <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              )}
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+                {selectedLead.name[0].toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">
+                  {selectedLead.name}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {selectedLead.email || selectedLead.phone || "No contact info"}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">
-                {selectedLead.name}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {selectedLead.email || selectedLead.phone || "No contact info"}
-              </p>
-            </div>
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={() => setShowActivityMonitor(!showActivityMonitor)}
+            >
+              <BarChart2 className={cn("h-4 w-4", showActivityMonitor && "text-primary")} />
+            </Button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="relative flex-1 overflow-hidden">
           <ChatMessages lead={selectedLead} />
+          
+          <AnimatePresence>
+            {showActivityMonitor && (
+              <motion.div 
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                className="absolute inset-0 bg-background z-10"
+              >
+                <div className="flex items-center justify-between border-b p-2">
+                  <h3 className="text-sm font-medium">Activity & Insights</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7" 
+                    onClick={() => setShowActivityMonitor(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="overflow-y-auto h-[calc(100%-40px)]">
+                  <ActivityMonitor lead={selectedLead} activities={activities || []} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="flex-shrink-0">
@@ -196,49 +235,83 @@ export function ChatArea({
     );
   }
 
-  // For desktop, use ResizablePanelGroup
+  // For desktop, use a single panel with activity drawer
   return (
-    <ResizablePanelGroup
-      direction="horizontal"
-      className="h-full overflow-hidden"
-    >
-      <ResizablePanel defaultSize={75} minSize={50} maxSize={85}>
-        <div className="flex flex-col h-full overflow-hidden">
-          <div className="border-b p-3 flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
-                {selectedLead.name[0].toUpperCase()}
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-foreground">
-                  {selectedLead.name}
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  {selectedLead.email || selectedLead.phone || "No contact info"}
-                </p>
-              </div>
+    <div className="flex flex-col h-full overflow-hidden relative">
+      <div className="border-b p-3 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              {selectedLead.name[0].toUpperCase()}
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">
+                {selectedLead.name}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {selectedLead.email || selectedLead.phone || "No contact info"}
+              </p>
             </div>
           </div>
-
-          <div className="flex-1 overflow-hidden">
-            <ChatMessages lead={selectedLead} />
-          </div>
-
-          <div className="flex-shrink-0">
-            <MessageComposer
-              messageType={messageType}
-              onMessageTypeChange={onMessageTypeChange}
-              leadId={selectedLead.id}
-            />
+          
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant={showActivityMonitor ? "default" : "outline"} 
+              className="flex gap-1.5 items-center cursor-pointer"
+              onClick={() => setShowActivityMonitor(!showActivityMonitor)}
+            >
+              <BarChart2 className="h-3.5 w-3.5" />
+              <span>Activity</span>
+              {activities && activities.length > 0 && (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-background text-[10px] text-foreground">
+                  {activities.length}
+                </span>
+              )}
+            </Badge>
           </div>
         </div>
-      </ResizablePanel>
+      </div>
 
-      <ResizableHandle withHandle />
+      <div className="flex-1 overflow-hidden relative">
+        <div className="h-full">
+          <ChatMessages lead={selectedLead} />
+        </div>
 
-      <ResizablePanel defaultSize={25} minSize={15} maxSize={40}>
-        <ActivityMonitor lead={selectedLead} activities={activities || []} />
-      </ResizablePanel>
-    </ResizablePanelGroup>
+        <AnimatePresence>
+          {showActivityMonitor && (
+            <motion.div 
+              initial={{ x: '100%', opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0.5 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+              className="absolute inset-y-0 right-0 w-[320px] bg-background border-l z-10"
+            >
+              <div className="flex items-center justify-between border-b p-2">
+                <h3 className="text-sm font-medium">Activity & Insights</h3>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7" 
+                  onClick={() => setShowActivityMonitor(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="overflow-y-auto h-[calc(100%-40px)]">
+                <ActivityMonitor lead={selectedLead} activities={activities || []} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="flex-shrink-0">
+        <MessageComposer
+          messageType={messageType}
+          onMessageTypeChange={onMessageTypeChange}
+          leadId={selectedLead.id}
+        />
+      </div>
+    </div>
   );
 }

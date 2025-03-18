@@ -1,16 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "./leads";
 import { LeadSidebar } from "@/components/chat/lead-sidebar";
 import { ChatArea } from "@/components/chat/chat-area";
-import { History, Mail, Inbox } from "lucide-react";
 import useChatStore from "@/hooks/use-chat-store";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -18,6 +14,13 @@ export default function ChatsPage() {
     "email"
   );
   const { setMessages, updateLeadActivity } = useChatStore();
+  const isMobile = useIsMobile();
+  const [showSidebar, setShowSidebar] = useState(!isMobile);
+
+  // Update sidebar visibility when mobile state changes
+  useEffect(() => {
+    setShowSidebar(!isMobile);
+  }, [isMobile]);
 
   // Fetch leads
   const {
@@ -151,17 +154,35 @@ export default function ChatsPage() {
     console.error("Lead query error:", leadsError);
   }
 
+  // Use a mobile-friendly adaptive layout
+  if (isMobile) {
+    return (
+      <div className="h-full bg-background flex flex-col">
+        {!selectedLead ? (
+          <LeadSidebar
+            leads={leads}
+            selectedLeadId={selectedLeadId}
+            onLeadSelect={(id) => {
+              setSelectedLeadId(id);
+            }}
+            className="h-full"
+          />
+        ) : (
+          <ChatArea
+            selectedLead={selectedLead}
+            messageType={messageType}
+            onMessageTypeChange={setMessageType}
+            onBack={() => setSelectedLeadId(null)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // For desktop, use a split layout
   return (
-    <ResizablePanelGroup
-      direction="horizontal"
-      className="h-full bg-background"
-    >
-      <ResizablePanel
-        defaultSize={20}
-        minSize={10}
-        maxSize={35}
-        collapsible={true}
-      >
+    <div className="h-full bg-background flex">
+      <div className="w-[300px] flex-shrink-0 border-r">
         <LeadSidebar
           leads={leads}
           selectedLeadId={selectedLeadId}
@@ -170,17 +191,15 @@ export default function ChatsPage() {
           }}
           className="h-full"
         />
-      </ResizablePanel>
-
-      <ResizableHandle withHandle />
-
-      <ResizablePanel defaultSize={80}>
+      </div>
+      
+      <div className="flex-1">
         <ChatArea
           selectedLead={selectedLead}
           messageType={messageType}
           onMessageTypeChange={setMessageType}
         />
-      </ResizablePanel>
-    </ResizablePanelGroup>
+      </div>
+    </div>
   );
 }
