@@ -39,6 +39,8 @@ export function StagesContainer({
   const [stageToDelete, setStageToDelete] = useState<PipelineColumn | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDraggingDisabled, setIsDraggingDisabled] = useState(false);
+  
+  // Use the full useStages hook and extract all its properties
   const {
     editingColumnId,
     setEditingColumnId,
@@ -49,6 +51,7 @@ export function StagesContainer({
     handleKeyDown,
     handleColorChange,
     handleAddNewStage,
+    handleDeleteStage,
     isAddingStage
   } = useStages(onReorderColumns);
 
