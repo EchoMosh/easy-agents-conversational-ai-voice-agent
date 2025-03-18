@@ -25,6 +25,12 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Activity as ActivityType } from "./types/activity-types";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ActivityMonitorProps {
   lead: Lead;
@@ -47,39 +53,65 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
       <Tabs defaultValue="timeline" className="flex-1 flex flex-col">
         <div className="border-b">
           <TabsList className="w-full h-9 bg-transparent p-0 rounded-none">
-            <TabsTrigger 
-              value="timeline" 
-              className={cn(
-                "flex-1 h-full text-xs rounded-none data-[state=active]:shadow-none",
-                "data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent",
-                "data-[state=active]:text-primary font-medium"
-              )}
-            >
-              <Layers className="h-3.5 w-3.5 mr-1" />
-              Timeline
-            </TabsTrigger>
-            <TabsTrigger 
-              value="overview" 
-              className={cn(
-                "flex-1 h-full text-xs rounded-none data-[state=active]:shadow-none",
-                "data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent",
-                "data-[state=active]:text-primary font-medium"
-              )}
-            >
-              <BarChart2 className="h-3.5 w-3.5 mr-1" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger 
-              value="suggestions" 
-              className={cn(
-                "flex-1 h-full text-xs rounded-none data-[state=active]:shadow-none",
-                "data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent",
-                "data-[state=active]:text-primary font-medium"
-              )}
-            >
-              <ThumbsUp className="h-3.5 w-3.5 mr-1" />
-              Insights
-            </TabsTrigger>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger 
+                    value="timeline" 
+                    className={cn(
+                      "flex-1 h-full rounded-none data-[state=active]:shadow-none",
+                      "data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent",
+                      "data-[state=active]:text-primary"
+                    )}
+                  >
+                    <Layers className="h-4 w-4" />
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs font-medium">
+                  Timeline
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger 
+                    value="overview" 
+                    className={cn(
+                      "flex-1 h-full rounded-none data-[state=active]:shadow-none",
+                      "data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent",
+                      "data-[state=active]:text-primary"
+                    )}
+                  >
+                    <BarChart2 className="h-4 w-4" />
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs font-medium">
+                  Overview
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger 
+                    value="suggestions" 
+                    className={cn(
+                      "flex-1 h-full rounded-none data-[state=active]:shadow-none",
+                      "data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent",
+                      "data-[state=active]:text-primary"
+                    )}
+                  >
+                    <ThumbsUp className="h-4 w-4" />
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs font-medium">
+                  Insights
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </TabsList>
         </div>
 
@@ -289,4 +321,3 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
     </div>
   );
 }
-
