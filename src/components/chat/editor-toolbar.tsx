@@ -86,7 +86,7 @@ export function EditorToolbar({
           "h-8 w-8",
           editor.isActive('underline') ? "bg-muted" : ""
         )}
-        onClick={() => editor.chain().focus().toggleMark('underline').run()}
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
       >
         <UnderlineIcon className="h-4 w-4" />
       </Button>
