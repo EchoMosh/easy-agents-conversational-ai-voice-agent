@@ -5,7 +5,7 @@ import { Lead } from "@/pages/dashboard/leads";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatContact } from "./chat-contact";
-import { Search, Users2, UserPlus, Filter } from "lucide-react";
+import { Search, User, UserPlus, Filter, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,79 +35,65 @@ export function ChatList() {
   );
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-3 border-b">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Users2 className="h-4 w-4 text-primary" />
-            <h2 className="text-base font-semibold">Contacts</h2>
-          </div>
-          <Badge 
-            variant="outline" 
-            className="bg-primary/10 text-primary hover:bg-primary/15 text-xs"
-          >
-            {filteredLeads.length}
-          </Badge>
+    <div className="flex flex-col h-full bg-white dark:bg-background">
+      <div className="px-4 py-3 border-b flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <User className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">Contacts</h2>
         </div>
+        <Badge 
+          variant="outline" 
+          className="bg-gray-100 hover:bg-gray-200 text-black px-3 py-1 rounded-full text-sm"
+        >
+          {filteredLeads.length}
+        </Badge>
+      </div>
+      
+      <div className="p-4">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search contacts..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 py-1.5 h-8 text-xs bg-muted/40 border-muted"
+            className="pl-10 py-2 bg-gray-100 dark:bg-muted/40 border-none rounded-full"
           />
         </div>
       </div>
       
-      <div className="px-3 py-2 border-b flex items-center gap-2">
-        {!isMobile ? (
-          <>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-8 gap-1 text-xs flex-1 justify-start bg-background border-muted"
-            >
-              <Filter className="h-3 w-3" />
-              <span>Filter</span>
-            </Button>
-            
-            <Button 
-              size="sm"
-              className="h-8 gap-1 text-xs flex-1"
-            >
-              <UserPlus className="h-3 w-3" />
-              <span>New Contact</span>
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="h-8 w-8 flex-1 bg-background border-muted"
-            >
-              <Filter className="h-3.5 w-3.5" />
-            </Button>
-            
-            <Button 
-              size="icon"
-              className="h-8 w-8 flex-1"
-            >
-              <UserPlus className="h-3.5 w-3.5" />
-            </Button>
-          </>
-        )}
+      <div className="px-4 pb-2 flex items-center gap-2">
+        <Button 
+          variant="outline" 
+          className="flex-1 justify-between px-4 py-2 rounded-full bg-white dark:bg-background border-gray-200"
+        >
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            <span>Filter</span>
+          </div>
+          <ChevronDown className="h-4 w-4 opacity-70" />
+        </Button>
+        
+        <Button 
+          variant="outline"
+          className="flex-1 justify-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-background border-gray-200"
+        >
+          <UserPlus className="h-4 w-4" />
+          <span>New</span>
+        </Button>
       </div>
       
-      <ScrollArea className="flex-1 px-2">
-        <div className="py-2 space-y-1">
-          {filteredLeads.map((lead) => (
-            <ChatContact key={lead.id} lead={lead} />
+      <ScrollArea className="flex-1">
+        <div className="py-2">
+          {filteredLeads.map((lead, index) => (
+            <ChatContact 
+              key={lead.id} 
+              lead={lead} 
+              isSelected={index === 0} 
+            />
           ))}
           
           {filteredLeads.length === 0 && (
-            <div className="py-8 text-center text-sm text-muted-foreground">
+            <div className="py-8 text-center text-sm text-gray-500">
               No contacts match your search
             </div>
           )}

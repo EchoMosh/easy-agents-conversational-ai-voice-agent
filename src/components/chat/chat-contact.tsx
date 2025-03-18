@@ -4,14 +4,15 @@ import { Lead } from "@/pages/dashboard/leads";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useState } from "react";
 import { ChatPage } from "@/pages/dashboard/chat";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Phone } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { formatDistanceToNow } from "date-fns";
 
 // Function to get initials from full name
 function getInitials(name: string): string {
-  if (!name) return "??";
+  if (!name) return "?";
 
   const nameParts = name.trim().split(/\s+/);
 
@@ -28,10 +29,11 @@ function getInitials(name: string): string {
 
 // Generate consistent color based on name
 function getAvatarColor(name: string): string {
-  if (!name) return "bg-primary/10";
+  if (!name) return "bg-gray-200 text-gray-600";
 
   // Pre-defined colors (tailwind-like)
   const colors = [
+    "bg-gray-100 text-gray-800",
     "bg-red-100 text-red-800",
     "bg-blue-100 text-blue-800",
     "bg-green-100 text-green-800",
@@ -39,8 +41,6 @@ function getAvatarColor(name: string): string {
     "bg-purple-100 text-purple-800",
     "bg-pink-100 text-pink-800",
     "bg-indigo-100 text-indigo-800",
-    "bg-teal-100 text-teal-800",
-    "bg-orange-100 text-orange-800",
   ];
 
   // Use name to generate a consistent index
@@ -56,72 +56,60 @@ function getAvatarColor(name: string): string {
   return colors[hash % colors.length];
 }
 
+function getLastMessageTime(date?: string): string {
+  if (!date) return "";
+  const messageDate = new Date(date);
+  return formatDistanceToNow(messageDate, { addSuffix: false });
+}
+
 interface ChatContactProps {
   lead: Lead;
   isSelected?: boolean;
   onClick?: () => void;
 }
 
-export function ChatContact({ lead }: ChatContactProps) {
+export function ChatContact({ lead, isSelected = false }: ChatContactProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
-
+  
+  // Generate mock message preview (would come from actual messages in a real app)
+  const messagePreview = "This is a message preview...";
+  
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "w-full flex items-center gap-2 px-2 py-2 rounded-md transition-colors text-xs hover:bg-muted/70",
-          isOpen
-            ? "bg-primary text-primary-foreground"
-            : "text-foreground"
+          "w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover:bg-gray-50 dark:hover:bg-muted/70 border-b border-gray-100 dark:border-gray-800",
+          isSelected && "bg-blue-50 dark:bg-blue-900/10"
         )}
       >
-        <div className="relative flex-shrink-0">
-          <Avatar className={cn("h-8 w-8 border border-transparent", isMobile && "h-7 w-7")}>
-            <AvatarFallback
-              className={cn(
-                "text-xs font-medium",
-                isOpen
-                  ? "bg-primary-foreground/20 text-primary-foreground"
-                  : getAvatarColor(lead.name)
-              )}
-            >
-              {getInitials(lead.name)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 border-2 border-background" />
-        </div>
-        
-        <div className="flex flex-col items-start gap-0.5 overflow-hidden w-full">
-          <div className="flex justify-between items-center w-full">
-            <p className="font-medium leading-none truncate">{lead.name}</p>
-            {lead.status && !isMobile && (
-              <Badge variant={isOpen ? "secondary" : "outline"} className="text-[0.65rem] ml-1 px-1 h-4">
-                {lead.status}
-              </Badge>
+        <Avatar className="h-12 w-12 border border-transparent">
+          <AvatarFallback
+            className={cn(
+              "text-base font-medium",
+              getAvatarColor(lead.name)
             )}
+          >
+            {getInitials(lead.name)}
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-center w-full mb-1">
+            <h3 className="font-medium text-gray-900 dark:text-foreground truncate">{lead.name}</h3>
+            <span className="text-xs text-gray-500 whitespace-nowrap">
+              {getLastMessageTime(lead.created_at) || "New"}
+            </span>
           </div>
           
-          {lead.email && (
-            <p className={cn(
-              "text-[0.65rem] flex items-center gap-1",
-              isOpen ? "text-primary-foreground/80" : "text-muted-foreground"
-            )}>
-              <Mail className="h-2.5 w-2.5" />
-              <span className="truncate max-w-[120px]">{lead.email}</span>
+          <div className="flex items-start justify-between">
+            <p className="text-sm text-gray-500 truncate">
+              {lead.email || lead.phone || messagePreview}
             </p>
-          )}
-          
-          {!lead.email && lead.phone && (
-            <p className={cn(
-              "text-[0.65rem] flex items-center gap-1",
-              isOpen ? "text-primary-foreground/80" : "text-muted-foreground"
-            )}>
-              <Phone className="h-2.5 w-2.5" />
-              <span className="truncate max-w-[120px]">{lead.phone}</span>
-            </p>
-          )}
+            
+            <div className="flex-shrink-0 w-2 h-2 rounded-full bg-red-500 ml-2 mt-1"></div>
+          </div>
         </div>
       </button>
 
