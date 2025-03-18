@@ -1,3 +1,4 @@
+
 import { Lead } from "@/pages/dashboard/leads";
 import { MessageComposer } from "./message-composer";
 import { useQuery } from "@tanstack/react-query";
@@ -204,7 +205,8 @@ export function ChatArea({
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                className="absolute inset-0 bg-background z-10"
+                className="fixed inset-0 bg-background z-[9999]"
+                style={{ maxWidth: "100vw" }}
               >
                 <div className="flex items-center justify-between border-b p-2">
                   <h3 className="text-sm font-medium">Activity & Insights</h3>
@@ -285,7 +287,8 @@ export function ChatArea({
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0.5 }}
               transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-              className="absolute inset-y-0 right-0 w-[320px] bg-background border-l z-50"
+              className="fixed inset-y-0 right-0 w-[320px] bg-background border-l shadow-lg z-[9999]"
+              style={{ backdropFilter: "blur(4px)" }}
             >
               <div className="flex items-center justify-between border-b p-2">
                 <h3 className="text-sm font-medium">Activity & Insights</h3>
