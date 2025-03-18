@@ -5,6 +5,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Underline from './extensions/underline-extension';
 import { cn } from '@/lib/utils';
 import { useCallback, useEffect } from 'react';
+import Link from '@tiptap/extension-link';
 
 interface RichTextEditorProps {
   value: string;
@@ -27,6 +28,12 @@ export function RichTextEditor({
     extensions: [
       StarterKit,
       Underline,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-500 underline',
+        },
+      }),
       Placeholder.configure({
         placeholder,
         emptyEditorClass: 'is-editor-empty',
@@ -68,7 +75,7 @@ export function RichTextEditor({
     >
       <EditorContent editor={editor} />
       
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .ProseMirror {
           padding: 0.5rem;
           outline: none;
@@ -96,7 +103,7 @@ export function RichTextEditor({
           pointer-events: none;
           height: 0;
         }
-      `}</style>
+      `}} />
     </div>
   );
 }

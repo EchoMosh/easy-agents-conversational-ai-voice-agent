@@ -23,6 +23,7 @@ import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from './extensions/underline-extension';
+import Link from '@tiptap/extension-link';
 
 interface MessageComposerProps {
   messageType: "email" | "sms" | "note";
@@ -39,6 +40,7 @@ export function MessageComposer({
   const [isLoading, setIsLoading] = useState(false);
   const [emailSubject, setEmailSubject] = useState("");
   const [emailCC, setEmailCC] = useState("");
+  const [emailBCC, setEmailBCC] = useState("");
   const queryClient = useQueryClient();
   const { addMessage } = useChatStore();
 
@@ -47,6 +49,9 @@ export function MessageComposer({
     extensions: [
       StarterKit,
       Underline,
+      Link.configure({
+        openOnClick: false,
+      }),
       Placeholder.configure({
         placeholder: messageType === "email"
           ? "Write your email..."
@@ -100,6 +105,7 @@ export function MessageComposer({
         metadata: messageType === "email" ? {
           subject: emailSubject,
           cc: emailCC,
+          bcc: emailBCC,
         } : undefined
       };
 
@@ -119,7 +125,7 @@ export function MessageComposer({
         }
       } else if (messageType === "email") {
         // TODO: Implement email sending
-        console.log("Sending email:", message, "Subject:", emailSubject, "CC:", emailCC);
+        console.log("Sending email:", message, "Subject:", emailSubject, "CC:", emailCC, "BCC:", emailBCC);
         // Simulate a delay for email sending
         await new Promise((resolve) => setTimeout(resolve, 500));
       } else if (messageType === "sms") {
@@ -147,6 +153,7 @@ export function MessageComposer({
       if (messageType === "email") {
         setEmailSubject("");
         setEmailCC("");
+        setEmailBCC("");
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -155,32 +162,45 @@ export function MessageComposer({
     }
   };
 
-  // Compact email header section
+  // Email header section with Subject, CC, and BCC on the same line
   const renderEmailHeader = () => {
     if (messageType !== "email") return null;
     
     return (
-      <div className="space-y-2">
-        <div className="grid grid-cols-12 gap-2 items-center">
-          <Label htmlFor="subject" className="col-span-2 text-xs text-right">Subject:</Label>
+      <div className="grid grid-cols-12 gap-2 items-center py-2">
+        <div className="col-span-4 flex items-center gap-2">
+          <Label htmlFor="subject" className="text-xs whitespace-nowrap">Subject:</Label>
           <Input
             id="subject"
             type="text"
             placeholder="Email subject"
             value={emailSubject}
             onChange={(e) => setEmailSubject(e.target.value)}
-            className="col-span-10 h-7 text-sm py-1"
+            className="h-7 text-sm py-1"
           />
         </div>
-        <div className="grid grid-cols-12 gap-2 items-center">
-          <Label htmlFor="cc" className="col-span-2 text-xs text-right">CC:</Label>
+        
+        <div className="col-span-4 flex items-center gap-2">
+          <Label htmlFor="cc" className="text-xs whitespace-nowrap">CC:</Label>
           <Input
             id="cc"
             type="text"
-            placeholder="email@example.com, another@example.com"
+            placeholder="email@example.com"
             value={emailCC}
             onChange={(e) => setEmailCC(e.target.value)}
-            className="col-span-10 h-7 text-sm py-1"
+            className="h-7 text-sm py-1"
+          />
+        </div>
+        
+        <div className="col-span-4 flex items-center gap-2">
+          <Label htmlFor="bcc" className="text-xs whitespace-nowrap">BCC:</Label>
+          <Input
+            id="bcc"
+            type="text"
+            placeholder="email@example.com"
+            value={emailBCC}
+            onChange={(e) => setEmailBCC(e.target.value)}
+            className="h-7 text-sm py-1"
           />
         </div>
       </div>

@@ -17,7 +17,9 @@ export const Underline = Mark.create({
       },
       {
         style: 'text-decoration',
-        getAttrs: (value) => value === 'underline',
+        getAttrs: (value) => {
+          return typeof value === 'string' && value.includes('underline') ? {} : false;
+        },
       },
     ]
   },
@@ -29,20 +31,20 @@ export const Underline = Mark.create({
   addCommands() {
     return {
       setUnderline: () => ({ commands }) => {
-        return commands.setMark('underline')
+        return commands.setMark(this.name)
       },
       toggleUnderline: () => ({ commands }) => {
-        return commands.toggleMark('underline')
+        return commands.toggleMark(this.name)
       },
       unsetUnderline: () => ({ commands }) => {
-        return commands.unsetMark('underline')
+        return commands.unsetMark(this.name)
       },
     }
   },
 
   addKeyboardShortcuts() {
     return {
-      'Mod-u': () => this.editor.commands.toggleUnderline(),
+      'Mod-u': () => this.editor.commands.toggleMark(this.name),
     }
   },
 })
