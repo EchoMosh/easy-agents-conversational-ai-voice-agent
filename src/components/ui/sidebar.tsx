@@ -22,7 +22,7 @@ const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "12rem"; // Reduced from 14rem to 12rem
 const SIDEBAR_WIDTH_MOBILE = "15rem"; // Reduced from 16rem to 15rem
 const SIDEBAR_WIDTH_ICON = "3.5rem"; // Reduced from 4rem to 3.5rem
-const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+const SIDEBAR_KEYBOARD_SHORTCUT = "\\"; // Changed from 'b' to '\' (backslash)
 
 type SidebarContext = {
   state: "expanded" | "collapsed";
