@@ -4,6 +4,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Activity, ActivityType } from "../types/activity-types";
+import { cn } from "@/lib/utils";
 
 interface ActivityTabProps {
   activities: Activity[];
@@ -219,16 +220,16 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
     switch (activity.type) {
       case 'status_change':
         return (
-          <div className="mt-1.5 text-xs space-y-0.5">
+          <div className="mt-1 text-[10px] space-y-0.5">
             {metadata.old_status && (
               <div className="flex items-baseline">
-                <span className="text-muted-foreground mr-1.5 w-12">From:</span>
+                <span className="text-muted-foreground mr-1 w-9">From:</span>
                 <span className="font-medium">{metadata.old_status}</span>
               </div>
             )}
             {metadata.new_status && (
               <div className="flex items-baseline">
-                <span className="text-muted-foreground mr-1.5 w-12">To:</span>
+                <span className="text-muted-foreground mr-1 w-9">To:</span>
                 <span className="font-medium">{metadata.new_status}</span>
               </div>
             )}
@@ -236,28 +237,28 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
         );
       case 'note':
         return metadata.note_content ? (
-          <div className="mt-1.5 text-xs italic">
+          <div className="mt-1 text-[10px] italic">
             "{metadata.note_content}"
           </div>
         ) : null;
       case 'email':
       case 'sms':
         return metadata.subject || metadata.message ? (
-          <div className="mt-1.5 text-xs">
+          <div className="mt-1 text-[10px]">
             {metadata.subject && <div><span className="font-medium">Subject:</span> {metadata.subject}</div>}
             {metadata.message && <div className="italic mt-0.5">"{metadata.message}"</div>}
           </div>
         ) : null;
       case 'deal_updated':
         return metadata.amount ? (
-          <div className="mt-1.5 text-xs">
-            <span className="text-muted-foreground mr-1.5">Amount:</span>
+          <div className="mt-1 text-[10px]">
+            <span className="text-muted-foreground mr-1">Amount:</span>
             <span className="font-medium">${metadata.amount}</span>
           </div>
         ) : null;
       default:
         return Object.keys(metadata).length > 0 ? (
-          <div className="mt-1.5 text-xs grid grid-cols-2 gap-x-3 gap-y-0.5">
+          <div className="mt-1 text-[10px] grid grid-cols-2 gap-x-2 gap-y-0.5">
             {Object.entries(metadata).map(([key, value]) => (
               <div key={key} className="flex gap-1 items-baseline">
                 <span className="font-medium text-muted-foreground">
@@ -272,62 +273,62 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {activities.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-6 text-center">
-          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-2">
-            <MessageSquare className="h-5 w-5 text-muted-foreground" />
+        <div className="flex flex-col items-center justify-center py-5 text-center">
+          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center mb-2">
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </div>
-          <h3 className="text-sm font-medium mb-1">No activity recorded yet</h3>
-          <p className="text-xs text-muted-foreground">
+          <h3 className="text-xs font-medium mb-1">No activity recorded yet</h3>
+          <p className="text-[10px] text-muted-foreground">
             Activities will appear here as you interact with this lead
           </p>
         </div>
       ) : (
         Object.entries(groupedActivities).map(([date, dayActivities]) => (
-          <div key={date} className="space-y-1.5">
-            <div className="sticky top-0 bg-background py-1.5 z-10">
+          <div key={date} className="space-y-1">
+            <div className="sticky top-0 bg-background py-1 z-10">
               <div className="flex items-center">
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground mr-1.5" />
-                <h3 className="text-xs font-medium">
+                <Calendar className="h-3 w-3 text-muted-foreground mr-1" />
+                <h3 className="text-[10px] font-medium">
                   {format(new Date(date), "EEEE, MMMM d, yyyy")}
                 </h3>
-                <Badge variant="outline" className="ml-auto text-[10px] h-4 px-1">
+                <Badge variant="outline" className="ml-auto text-[9px] h-3.5 px-1">
                   {dayActivities.length}
                 </Badge>
               </div>
-              <Separator className="my-1.5" />
+              <Separator className="my-1" />
             </div>
 
-            <div className="space-y-2 ml-1 relative">
-              <div className="absolute left-2.5 top-0 bottom-0 w-px bg-border"></div>
+            <div className="space-y-1.5 ml-1 relative">
+              <div className="absolute left-1.5 top-0 bottom-0 w-[1px] bg-border/70"></div>
 
               {dayActivities.map((activity) => {
                 const style = getActivityStyle(activity.type);
                 return (
-                  <div key={activity.id} className="relative flex gap-3 pl-5">
-                    <div className={`absolute left-0 size-5 rounded-full border border-background flex items-center justify-center z-10 ${style.iconClass}`}>
+                  <div key={activity.id} className="relative flex gap-2 pl-3.5">
+                    <div className={cn(`absolute left-0 size-3 rounded-full border flex items-center justify-center z-10 ${style.iconClass}`)}>
                       {getActivityIcon(activity.type)}
                     </div>
 
-                    <div className={`flex-1 rounded-md p-2 border ${style.bgClass}`}>
-                      <div className="flex justify-between items-start gap-2">
-                        <Badge variant="outline" className="font-normal h-5 text-[10px] px-1">
+                    <div className={cn(`flex-1 rounded border-[0.5px] ${style.bgClass}`, "p-1.5")}>
+                      <div className="flex justify-between items-start gap-1">
+                        <Badge variant="outline" className="font-normal h-4 text-[9px] px-1">
                           {leadName}
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                        <span className="text-[9px] text-muted-foreground whitespace-nowrap">
                           {format(new Date(activity.timestamp), "h:mm a")}
                         </span>
                       </div>
                       
-                      <p className="text-sm font-medium mt-1">
+                      <p className="text-[11px] font-medium mt-0.5 line-clamp-1">
                         {activity.type === 'note' ? "Note added" : 
                          activity.type === 'status_change' ? "Status changed" : 
                          activity.content}
                       </p>
                       
                       {activity.content && activity.type !== 'note' && activity.type !== 'status_change' && (
-                        <p className="text-xs mt-0.5">{activity.content}</p>
+                        <p className="text-[10px] mt-0.5 line-clamp-2">{activity.content}</p>
                       )}
                       
                       {getActivityMetadata(activity)}

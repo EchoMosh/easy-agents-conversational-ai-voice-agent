@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 import { Activity, BarChart2, Layers, ThumbsUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +23,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Activity as ActivityType } from "./types/activity-types";
+import { cn } from "@/lib/utils";
 
 interface ActivityMonitorProps {
   lead: Lead;
@@ -33,7 +33,7 @@ interface ActivityMonitorProps {
 export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="p-2 border-b flex items-center justify-between">
+      <div className="p-1.5 border-b flex items-center justify-between">
         <h2 className="text-xs font-semibold flex items-center gap-1">
           <Activity className="h-3.5 w-3.5 text-primary" />
           Activity Monitor
@@ -44,25 +44,46 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
       </div>
 
       <Tabs defaultValue="timeline" className="flex-1 flex flex-col">
-        <div className="border-b px-2 py-1">
-          <TabsList className="w-full h-7">
-            <TabsTrigger value="timeline" className="text-xs">
-              <Layers className="h-3 w-3 mr-1" />
+        <div className="border-b">
+          <TabsList className="w-full h-10 bg-transparent p-0 rounded-none">
+            <TabsTrigger 
+              value="timeline" 
+              className={cn(
+                "flex-1 h-full text-xs rounded-none data-[state=active]:shadow-none",
+                "data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent",
+                "data-[state=active]:text-primary font-medium"
+              )}
+            >
+              <Layers className="h-4 w-4 mr-1.5" />
               Timeline
             </TabsTrigger>
-            <TabsTrigger value="overview" className="text-xs">
-              <BarChart2 className="h-3 w-3 mr-1" />
+            <TabsTrigger 
+              value="overview" 
+              className={cn(
+                "flex-1 h-full text-xs rounded-none data-[state=active]:shadow-none",
+                "data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent",
+                "data-[state=active]:text-primary font-medium"
+              )}
+            >
+              <BarChart2 className="h-4 w-4 mr-1.5" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="suggestions" className="text-xs">
-              <ThumbsUp className="h-3 w-3 mr-1" />
+            <TabsTrigger 
+              value="suggestions" 
+              className={cn(
+                "flex-1 h-full text-xs rounded-none data-[state=active]:shadow-none",
+                "data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent",
+                "data-[state=active]:text-primary font-medium"
+              )}
+            >
+              <ThumbsUp className="h-4 w-4 mr-1.5" />
               Insights
             </TabsTrigger>
           </TabsList>
         </div>
 
         {/* Timeline Tab */}
-        <TabsContent value="timeline" className="flex-1 overflow-hidden p-0">
+        <TabsContent value="timeline" className="flex-1 overflow-hidden p-0 mt-0">
           <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="p-2">
               <ActivityTab activities={activities} leadName={lead.name} />
@@ -71,7 +92,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
         </TabsContent>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="flex-1 overflow-hidden p-0">
+        <TabsContent value="overview" className="flex-1 overflow-hidden p-0 mt-0">
           <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="space-y-2 p-2">
               <Card className="shadow-none border-0">
@@ -201,7 +222,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
         </TabsContent>
 
         {/* Insights Tab */}
-        <TabsContent value="suggestions" className="flex-1 overflow-hidden p-0">
+        <TabsContent value="suggestions" className="flex-1 overflow-hidden p-0 mt-0">
           <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="space-y-2 p-2">
               <Card className="shadow-none border-0">
