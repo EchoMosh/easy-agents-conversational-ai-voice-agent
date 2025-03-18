@@ -1,3 +1,4 @@
+
 import { Mail, Phone, MessageSquare, Calendar, Edit, FileText, UserPlus, Tags, DollarSign, UserCheck, LinkIcon, Star, CheckCircle, PenTool, Eye, Info } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -24,35 +25,35 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
   const getActivityIcon = (type: ActivityType) => {
     switch (type) {
       case 'email':
-        return <Mail className="h-4 w-4" />;
+        return <Mail className="h-3.5 w-3.5" />;
       case 'sms':
-        return <Phone className="h-4 w-4" />;
+        return <Phone className="h-3.5 w-3.5" />;
       case 'note':
-        return <FileText className="h-4 w-4" />;
+        return <FileText className="h-3.5 w-3.5" />;
       case 'status_change':
-        return <Edit className="h-4 w-4" />;
+        return <Edit className="h-3.5 w-3.5" />;
       case 'lead_created':
-        return <UserPlus className="h-4 w-4" />;
+        return <UserPlus className="h-3.5 w-3.5" />;
       case 'tag_added':
-        return <Tags className="h-4 w-4" />;
+        return <Tags className="h-3.5 w-3.5" />;
       case 'deal_updated':
-        return <DollarSign className="h-4 w-4" />;
+        return <DollarSign className="h-3.5 w-3.5" />;
       case 'lead_converted':
-        return <UserCheck className="h-4 w-4" />;
+        return <UserCheck className="h-3.5 w-3.5" />;
       case 'meeting_scheduled':
-        return <Calendar className="h-4 w-4" />;
+        return <Calendar className="h-3.5 w-3.5" />;
       case 'link_clicked':
-        return <LinkIcon className="h-4 w-4" />;
+        return <LinkIcon className="h-3.5 w-3.5" />;
       case 'lead_rated':
-        return <Star className="h-4 w-4" />;
+        return <Star className="h-3.5 w-3.5" />;
       case 'task_completed':
-        return <CheckCircle className="h-4 w-4" />;
+        return <CheckCircle className="h-3.5 w-3.5" />;
       case 'form_completed':
-        return <PenTool className="h-4 w-4" />;
+        return <PenTool className="h-3.5 w-3.5" />;
       case 'email_opened':
-        return <Eye className="h-4 w-4" />;
+        return <Eye className="h-3.5 w-3.5" />;
       default:
-        return <Info className="h-4 w-4" />;
+        return <Info className="h-3.5 w-3.5" />;
     }
   };
 
@@ -61,62 +62,62 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
     switch (type) {
       case 'email':
         return {
-          bgClass: 'bg-blue-100/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/30',
-          iconClass: 'text-blue-500 border-blue-200 bg-blue-100 dark:bg-blue-900/40 dark:border-blue-800/40',
+          bgClass: 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20',
+          iconClass: 'text-blue-500 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800/30',
           emoji: '📧'
         };
       case 'sms':
         return {
-          bgClass: 'bg-green-100/50 dark:bg-green-900/20 border-green-200 dark:border-green-900/30',
-          iconClass: 'text-green-500 border-green-200 bg-green-100 dark:bg-green-900/40 dark:border-green-800/40',
+          bgClass: 'bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/20',
+          iconClass: 'text-green-500 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800/30',
           emoji: '💬'
         };
       case 'note':
         return {
-          bgClass: 'bg-purple-100/50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-900/30',
-          iconClass: 'text-purple-500 border-purple-200 bg-purple-100 dark:bg-purple-900/40 dark:border-purple-800/40',
+          bgClass: 'bg-purple-50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/20',
+          iconClass: 'text-purple-500 border-purple-200 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800/30',
           emoji: '📝'
         };
       case 'status_change':
         return {
-          bgClass: 'bg-amber-100/50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30',
-          iconClass: 'text-amber-500 border-amber-200 bg-amber-100 dark:bg-amber-900/40 dark:border-amber-800/40',
+          bgClass: 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20',
+          iconClass: 'text-amber-500 border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800/30',
           emoji: '🔄'
         };
       case 'lead_created':
         return {
-          bgClass: 'bg-emerald-100/50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/30',
-          iconClass: 'text-emerald-500 border-emerald-200 bg-emerald-100 dark:bg-emerald-900/40 dark:border-emerald-800/40',
+          bgClass: 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20',
+          iconClass: 'text-emerald-500 border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800/30',
           emoji: '✨'
         };
       case 'tag_added':
         return {
-          bgClass: 'bg-pink-100/50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-900/30',
-          iconClass: 'text-pink-500 border-pink-200 bg-pink-100 dark:bg-pink-900/40 dark:border-pink-800/40',
+          bgClass: 'bg-pink-50 dark:bg-pink-900/10 border-pink-100 dark:border-pink-900/20',
+          iconClass: 'text-pink-500 border-pink-200 bg-pink-50 dark:bg-pink-900/20 dark:border-pink-800/30',
           emoji: '🏷️'
         };
       case 'deal_updated':
         return {
-          bgClass: 'bg-teal-100/50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-900/30',
-          iconClass: 'text-teal-500 border-teal-200 bg-teal-100 dark:bg-teal-900/40 dark:border-teal-800/40',
+          bgClass: 'bg-teal-50 dark:bg-teal-900/10 border-teal-100 dark:border-teal-900/20',
+          iconClass: 'text-teal-500 border-teal-200 bg-teal-50 dark:bg-teal-900/20 dark:border-teal-800/30',
           emoji: '💰'
         };
       case 'lead_converted':
         return {
-          bgClass: 'bg-indigo-100/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/30',
-          iconClass: 'text-indigo-500 border-indigo-200 bg-indigo-100 dark:bg-indigo-900/40 dark:border-indigo-800/40',
+          bgClass: 'bg-indigo-50 dark:bg-indigo-950/10 border-indigo-100 dark:border-indigo-900/20',
+          iconClass: 'text-indigo-500 border-indigo-200 bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-800/30',
           emoji: '🎯'
         };
       case 'meeting_scheduled':
         return {
-          bgClass: 'bg-violet-100/50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-900/30',
-          iconClass: 'text-violet-500 border-violet-200 bg-violet-100 dark:bg-violet-900/40 dark:border-violet-800/40',
+          bgClass: 'bg-violet-50 dark:bg-violet-950/10 border-violet-100 dark:border-violet-900/20',
+          iconClass: 'text-violet-500 border-violet-200 bg-violet-50 dark:bg-violet-900/20 dark:border-violet-800/30',
           emoji: '📅'
         };
       default:
         return {
-          bgClass: 'bg-gray-100/50 dark:bg-gray-800/20 border-gray-200 dark:border-gray-700/30',
-          iconClass: 'text-gray-500 border-gray-200 bg-gray-100 dark:bg-gray-800/40 dark:border-gray-700/40',
+          bgClass: 'bg-gray-50 dark:bg-gray-800/10 border-gray-100 dark:border-gray-700/20',
+          iconClass: 'text-gray-500 border-gray-200 bg-gray-50 dark:bg-gray-800/20 dark:border-gray-700/30',
           emoji: 'ℹ️'
         };
     }
@@ -218,47 +219,45 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
     switch (activity.type) {
       case 'status_change':
         return (
-          <>
-            <div className="mt-2 space-y-1 text-sm">
-              {metadata.old_status && (
-                <div>
-                  <span className="font-medium text-muted-foreground mr-2">From:</span>
-                  <span>{metadata.old_status}</span>
-                </div>
-              )}
-              {metadata.new_status && (
-                <div>
-                  <span className="font-medium text-muted-foreground mr-2">To:</span>
-                  <span>{metadata.new_status}</span>
-                </div>
-              )}
-            </div>
-          </>
+          <div className="mt-1.5 text-xs space-y-0.5">
+            {metadata.old_status && (
+              <div className="flex items-baseline">
+                <span className="text-muted-foreground mr-1.5 w-12">From:</span>
+                <span className="font-medium">{metadata.old_status}</span>
+              </div>
+            )}
+            {metadata.new_status && (
+              <div className="flex items-baseline">
+                <span className="text-muted-foreground mr-1.5 w-12">To:</span>
+                <span className="font-medium">{metadata.new_status}</span>
+              </div>
+            )}
+          </div>
         );
       case 'note':
         return metadata.note_content ? (
-          <div className="mt-2 p-2 bg-background/80 border border-border rounded-md text-sm italic">
+          <div className="mt-1.5 text-xs italic">
             "{metadata.note_content}"
           </div>
         ) : null;
       case 'email':
       case 'sms':
         return metadata.subject || metadata.message ? (
-          <div className="mt-2 p-2 bg-background/80 border border-border rounded-md text-sm">
+          <div className="mt-1.5 text-xs">
             {metadata.subject && <div><span className="font-medium">Subject:</span> {metadata.subject}</div>}
-            {metadata.message && <div className="italic">"{metadata.message}"</div>}
+            {metadata.message && <div className="italic mt-0.5">"{metadata.message}"</div>}
           </div>
         ) : null;
       case 'deal_updated':
         return metadata.amount ? (
-          <div className="mt-2 text-sm">
-            <span className="font-medium text-muted-foreground mr-2">Amount:</span>
+          <div className="mt-1.5 text-xs">
+            <span className="text-muted-foreground mr-1.5">Amount:</span>
             <span className="font-medium">${metadata.amount}</span>
           </div>
         ) : null;
       default:
         return Object.keys(metadata).length > 0 ? (
-          <div className="mt-2 text-xs grid grid-cols-2 gap-x-4 gap-y-1 bg-background/80 p-2 rounded-md border border-border">
+          <div className="mt-1.5 text-xs grid grid-cols-2 gap-x-3 gap-y-0.5">
             {Object.entries(metadata).map(([key, value]) => (
               <div key={key} className="flex gap-1 items-baseline">
                 <span className="font-medium text-muted-foreground">
@@ -273,59 +272,63 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {activities.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-center">
-          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
-            <MessageSquare className="h-6 w-6 text-muted-foreground" />
+          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-2">
+            <MessageSquare className="h-5 w-5 text-muted-foreground" />
           </div>
-          <h3 className="font-medium mb-1">No activity recorded yet</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-sm font-medium mb-1">No activity recorded yet</h3>
+          <p className="text-xs text-muted-foreground">
             Activities will appear here as you interact with this lead
           </p>
         </div>
       ) : (
         Object.entries(groupedActivities).map(([date, dayActivities]) => (
-          <div key={date} className="space-y-2">
-            <div className="sticky top-0 bg-background py-2 z-10">
+          <div key={date} className="space-y-1.5">
+            <div className="sticky top-0 bg-background py-1.5 z-10">
               <div className="flex items-center">
-                <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-                <h3 className="text-sm font-medium">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground mr-1.5" />
+                <h3 className="text-xs font-medium">
                   {format(new Date(date), "EEEE, MMMM d, yyyy")}
                 </h3>
-                <Badge variant="outline" className="ml-auto">
+                <Badge variant="outline" className="ml-auto text-[10px] h-4 px-1">
                   {dayActivities.length}
                 </Badge>
               </div>
-              <Separator className="my-2" />
+              <Separator className="my-1.5" />
             </div>
 
-            <div className="space-y-3 ml-1 relative">
-              <div className="absolute left-3 top-0 bottom-0 w-px bg-border"></div>
+            <div className="space-y-2 ml-1 relative">
+              <div className="absolute left-2.5 top-0 bottom-0 w-px bg-border"></div>
 
               {dayActivities.map((activity) => {
                 const style = getActivityStyle(activity.type);
                 return (
-                  <div key={activity.id} className="relative flex gap-4 pl-7">
-                    <div className={`absolute left-0 size-6 rounded-full border-2 border-background flex items-center justify-center z-10 ${style.iconClass}`}>
+                  <div key={activity.id} className="relative flex gap-3 pl-5">
+                    <div className={`absolute left-0 size-5 rounded-full border border-background flex items-center justify-center z-10 ${style.iconClass}`}>
                       {getActivityIcon(activity.type)}
                     </div>
 
-                    <div className={`flex-1 rounded-lg p-3 border ${style.bgClass}`}>
-                      <div className="flex justify-between items-start mb-1">
-                        <Badge variant="outline" className="font-normal">
+                    <div className={`flex-1 rounded-md p-2 border ${style.bgClass}`}>
+                      <div className="flex justify-between items-start gap-2">
+                        <Badge variant="outline" className="font-normal h-5 text-[10px] px-1">
                           {leadName}
                         </Badge>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                           {format(new Date(activity.timestamp), "h:mm a")}
                         </span>
                       </div>
                       
-                      <p className="text-base font-medium mb-1">
-                        {getActivityTitle(activity)}
+                      <p className="text-sm font-medium mt-1">
+                        {activity.type === 'note' ? "Note added" : 
+                         activity.type === 'status_change' ? "Status changed" : 
+                         activity.content}
                       </p>
                       
-                      <p className="text-sm">{getDetailedActivityContent(activity)}</p>
+                      {activity.content && activity.type !== 'note' && activity.type !== 'status_change' && (
+                        <p className="text-xs mt-0.5">{activity.content}</p>
+                      )}
                       
                       {getActivityMetadata(activity)}
                     </div>
