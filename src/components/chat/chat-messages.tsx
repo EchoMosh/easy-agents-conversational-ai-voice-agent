@@ -73,7 +73,7 @@ export function ChatMessages({ lead }: ChatMessagesProps) {
   ];
 
   return (
-    <ScrollArea className="h-[calc(100vh-300px)]">
+    <ScrollArea className="h-[calc(100vh-12rem)]">
       <ChatMessageList>
         <AnimatePresence>
           {leadMessages.map((message, index) => {

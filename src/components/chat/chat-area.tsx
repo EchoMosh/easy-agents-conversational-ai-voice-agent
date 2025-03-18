@@ -148,7 +148,7 @@ export function ChatArea({
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-[calc(100vh-4rem)]">
       <div className="w-[75%] flex flex-col h-full border-r">
         <div className="border-b p-4">
           <div className="flex items-center gap-3">

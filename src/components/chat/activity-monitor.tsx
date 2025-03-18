@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 import { Activity, BarChart2, Layers, ThumbsUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +38,7 @@ interface ActivityMonitorProps {
 
 export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps) {
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-4rem)]">
       <div className="p-1.5 border-b flex items-center justify-between">
         <h2 className="text-xs font-semibold flex items-center gap-1">
           <Activity className="h-3.5 w-3.5 text-primary" />
@@ -50,7 +49,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
         </Badge>
       </div>
 
-      <Tabs defaultValue="timeline" className="flex-1 flex flex-col">
+      <Tabs defaultValue="timeline" className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b">
           <TabsList className="w-full h-9 bg-transparent p-0 rounded-none">
             <TooltipProvider>
@@ -117,7 +116,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
 
         {/* Timeline Tab */}
         <TabsContent value="timeline" className="flex-1 overflow-hidden p-0 mt-0">
-          <ScrollArea className="h-[calc(100vh-200px)]">
+          <ScrollArea className="h-[calc(100vh-8rem)]">
             <div className="p-2">
               <ActivityTab activities={activities} leadName={lead.name} />
             </div>
@@ -126,7 +125,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="flex-1 overflow-hidden p-0 mt-0">
-          <ScrollArea className="h-[calc(100vh-200px)]">
+          <ScrollArea className="h-[calc(100vh-8rem)]">
             <div className="space-y-2 p-2">
               <Card className="shadow-none border-0">
                 <CardHeader className="px-2 py-1.5">
@@ -256,7 +255,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
 
         {/* Insights Tab */}
         <TabsContent value="suggestions" className="flex-1 overflow-hidden p-0 mt-0">
-          <ScrollArea className="h-[calc(100vh-200px)]">
+          <ScrollArea className="h-[calc(100vh-8rem)]">
             <div className="space-y-2 p-2">
               <Card className="shadow-none border-0">
                 <CardHeader className="px-2 py-1.5">
@@ -321,3 +320,4 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
     </div>
   );
 }
+
