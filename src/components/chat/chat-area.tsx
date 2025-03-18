@@ -1,3 +1,4 @@
+
 import { Lead } from "@/pages/dashboard/leads";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { MessageComposer } from "./message-composer";
@@ -35,6 +36,28 @@ export function ChatArea({
     }
     setMessageType(messageType);
   }, [selectedLead, messageType, setSelectedLeadId, setMessageType]);
+
+  // Fetch pipeline data based on selectedLead's pipeline_id
+  const { data: pipeline } = useQuery({
+    queryKey: ["pipeline", selectedLead?.pipeline_id],
+    queryFn: async () => {
+      if (!selectedLead?.pipeline_id) return null;
+      
+      const { data, error } = await supabase
+        .from("pipelines")
+        .select("*")
+        .eq("id", selectedLead.pipeline_id)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching pipeline:", error);
+        return null;
+      }
+      
+      return data ? convertJsonToPipeline(data) : null;
+    },
+    enabled: !!selectedLead?.pipeline_id,
+  });
 
   const { data: activities } = useQuery({
     queryKey: ["lead-activities", selectedLead?.id],
@@ -110,7 +133,7 @@ export function ChatArea({
     };
 
     updateLeadStatus();
-  }, [selectedLead?.pipeline_id, pipeline]);
+  }, [selectedLead?.pipeline_id, pipeline, selectedLead, toast]);
 
   if (!selectedLead) {
     return (
