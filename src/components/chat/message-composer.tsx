@@ -1,4 +1,18 @@
-import { Mail, Phone, Send, StickyNote } from "lucide-react";
+
+import { 
+  Mail, 
+  Phone, 
+  Send, 
+  StickyNote, 
+  Bold, 
+  Italic, 
+  Underline, 
+  Link, 
+  ListOrdered, 
+  List, 
+  Smile, 
+  Paperclip 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +21,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import useChatStore from "@/hooks/use-chat-store";
 import { v4 as uuidv4 } from "uuid";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface MessageComposerProps {
   messageType: "email" | "sms" | "note";
@@ -21,6 +38,8 @@ export function MessageComposer({
 }: MessageComposerProps) {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailCC, setEmailCC] = useState("");
   const queryClient = useQueryClient();
   const { addMessage } = useChatStore();
 
@@ -50,6 +69,10 @@ export function MessageComposer({
         userId: user.id,
         userName: user.email?.split("@")[0] || "User",
         userAvatar: user.user_metadata?.avatar_url,
+        metadata: messageType === "email" ? {
+          subject: emailSubject,
+          cc: emailCC,
+        } : undefined
       };
 
       addMessage(newMessage);
@@ -68,7 +91,7 @@ export function MessageComposer({
         }
       } else if (messageType === "email") {
         // TODO: Implement email sending
-        console.log("Sending email:", message);
+        console.log("Sending email:", message, "Subject:", emailSubject, "CC:", emailCC);
         // Simulate a delay for email sending
         await new Promise((resolve) => setTimeout(resolve, 500));
       } else if (messageType === "sms") {
@@ -89,11 +112,60 @@ export function MessageComposer({
 
       // Clear the input
       setMessage("");
+      if (messageType === "email") {
+        setEmailSubject("");
+        setEmailCC("");
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const insertFormatting = (format: string) => {
+    // Simple implementation of formatting text insertion
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = message.substring(start, end);
+    
+    let formattedText = '';
+    
+    switch(format) {
+      case 'bold':
+        formattedText = `**${selectedText}**`;
+        break;
+      case 'italic':
+        formattedText = `*${selectedText}*`;
+        break;
+      case 'underline':
+        formattedText = `_${selectedText}_`;
+        break;
+      case 'link':
+        formattedText = `[${selectedText}](url)`;
+        break;
+      case 'list':
+        formattedText = `\n- ${selectedText}`;
+        break;
+      case 'list-ordered':
+        formattedText = `\n1. ${selectedText}`;
+        break;
+      default:
+        formattedText = selectedText;
+    }
+    
+    const newText = message.substring(0, start) + formattedText + message.substring(end);
+    setMessage(newText);
+    
+    // Set cursor position after formatting is applied
+    setTimeout(() => {
+      textarea.focus();
+      const newPosition = start + formattedText.length;
+      textarea.setSelectionRange(newPosition, newPosition);
+    }, 0);
   };
 
   return (
@@ -120,6 +192,105 @@ export function MessageComposer({
           </ToggleGroup>
         </div>
 
+        {messageType === "email" && (
+          <div className="space-y-2">
+            <div>
+              <Label htmlFor="subject">Subject</Label>
+              <Input
+                id="subject"
+                type="text"
+                placeholder="Email subject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                className="h-8"
+              />
+            </div>
+            <div>
+              <Label htmlFor="cc">CC</Label>
+              <Input
+                id="cc"
+                type="text"
+                placeholder="email@example.com, another@example.com"
+                value={emailCC}
+                onChange={(e) => setEmailCC(e.target.value)}
+                className="h-8"
+              />
+            </div>
+            <div className="flex items-center gap-1 border-b pb-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => insertFormatting('bold')}
+              >
+                <Bold className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => insertFormatting('italic')}
+              >
+                <Italic className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => insertFormatting('underline')}
+              >
+                <Underline className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => insertFormatting('link')}
+              >
+                <Link className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => insertFormatting('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => insertFormatting('list-ordered')}
+              >
+                <ListOrdered className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+              >
+                <Smile className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="relative">
           <Textarea
             placeholder={
@@ -131,17 +302,26 @@ export function MessageComposer({
             }
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            rows={3}
-            className="resize-none min-h-[80px] pr-12"
+            rows={messageType === "email" ? 5 : 3}
+            className={cn(
+              "resize-none pr-12",
+              messageType === "email" ? "min-h-[120px]" : "min-h-[80px]"
+            )}
           />
-          <Button
-            type="submit"
-            size="icon"
-            className="absolute bottom-2 right-2"
-            disabled={isLoading || !message.trim()}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+          <div className="absolute bottom-2 right-2 flex items-center">
+            {messageType === "email" && message.length > 0 && (
+              <span className="text-xs text-muted-foreground mr-2">
+                {message.length}/2000
+              </span>
+            )}
+            <Button
+              type="submit"
+              size="icon"
+              disabled={isLoading || !message.trim() || (messageType === "email" && !emailSubject.trim())}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="text-xs text-muted-foreground">
