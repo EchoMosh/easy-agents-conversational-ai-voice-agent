@@ -132,41 +132,41 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
   const getActivityDescription = (activity: any) => {
     const type = activity.activity_type || "";
     const metadata = activity.metadata || {};
-    const userName = metadata.user_name || "User";
+    const userName = metadata.user_name || "Your team";
     
     switch (type) {
       case "note_added":
-        return `Note added: "${metadata.note_content || 'Internal note'}"`;
+        return `📝 <span class="font-medium">${userName}</span> added a note: <span class="italic">"${metadata.note_content || 'Internal note'}"</span>`;
       case "email_sent":
-        return `Email sent to ${lead.name} - ${metadata.subject || 'No subject'}`;
+        return `📧 <span class="font-medium">Email sent</span> to ${lead.name} with subject <span class="italic">"${metadata.subject || 'No subject'}"</span>`;
       case "email_received":
-        return `Email received from ${lead.name} - ${metadata.subject || 'No subject'}`;
+        return `📩 <span class="font-medium">Email received</span> from ${lead.name} about <span class="italic">"${metadata.subject || 'No subject'}"</span>`;
       case "sms_sent":
-        return `SMS sent to ${lead.name}${metadata.message ? ': "' + metadata.message + '"' : ''}`;
+        return `📱 <span class="font-medium">SMS sent</span> to ${lead.name}${metadata.message ? ': <span class="italic">"' + metadata.message + '"</span>' : ''}`;
       case "sms_received":
-        return `SMS received from ${lead.name}${metadata.message ? ': "' + metadata.message + '"' : ''}`;
+        return `💬 <span class="font-medium">SMS received</span> from ${lead.name}${metadata.message ? ': <span class="italic">"' + metadata.message + '"</span>' : ''}`;
       case "status_updated":
-        return `Lead status updated to ${metadata.new_status || 'new status'}`;
+        return `🔄 Lead status changed from <span class="font-medium">${metadata.old_status || 'previous status'}</span> to <span class="font-medium">${metadata.new_status || 'new status'}</span>`;
       case "lead_created":
-        return `Lead "${lead.name}" created by ${userName}`;
+        return `✨ <span class="font-medium">New lead created</span> - ${lead.name} was added to the system by ${userName}`;
       case "tag_added":
-        return `Tag "${metadata.tag_name || 'New tag'}" added to lead`;
+        return `🏷️ Tag <span class="font-medium">"${metadata.tag_name || 'New tag'}"</span> was added to lead`;
       case "deal_updated":
-        return `Deal value updated to $${metadata.amount || '0'}`;
+        return `💰 Deal value updated to <span class="font-medium">$${metadata.amount || '0'}</span>`;
       case "lead_converted":
-        return `Lead converted to ${metadata.converted_to || 'customer'}`;
+        return `🎯 Lead successfully <span class="font-medium">converted to ${metadata.converted_to || 'customer'}</span>`;
       case "meeting_scheduled":
-        return `Meeting scheduled with ${lead.name} for ${metadata.meeting_time || 'upcoming date'}`;
+        return `📅 <span class="font-medium">Meeting scheduled</span> with ${lead.name} for ${metadata.meeting_time || 'upcoming date'}`;
       case "link_clicked":
-        return `${lead.name} clicked on ${metadata.link_title || 'a link'}`;
+        return `🔗 ${lead.name} <span class="font-medium">clicked on link</span> "${metadata.link_title || 'a link'}"`;
       case "lead_rated":
-        return `Lead rated ${metadata.rating || '★★★☆☆'}`;
+        return `⭐ Lead quality rated as <span class="font-medium">${metadata.rating || '★★★☆☆'}</span>`;
       case "task_completed":
-        return `Task "${metadata.task_name || 'Untitled task'}" completed`;
+        return `✅ Task <span class="font-medium">"${metadata.task_name || 'Untitled task'}"</span> was completed`;
       case "form_completed":
-        return `${lead.name} completed ${metadata.form_name || 'a form'}`;
+        return `📋 ${lead.name} <span class="font-medium">completed form</span> "${metadata.form_name || 'a form'}"`;
       case "email_opened":
-        return `${lead.name} opened email "${metadata.subject || 'No subject'}"`;
+        return `👁️ ${lead.name} <span class="font-medium">opened email</span> "${metadata.subject || 'No subject'}"`;
       default:
         return activity.description || `Activity related to ${lead.name}`;
     }
@@ -178,11 +178,13 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
       case "note_added":
         return "bg-purple-50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900/30";
       case "email_sent":
-      case "email_received":
         return "bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30";
+      case "email_received":
+        return "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900/30";
       case "sms_sent":
-      case "sms_received":
         return "bg-green-50 dark:bg-green-950/20 border-green-100 dark:border-green-900/30";
+      case "sms_received":
+        return "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30";
       case "status_updated":
         return "bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30";
       case "lead_created":
@@ -208,6 +210,18 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
       default:
         return "bg-gray-50 dark:bg-gray-900/20 border-gray-100 dark:border-gray-800/30";
     }
+  };
+
+  // Get activity title based on type
+  const getActivityTitle = (type: string) => {
+    return type
+      ? type
+          .split("_")
+          .map((word: string) =>
+            word ? word.charAt(0).toUpperCase() + word.slice(1) : ""
+          )
+          .join(" ")
+      : "Activity";
   };
 
   return (
@@ -272,22 +286,12 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                               {getActivityIcon(activity.activity_type || "")}
                             </div>
 
-                            <div className={`flex-1 rounded-lg p-3 ${getActivityBackgroundColor(activity.activity_type || "")}`}>
+                            <div className={`flex-1 rounded-lg p-3 border ${getActivityBackgroundColor(activity.activity_type || "")}`}>
                               <div className="flex justify-between items-start mb-1">
                                 <span className="font-medium">
-                                  {activity.activity_type
-                                    ? activity.activity_type
-                                        .split("_")
-                                        .map((word: string) =>
-                                          word
-                                            ? word.charAt(0).toUpperCase() +
-                                              word.slice(1)
-                                            : ""
-                                        )
-                                        .join(" ")
-                                    : "Activity"}
+                                  {getActivityTitle(activity.activity_type || "")}
                                 </span>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                                   {format(
                                     parseISO(activity.created_at),
                                     "h:mm a"
@@ -295,16 +299,14 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                                 </span>
                               </div>
 
-                              <p className="text-sm">
-                                {getActivityDescription(activity)}
-                              </p>
+                              <p className="text-sm" dangerouslySetInnerHTML={{ __html: getActivityDescription(activity) }}></p>
 
-                              {activity.metadata && (
-                                <div className="mt-2 text-xs text-muted-foreground">
+                              {activity.metadata && Object.keys(activity.metadata).length > 0 && (
+                                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs rounded-md px-2 py-1.5 bg-muted/50">
                                   {Object.entries(activity.metadata).map(
                                     ([key, value]) => (
-                                      <div key={key} className="flex gap-1">
-                                        <span className="font-medium">
+                                      <div key={key} className="flex gap-1 items-baseline">
+                                        <span className="font-medium text-muted-foreground">
                                           {key
                                             .split('_')
                                             .map(word => 
@@ -312,7 +314,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                                             )
                                             .join(' ')}:
                                         </span>
-                                        <span>{String(value)}</span>
+                                        <span className="truncate">{String(value)}</span>
                                       </div>
                                     )
                                   )}
