@@ -1,3 +1,4 @@
+
 import { Lead } from "@/pages/dashboard/leads";
 import {
   Mail,
@@ -157,7 +158,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
 
                         {(activities as any[]).map((activity, i) => (
                           <div key={i} className="relative flex gap-4 pl-7">
-                            <div className="absolute left-0 size-6 rounded-full bg-background border-2 border-background flex items-center justify-center z-10">
+                            <div className="absolute left-0 size-6 rounded-full bg-background border-2 border-background flex items-center justify-center z-0">
                               {getActivityIcon(activity.activity_type || "")}
                             </div>
 
