@@ -1,3 +1,4 @@
+
 import { Lead } from "@/pages/dashboard/leads";
 import { Activity, BarChart2, Layers, ThumbsUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +46,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
 
       <Tabs defaultValue="timeline" className="flex-1 flex flex-col">
         <div className="border-b">
-          <TabsList className="w-full h-10 bg-transparent p-0 rounded-none">
+          <TabsList className="w-full h-9 bg-transparent p-0 rounded-none">
             <TabsTrigger 
               value="timeline" 
               className={cn(
@@ -54,7 +55,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
                 "data-[state=active]:text-primary font-medium"
               )}
             >
-              <Layers className="h-4 w-4 mr-1.5" />
+              <Layers className="h-3.5 w-3.5 mr-1" />
               Timeline
             </TabsTrigger>
             <TabsTrigger 
@@ -65,7 +66,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
                 "data-[state=active]:text-primary font-medium"
               )}
             >
-              <BarChart2 className="h-4 w-4 mr-1.5" />
+              <BarChart2 className="h-3.5 w-3.5 mr-1" />
               Overview
             </TabsTrigger>
             <TabsTrigger 
@@ -76,7 +77,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
                 "data-[state=active]:text-primary font-medium"
               )}
             >
-              <ThumbsUp className="h-4 w-4 mr-1.5" />
+              <ThumbsUp className="h-3.5 w-3.5 mr-1" />
               Insights
             </TabsTrigger>
           </TabsList>
@@ -288,3 +289,4 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
     </div>
   );
 }
+
