@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Mail, MessageSquare, Phone } from "lucide-react";
@@ -14,6 +15,7 @@ import {
   ChatMessageList,
 } from "@/components/ui/shadcn-chat/chat-bubble";
 import { Heart, Share, MoreVertical } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatMessagesProps {
   lead: Lead;
@@ -71,76 +73,78 @@ export function ChatMessages({ lead }: ChatMessagesProps) {
   ];
 
   return (
-    <ChatMessageList>
-      <AnimatePresence>
-        {leadMessages.map((message, index) => {
-          const variant = getMessageVariant(message);
-          const typeIcon = getMessageTypeIcon(message.type);
-          const initials = message.userName
-            ? message.userName.charAt(0).toUpperCase()
-            : lead.name.charAt(0).toUpperCase();
-          const formattedDate = new Date(message.createdAt).toLocaleTimeString(
-            [],
-            { hour: "2-digit", minute: "2-digit" }
-          );
+    <ScrollArea className="h-[calc(100vh-300px)]">
+      <ChatMessageList>
+        <AnimatePresence>
+          {leadMessages.map((message, index) => {
+            const variant = getMessageVariant(message);
+            const typeIcon = getMessageTypeIcon(message.type);
+            const initials = message.userName
+              ? message.userName.charAt(0).toUpperCase()
+              : lead.name.charAt(0).toUpperCase();
+            const formattedDate = new Date(message.createdAt).toLocaleTimeString(
+              [],
+              { hour: "2-digit", minute: "2-digit" }
+            );
 
-          return (
-            <motion.div
-              key={message.id}
-              layout
-              initial={{ opacity: 0, scale: 1, y: 50, x: 0 }}
-              animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-              exit={{ opacity: 0, scale: 1, y: 1, x: 0 }}
-              transition={{
-                opacity: { duration: 0.1 },
-                layout: {
-                  type: "spring",
-                  bounce: 0.3,
-                  duration: index * 0.05 + 0.2,
-                },
-              }}
-              style={{ originX: 0.5, originY: 0.5 }}
-              className="flex flex-col gap-2 p-4"
-            >
-              <ChatBubble variant={variant}>
-                <ChatBubbleAvatar
-                  src={message.userAvatar}
-                  fallback={initials}
-                />
-                <ChatBubbleMessage isLoading={message.isLoading}>
-                  <div className="flex items-center gap-2 mb-1 text-xs text-muted-foreground">
-                    {typeIcon}
-                    <span>
-                      {message.type === "email"
-                        ? "Email"
-                        : message.type === "sms"
-                        ? "SMS"
-                        : "Note"}
-                    </span>
-                  </div>
-                  {message.content}
-                  {formattedDate && (
-                    <ChatBubbleTimestamp timestamp={formattedDate} />
-                  )}
-                </ChatBubbleMessage>
-                <ChatBubbleActionWrapper>
-                  {actionIcons.map(({ icon, type }) => (
-                    <ChatBubbleAction
-                      className="size-7"
-                      key={type}
-                      icon={icon}
-                      onClick={() =>
-                        console.log(`${type} clicked for message ${message.id}`)
-                      }
-                    />
-                  ))}
-                </ChatBubbleActionWrapper>
-              </ChatBubble>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-      <div ref={messagesEndRef} />
-    </ChatMessageList>
+            return (
+              <motion.div
+                key={message.id}
+                layout
+                initial={{ opacity: 0, scale: 1, y: 50, x: 0 }}
+                animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+                exit={{ opacity: 0, scale: 1, y: 1, x: 0 }}
+                transition={{
+                  opacity: { duration: 0.1 },
+                  layout: {
+                    type: "spring",
+                    bounce: 0.3,
+                    duration: index * 0.05 + 0.2,
+                  },
+                }}
+                style={{ originX: 0.5, originY: 0.5 }}
+                className="flex flex-col gap-2 p-4"
+              >
+                <ChatBubble variant={variant}>
+                  <ChatBubbleAvatar
+                    src={message.userAvatar}
+                    fallback={initials}
+                  />
+                  <ChatBubbleMessage isLoading={message.isLoading}>
+                    <div className="flex items-center gap-2 mb-1 text-xs text-muted-foreground">
+                      {typeIcon}
+                      <span>
+                        {message.type === "email"
+                          ? "Email"
+                          : message.type === "sms"
+                          ? "SMS"
+                          : "Note"}
+                      </span>
+                    </div>
+                    {message.content}
+                    {formattedDate && (
+                      <ChatBubbleTimestamp timestamp={formattedDate} />
+                    )}
+                  </ChatBubbleMessage>
+                  <ChatBubbleActionWrapper>
+                    {actionIcons.map(({ icon, type }) => (
+                      <ChatBubbleAction
+                        className="size-7"
+                        key={type}
+                        icon={icon}
+                        onClick={() =>
+                          console.log(`${type} clicked for message ${message.id}`)
+                        }
+                      />
+                    ))}
+                  </ChatBubbleActionWrapper>
+                </ChatBubble>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+        <div ref={messagesEndRef} />
+      </ChatMessageList>
+    </ScrollArea>
   );
 }
