@@ -31,13 +31,13 @@ export const Underline = Mark.create({
   addCommands() {
     return {
       setUnderline: () => ({ commands }) => {
-        return commands.setMark('underline')
+        return commands.setMark(this.name)
       },
       toggleUnderline: () => ({ commands }) => {
-        return commands.toggleMark('underline')
+        return commands.toggleMark(this.name)
       },
       unsetUnderline: () => ({ commands }) => {
-        return commands.unsetMark('underline')
+        return commands.unsetMark(this.name)
       },
     }
   },
