@@ -4,19 +4,12 @@ import {
   Phone, 
   Send, 
   StickyNote, 
-  Bold, 
-  Italic, 
-  Underline, 
-  Link, 
-  ListOrdered, 
-  List, 
   Smile, 
   Paperclip 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import useChatStore from "@/hooks/use-chat-store";
@@ -24,6 +17,12 @@ import { v4 as uuidv4 } from "uuid";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { RichTextEditor } from "./rich-text-editor";
+import { EditorToolbar } from "./editor-toolbar";
+import { useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import Underline from './extensions/underline-extension';
 
 interface MessageComposerProps {
   messageType: "email" | "sms" | "note";
@@ -42,6 +41,35 @@ export function MessageComposer({
   const [emailCC, setEmailCC] = useState("");
   const queryClient = useQueryClient();
   const { addMessage } = useChatStore();
+
+  // Create a Tiptap editor instance
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Placeholder.configure({
+        placeholder: messageType === "email"
+          ? "Write your email..."
+          : messageType === "sms"
+          ? "Write your SMS..."
+          : "Add a note...",
+      }),
+    ],
+    content: "",
+    onUpdate: ({ editor }) => {
+      setMessage(editor.getHTML());
+    },
+  });
+
+  // Reset editor content when message type changes
+  useEffect(() => {
+    if (editor) {
+      editor.commands.setContent("");
+      setTimeout(() => {
+        editor.commands.focus();
+      }, 10);
+    }
+  }, [messageType, editor]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +140,10 @@ export function MessageComposer({
 
       // Clear the input
       setMessage("");
+      if (editor) {
+        editor.commands.setContent("");
+      }
+      
       if (messageType === "email") {
         setEmailSubject("");
         setEmailCC("");
@@ -123,54 +155,41 @@ export function MessageComposer({
     }
   };
 
-  const insertFormatting = (format: string) => {
-    // Simple implementation of formatting text insertion
-    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
-    if (!textarea) return;
+  // Compact email header section
+  const renderEmailHeader = () => {
+    if (messageType !== "email") return null;
     
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = message.substring(start, end);
-    
-    let formattedText = '';
-    
-    switch(format) {
-      case 'bold':
-        formattedText = `**${selectedText}**`;
-        break;
-      case 'italic':
-        formattedText = `*${selectedText}*`;
-        break;
-      case 'underline':
-        formattedText = `_${selectedText}_`;
-        break;
-      case 'link':
-        formattedText = `[${selectedText}](url)`;
-        break;
-      case 'list':
-        formattedText = `\n- ${selectedText}`;
-        break;
-      case 'list-ordered':
-        formattedText = `\n1. ${selectedText}`;
-        break;
-      default:
-        formattedText = selectedText;
-    }
-    
-    const newText = message.substring(0, start) + formattedText + message.substring(end);
-    setMessage(newText);
-    
-    // Set cursor position after formatting is applied
-    setTimeout(() => {
-      textarea.focus();
-      const newPosition = start + formattedText.length;
-      textarea.setSelectionRange(newPosition, newPosition);
-    }, 0);
+    return (
+      <div className="space-y-2">
+        <div className="grid grid-cols-12 gap-2 items-center">
+          <Label htmlFor="subject" className="col-span-2 text-xs text-right">Subject:</Label>
+          <Input
+            id="subject"
+            type="text"
+            placeholder="Email subject"
+            value={emailSubject}
+            onChange={(e) => setEmailSubject(e.target.value)}
+            className="col-span-10 h-7 text-sm py-1"
+          />
+        </div>
+        <div className="grid grid-cols-12 gap-2 items-center">
+          <Label htmlFor="cc" className="col-span-2 text-xs text-right">CC:</Label>
+          <Input
+            id="cc"
+            type="text"
+            placeholder="email@example.com, another@example.com"
+            value={emailCC}
+            onChange={(e) => setEmailCC(e.target.value)}
+            className="col-span-10 h-7 text-sm py-1"
+          />
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="border-t p-4">
-      <form id="message-form" onSubmit={handleSubmit} className="space-y-3">
+    <div className="border-t p-2">
+      <form id="message-form" onSubmit={handleSubmit} className="space-y-2">
         <div className="flex items-center justify-between">
           <ToggleGroup
             type="single"
@@ -192,135 +211,59 @@ export function MessageComposer({
           </ToggleGroup>
         </div>
 
-        {messageType === "email" && (
-          <div className="space-y-2">
-            <div>
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                type="text"
-                placeholder="Email subject"
-                value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                className="h-8"
-              />
-            </div>
-            <div>
-              <Label htmlFor="cc">CC</Label>
-              <Input
-                id="cc"
-                type="text"
-                placeholder="email@example.com, another@example.com"
-                value={emailCC}
-                onChange={(e) => setEmailCC(e.target.value)}
-                className="h-8"
-              />
-            </div>
-            <div className="flex items-center gap-1 border-b pb-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => insertFormatting('bold')}
-              >
-                <Bold className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => insertFormatting('italic')}
-              >
-                <Italic className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => insertFormatting('underline')}
-              >
-                <Underline className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => insertFormatting('link')}
-              >
-                <Link className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => insertFormatting('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => insertFormatting('list-ordered')}
-              >
-                <ListOrdered className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-              >
-                <Smile className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
+        {renderEmailHeader()}
 
         <div className="relative">
-          <Textarea
-            placeholder={
-              messageType === "email"
-                ? "Write your email..."
-                : messageType === "sms"
-                ? "Write your SMS..."
-                : "Add a note..."
-            }
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            rows={messageType === "email" ? 5 : 3}
+          <div 
             className={cn(
-              "resize-none pr-12",
+              "border rounded-md bg-background flex flex-col", 
               messageType === "email" ? "min-h-[120px]" : "min-h-[80px]"
             )}
-          />
-          <div className="absolute bottom-2 right-2 flex items-center">
-            {messageType === "email" && message.length > 0 && (
-              <span className="text-xs text-muted-foreground mr-2">
-                {message.length}/2000
-              </span>
+          >
+            {/* Toolbar */}
+            {messageType === "email" && (
+              <div className="border-b px-2 py-1">
+                <EditorToolbar 
+                  editor={editor}
+                  showSmileButton={true}
+                  showAttachButton={true}
+                  onSmileClick={() => console.log("Smile clicked")}
+                  onAttachClick={() => console.log("Attach clicked")}
+                />
+              </div>
             )}
-            <Button
-              type="submit"
-              size="icon"
-              disabled={isLoading || !message.trim() || (messageType === "email" && !emailSubject.trim())}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            
+            {/* Editor */}
+            <div className="flex-1 relative">
+              <RichTextEditor
+                value={message}
+                onChange={setMessage}
+                placeholder={
+                  messageType === "email"
+                    ? "Write your email..."
+                    : messageType === "sms"
+                    ? "Write your SMS..."
+                    : "Add a note..."
+                }
+                minHeight={messageType === "email" ? "min-h-[80px]" : "min-h-[60px]"}
+                className="resize-none pr-12"
+              />
+              
+              <div className="absolute bottom-2 right-2 flex items-center">
+                {message.length > 0 && (
+                  <span className="text-xs text-muted-foreground mr-2">
+                    {message.length > 1000 ? `${message.length}/2000` : ""}
+                  </span>
+                )}
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={isLoading || !message.trim() || (messageType === "email" && !emailSubject.trim())}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
