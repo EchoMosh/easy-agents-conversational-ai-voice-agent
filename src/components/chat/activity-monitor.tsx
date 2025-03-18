@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 import {
   Mail,
@@ -132,7 +131,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
 
         {/* Timeline Tab */}
         <TabsContent value="timeline" className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="p-4">
               {Object.keys(activityByDate).length > 0 ? (
                 <div className="space-y-6">
@@ -226,7 +225,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="space-y-4 p-4">
               <Card>
                 <CardHeader className="pb-2">
@@ -368,7 +367,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
 
         {/* Suggestions Tab */}
         <TabsContent value="suggestions" className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="space-y-4 p-4">
               <Card>
                 <CardHeader className="pb-2">

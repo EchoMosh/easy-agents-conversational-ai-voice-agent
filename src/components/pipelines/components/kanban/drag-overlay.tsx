@@ -36,7 +36,7 @@ export function DragOverlayContainer({
         <TaskCard
           lead={activeLead}
           isOverlay
-          columnId={activeItem.columnId || "unknown"}
+          columnId={activeItem.type === "Task" && activeItem.columnId ? activeItem.columnId : "unknown"}
         />
       )}
     </DragOverlay>,
