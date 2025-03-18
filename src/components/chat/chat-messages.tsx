@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Mail, MessageSquare, Phone } from "lucide-react";
@@ -73,8 +72,8 @@ export function ChatMessages({ lead }: ChatMessagesProps) {
   ];
 
   return (
-    <ScrollArea className="h-[calc(100vh-12rem)]">
-      <ChatMessageList>
+    <ScrollArea className="h-[calc(100vh-13rem)]">
+      <ChatMessageList className="px-4">
         <AnimatePresence>
           {leadMessages.map((message, index) => {
             const variant = getMessageVariant(message);

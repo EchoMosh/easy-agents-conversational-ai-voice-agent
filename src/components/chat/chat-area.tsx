@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 import { MessageComposer } from "./message-composer";
 import { useQuery } from "@tanstack/react-query";
@@ -36,7 +35,6 @@ export function ChatArea({
     setMessageType(messageType);
   }, [selectedLead, messageType, setSelectedLeadId, setMessageType]);
 
-  // Fetch pipeline data based on selectedLead's pipeline_id
   const { data: pipeline } = useQuery({
     queryKey: ["pipeline", selectedLead?.pipeline_id],
     queryFn: async () => {
@@ -136,7 +134,7 @@ export function ChatArea({
 
   if (!selectedLead) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center h-[calc(100vh-4rem)]">
         <div className="text-center space-y-2">
           <Mail className="h-12 w-12 mx-auto text-muted-foreground/50" />
           <p className="text-muted-foreground">
@@ -148,9 +146,9 @@ export function ChatArea({
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
-      <div className="w-[75%] flex flex-col h-full border-r">
-        <div className="border-b p-4">
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="w-[75%] flex flex-col border-r">
+        <div className="border-b p-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
               {selectedLead.name[0].toUpperCase()}
@@ -170,11 +168,13 @@ export function ChatArea({
           <ChatMessages lead={selectedLead} />
         </div>
 
-        <MessageComposer
-          messageType={messageType}
-          onMessageTypeChange={onMessageTypeChange}
-          leadId={selectedLead.id}
-        />
+        <div className="flex-shrink-0">
+          <MessageComposer
+            messageType={messageType}
+            onMessageTypeChange={onMessageTypeChange}
+            leadId={selectedLead.id}
+          />
+        </div>
       </div>
 
       <div className="w-[25%]">

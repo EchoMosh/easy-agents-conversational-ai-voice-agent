@@ -38,8 +38,8 @@ interface ActivityMonitorProps {
 
 export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps) {
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <div className="p-1.5 border-b flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="p-1.5 border-b flex items-center justify-between flex-shrink-0">
         <h2 className="text-xs font-semibold flex items-center gap-1">
           <Activity className="h-3.5 w-3.5 text-primary" />
           Activity Monitor
@@ -320,4 +320,3 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
     </div>
   );
 }
-
