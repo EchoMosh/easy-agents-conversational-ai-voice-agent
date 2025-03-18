@@ -1,9 +1,12 @@
+
 import { cn } from "@/lib/utils";
 import { Lead } from "@/pages/dashboard/leads";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useState } from "react";
 import { ChatPage } from "@/pages/dashboard/chat";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Mail, Phone } from "lucide-react";
 
 // Function to get initials from full name
 function getInitials(name: string): string {
@@ -66,27 +69,57 @@ export function ChatContact({ lead }: ChatContactProps) {
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm",
+          "w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors text-sm hover:bg-muted/70",
           isOpen
             ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            : "text-foreground"
         )}
       >
         <div className="relative">
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-10 w-10 border border-transparent">
             <AvatarFallback
-              className={cn("text-xs font-medium", getAvatarColor(lead.name))}
+              className={cn(
+                "text-sm font-medium",
+                isOpen
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : getAvatarColor(lead.name)
+              )}
             >
               {getInitials(lead.name)}
             </AvatarFallback>
           </Avatar>
-          <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500" />
+          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-background" />
         </div>
-        <div className="flex flex-col items-start gap-1 overflow-hidden">
-          <p className="truncate font-medium leading-none">{lead.name}</p>
-          <p className="text-xs text-muted-foreground truncate w-full">
-            {lead.email || lead.phone || "No contact info"}
-          </p>
+        
+        <div className="flex flex-col items-start gap-0.5 overflow-hidden">
+          <div className="flex justify-between items-center w-full">
+            <p className="font-medium leading-none">{lead.name}</p>
+            {lead.status && (
+              <Badge variant={isOpen ? "secondary" : "outline"} className="text-xs ml-2">
+                {lead.status}
+              </Badge>
+            )}
+          </div>
+          
+          {lead.email && (
+            <p className={cn(
+              "text-xs flex items-center gap-1",
+              isOpen ? "text-primary-foreground/80" : "text-muted-foreground"
+            )}>
+              <Mail className="h-3 w-3" />
+              <span className="truncate max-w-[150px]">{lead.email}</span>
+            </p>
+          )}
+          
+          {!lead.email && lead.phone && (
+            <p className={cn(
+              "text-xs flex items-center gap-1",
+              isOpen ? "text-primary-foreground/80" : "text-muted-foreground"
+            )}>
+              <Phone className="h-3 w-3" />
+              <span>{lead.phone}</span>
+            </p>
+          )}
         </div>
       </button>
 
