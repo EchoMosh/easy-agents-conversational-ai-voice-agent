@@ -1,20 +1,19 @@
-
 import { Lead } from "@/pages/dashboard/leads";
+import { Activity, BarChart2, Layers, ThumbsUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ActivityTab } from "../chat/tabs/activity-tab";
 import {
   Mail,
   MessageSquare,
   Phone,
   Clock,
-  BarChart2,
-  Activity,
-  Layers,
-  Calendar,
-  CheckCircle,
   AlertCircle,
   FileText,
   Info,
   Edit,
-  ThumbsUp,
+  ThumbsUp as ThumbsUpIcon,
   Tags,
   DollarSign,
   UserCheck,
@@ -31,199 +30,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import useChatStore from "@/hooks/use-chat-store";
 import { format, formatDistanceToNow, parseISO, isSameDay } from "date-fns";
 import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 interface ActivityMonitorProps {
   lead: Lead;
+  activities?: Array<{
+    id: string;
+    type: string;
+    content: string;
+    timestamp: string;
+    metadata?: Record<string, any>;
+  }>;
 }
 
-export function ActivityMonitor({ lead }: ActivityMonitorProps) {
-  const { leadActivities } = useChatStore();
-  const leadActivity = leadActivities[lead.id] || {
-    leadId: lead.id,
-    lastActive: new Date().toISOString(),
-    messageCount: { email: 0, sms: 0, note: 0, total: 0 },
-    responseTime: 0,
-    activityHistory: [],
-  };
-
-  // Calculate message type percentages
-  const totalMessages = leadActivity.messageCount.total || 1; // Avoid division by zero
-  const emailPercentage =
-    (leadActivity.messageCount.email / totalMessages) * 100;
-  const smsPercentage = (leadActivity.messageCount.sms / totalMessages) * 100;
-  const notePercentage = (leadActivity.messageCount.note / totalMessages) * 100;
-
-  // Calculate engagement level (simple heuristic based on message count)
-  const engagementLevel =
-    totalMessages < 5 ? "Low" : totalMessages < 15 ? "Medium" : "High";
-
-  // Corresponding colors for engagement levels
-  const engagementColor =
-    engagementLevel === "Low"
-      ? "text-yellow-500"
-      : engagementLevel === "Medium"
-      ? "text-blue-500"
-      : "text-green-500";
-
-  // Group activity history by date
-  const activityByDate = (leadActivity.activityHistory || []).reduce(
-    (groups: Record<string, any[]>, activity: any) => {
-      if (!activity?.created_at) return groups;
-
-      const date = format(parseISO(activity.created_at), "yyyy-MM-dd");
-      if (!groups[date]) {
-        groups[date] = [];
-      }
-      groups[date].push(activity);
-      return groups;
-    },
-    {}
-  );
-
-  // Get activity type icon
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case "note_added":
-        return <FileText className="h-4 w-4 text-purple-500" />;
-      case "email_sent":
-        return <Mail className="h-4 w-4 text-blue-500" />;
-      case "email_received":
-        return <Mail className="h-4 w-4 text-indigo-500" />;
-      case "sms_sent":
-        return <Phone className="h-4 w-4 text-green-500" />;
-      case "sms_received":
-        return <Phone className="h-4 w-4 text-emerald-500" />;
-      case "status_updated":
-        return <Edit className="h-4 w-4 text-amber-500" />;
-      case "lead_created":
-        return <UserPlus className="h-4 w-4 text-green-500" />;
-      case "tag_added":
-        return <Tags className="h-4 w-4 text-pink-500" />;
-      case "deal_updated":
-        return <DollarSign className="h-4 w-4 text-emerald-500" />;
-      case "lead_converted":
-        return <UserCheck className="h-4 w-4 text-blue-500" />;
-      case "meeting_scheduled":
-        return <Calendar className="h-4 w-4 text-indigo-500" />;
-      case "link_clicked":
-        return <LinkIcon className="h-4 w-4 text-blue-500" />;
-      case "lead_rated":
-        return <Star className="h-4 w-4 text-amber-500" />;
-      case "task_completed":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "form_completed":
-        return <PenTool className="h-4 w-4 text-violet-500" />;
-      case "email_opened":
-        return <Eye className="h-4 w-4 text-teal-500" />;
-      default:
-        return <Info className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  // Get descriptive activity text based on type and metadata
-  const getActivityDescription = (activity: any) => {
-    const type = activity.activity_type || "";
-    const metadata = activity.metadata || {};
-    const userName = metadata.user_name || "Your team";
-    
-    switch (type) {
-      case "note_added":
-        return `📝 <span class="font-medium">${userName}</span> added a note: <span class="italic">"${metadata.note_content || 'Internal note'}"</span>`;
-      case "email_sent":
-        return `📧 <span class="font-medium">Email sent</span> to ${lead.name} with subject <span class="italic">"${metadata.subject || 'No subject'}"</span>`;
-      case "email_received":
-        return `📩 <span class="font-medium">Email received</span> from ${lead.name} about <span class="italic">"${metadata.subject || 'No subject'}"</span>`;
-      case "sms_sent":
-        return `📱 <span class="font-medium">SMS sent</span> to ${lead.name}${metadata.message ? ': <span class="italic">"' + metadata.message + '"</span>' : ''}`;
-      case "sms_received":
-        return `💬 <span class="font-medium">SMS received</span> from ${lead.name}${metadata.message ? ': <span class="italic">"' + metadata.message + '"</span>' : ''}`;
-      case "status_updated":
-        return `🔄 Lead status changed from <span class="font-medium">${metadata.old_status || 'previous status'}</span> to <span class="font-medium">${metadata.new_status || 'new status'}</span>`;
-      case "lead_created":
-        return `✨ <span class="font-medium">New lead created</span> - ${lead.name} was added to the system by ${userName}`;
-      case "tag_added":
-        return `🏷️ Tag <span class="font-medium">"${metadata.tag_name || 'New tag'}"</span> was added to lead`;
-      case "deal_updated":
-        return `💰 Deal value updated to <span class="font-medium">$${metadata.amount || '0'}</span>`;
-      case "lead_converted":
-        return `🎯 Lead successfully <span class="font-medium">converted to ${metadata.converted_to || 'customer'}</span>`;
-      case "meeting_scheduled":
-        return `📅 <span class="font-medium">Meeting scheduled</span> with ${lead.name} for ${metadata.meeting_time || 'upcoming date'}`;
-      case "link_clicked":
-        return `🔗 ${lead.name} <span class="font-medium">clicked on link</span> "${metadata.link_title || 'a link'}"`;
-      case "lead_rated":
-        return `⭐ Lead quality rated as <span class="font-medium">${metadata.rating || '★★★☆☆'}</span>`;
-      case "task_completed":
-        return `✅ Task <span class="font-medium">"${metadata.task_name || 'Untitled task'}"</span> was completed`;
-      case "form_completed":
-        return `📋 ${lead.name} <span class="font-medium">completed form</span> "${metadata.form_name || 'a form'}"`;
-      case "email_opened":
-        return `👁️ ${lead.name} <span class="font-medium">opened email</span> "${metadata.subject || 'No subject'}"`;
-      default:
-        return activity.description || `Activity related to ${lead.name}`;
-    }
-  };
-
-  // Get background color based on activity type
-  const getActivityBackgroundColor = (type: string) => {
-    switch (type) {
-      case "note_added":
-        return "bg-purple-50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900/30";
-      case "email_sent":
-        return "bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30";
-      case "email_received":
-        return "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900/30";
-      case "sms_sent":
-        return "bg-green-50 dark:bg-green-950/20 border-green-100 dark:border-green-900/30";
-      case "sms_received":
-        return "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30";
-      case "status_updated":
-        return "bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30";
-      case "lead_created":
-        return "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30";
-      case "tag_added":
-        return "bg-pink-50 dark:bg-pink-950/20 border-pink-100 dark:border-pink-900/30";
-      case "deal_updated":
-        return "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30";
-      case "lead_converted":
-        return "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900/30";
-      case "meeting_scheduled":
-        return "bg-violet-50 dark:bg-violet-950/20 border-violet-100 dark:border-violet-900/30";
-      case "link_clicked":
-        return "bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30";
-      case "lead_rated":
-        return "bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30";
-      case "task_completed":
-        return "bg-teal-50 dark:bg-teal-950/20 border-teal-100 dark:border-teal-900/30";
-      case "form_completed":
-        return "bg-violet-50 dark:bg-violet-950/20 border-violet-100 dark:border-violet-900/30";
-      case "email_opened":
-        return "bg-cyan-50 dark:bg-cyan-950/20 border-cyan-100 dark:border-cyan-900/30";
-      default:
-        return "bg-gray-50 dark:bg-gray-900/20 border-gray-100 dark:border-gray-800/30";
-    }
-  };
-
-  // Get activity title based on type
-  const getActivityTitle = (type: string) => {
-    return type
-      ? type
-          .split("_")
-          .map((word: string) =>
-            word ? word.charAt(0).toUpperCase() + word.slice(1) : ""
-          )
-          .join(" ")
-      : "Activity";
-  };
-
+export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="p-4 border-b flex items-center justify-between">
@@ -232,7 +54,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
           Activity Monitor
         </h2>
         <Badge variant="outline" className="font-mono">
-          {leadActivity.activityHistory?.length || 0} events
+          {activities.length} events
         </Badge>
       </div>
 
@@ -258,84 +80,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
         <TabsContent value="timeline" className="flex-1 overflow-hidden">
           <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="p-4">
-              {Object.keys(activityByDate).length > 0 ? (
-                <div className="space-y-6">
-                  {Object.entries(activityByDate).map(([date, activities]) => (
-                    <div key={date} className="relative">
-                      <div className="sticky top-0 bg-background py-2 z-10">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-                          <h3 className="text-sm font-medium">
-                            {isSameDay(parseISO(date), new Date())
-                              ? "Today"
-                              : format(parseISO(date), "EEEE, MMMM d, yyyy")}
-                          </h3>
-                          <Badge variant="outline" className="ml-auto">
-                            {(activities as any[]).length}
-                          </Badge>
-                        </div>
-                        <Separator className="my-2" />
-                      </div>
-
-                      <div className="space-y-3 ml-1 relative">
-                        <div className="absolute left-3 top-0 bottom-0 w-px bg-border"></div>
-
-                        {(activities as any[]).map((activity, i) => (
-                          <div key={i} className="relative flex gap-4 pl-7">
-                            <div className="absolute left-0 size-6 rounded-full bg-background border-2 border-background flex items-center justify-center z-0">
-                              {getActivityIcon(activity.activity_type || "")}
-                            </div>
-
-                            <div className={`flex-1 rounded-lg p-3 border ${getActivityBackgroundColor(activity.activity_type || "")}`}>
-                              <div className="flex justify-between items-start mb-1">
-                                <span className="font-medium">
-                                  {getActivityTitle(activity.activity_type || "")}
-                                </span>
-                                <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                                  {format(
-                                    parseISO(activity.created_at),
-                                    "h:mm a"
-                                  )}
-                                </span>
-                              </div>
-
-                              <p className="text-sm" dangerouslySetInnerHTML={{ __html: getActivityDescription(activity) }}></p>
-
-                              {activity.metadata && Object.keys(activity.metadata).length > 0 && (
-                                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs rounded-md px-2 py-1.5 bg-muted/50">
-                                  {Object.entries(activity.metadata).map(
-                                    ([key, value]) => (
-                                      <div key={key} className="flex gap-1 items-baseline">
-                                        <span className="font-medium text-muted-foreground">
-                                          {key
-                                            .split('_')
-                                            .map(word => 
-                                              word.charAt(0).toUpperCase() + word.slice(1)
-                                            )
-                                            .join(' ')}:
-                                        </span>
-                                        <span className="truncate">{String(value)}</span>
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                  <Activity className="h-10 w-10 text-muted-foreground mb-3 opacity-50" />
-                  <h3 className="font-medium mb-1">No activity recorded yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Activities will appear here as you interact with this lead
-                  </p>
-                </div>
-              )}
+              <ActivityTab activities={activities} leadName={lead.name} />
             </div>
           </ScrollArea>
         </TabsContent>
@@ -354,13 +99,13 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">
-                      {formatDistanceToNow(new Date(leadActivity.lastActive), {
+                      {formatDistanceToNow(new Date(lead.created_at), {
                         addSuffix: true,
                       })}
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(leadActivity.lastActive), "PPpp")}
+                    {format(new Date(lead.created_at), "PPpp")}
                   </div>
                 </CardContent>
               </Card>
@@ -377,9 +122,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                       <Mail className="h-4 w-4 text-blue-500" />
                       <span>Email</span>
                     </div>
-                    <span className="font-medium">
-                      {leadActivity.messageCount.email}
-                    </span>
+                    <span className="font-medium">0</span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -387,9 +130,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                       <Phone className="h-4 w-4 text-green-500" />
                       <span>SMS</span>
                     </div>
-                    <span className="font-medium">
-                      {leadActivity.messageCount.sms}
-                    </span>
+                    <span className="font-medium">0</span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -397,16 +138,12 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                       <MessageSquare className="h-4 w-4 text-purple-500" />
                       <span>Notes</span>
                     </div>
-                    <span className="font-medium">
-                      {leadActivity.messageCount.note}
-                    </span>
+                    <span className="font-medium">0</span>
                   </div>
 
                   <div className="border-t pt-2 mt-2 flex items-center justify-between">
                     <span className="font-medium">Total</span>
-                    <span className="font-medium">
-                      {leadActivity.messageCount.total}
-                    </span>
+                    <span className="font-medium">0</span>
                   </div>
                 </CardContent>
               </Card>
@@ -424,11 +161,9 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                         <Mail className="h-4 w-4 text-blue-500" />
                         <span>Email</span>
                       </div>
-                      <span className="text-xs">
-                        {emailPercentage.toFixed(0)}%
-                      </span>
+                      <span className="text-xs">0%</span>
                     </div>
-                    <Progress value={emailPercentage} className="h-2" />
+                    <Progress value={0} className="h-2" />
                   </div>
 
                   <div className="space-y-2">
@@ -437,9 +172,9 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                         <Phone className="h-4 w-4 text-green-500" />
                         <span>SMS</span>
                       </div>
-                      <span className="text-xs">{smsPercentage.toFixed(0)}%</span>
+                      <span className="text-xs">0%</span>
                     </div>
-                    <Progress value={smsPercentage} className="h-2" />
+                    <Progress value={0} className="h-2" />
                   </div>
 
                   <div className="space-y-2">
@@ -448,11 +183,9 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                         <MessageSquare className="h-4 w-4 text-purple-500" />
                         <span>Notes</span>
                       </div>
-                      <span className="text-xs">
-                        {notePercentage.toFixed(0)}%
-                      </span>
+                      <span className="text-xs">0%</span>
                     </div>
-                    <Progress value={notePercentage} className="h-2" />
+                    <Progress value={0} className="h-2" />
                   </div>
                 </CardContent>
               </Card>
@@ -498,32 +231,16 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                 <CardContent>
                   <div className="flex items-center gap-3">
                     <div
-                      className={`size-12 rounded-full flex items-center justify-center border-2 ${
-                        engagementLevel === "Low"
-                          ? "border-yellow-500 text-yellow-500 bg-yellow-500/10"
-                          : engagementLevel === "Medium"
-                          ? "border-blue-500 text-blue-500 bg-blue-500/10"
-                          : "border-green-500 text-green-500 bg-green-500/10"
-                      }`}
+                      className={`size-12 rounded-full flex items-center justify-center border-2 border-yellow-500 text-yellow-500 bg-yellow-500/10`}
                     >
-                      {engagementLevel === "Low" ? (
-                        <AlertCircle className="h-6 w-6" />
-                      ) : engagementLevel === "Medium" ? (
-                        <Clock className="h-6 w-6" />
-                      ) : (
-                        <ThumbsUp className="h-6 w-6" />
-                      )}
+                      <AlertCircle className="h-6 w-6" />
                     </div>
                     <div>
-                      <div className={`text-lg font-bold ${engagementColor}`}>
-                        {engagementLevel} Engagement
+                      <div className={`text-lg font-bold text-yellow-500`}>
+                        Low Engagement
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {engagementLevel === "Low"
-                          ? "Needs immediate attention"
-                          : engagementLevel === "Medium"
-                          ? "Making progress, keep going"
-                          : "Excellent engagement, follow up with next steps"}
+                        Needs immediate attention
                       </div>
                     </div>
                   </div>
@@ -540,71 +257,23 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {engagementLevel === "Low" && (
-                    <>
-                      <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-900 rounded-md text-sm">
-                        <p className="font-medium text-yellow-800 dark:text-yellow-300">
-                          Follow up needed
-                        </p>
-                        <p className="text-yellow-700 dark:text-yellow-400 text-xs mt-1">
-                          No communication in over a week. Consider sending a
-                          follow-up email.
-                        </p>
-                      </div>
-                      <div className="px-3 py-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-md text-sm">
-                        <p className="font-medium text-blue-800 dark:text-blue-300">
-                          Try different channel
-                        </p>
-                        <p className="text-blue-700 dark:text-blue-400 text-xs mt-1">
-                          Email responses are low. Consider trying SMS instead.
-                        </p>
-                      </div>
-                    </>
-                  )}
-
-                  {engagementLevel === "Medium" && (
-                    <>
-                      <div className="px-3 py-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-md text-sm">
-                        <p className="font-medium text-blue-800 dark:text-blue-300">
-                          Maintain momentum
-                        </p>
-                        <p className="text-blue-700 dark:text-blue-400 text-xs mt-1">
-                          Good engagement so far. Schedule a follow-up to maintain
-                          momentum.
-                        </p>
-                      </div>
-                      <div className="px-3 py-2 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-900 rounded-md text-sm">
-                        <p className="font-medium text-purple-800 dark:text-purple-300">
-                          Add more context
-                        </p>
-                        <p className="text-purple-700 dark:text-purple-400 text-xs mt-1">
-                          Consider adding more internal notes about this lead.
-                        </p>
-                      </div>
-                    </>
-                  )}
-
-                  {engagementLevel === "High" && (
-                    <>
-                      <div className="px-3 py-2 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-900 rounded-md text-sm">
-                        <p className="font-medium text-green-800 dark:text-green-300">
-                          Ready for next step
-                        </p>
-                        <p className="text-green-700 dark:text-green-400 text-xs mt-1">
-                          High engagement suggests this lead is ready for a
-                          proposal or demo.
-                        </p>
-                      </div>
-                      <div className="px-3 py-2 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-900 rounded-md text-sm">
-                        <p className="font-medium text-emerald-800 dark:text-emerald-300">
-                          Move pipeline stage
-                        </p>
-                        <p className="text-emerald-700 dark:text-emerald-400 text-xs mt-1">
-                          Consider moving this lead to the next pipeline stage.
-                        </p>
-                      </div>
-                    </>
-                  )}
+                  <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-900 rounded-md text-sm">
+                    <p className="font-medium text-yellow-800 dark:text-yellow-300">
+                      Follow up needed
+                    </p>
+                    <p className="text-yellow-700 dark:text-yellow-400 text-xs mt-1">
+                      No communication in over a week. Consider sending a
+                      follow-up email.
+                    </p>
+                  </div>
+                  <div className="px-3 py-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-md text-sm">
+                    <p className="font-medium text-blue-800 dark:text-blue-300">
+                      Try different channel
+                    </p>
+                    <p className="text-blue-700 dark:text-blue-400 text-xs mt-1">
+                      Email responses are low. Consider trying SMS instead.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>

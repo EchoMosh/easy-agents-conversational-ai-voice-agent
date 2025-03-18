@@ -1,4 +1,4 @@
-import { Mail, MessageCircle, StickyNote } from "lucide-react";
+
 import { Lead } from "@/pages/dashboard/leads";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { MessageComposer } from "./message-composer";
@@ -15,6 +15,8 @@ import {
 import { ChatMessages } from "./chat-messages";
 import { ActivityMonitor } from "./activity-monitor";
 import useChatStore from "@/hooks/use-chat-store";
+import { Mail, MessageCircle, StickyNote } from "lucide-react";
+import { fetchLeadActivities } from "@/utils/supabase-activity-utils";
 
 interface ChatAreaProps {
   selectedLead: Lead | undefined;
@@ -39,6 +41,31 @@ export function ChatArea({
     }
     setMessageType(messageType);
   }, [selectedLead, messageType, setSelectedLeadId, setMessageType]);
+
+  // Fetch activities for the selected lead
+  const { data: activities } = useQuery({
+    queryKey: ["lead-activities", selectedLead?.id],
+    queryFn: async () => {
+      if (!selectedLead?.id) return [];
+      
+      try {
+        const activities = await fetchLeadActivities(selectedLead.id, 30);
+        
+        // Transform activities to the format expected by ActivityTab
+        return activities.map(activity => ({
+          id: activity.id,
+          type: activity.activity_type as any || "note",
+          content: activity.content || `Activity related to ${selectedLead.name}`,
+          timestamp: activity.created_at,
+          metadata: activity.metadata || {}
+        }));
+      } catch (error) {
+        console.error("Error fetching lead activities:", error);
+        return [];
+      }
+    },
+    enabled: !!selectedLead?.id,
+  });
 
   const { data: pipeline } = useQuery({
     queryKey: ["pipeline", selectedLead?.pipeline_id],
@@ -140,7 +167,7 @@ export function ChatArea({
       <ResizableHandle withHandle />
 
       <ResizablePanel defaultSize={30} minSize={25}>
-        <ActivityMonitor lead={selectedLead} />
+        <ActivityMonitor lead={selectedLead} activities={activities || []} />
       </ResizablePanel>
     </ResizablePanelGroup>
   );

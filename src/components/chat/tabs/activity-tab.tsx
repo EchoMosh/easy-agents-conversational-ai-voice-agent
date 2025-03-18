@@ -111,13 +111,13 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
         };
       case 'lead_converted':
         return {
-          bgClass: 'bg-indigo-100/50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/30',
+          bgClass: 'bg-indigo-100/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/30',
           iconClass: 'text-indigo-500 border-indigo-200 bg-indigo-100 dark:bg-indigo-900/40 dark:border-indigo-800/40',
           emoji: '🎯'
         };
       case 'meeting_scheduled':
         return {
-          bgClass: 'bg-violet-100/50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-900/30',
+          bgClass: 'bg-violet-100/50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-900/30',
           iconClass: 'text-violet-500 border-violet-200 bg-violet-100 dark:bg-violet-900/40 dark:border-violet-800/40',
           emoji: '📅'
         };
@@ -165,6 +165,57 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
         return 'Email opened';
       default:
         return 'Activity';
+    }
+  };
+
+  // Generate a more detailed description of the activity
+  const getDetailedActivityContent = (activity: Activity) => {
+    const type = activity.type;
+    const metadata = activity.metadata || {};
+    
+    switch (type) {
+      case 'email':
+        if (activity.content.includes('received')) {
+          return `Email received from ${leadName}${metadata.subject ? ' about "' + metadata.subject + '"' : ''}`;
+        } else {
+          return `Email sent to ${leadName}${metadata.subject ? ' with subject "' + metadata.subject + '"' : ''}`;
+        }
+      case 'sms':
+        if (activity.content.includes('received')) {
+          return `SMS received from ${leadName}${metadata.message ? ': "' + metadata.message + '"' : ''}`;
+        } else {
+          return `SMS sent to ${leadName}${metadata.message ? ': "' + metadata.message + '"' : ''}`;
+        }
+      case 'note':
+        return `Note added about ${leadName}: "${metadata.note_content || activity.content}"`;
+      case 'status_change':
+        return `Status changed from "${metadata.old_status || 'previous status'}" to "${metadata.new_status || 'new status'}"`;
+      case 'lead_created':
+        return `New lead ${leadName} was created`;
+      case 'tag_added':
+        return `Tag "${metadata.tag_name || 'New tag'}" was added to ${leadName}`;
+      case 'deal_updated':
+        return `Deal value updated to $${metadata.amount || '0'}`;
+      case 'lead_converted':
+        return `Lead ${leadName} successfully converted to ${metadata.converted_to || 'customer'}`;
+      case 'meeting_scheduled':
+        return `Meeting scheduled with ${leadName} for ${metadata.meeting_time || 'upcoming date'}`;
+      case 'link_clicked':
+        return `${leadName} clicked on link "${metadata.link_title || 'a link'}"`;
+      case 'lead_rated':
+        return `Lead quality rated as ${metadata.rating || '★★★☆☆'}`;
+      case 'task_completed':
+        return `Task "${metadata.task_name || 'Untitled task'}" was completed`;
+      case 'form_completed':
+        return `${leadName} completed form "${metadata.form_name || 'a form'}"`;
+      case 'email_opened':
+        return `${leadName} opened email "${metadata.subject || 'No subject'}"`;
+      default:
+        // Prevent the generic "Activity related to [name]" message
+        if (activity.content === `Activity related to ${leadName}`) {
+          return `Interaction with ${leadName}`;
+        }
+        return activity.content;
     }
   };
 
@@ -282,7 +333,7 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
                         {getActivityTitle(activity)}
                       </p>
                       
-                      <p className="text-sm">{activity.content}</p>
+                      <p className="text-sm">{getDetailedActivityContent(activity)}</p>
                       
                       {getActivityMetadata(activity)}
                     </div>
