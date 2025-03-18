@@ -7,11 +7,11 @@ import { PipelineStage } from "./pipeline-stage";
 import { SortableStage } from "./sortable-stage";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { AddStageButton } from "./add-stage-button";
-import { useStages } from "@/hooks/pipeline/use-stages";
 import { DeleteStageDialog } from "./delete-stage-dialog";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useColumnEditor } from "./kanban/hooks/use-column-editor";
 
 interface StagesContainerProps {
   selectedPipeline: Pipeline;
@@ -36,26 +36,48 @@ export function StagesContainer({
   allPipelines = [],
   onDeleteStage
 }: StagesContainerProps) {
-  const [stageToDelete, setStageToDelete] = useState<PipelineColumn | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isDraggingDisabled, setIsDraggingDisabled] = useState(false);
+  const [pipelineLeads, setPipelineLeads] = useState<Lead[]>([]);
   
-  // Use the full useStages hook and extract all its properties
+  // Get column leads function
+  const getColumnLeads = (columnId: string) => {
+    if (!columnId) return [];
+    
+    const column = selectedPipeline.columns.find(col => col.id === columnId);
+    if (!column?.title) return [];
+    
+    const columnLeads = pipelineLeads.filter(
+      lead => lead.status && 
+             column.title && 
+             lead.status.toLowerCase() === column.title.toLowerCase()
+    );
+    
+    return columnLeads;
+  };
+  
+  // Use the column editor hook
   const {
     editingColumnId,
     setEditingColumnId,
     editingColumnTitle,
     setEditingColumnTitle,
-    isColumnCollapsed,
-    toggleColumnCollapse,
+    stageToDelete,
+    setStageToDelete,
+    isDeleting,
+    isAddingStage,
     handleKeyDown,
     handleColorChange,
-    handleAddNewStage,
-    handleDeleteStage,
-    isAddingStage
-  } = useStages(onReorderColumns);
-
-  const [pipelineLeads, setPipelineLeads] = useState<Lead[]>([]);
+    handleDeleteStage: initiateDeleteStage,
+    toggleColumnCollapse,
+    isColumnCollapsed,
+    handleConfirmDeleteStage,
+    handleAddNewStage
+  } = useColumnEditor({
+    onEditColumnTitle,
+    onAddStage,
+    onDeleteStage,
+    getColumnLeads
+  });
   
   const debouncedSetStageToDelete = useDebounce((stage: PipelineColumn | null) => {
     console.log("Setting stage to delete:", stage?.title);
@@ -86,25 +108,14 @@ export function StagesContainer({
       console.warn(selectedPipeline.columns.map(c => ({ id: c.id, title: c.title })));
     }
   }, [selectedPipeline]);
-  
-  const getColumnLeads = (column: PipelineColumn) => {
-    if (!column?.title) return [];
-    
-    const columnLeads = pipelineLeads.filter(
-      lead => lead.status && 
-             column.title && 
-             lead.status.toLowerCase() === column.title.toLowerCase()
-    );
-    
-    return columnLeads;
-  };
 
   if (!selectedPipeline?.columns?.length) {
     return <div>No stages found</div>;
   }
 
   const handleStageColorChange = (columnId: string, color: string) => {
-    handleColorChange(selectedPipeline.id, columnId, color, selectedPipeline.columns);
+    // Pass to component-specific handler
+    handleColorChange(columnId, color);
   };
 
   const handleDeleteStageClick = (column: PipelineColumn) => {
@@ -115,7 +126,7 @@ export function StagesContainer({
     
     console.log(`Initiating delete for stage: ${column.title}`);
     
-    const leadsInColumn = getColumnLeads(column);
+    const leadsInColumn = getColumnLeads(column.id);
     if (leadsInColumn.length > 0) {
       console.warn(`Cannot delete stage "${column.title}" with ${leadsInColumn.length} leads`);
       toast.error(`Cannot delete stage "${column.title}" with ${leadsInColumn.length} leads. Please move them first.`);
@@ -128,7 +139,7 @@ export function StagesContainer({
       return;
     }
     
-    debouncedSetStageToDelete(column);
+    initiateDeleteStage(column);
   };
 
   const handleDeleteStageConfirm = async (column: PipelineColumn) => {
@@ -142,7 +153,6 @@ export function StagesContainer({
       return;
     }
     
-    setIsDeleting(true);
     try {
       console.log(`StagesContainer: Confirming deletion of stage ${column.title} (${column.id})`);
       await onDeleteStage(column);
@@ -152,7 +162,6 @@ export function StagesContainer({
       console.error("Error in handleDeleteStageConfirm:", error);
       toast.error(error instanceof Error ? error.message : "Failed to delete stage");
     } finally {
-      setIsDeleting(false);
       setIsDraggingDisabled(false);
       
       setTimeout(() => {
@@ -181,15 +190,15 @@ export function StagesContainer({
                 >
                   <PipelineStage
                     column={column}
-                    columnLeads={getColumnLeads(column)}
-                    isCollapsed={isColumnCollapsed(selectedPipeline.id, column.id)}
+                    columnLeads={getColumnLeads(column.id)}
+                    isCollapsed={isColumnCollapsed(column.id)}
                     editingColumnId={editingColumnId}
                     editingColumnTitle={editingColumnTitle}
-                    onEditColumnTitle={(e) => handleKeyDown(e, onEditColumnTitle)}
+                    onEditColumnTitle={(e) => handleKeyDown(e)}
                     setEditingColumnTitle={setEditingColumnTitle}
                     handleColorChange={handleStageColorChange}
                     onDeleteStage={handleDeleteStageClick}
-                    toggleColumnCollapse={() => toggleColumnCollapse(selectedPipeline.id, column.id)}
+                    toggleColumnCollapse={() => toggleColumnCollapse(column.id)}
                     setEditingColumnId={setEditingColumnId}
                     onLeadClick={onLeadClick}
                     allPipelines={allPipelines}
@@ -199,13 +208,7 @@ export function StagesContainer({
               ))}
               <div className="flex items-center justify-center h-full pipeline-stage">
                 <AddStageButton 
-                  onAddStage={() => {
-                    handleAddNewStage(
-                      selectedPipeline.id, 
-                      selectedPipeline.columns, 
-                      onAddStage
-                    );
-                  }}
+                  onAddStage={handleAddNewStage}
                   isLoading={isAddingStage}
                 />
               </div>
