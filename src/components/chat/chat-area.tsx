@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { MessageComposer } from "./message-composer";
@@ -7,11 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 import { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
 import { ChatMessages } from "./chat-messages";
 import { ActivityMonitor } from "./activity-monitor";
 import useChatStore from "@/hooks/use-chat-store";
@@ -33,7 +27,6 @@ export function ChatArea({
   const { toast } = useToast();
   const { setSelectedLeadId, setMessageType } = useChatStore();
 
-  // Keep the Zustand store in sync with the parent component's state
   useEffect(() => {
     if (selectedLead) {
       setSelectedLeadId(selectedLead.id);
@@ -43,7 +36,6 @@ export function ChatArea({
     setMessageType(messageType);
   }, [selectedLead, messageType, setSelectedLeadId, setMessageType]);
 
-  // Fetch activities for the selected lead
   const { data: activities } = useQuery({
     queryKey: ["lead-activities", selectedLead?.id],
     queryFn: async () => {
@@ -52,9 +44,7 @@ export function ChatArea({
       try {
         const activities = await fetchLeadActivities(selectedLead.id, 30);
         
-        // Transform activities to the format expected by ActivityTab
         return activities.map(activity => {
-          // Determine activity type based on content
           let activityType: ActivityType = "note";
           
           if (activity.content.toLowerCase().includes('email')) {
@@ -71,7 +61,6 @@ export function ChatArea({
             activityType = "tag_added";
           }
           
-          // Create metadata from old_value and new_value
           const metadata: Record<string, any> = {};
           if (activity.old_value) metadata.old_status = activity.old_value;
           if (activity.new_value) metadata.new_status = activity.new_value;
@@ -90,23 +79,6 @@ export function ChatArea({
       }
     },
     enabled: !!selectedLead?.id,
-  });
-
-  const { data: pipeline } = useQuery({
-    queryKey: ["pipeline", selectedLead?.pipeline_id],
-    queryFn: async () => {
-      if (!selectedLead?.pipeline_id) return null;
-
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("id", selectedLead.pipeline_id)
-        .single();
-
-      if (error) throw error;
-      return convertJsonToPipeline(data);
-    },
-    enabled: !!selectedLead?.pipeline_id,
   });
 
   useEffect(() => {
@@ -154,46 +126,42 @@ export function ChatArea({
   }
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="flex-1">
-      <ResizablePanel defaultSize={70} minSize={40}>
-        <div className="flex flex-col h-full">
-          <div className="border-b p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-lg">
-                  {selectedLead.name[0].toUpperCase()}
-                </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">
-                    {selectedLead.name}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    {selectedLead.email ||
-                      selectedLead.phone ||
-                      "No contact info"}
-                  </p>
-                </div>
+    <div className="flex flex-1 h-full">
+      <div className="w-[70%] flex flex-col h-full border-r">
+        <div className="border-b p-4 sm:p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-lg">
+                {selectedLead.name[0].toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground">
+                  {selectedLead.name}
+                </h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  {selectedLead.email ||
+                    selectedLead.phone ||
+                    "No contact info"}
+                </p>
               </div>
             </div>
           </div>
-
-          <div className="flex-1 overflow-hidden">
-            <ChatMessages lead={selectedLead} />
-          </div>
-
-          <MessageComposer
-            messageType={messageType}
-            onMessageTypeChange={onMessageTypeChange}
-            leadId={selectedLead.id}
-          />
         </div>
-      </ResizablePanel>
 
-      <ResizableHandle withHandle />
+        <div className="flex-1 overflow-hidden">
+          <ChatMessages lead={selectedLead} />
+        </div>
 
-      <ResizablePanel defaultSize={30} minSize={25}>
+        <MessageComposer
+          messageType={messageType}
+          onMessageTypeChange={onMessageTypeChange}
+          leadId={selectedLead.id}
+        />
+      </div>
+
+      <div className="w-[30%]">
         <ActivityMonitor lead={selectedLead} activities={activities || []} />
-      </ResizablePanel>
-    </ResizablePanelGroup>
+      </div>
+    </div>
   );
 }
