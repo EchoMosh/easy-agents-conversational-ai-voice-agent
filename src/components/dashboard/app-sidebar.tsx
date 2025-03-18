@@ -1,3 +1,4 @@
+
 import {
   LayoutDashboard,
   MessagesSquare,
@@ -100,7 +101,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white"
+      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white narrow-sidebar"
       collapsible="icon"
     >
       <SidebarHeader className="p-0">
