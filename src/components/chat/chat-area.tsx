@@ -1,6 +1,5 @@
 
 import { Lead } from "@/pages/dashboard/leads";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { MessageComposer } from "./message-composer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ChatMessages } from "./chat-messages";
 import { ActivityMonitor } from "./activity-monitor";
 import useChatStore from "@/hooks/use-chat-store";
-import { Mail, MessageCircle, StickyNote } from "lucide-react";
+import { Mail } from "lucide-react";
 import { fetchLeadActivities } from "@/utils/supabase-activity-utils";
 import { ActivityType } from "./types/activity-types";
 
@@ -149,24 +148,20 @@ export function ChatArea({
   }
 
   return (
-    <div className="flex flex-1 h-full">
-      <div className="w-[70%] flex flex-col h-full border-r">
-        <div className="border-b p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-lg">
-                {selectedLead.name[0].toUpperCase()}
-              </div>
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-foreground">
-                  {selectedLead.name}
-                </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  {selectedLead.email ||
-                    selectedLead.phone ||
-                    "No contact info"}
-                </p>
-              </div>
+    <div className="flex h-full">
+      <div className="w-[75%] flex flex-col h-full border-r">
+        <div className="border-b p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
+              {selectedLead.name[0].toUpperCase()}
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                {selectedLead.name}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {selectedLead.email || selectedLead.phone || "No contact info"}
+              </p>
             </div>
           </div>
         </div>
@@ -182,7 +177,7 @@ export function ChatArea({
         />
       </div>
 
-      <div className="w-[30%]">
+      <div className="w-[25%]">
         <ActivityMonitor lead={selectedLead} activities={activities || []} />
       </div>
     </div>
