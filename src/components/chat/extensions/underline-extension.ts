@@ -1,7 +1,7 @@
 
 import { Mark, mergeAttributes } from '@tiptap/core'
 
-export const Underline = Mark.create({
+const Underline = Mark.create({
   name: 'underline',
 
   addOptions() {
@@ -30,8 +30,8 @@ export const Underline = Mark.create({
 
   addCommands() {
     return {
-      toggleUnderline: () => ({ commands }) => {
-        return commands.toggleMark('underline')
+      toggleUnderline: () => ({ chain }) => {
+        return chain().toggleMark('underline').run()
       },
     }
   },
