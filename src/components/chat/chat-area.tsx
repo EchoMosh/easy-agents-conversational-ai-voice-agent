@@ -17,6 +17,7 @@ import { ActivityMonitor } from "./activity-monitor";
 import useChatStore from "@/hooks/use-chat-store";
 import { Mail, MessageCircle, StickyNote } from "lucide-react";
 import { fetchLeadActivities } from "@/utils/supabase-activity-utils";
+import { ActivityType } from "./types/activity-types";
 
 interface ChatAreaProps {
   selectedLead: Lead | undefined;
@@ -52,13 +53,37 @@ export function ChatArea({
         const activities = await fetchLeadActivities(selectedLead.id, 30);
         
         // Transform activities to the format expected by ActivityTab
-        return activities.map(activity => ({
-          id: activity.id,
-          type: activity.activity_type as any || "note",
-          content: activity.content || `Activity related to ${selectedLead.name}`,
-          timestamp: activity.created_at,
-          metadata: activity.metadata || {}
-        }));
+        return activities.map(activity => {
+          // Determine activity type based on content
+          let activityType: ActivityType = "note";
+          
+          if (activity.content.toLowerCase().includes('email')) {
+            activityType = "email";
+          } else if (activity.content.toLowerCase().includes('sms')) {
+            activityType = "sms";
+          } else if (activity.content.toLowerCase().includes('note')) {
+            activityType = "note";
+          } else if (activity.content.toLowerCase().includes('status')) {
+            activityType = "status_change";
+          } else if (activity.content.toLowerCase().includes('created')) {
+            activityType = "lead_created";
+          } else if (activity.content.toLowerCase().includes('tag')) {
+            activityType = "tag_added";
+          }
+          
+          // Create metadata from old_value and new_value
+          const metadata: Record<string, any> = {};
+          if (activity.old_value) metadata.old_status = activity.old_value;
+          if (activity.new_value) metadata.new_status = activity.new_value;
+          
+          return {
+            id: activity.id,
+            type: activityType,
+            content: activity.content || `Activity related to ${selectedLead.name}`,
+            timestamp: activity.created_at,
+            metadata
+          };
+        });
       } catch (error) {
         console.error("Error fetching lead activities:", error);
         return [];

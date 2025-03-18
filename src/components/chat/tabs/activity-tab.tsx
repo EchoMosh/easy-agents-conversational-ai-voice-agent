@@ -1,16 +1,8 @@
-
 import { Mail, Phone, MessageSquare, Calendar, Edit, FileText, UserPlus, Tags, DollarSign, UserCheck, LinkIcon, Star, CheckCircle, PenTool, Eye, Info } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
-interface Activity {
-  id: string;
-  type: 'email' | 'sms' | 'note' | 'status_change' | 'lead_created' | 'tag_added' | 'deal_updated' | 'lead_converted' | 'meeting_scheduled' | 'link_clicked' | 'lead_rated' | 'task_completed' | 'form_completed' | 'email_opened';
-  content: string;
-  timestamp: string;
-  metadata?: Record<string, any>;
-}
+import { Activity, ActivityType } from "../types/activity-types";
 
 interface ActivityTabProps {
   activities: Activity[];
@@ -29,7 +21,7 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
   }, {});
 
   // Get activity type icon
-  const getActivityIcon = (type: string) => {
+  const getActivityIcon = (type: ActivityType) => {
     switch (type) {
       case 'email':
         return <Mail className="h-4 w-4" />;
@@ -65,7 +57,7 @@ export function ActivityTab({ activities, leadName = "Lead" }: ActivityTabProps)
   };
 
   // Get background color and icon class based on activity type
-  const getActivityStyle = (type: string) => {
+  const getActivityStyle = (type: ActivityType) => {
     switch (type) {
       case 'email':
         return {

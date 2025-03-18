@@ -33,16 +33,11 @@ import {
 import { format, formatDistanceToNow, parseISO, isSameDay } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Activity as ActivityType } from "./types/activity-types";
 
 interface ActivityMonitorProps {
   lead: Lead;
-  activities?: Array<{
-    id: string;
-    type: string;
-    content: string;
-    timestamp: string;
-    metadata?: Record<string, any>;
-  }>;
+  activities?: ActivityType[];
 }
 
 export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps) {
