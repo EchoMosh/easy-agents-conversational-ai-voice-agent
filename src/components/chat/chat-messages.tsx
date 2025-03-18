@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Mail, MessageSquare, Phone } from "lucide-react";
@@ -72,7 +73,7 @@ export function ChatMessages({ lead }: ChatMessagesProps) {
   ];
 
   return (
-    <ScrollArea className="h-[calc(100vh-13rem)]">
+    <div className="h-full py-4">
       <ChatMessageList className="px-4">
         <AnimatePresence>
           {leadMessages.map((message, index) => {
@@ -144,6 +145,6 @@ export function ChatMessages({ lead }: ChatMessagesProps) {
         </AnimatePresence>
         <div ref={messagesEndRef} />
       </ChatMessageList>
-    </ScrollArea>
+    </div>
   );
 }

@@ -179,9 +179,9 @@ export default function ChatsPage() {
     );
   }
 
-  // For desktop, use a split layout
+  // For desktop, use a split layout with fixed heights
   return (
-    <div className="h-full bg-background flex">
+    <div className="h-full bg-background flex overflow-hidden">
       <div className="w-[300px] flex-shrink-0 border-r">
         <LeadSidebar
           leads={leads}
@@ -193,7 +193,7 @@ export default function ChatsPage() {
         />
       </div>
       
-      <div className="flex-1">
+      <div className="flex-1 overflow-hidden">
         <ChatArea
           selectedLead={selectedLead}
           messageType={messageType}

@@ -157,7 +157,7 @@ export function ChatArea({
     );
   }
 
-  // For mobile, use a different layout
+  // For mobile, use a different layout with fixed height
   if (isMobile) {
     return (
       <div className="flex flex-col h-full overflow-hidden">
@@ -194,7 +194,9 @@ export function ChatArea({
         </div>
 
         <div className="relative flex-1 overflow-hidden">
-          <ChatMessages lead={selectedLead} />
+          <div className="absolute inset-0 overflow-y-auto">
+            <ChatMessages lead={selectedLead} />
+          </div>
           
           <AnimatePresence>
             {showActivityMonitor && (
@@ -224,7 +226,7 @@ export function ChatArea({
           </AnimatePresence>
         </div>
 
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 mt-auto">
           <MessageComposer
             messageType={messageType}
             onMessageTypeChange={onMessageTypeChange}
@@ -235,7 +237,7 @@ export function ChatArea({
     );
   }
 
-  // For desktop, use a single panel with activity drawer
+  // For desktop, use a more flexible layout with correct height constraints
   return (
     <div className="flex flex-col h-full overflow-hidden relative">
       <div className="border-b p-3 flex-shrink-0">
@@ -273,7 +275,7 @@ export function ChatArea({
       </div>
 
       <div className="flex-1 overflow-hidden relative">
-        <div className="h-full">
+        <div className="absolute inset-0 overflow-y-auto">
           <ChatMessages lead={selectedLead} />
         </div>
 
@@ -305,7 +307,7 @@ export function ChatArea({
         </AnimatePresence>
       </div>
 
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 mt-auto">
         <MessageComposer
           messageType={messageType}
           onMessageTypeChange={onMessageTypeChange}
