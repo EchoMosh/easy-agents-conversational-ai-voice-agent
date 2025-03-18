@@ -6,74 +6,69 @@ import { LeadSidebar } from "@/components/chat/lead-sidebar";
 import { ChatArea } from "@/components/chat/chat-area";
 import useChatStore from "@/hooks/use-chat-store";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [messageType, setMessageType] = useState<"email" | "sms" | "note">(
-    "email"
-  );
-  const { setMessages, updateLeadActivity } = useChatStore();
+  const [messageType, setMessageType] = useState<"email" | "sms" | "note">("email");
+  const {
+    setMessages,
+    updateLeadActivity
+  } = useChatStore();
   const isMobile = useIsMobile();
   const [showSidebar, setShowSidebar] = useState(!isMobile);
-
   useEffect(() => {
     setShowSidebar(!isMobile);
   }, [isMobile]);
-
   const {
     data: leads,
     isLoading: leadsLoading,
-    error: leadsError,
+    error: leadsError
   } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("leads").select(`
+      const {
+        data,
+        error
+      } = await supabase.from("leads").select(`
           *,
           variables:lead_variables(*),
           tags:lead_tags(
             tag:tags(*)
           )
         `);
-
       if (error) {
         console.error("Error fetching leads:", error);
         throw error;
       }
-
-      return (data || []).map((lead) => ({
+      return (data || []).map(lead => ({
         ...lead,
-        tags: (lead.tags || []).map((tagRelation: any) => tagRelation.tag),
+        tags: (lead.tags || []).map((tagRelation: any) => tagRelation.tag)
       })) as Lead[];
-    },
+    }
   });
-
-  const selectedLead = leads?.find((lead) => lead.id === selectedLeadId);
-
-  const { data: leadMessages } = useQuery({
+  const selectedLead = leads?.find(lead => lead.id === selectedLeadId);
+  const {
+    data: leadMessages
+  } = useQuery({
     queryKey: ["lead_messages", selectedLeadId],
     queryFn: async () => {
       if (!selectedLeadId) return [];
-
-      const { data, error } = await supabase
-        .from("lead_notes")
-        .select("*")
-        .eq("lead_id", selectedLeadId)
-        .order("created_at", { ascending: true });
-
+      const {
+        data,
+        error
+      } = await supabase.from("lead_notes").select("*").eq("lead_id", selectedLeadId).order("created_at", {
+        ascending: true
+      });
       if (error) {
         console.error("Error fetching lead notes:", error);
         throw error;
       }
-
       const {
-        data: { user: currentUser },
+        data: {
+          user: currentUser
+        }
       } = await supabase.auth.getUser();
-
-      return (data || []).map((note) => {
-        const userName =
-          currentUser?.email?.split("@")[0] ||
-          `User_${note.user_id.substring(0, 5)}`;
-
+      return (data || []).map(note => {
+        const userName = currentUser?.email?.split("@")[0] || `User_${note.user_id.substring(0, 5)}`;
         return {
           id: note.id,
           leadId: note.lead_id,
@@ -82,46 +77,40 @@ export default function ChatsPage() {
           createdAt: note.created_at,
           userId: note.user_id,
           userName: userName,
-          userAvatar: currentUser?.user_metadata?.avatar_url,
+          userAvatar: currentUser?.user_metadata?.avatar_url
         };
       });
     },
-    enabled: !!selectedLeadId,
+    enabled: !!selectedLeadId
   });
-
-  const { data: leadActivities } = useQuery({
+  const {
+    data: leadActivities
+  } = useQuery({
     queryKey: ["lead_activities", selectedLeadId],
     queryFn: async () => {
       if (!selectedLeadId) return [];
-
-      const { data, error } = await supabase
-        .from("lead_activities")
-        .select("*")
-        .eq("lead_id", selectedLeadId)
-        .order("created_at", { ascending: false })
-        .limit(20);
-
+      const {
+        data,
+        error
+      } = await supabase.from("lead_activities").select("*").eq("lead_id", selectedLeadId).order("created_at", {
+        ascending: false
+      }).limit(20);
       if (error) {
         console.error("Error fetching lead activities:", error);
         throw error;
       }
-
       return data || [];
     },
-    enabled: !!selectedLeadId,
+    enabled: !!selectedLeadId
   });
-
   useEffect(() => {
     if (leadMessages) {
       setMessages(leadMessages);
     }
   }, [leadMessages, setMessages]);
-
   useEffect(() => {
     if (selectedLeadId && leadActivities && leadActivities.length > 0) {
-      const notesCount =
-        leadMessages?.filter((m) => m.type === "note").length || 0;
-
+      const notesCount = leadMessages?.filter(m => m.type === "note").length || 0;
       updateLeadActivity(selectedLeadId, {
         lastActive: leadActivities[0].created_at,
         activityHistory: leadActivities,
@@ -129,60 +118,30 @@ export default function ChatsPage() {
           email: 0,
           sms: 0,
           note: notesCount,
-          total: notesCount,
-        },
+          total: notesCount
+        }
       });
     }
   }, [selectedLeadId, leadActivities, leadMessages, updateLeadActivity]);
-
   if (leadsError) {
     console.error("Lead query error:", leadsError);
   }
-
   if (isMobile) {
-    return (
-      <div className="h-full bg-background flex flex-col">
-        {!selectedLead ? (
-          <LeadSidebar
-            leads={leads}
-            selectedLeadId={selectedLeadId}
-            onLeadSelect={(id) => {
-              setSelectedLeadId(id);
-            }}
-            className="h-full"
-          />
-        ) : (
-          <ChatArea
-            selectedLead={selectedLead}
-            messageType={messageType}
-            onMessageTypeChange={setMessageType}
-            onBack={() => setSelectedLeadId(null)}
-          />
-        )}
-      </div>
-    );
+    return <div className="h-full bg-background flex flex-col">
+        {!selectedLead ? <LeadSidebar leads={leads} selectedLeadId={selectedLeadId} onLeadSelect={id => {
+        setSelectedLeadId(id);
+      }} className="h-full" /> : <ChatArea selectedLead={selectedLead} messageType={messageType} onMessageTypeChange={setMessageType} onBack={() => setSelectedLeadId(null)} />}
+      </div>;
   }
-
-  return (
-    <div className="h-full bg-background flex overflow-hidden">
-      <div className="w-[200px] flex-shrink-0 border-r">
-        <LeadSidebar
-          leads={leads}
-          selectedLeadId={selectedLeadId}
-          onLeadSelect={(id) => {
-            setSelectedLeadId(id);
-          }}
-          className="h-full"
-        />
+  return <div className="h-full bg-background flex overflow-hidden">
+      <div className="w-[250px] flex-shrink-0 border-r">
+        <LeadSidebar leads={leads} selectedLeadId={selectedLeadId} onLeadSelect={id => {
+        setSelectedLeadId(id);
+      }} className="h-full" />
       </div>
       
       <div className="flex-1 overflow-hidden">
-        <ChatArea
-          selectedLead={selectedLead}
-          messageType={messageType}
-          onMessageTypeChange={setMessageType}
-        />
+        <ChatArea selectedLead={selectedLead} messageType={messageType} onMessageTypeChange={setMessageType} />
       </div>
-    </div>
-  );
+    </div>;
 }
