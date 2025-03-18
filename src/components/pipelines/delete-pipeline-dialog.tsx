@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +10,13 @@ import {
 } from "@/components/ui/sheet";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Pipeline } from "@/types/pipeline";
 
 type LeadHandlingOption = "keep" | "move";
@@ -37,7 +42,10 @@ export function DeletePipelineDialog({
   const [targetPipelineId, setTargetPipelineId] = useState<string>("");
 
   const handleDelete = () => {
-    onDelete(leadHandling, leadHandling === "move" ? targetPipelineId : undefined);
+    onDelete(
+      leadHandling,
+      leadHandling === "move" ? targetPipelineId : undefined
+    );
   };
 
   return (
@@ -46,7 +54,7 @@ export function DeletePipelineDialog({
         <SheetHeader>
           <SheetTitle>Delete Pipeline</SheetTitle>
           <SheetDescription>
-            {hasLeads 
+            {hasLeads
               ? "This pipeline contains leads. What would you like to do with them?"
               : "Are you sure you want to delete this pipeline? This action cannot be undone."}
           </SheetDescription>
@@ -56,14 +64,16 @@ export function DeletePipelineDialog({
           <div className="my-6">
             <RadioGroup
               value={leadHandling}
-              onValueChange={(value) => setLeadHandling(value as LeadHandlingOption)}
+              onValueChange={(value) =>
+                setLeadHandling(value as LeadHandlingOption)
+              }
               className="space-y-4"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="keep" id="keep" />
                 <Label htmlFor="keep">Keep leads without a pipeline</Label>
               </div>
-              
+
               {otherPipelines.length > 0 && (
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="move" id="move" />
@@ -97,17 +107,19 @@ export function DeletePipelineDialog({
 
         <SheetFooter className="mt-4">
           <div className="flex justify-end gap-4 w-full">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isDeleting}
             >
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDelete}
-              disabled={isDeleting || (leadHandling === "move" && !targetPipelineId)}
+              disabled={
+                isDeleting || (leadHandling === "move" && !targetPipelineId)
+              }
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>

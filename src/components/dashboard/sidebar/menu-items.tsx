@@ -1,66 +1,67 @@
-
-import { 
-  Users, 
-  Target, 
-  Settings, 
-  GitMerge, 
-  MessageSquare, 
-  Book, 
-  Zap,
-  LayoutDashboard,
-  CalendarDays,
-  Search
+import {
+  MessageSquare,
+  Search,
+  Home,
+  Grid,
+  Play,
+  Heart,
+  DollarSign,
+  HelpCircle,
+  Settings,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { MenuItem } from "./types";
 
+export const historyMenuItems: MenuItem[] = [
+  {
+    title: "Downloads",
+    icon: Play,
+    url: "/dashboard/downloads",
+    badge: "12",
+  },
+  {
+    title: "Favorites",
+    icon: Heart,
+    url: "/dashboard/favorites",
+  },
+];
+
 export const mainMenuItems: MenuItem[] = [
   {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    url: "/dashboard/overview",
+    title: "Home",
+    icon: Home,
+    url: "/dashboard/home",
   },
   {
-    title: "Calendar",
-    icon: CalendarDays,
-    url: "/dashboard/calendar",
+    title: "Browse",
+    icon: Grid,
+    url: "/dashboard/browse",
+    highlight: true,
   },
   {
-    title: "Agents",
-    icon: Users,
-    url: "/dashboard/agents",
-    subItems: [
-      {
-        title: "Knowledge",
-        url: "/dashboard/knowledge",
-        icon: Book,
-      }
-    ]
-  },
-  {
-    title: "Leads",
-    icon: Target,
-    url: "/dashboard/leads",
-  },
-  {
-    title: "Lead Scraper",
-    icon: Search,
-    url: "/dashboard/lead-scraper",
-  },
-  {
-    title: "Pipelines",
-    icon: GitMerge,
-    url: "/dashboard/pipelines",
-  },
-  {
-    title: "Chats",
+    title: "Topics",
     icon: MessageSquare,
-    url: "/dashboard/chats",
+    url: "/dashboard/topics",
   },
   {
-    title: "Automations",
-    icon: Zap,
-    url: "/dashboard/automations",
+    title: "Search",
+    icon: Search,
+    url: "/dashboard/search",
   },
+  {
+    title: "Pricing",
+    icon: DollarSign,
+    url: "/dashboard/pricing",
+  },
+  {
+    title: "Help",
+    icon: HelpCircle,
+    url: "/dashboard/help",
+  },
+];
+
+export const settingsMenuItems: MenuItem[] = [
   {
     title: "Settings",
     icon: Settings,
@@ -70,22 +71,17 @@ export const mainMenuItems: MenuItem[] = [
 
 // Create an icons object for easy lookup
 export const iconComponents = {
-  Users,
-  Target,
-  Settings,
-  GitMerge,
   MessageSquare,
-  Book,
-  Zap,
-  ChevronDown: () => import("lucide-react").then(mod => mod.ChevronDown),
-  ChevronUp: () => import("lucide-react").then(mod => mod.ChevronUp), 
-  ChevronLeft: () => import("lucide-react").then(mod => mod.ChevronLeft), 
-  ChevronRight: () => import("lucide-react").then(mod => mod.ChevronRight),
-  ArrowUp: () => import("lucide-react").then(mod => mod.ArrowUp),
-  ArrowDown: () => import("lucide-react").then(mod => mod.ArrowDown),
-  ArrowLeft: () => import("lucide-react").then(mod => mod.ArrowLeft),
-  ArrowRight: () => import("lucide-react").then(mod => mod.ArrowRight),
-  LayoutDashboard,
-  CalendarDays,
-  Search
+  Search,
+  Home,
+  Grid,
+  Play,
+  Heart,
+  DollarSign,
+  HelpCircle,
+  Settings,
+  Moon,
+  Sun,
+  ChevronDown: () => import("lucide-react").then((mod) => mod.ChevronDown),
+  ChevronUp: () => import("lucide-react").then((mod) => mod.ChevronUp),
 };

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";
 import { LeadsTable } from "@/components/leads/leads-table";
@@ -34,9 +33,12 @@ export interface Lead {
 export default function LeadsPage() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | undefined>(undefined);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<
+    string | undefined
+  >(undefined);
   const [searchQuery, setSearchQuery] = useState("");
-  const { pipelines, leads, invalidateAndRefetch } = usePipelineQueries(selectedPipelineId);
+  const { pipelines, leads, invalidateAndRefetch } =
+    usePipelineQueries(selectedPipelineId);
 
   // Load all leads on first render
   useEffect(() => {
@@ -50,44 +52,41 @@ export default function LeadsPage() {
       setEditingLead(event.detail);
     };
 
-    window.addEventListener('editLead', handleEditLead as EventListener);
-    
+    window.addEventListener("editLead", handleEditLead as EventListener);
+
     return () => {
-      window.removeEventListener('editLead', handleEditLead as EventListener);
+      window.removeEventListener("editLead", handleEditLead as EventListener);
     };
   }, []);
 
   // Filter leads based on search query and selected pipeline
-  const filteredLeads = leads.filter(lead => {
+  const filteredLeads = leads.filter((lead) => {
     // Filter by pipeline if one is selected
     if (selectedPipelineId && selectedPipelineId !== "all") {
       if (lead.pipeline_id !== selectedPipelineId) {
         return false;
       }
     }
-    
+
     // Then filter by search query
     const query = searchQuery.toLowerCase();
     return (
-      (lead.name || '').toLowerCase().includes(query) ||
-      (lead.email || '').toLowerCase().includes(query) ||
-      (lead.phone || '').toLowerCase().includes(query) ||
-      (lead.status || '').toLowerCase().includes(query)
+      (lead.name || "").toLowerCase().includes(query) ||
+      (lead.email || "").toLowerCase().includes(query) ||
+      (lead.phone || "").toLowerCase().includes(query) ||
+      (lead.status || "").toLowerCase().includes(query)
     );
   });
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Leads</h1>
-        <AddLeadDialog 
-          isOpen={isNewLeadOpen} 
+      <div className="flex justify-end mb-6">
+        <AddLeadDialog
+          isOpen={isNewLeadOpen}
           onOpenChange={setIsNewLeadOpen}
-          onSuccess={invalidateAndRefetch} 
+          onSuccess={invalidateAndRefetch}
         />
       </div>
-
-      <Separator className="my-6" />
 
       <SearchAndFilters
         selectedPipelineId={selectedPipelineId}
@@ -97,10 +96,10 @@ export default function LeadsPage() {
         pipelines={pipelines}
       />
 
-      <LeadsTable 
-        leads={filteredLeads} 
-        isLoading={false} 
-        onLeadUpdated={invalidateAndRefetch} 
+      <LeadsTable
+        leads={filteredLeads}
+        isLoading={false}
+        onLeadUpdated={invalidateAndRefetch}
       />
 
       <LeadEditForm

@@ -1,28 +1,25 @@
-
-import { useState, useMemo } from "react";
-import { Lead } from "@/pages/dashboard/leads";
+import { useMemo } from "react";
 import { Pipeline } from "@/types/pipeline";
+import { Lead } from "@/pages/dashboard/leads";
 
 export function useBoardColumns(pipeline: Pipeline, pipelineLeads: Lead[]) {
-  // Get column IDs for SortableContext
-  const columnsId = useMemo(() => 
-    pipeline.columns.map((col) => col.id), 
-  [pipeline.columns]);
+  // Get all column IDs
+  const columnsId = useMemo(() => {
+    return pipeline.columns.map((col) => col.id);
+  }, [pipeline.columns]);
 
-  // Get leads for each column
+  // Get leads for a specific column
   const getColumnLeads = (columnId: string) => {
-    const column = pipeline.columns.find(col => col.id === columnId);
-    if (!column?.title) return [];
-    
-    return pipelineLeads.filter(
-      lead => lead.status && 
-             column.title && 
-             lead.status.toLowerCase() === column.title.toLowerCase()
-    );
+    return pipelineLeads.filter((lead) => {
+      const columnTitle = pipeline.columns.find(
+        (col) => col.id === columnId
+      )?.title;
+      return lead.status === columnTitle;
+    });
   };
 
   return {
     columnsId,
-    getColumnLeads
+    getColumnLeads,
   };
 }

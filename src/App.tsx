@@ -9,7 +9,7 @@ import AuthPage from "@/pages/auth";
 import NotFound from "@/pages/NotFound";
 import DashboardLayout from "@/layouts/dashboard-layout";
 import AgentsPage from "@/pages/dashboard/agents";
-import AgentFlowPage from './pages/dashboard/agent-flow';
+import AgentFlowPage from "./pages/dashboard/agent-flow";
 import LeadsPage from "@/pages/dashboard/leads";
 import PipelinesPage from "@/pages/dashboard/pipelines";
 import SettingsPage from "@/pages/dashboard/settings";
@@ -18,6 +18,7 @@ import ChatsPage from "@/pages/dashboard/chats";
 import { ChatPage } from "@/pages/dashboard/chat";
 import KnowledgePage from "@/pages/dashboard/knowledge";
 import AutomationsPage from "@/pages/dashboard/automations";
+import ActivitiesPage from "@/pages/dashboard/activities";
 import DashboardPage from "@/pages/dashboard/dashboard";
 import CalendarPage from "@/pages/dashboard/calendar";
 import LeadScraperPage from "@/pages/dashboard/lead-scraper";
@@ -35,7 +36,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
-            
+
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<OnboardingPage />} />
@@ -43,19 +44,38 @@ function App() {
                 <Route path="/dashboard/overview" element={<DashboardPage />} />
                 <Route path="/dashboard/calendar" element={<CalendarPage />} />
                 <Route path="/dashboard/agents" element={<AgentsPage />} />
-                <Route path="/dashboard/agents/flow/:id" element={<AgentFlowPage />} />
+                <Route
+                  path="/dashboard/agents/flow/:id"
+                  element={<AgentFlowPage />}
+                />
                 <Route path="/dashboard/leads" element={<LeadsPage />} />
-                <Route path="/dashboard/lead-scraper" element={<LeadScraperPage />} />
-                <Route path="/dashboard/pipelines" element={<PipelinesPage />} />
+                <Route
+                  path="/dashboard/lead-scraper"
+                  element={<LeadScraperPage />}
+                />
+                <Route
+                  path="/dashboard/pipelines"
+                  element={<PipelinesPage />}
+                />
                 <Route path="/dashboard/settings" element={<SettingsPage />} />
                 <Route path="/dashboard/profile" element={<ProfilePage />} />
                 <Route path="/dashboard/chats" element={<ChatsPage />} />
                 <Route path="/dashboard/chats/:id" element={<ChatPage />} />
-                <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
-                <Route path="/dashboard/automations" element={<AutomationsPage />} />
+                <Route
+                  path="/dashboard/knowledge"
+                  element={<KnowledgePage />}
+                />
+                <Route
+                  path="/dashboard/automations"
+                  element={<AutomationsPage />}
+                />
+                <Route
+                  path="/dashboard/activities"
+                  element={<ActivitiesPage />}
+                />
               </Route>
             </Route>
-            
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>

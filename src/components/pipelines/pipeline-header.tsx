@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Pipeline } from "@/types/pipeline";
@@ -7,15 +6,15 @@ import { useNavigate } from "react-router-dom";
 interface PipelineHeaderProps {
   pipelines: Pipeline[];
   selectedPipeline: Pipeline | null;
-  onCreatePipeline: () => void;
   onSelectPipeline: (pipeline: Pipeline) => void;
+  onCreatePipeline?: () => void;
 }
 
-export function PipelineHeader({ 
-  pipelines, 
-  selectedPipeline, 
-  onCreatePipeline, 
-  onSelectPipeline 
+export function PipelineHeader({
+  pipelines,
+  selectedPipeline,
+  onSelectPipeline,
+  onCreatePipeline,
 }: PipelineHeaderProps) {
   const navigate = useNavigate();
 
@@ -26,33 +25,30 @@ export function PipelineHeader({
 
   return (
     <div className="mb-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Pipelines
-        </h1>
-        <Button
-          onClick={onCreatePipeline}
-          size="sm"
-          className="bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:from-gray-800 hover:to-gray-700 rounded-full px-4 shadow-sm transition-all"
-        >
-          <Plus className="w-4 h-4 mr-2" />
+      <div className="flex justify-end mb-6">
+        <Button onClick={onCreatePipeline}>
+          <Plus className="mr-2 h-4 w-4" />
           New Pipeline
         </Button>
       </div>
-      
+
       {pipelines && pipelines.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           {pipelines.map((pipeline) => (
             <Button
               key={pipeline.id}
-              variant={selectedPipeline?.id === pipeline.id ? "subtle" : "clean"}
+              variant={
+                selectedPipeline?.id === pipeline.id ? "subtle" : "clean"
+              }
               onClick={() => handlePipelineClick(pipeline)}
               size="sm"
               className={`
                 font-medium rounded-full px-4 transition-all
-                ${selectedPipeline?.id === pipeline.id 
-                  ? "bg-gray-100 dark:bg-gray-800 shadow-sm" 
-                  : "hover:bg-gray-50 dark:hover:bg-gray-900"}
+                ${
+                  selectedPipeline?.id === pipeline.id
+                    ? "bg-gray-100 dark:bg-gray-800 shadow-sm"
+                    : "hover:bg-gray-50 dark:hover:bg-gray-900"
+                }
               `}
             >
               {pipeline.name}

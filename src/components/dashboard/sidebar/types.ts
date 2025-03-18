@@ -7,6 +7,8 @@ export interface MenuItem {
   url: string;
   subItems?: MenuItem[];
   visible?: boolean;
+  badge?: string;
+  highlight?: boolean;
 }
 
 export interface CustomizedMenuItem {

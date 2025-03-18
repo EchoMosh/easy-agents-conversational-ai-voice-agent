@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,17 +21,19 @@ const AgentsPage = () => {
   const queryClient = useQueryClient();
 
   const { data: agents = [], isLoading } = useQuery({
-    queryKey: ['agents'],
+    queryKey: ["agents"],
     queryFn: async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.id) throw new Error('Not authenticated');
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session?.user?.id) throw new Error("Not authenticated");
+
         const { data, error } = await supabase
-          .from('agents')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false });
+          .from("agents")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false });
 
         if (error) {
           toast({
@@ -43,14 +44,14 @@ const AgentsPage = () => {
           throw error;
         }
 
-        console.log('Raw agent data from database:', data);
+        console.log("Raw agent data from database:", data);
 
-        return (data || []).map(agent => {
+        return (data || []).map((agent) => {
           let flowData;
           try {
-            if (typeof agent.flow === 'string') {
+            if (typeof agent.flow === "string") {
               flowData = JSON.parse(agent.flow);
-            } else if (agent.flow && typeof agent.flow === 'object') {
+            } else if (agent.flow && typeof agent.flow === "object") {
               flowData = agent.flow;
             } else {
               flowData = { nodes: [], edges: [] };
@@ -62,22 +63,31 @@ const AgentsPage = () => {
             }
 
             if (flowData && (flowData.nodes || flowData.edges)) {
-              console.log(`Valid flow data found for agent ${agent.id}:`, flowData);
+              console.log(
+                `Valid flow data found for agent ${agent.id}:`,
+                flowData
+              );
               return {
                 ...agent,
                 flow: {
                   nodes: flowData.nodes || [],
-                  edges: flowData.edges || []
-                }
+                  edges: flowData.edges || [],
+                },
               };
-            } else if (flowData?.flow && (flowData.flow.nodes || flowData.flow.edges)) {
-              console.log(`Nested flow data found for agent ${agent.id}:`, flowData.flow);
+            } else if (
+              flowData?.flow &&
+              (flowData.flow.nodes || flowData.flow.edges)
+            ) {
+              console.log(
+                `Nested flow data found for agent ${agent.id}:`,
+                flowData.flow
+              );
               return {
                 ...agent,
                 flow: {
                   nodes: flowData.flow.nodes || [],
-                  edges: flowData.flow.edges || []
-                }
+                  edges: flowData.flow.edges || [],
+                },
               };
             } else {
               console.log(`No valid flow data found for agent ${agent.id}`);
@@ -85,8 +95,8 @@ const AgentsPage = () => {
                 ...agent,
                 flow: {
                   nodes: [],
-                  edges: []
-                }
+                  edges: [],
+                },
               };
             }
           } catch (e) {
@@ -96,8 +106,8 @@ const AgentsPage = () => {
               language: agent.language || "en", // Ensure language default is "en"
               flow: {
                 nodes: [],
-                edges: []
-              }
+                edges: [],
+              },
             };
           }
         }) as Agent[];
@@ -111,13 +121,13 @@ const AgentsPage = () => {
   const handleDeleteAgent = async (agentId: string) => {
     try {
       const { error } = await supabase
-        .from('agents')
+        .from("agents")
         .delete()
-        .eq('id', agentId);
+        .eq("id", agentId);
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['agents'] });
+      await queryClient.invalidateQueries({ queryKey: ["agents"] });
 
       toast({
         title: "Success",
@@ -134,7 +144,7 @@ const AgentsPage = () => {
   };
 
   const handleCreateSuccess = async (agentId: string) => {
-    await queryClient.invalidateQueries({ queryKey: ['agents'] });
+    await queryClient.invalidateQueries({ queryKey: ["agents"] });
     setIsCreating(false);
     toast({
       title: "Success",
@@ -153,10 +163,22 @@ const AgentsPage = () => {
     });
   };
 
+  // Listen for create-agent events from the header button
+  useEffect(() => {
+    const handleCreateAgent = () => {
+      setIsCreating(true);
+    };
+
+    window.addEventListener("create-agent", handleCreateAgent);
+
+    return () => {
+      window.removeEventListener("create-agent", handleCreateAgent);
+    };
+  }, []);
+
   return (
     <div className="w-full p-8 bg-background text-foreground relative">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Agents</h1>
+      <div className="flex justify-end mb-8">
         <div className="flex gap-2">
           <Button onClick={() => setIsCreating(true)}>
             <Plus className="w-4 h-4 mr-2" />
@@ -164,7 +186,6 @@ const AgentsPage = () => {
           </Button>
         </div>
       </div>
-
       {isLoading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -172,14 +193,11 @@ const AgentsPage = () => {
       )}
 
       {!isLoading && agents && (
-        <AgentsTable 
-          agents={agents} 
-          onDelete={handleDeleteAgent}
-        />
+        <AgentsTable agents={agents} onDelete={handleDeleteAgent} />
       )}
 
-      <Dialog 
-        open={isCreating} 
+      <Dialog
+        open={isCreating}
         onOpenChange={(open) => {
           if (!open) {
             handleCancel();
@@ -193,8 +211,8 @@ const AgentsPage = () => {
               Create a new agent to handle your conversations.
             </DialogDescription>
           </DialogHeader>
-          <CreateAgentForm 
-            onSuccess={handleCreateSuccess} 
+          <CreateAgentForm
+            onSuccess={handleCreateSuccess}
             onCancel={handleCancel}
           />
         </DialogContent>

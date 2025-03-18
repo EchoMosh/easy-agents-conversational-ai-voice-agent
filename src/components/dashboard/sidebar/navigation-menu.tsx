@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -12,17 +11,29 @@ import { MenuItem as MenuItemComponent } from "./menu-item";
 import { MenuItemWithSub } from "./menu-item-with-sub";
 import { useCustomMenu } from "./use-custom-menu";
 import { MenuItem } from "./types";
+import { historyMenuItems, mainMenuItems } from "./menu-items";
 
-export function NavigationMenu() {
+interface NavigationMenuProps {
+  isHistory?: boolean;
+  lightMode?: boolean;
+}
+
+export function NavigationMenu({
+  isHistory = false,
+  lightMode = false,
+}: NavigationMenuProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { displayedItems } = useCustomMenu();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
+  // Select which items to display based on isHistory prop - directly use the imported items
+  const items = isHistory ? historyMenuItems : mainMenuItems;
+
   const toggleExpand = (title: string) => {
-    setExpandedItems(prev => 
-      prev.includes(title) 
-        ? prev.filter(item => item !== title) 
+    setExpandedItems((prev) =>
+      prev.includes(title)
+        ? prev.filter((item) => item !== title)
         : [...prev, title]
     );
   };
@@ -30,12 +41,12 @@ export function NavigationMenu() {
   const handleItemClick = (item: MenuItem, event: React.MouseEvent) => {
     if (item.subItems && item.subItems.length > 0) {
       const target = event.target as HTMLElement;
-      const isChevronClick = target.closest('.chevron-toggle');
-      
+      const isChevronClick = target.closest(".chevron-toggle");
+
       if (!isChevronClick) {
         navigate(item.url);
       }
-      
+
       toggleExpand(item.title);
     } else {
       navigate(item.url);
@@ -44,21 +55,23 @@ export function NavigationMenu() {
 
   const isActiveOrHasActiveChild = (item: MenuItem) => {
     const isActive = location.pathname === item.url;
-    const hasActiveChild = item.subItems?.some((subItem) => 
-      location.pathname === subItem.url
+    const hasActiveChild = item.subItems?.some(
+      (subItem) => location.pathname === subItem.url
     );
     return isActive || hasActiveChild;
   };
 
   useEffect(() => {
     const pathsToExpand = displayedItems
-      .filter(item => item.subItems?.some(subItem => location.pathname === subItem.url))
-      .map(item => item.title);
-    
+      .filter((item) =>
+        item.subItems?.some((subItem) => location.pathname === subItem.url)
+      )
+      .map((item) => item.title);
+
     if (pathsToExpand.length > 0) {
-      setExpandedItems(prev => {
+      setExpandedItems((prev) => {
         const newExpanded = [...prev];
-        pathsToExpand.forEach(path => {
+        pathsToExpand.forEach((path) => {
           if (!newExpanded.includes(path)) {
             newExpanded.push(path);
           }
@@ -73,7 +86,7 @@ export function NavigationMenu() {
       <SidebarGroup>
         <SidebarGroupContent>
           <SidebarMenu>
-            {displayedItems.map((item) => (
+            {items.map((item) => (
               <SidebarMenuItem key={item.title}>
                 {item.subItems && item.subItems.length > 0 ? (
                   <MenuItemWithSub
@@ -83,9 +96,10 @@ export function NavigationMenu() {
                     onToggleExpand={toggleExpand}
                     onClick={handleItemClick}
                     currentPath={location.pathname}
+                    lightMode={lightMode}
                   />
                 ) : (
-                  <MenuItemComponent item={item} />
+                  <MenuItemComponent item={item} lightMode={lightMode} />
                 )}
               </SidebarMenuItem>
             ))}

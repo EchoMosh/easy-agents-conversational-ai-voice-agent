@@ -1,12 +1,10 @@
-
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Mail, Phone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lead } from "@/pages/dashboard/leads";
 import { UniqueIdentifier } from "@dnd-kit/core";
-import { Mail, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface Task {
@@ -15,40 +13,47 @@ export interface Task {
   content: string;
 }
 
+export type TaskType = "Task";
+
 export interface TaskDragData {
-  type: "Task";
+  type: TaskType;
   task: Task;
-  columnId: string; // Always include column ID
   lead?: Lead;
-  index?: number; // Add index for position tracking
+  columnId: string;
+  index?: number;
 }
 
-export interface TaskCardProps {
+interface TaskCardProps {
   task?: Task;
   lead?: Lead;
   isOverlay?: boolean;
   isPreview?: boolean;
   onClick?: () => void;
-  columnId?: string; // Added to pass current column ID
-  index?: number; // Add index for position tracking
+  columnId: string;
+  index?: number;
 }
 
-export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId, index = 0 }: TaskCardProps) {
+export function TaskCard({
+  task,
+  lead,
+  isOverlay,
+  isPreview,
+  onClick,
+  columnId,
+  index = 0,
+}: TaskCardProps) {
   // Use either the task from props or create one from the lead
-  const taskData = task || (lead ? {
-    id: lead.id,
-    columnId: columnId || lead.status || "",
-    content: lead.name || "Unnamed Lead"
-  } : undefined);
+  const taskData =
+    task ||
+    (lead
+      ? {
+          id: lead.id,
+          columnId: columnId,
+          content: lead.name || "Unnamed Lead",
+        }
+      : undefined);
 
   if (!taskData) return null;
-
-  // Ensure columnId is always present
-  const actualColumnId = columnId || taskData.columnId;
-  
-  if (!actualColumnId) {
-    console.warn("Missing columnId for task", taskData);
-  }
 
   const {
     setNodeRef,
@@ -61,16 +66,13 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId, 
     id: taskData.id,
     data: {
       type: "Task",
-      task: {
-        ...taskData,
-        columnId: actualColumnId, // Ensure column ID is set
-      },
-      columnId: actualColumnId, // Explicitly set for easy access
+      task: taskData,
       lead: lead,
-      index: index, // Pass the index for sorting
-    } as TaskDragData,
+      columnId: columnId,
+      index: index,
+    } satisfies TaskDragData,
     attributes: {
-      roleDescription: `Task: ${taskData.content}`,
+      roleDescription: "Task",
     },
   });
 
@@ -78,6 +80,15 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId, 
     transition,
     transform: CSS.Translate.toString(transform),
   };
+
+  const variants = cva("", {
+    variants: {
+      dragging: {
+        over: "ring-2 opacity-30",
+        overlay: "ring-2 ring-primary",
+      },
+    },
+  });
 
   // When a card is in preview mode, we show it with a blue highlight
   const previewStyles = isPreview
@@ -89,14 +100,14 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId, 
       ref={setNodeRef}
       style={style}
       className={cn(
-        "bg-card border shadow-sm relative", // Added relative positioning
+        "bg-card border shadow-sm hover:shadow-md transition-shadow duration-200 relative rounded-md",
         isDragging ? "opacity-50 z-10" : "opacity-100",
-        isOverlay ? "ring-2 ring-primary shadow-md z-50" : "", // Higher z-index for overlay
+        isOverlay ? "ring-2 ring-primary shadow-md z-50" : "",
         previewStyles,
         "cursor-grab active:cursor-grabbing"
       )}
       onClick={onClick}
-      data-task-id={taskData.id} // Add data attribute for easier targeting
+      data-task-id={taskData.id}
     >
       <CardContent className="p-3 flex flex-col gap-2">
         <div className="flex items-start justify-between">
@@ -111,7 +122,7 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId, 
             <GripVertical className="h-4 w-4" />
           </Button>
         </div>
-        
+
         {lead && (
           <div className="space-y-1">
             {lead.email && (
@@ -120,7 +131,7 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId, 
                 <span className="truncate max-w-[200px]">{lead.email}</span>
               </div>
             )}
-            
+
             {lead.phone && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Phone className="h-3 w-3" />
@@ -133,3 +144,5 @@ export function TaskCard({ task, lead, isOverlay, isPreview, onClick, columnId, 
     </Card>
   );
 }
+
+import { cva } from "class-variance-authority";

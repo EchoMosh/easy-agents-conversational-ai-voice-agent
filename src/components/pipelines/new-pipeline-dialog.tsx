@@ -1,12 +1,21 @@
-
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { NewPipelineDialogProps } from "@/types/pipeline-types";
 
-export function NewPipelineDialog({ open, onOpenChange, onSubmit }: NewPipelineDialogProps) {
+export function NewPipelineDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+}: NewPipelineDialogProps) {
   const [newPipelineName, setNewPipelineName] = useState("");
 
   const handleSubmit = () => {
@@ -37,9 +46,7 @@ export function NewPipelineDialog({ open, onOpenChange, onSubmit }: NewPipelineD
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>
-            Create Pipeline
-          </Button>
+          <Button onClick={handleSubmit}>Create Pipeline</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

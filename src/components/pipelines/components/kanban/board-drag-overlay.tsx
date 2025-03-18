@@ -1,23 +1,22 @@
-
-import { createPortal } from "react-dom";
 import { DragOverlay } from "@dnd-kit/core";
-import { Lead } from "@/pages/dashboard/leads";
-import { PipelineColumn } from "@/types/pipeline";
+import { createPortal } from "react-dom";
 import { BoardColumn } from "./BoardColumn";
 import { TaskCard } from "./TaskCard";
+import { Lead } from "@/pages/dashboard/leads";
+import { Column } from "./BoardColumn";
 
 interface BoardDragOverlayProps {
-  activeColumn: PipelineColumn | null;
+  activeColumn: Column | null;
   activeLead: Lead | null;
   pickedUpLeadColumn: string | null;
   getColumnLeads: (columnId: string) => Lead[];
 }
 
-export function BoardDragOverlay({ 
-  activeColumn, 
-  activeLead, 
+export function BoardDragOverlay({
+  activeColumn,
+  activeLead,
   pickedUpLeadColumn,
-  getColumnLeads 
+  getColumnLeads,
 }: BoardDragOverlayProps) {
   if (!activeColumn && !activeLead) return null;
 
@@ -25,16 +24,16 @@ export function BoardDragOverlay({
     <DragOverlay>
       {activeColumn && (
         <BoardColumn
-          column={activeColumn}
-          columnLeads={getColumnLeads(activeColumn.id)}
           isOverlay
+          column={activeColumn}
+          tasks={getColumnLeads(activeColumn.id.toString())}
         />
       )}
       {activeLead && (
         <TaskCard
           lead={activeLead}
-          columnId={pickedUpLeadColumn || ""}
           isOverlay
+          columnId={pickedUpLeadColumn || ""}
         />
       )}
     </DragOverlay>,
