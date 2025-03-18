@@ -15,6 +15,14 @@ import {
   Info,
   Edit,
   ThumbsUp,
+  Tags,
+  DollarSign,
+  UserCheck,
+  LinkIcon,
+  Star,
+  UserPlus,
+  PenTool,
+  Eye
 } from "lucide-react";
 import {
   Card,
@@ -87,16 +95,118 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
         return <FileText className="h-4 w-4 text-purple-500" />;
       case "email_sent":
         return <Mail className="h-4 w-4 text-blue-500" />;
+      case "email_received":
+        return <Mail className="h-4 w-4 text-indigo-500" />;
       case "sms_sent":
         return <Phone className="h-4 w-4 text-green-500" />;
+      case "sms_received":
+        return <Phone className="h-4 w-4 text-emerald-500" />;
       case "status_updated":
         return <Edit className="h-4 w-4 text-amber-500" />;
       case "lead_created":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <UserPlus className="h-4 w-4 text-green-500" />;
+      case "tag_added":
+        return <Tags className="h-4 w-4 text-pink-500" />;
+      case "deal_updated":
+        return <DollarSign className="h-4 w-4 text-emerald-500" />;
+      case "lead_converted":
+        return <UserCheck className="h-4 w-4 text-blue-500" />;
+      case "meeting_scheduled":
+        return <Calendar className="h-4 w-4 text-indigo-500" />;
+      case "link_clicked":
+        return <LinkIcon className="h-4 w-4 text-blue-500" />;
+      case "lead_rated":
+        return <Star className="h-4 w-4 text-amber-500" />;
       case "task_completed":
-        return <ThumbsUp className="h-4 w-4 text-teal-500" />;
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "form_completed":
+        return <PenTool className="h-4 w-4 text-violet-500" />;
+      case "email_opened":
+        return <Eye className="h-4 w-4 text-teal-500" />;
       default:
         return <Info className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  // Get descriptive activity text based on type and metadata
+  const getActivityDescription = (activity: any) => {
+    const type = activity.activity_type || "";
+    const metadata = activity.metadata || {};
+    const userName = metadata.user_name || "User";
+    
+    switch (type) {
+      case "note_added":
+        return `Note added: "${metadata.note_content || 'Internal note'}"`;
+      case "email_sent":
+        return `Email sent to ${lead.name} - ${metadata.subject || 'No subject'}`;
+      case "email_received":
+        return `Email received from ${lead.name} - ${metadata.subject || 'No subject'}`;
+      case "sms_sent":
+        return `SMS sent to ${lead.name}${metadata.message ? ': "' + metadata.message + '"' : ''}`;
+      case "sms_received":
+        return `SMS received from ${lead.name}${metadata.message ? ': "' + metadata.message + '"' : ''}`;
+      case "status_updated":
+        return `Lead status updated to ${metadata.new_status || 'new status'}`;
+      case "lead_created":
+        return `Lead "${lead.name}" created by ${userName}`;
+      case "tag_added":
+        return `Tag "${metadata.tag_name || 'New tag'}" added to lead`;
+      case "deal_updated":
+        return `Deal value updated to $${metadata.amount || '0'}`;
+      case "lead_converted":
+        return `Lead converted to ${metadata.converted_to || 'customer'}`;
+      case "meeting_scheduled":
+        return `Meeting scheduled with ${lead.name} for ${metadata.meeting_time || 'upcoming date'}`;
+      case "link_clicked":
+        return `${lead.name} clicked on ${metadata.link_title || 'a link'}`;
+      case "lead_rated":
+        return `Lead rated ${metadata.rating || '★★★☆☆'}`;
+      case "task_completed":
+        return `Task "${metadata.task_name || 'Untitled task'}" completed`;
+      case "form_completed":
+        return `${lead.name} completed ${metadata.form_name || 'a form'}`;
+      case "email_opened":
+        return `${lead.name} opened email "${metadata.subject || 'No subject'}"`;
+      default:
+        return activity.description || `Activity related to ${lead.name}`;
+    }
+  };
+
+  // Get background color based on activity type
+  const getActivityBackgroundColor = (type: string) => {
+    switch (type) {
+      case "note_added":
+        return "bg-purple-50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900/30";
+      case "email_sent":
+      case "email_received":
+        return "bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30";
+      case "sms_sent":
+      case "sms_received":
+        return "bg-green-50 dark:bg-green-950/20 border-green-100 dark:border-green-900/30";
+      case "status_updated":
+        return "bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30";
+      case "lead_created":
+        return "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30";
+      case "tag_added":
+        return "bg-pink-50 dark:bg-pink-950/20 border-pink-100 dark:border-pink-900/30";
+      case "deal_updated":
+        return "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30";
+      case "lead_converted":
+        return "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900/30";
+      case "meeting_scheduled":
+        return "bg-violet-50 dark:bg-violet-950/20 border-violet-100 dark:border-violet-900/30";
+      case "link_clicked":
+        return "bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30";
+      case "lead_rated":
+        return "bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30";
+      case "task_completed":
+        return "bg-teal-50 dark:bg-teal-950/20 border-teal-100 dark:border-teal-900/30";
+      case "form_completed":
+        return "bg-violet-50 dark:bg-violet-950/20 border-violet-100 dark:border-violet-900/30";
+      case "email_opened":
+        return "bg-cyan-50 dark:bg-cyan-950/20 border-cyan-100 dark:border-cyan-900/30";
+      default:
+        return "bg-gray-50 dark:bg-gray-900/20 border-gray-100 dark:border-gray-800/30";
     }
   };
 
@@ -162,7 +272,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                               {getActivityIcon(activity.activity_type || "")}
                             </div>
 
-                            <div className="flex-1 bg-muted/40 rounded-lg p-3">
+                            <div className={`flex-1 rounded-lg p-3 ${getActivityBackgroundColor(activity.activity_type || "")}`}>
                               <div className="flex justify-between items-start mb-1">
                                 <span className="font-medium">
                                   {activity.activity_type
@@ -186,8 +296,7 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                               </div>
 
                               <p className="text-sm">
-                                {activity.description ||
-                                  `Activity for ${lead.name}`}
+                                {getActivityDescription(activity)}
                               </p>
 
                               {activity.metadata && (
@@ -196,7 +305,12 @@ export function ActivityMonitor({ lead }: ActivityMonitorProps) {
                                     ([key, value]) => (
                                       <div key={key} className="flex gap-1">
                                         <span className="font-medium">
-                                          {key}:
+                                          {key
+                                            .split('_')
+                                            .map(word => 
+                                              word.charAt(0).toUpperCase() + word.slice(1)
+                                            )
+                                            .join(' ')}:
                                         </span>
                                         <span>{String(value)}</span>
                                       </div>
