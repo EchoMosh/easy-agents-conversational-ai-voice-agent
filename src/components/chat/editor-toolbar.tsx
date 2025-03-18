@@ -2,8 +2,8 @@
 import { 
   Bold, 
   Italic, 
-  Underline, 
-  Link, 
+  Underline as UnderlineIcon, 
+  Link as LinkIcon, 
   ListOrdered, 
   List, 
   Smile, 
@@ -31,6 +31,26 @@ export function EditorToolbar({
   onAttachClick
 }: EditorToolbarProps) {
   if (!editor) return null;
+
+  const handleLinkClick = () => {
+    // Get the current selected text
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('URL', previousUrl);
+
+    // cancelled
+    if (url === null) {
+      return;
+    }
+
+    // empty
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+
+    // update link
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  };
 
   return (
     <div className={cn("flex items-center gap-1", className)}>
@@ -68,7 +88,7 @@ export function EditorToolbar({
         )}
         onClick={() => editor.chain().focus().toggleMark('underline').run()}
       >
-        <Underline className="h-4 w-4" />
+        <UnderlineIcon className="h-4 w-4" />
       </Button>
       <Button
         type="button"
@@ -78,16 +98,9 @@ export function EditorToolbar({
           "h-8 w-8",
           editor.isActive('link') ? "bg-muted" : ""
         )}
-        onClick={() => {
-          const url = window.prompt('URL');
-          if (url) {
-            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-          } else if (editor.isActive('link')) {
-            editor.chain().focus().extendMarkRange('link').unsetLink().run();
-          }
-        }}
+        onClick={handleLinkClick}
       >
-        <Link className="h-4 w-4" />
+        <LinkIcon className="h-4 w-4" />
       </Button>
       <Button
         type="button"

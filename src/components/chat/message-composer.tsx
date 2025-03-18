@@ -167,8 +167,8 @@ export function MessageComposer({
     if (messageType !== "email") return null;
     
     return (
-      <div className="grid grid-cols-12 gap-2 items-center py-2">
-        <div className="col-span-4 flex items-center gap-2">
+      <div className="flex flex-wrap gap-2 items-center py-2">
+        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
           <Label htmlFor="subject" className="text-xs whitespace-nowrap">Subject:</Label>
           <Input
             id="subject"
@@ -180,7 +180,7 @@ export function MessageComposer({
           />
         </div>
         
-        <div className="col-span-4 flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-[180px]">
           <Label htmlFor="cc" className="text-xs whitespace-nowrap">CC:</Label>
           <Input
             id="cc"
@@ -192,7 +192,7 @@ export function MessageComposer({
           />
         </div>
         
-        <div className="col-span-4 flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-[180px]">
           <Label htmlFor="bcc" className="text-xs whitespace-nowrap">BCC:</Label>
           <Input
             id="bcc"
