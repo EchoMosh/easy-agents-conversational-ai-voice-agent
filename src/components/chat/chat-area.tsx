@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 import { MessageComposer } from "./message-composer";
 import { useQuery } from "@tanstack/react-query";
@@ -286,7 +285,7 @@ export function ChatArea({
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0.5 }}
               transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-              className="absolute inset-y-0 right-0 w-[320px] bg-background border-l z-10"
+              className="absolute inset-y-0 right-0 w-[320px] bg-background border-l z-50"
             >
               <div className="flex items-center justify-between border-b p-2">
                 <h3 className="text-sm font-medium">Activity & Insights</h3>
