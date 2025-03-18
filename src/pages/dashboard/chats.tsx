@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,12 +16,10 @@ export default function ChatsPage() {
   const isMobile = useIsMobile();
   const [showSidebar, setShowSidebar] = useState(!isMobile);
 
-  // Update sidebar visibility when mobile state changes
   useEffect(() => {
     setShowSidebar(!isMobile);
   }, [isMobile]);
 
-  // Fetch leads
   const {
     data: leads,
     isLoading: leadsLoading,
@@ -50,16 +47,13 @@ export default function ChatsPage() {
     },
   });
 
-  // Find the selected lead
   const selectedLead = leads?.find((lead) => lead.id === selectedLeadId);
 
-  // Fetch messages for the selected lead
   const { data: leadMessages } = useQuery({
     queryKey: ["lead_messages", selectedLeadId],
     queryFn: async () => {
       if (!selectedLeadId) return [];
 
-      // For now, we'll fetch notes as a sample of messages
       const { data, error } = await supabase
         .from("lead_notes")
         .select("*")
@@ -71,14 +65,11 @@ export default function ChatsPage() {
         throw error;
       }
 
-      // We'll use the authenticated user info for all messages for simplicity
       const {
         data: { user: currentUser },
       } = await supabase.auth.getUser();
 
-      // Transform notes to our message format
       return (data || []).map((note) => {
-        // Generate a placeholder user name from the user ID
         const userName =
           currentUser?.email?.split("@")[0] ||
           `User_${note.user_id.substring(0, 5)}`;
@@ -98,7 +89,6 @@ export default function ChatsPage() {
     enabled: !!selectedLeadId,
   });
 
-  // Fetch lead activities
   const { data: leadActivities } = useQuery({
     queryKey: ["lead_activities", selectedLeadId],
     queryFn: async () => {
@@ -121,27 +111,23 @@ export default function ChatsPage() {
     enabled: !!selectedLeadId,
   });
 
-  // Update the chat store with the fetched messages and activities
   useEffect(() => {
     if (leadMessages) {
       setMessages(leadMessages);
     }
   }, [leadMessages, setMessages]);
 
-  // Update lead activities in the store when they change
   useEffect(() => {
     if (selectedLeadId && leadActivities && leadActivities.length > 0) {
-      // Calculate message counts
       const notesCount =
         leadMessages?.filter((m) => m.type === "note").length || 0;
 
-      // Create activity summary
       updateLeadActivity(selectedLeadId, {
         lastActive: leadActivities[0].created_at,
         activityHistory: leadActivities,
         messageCount: {
-          email: 0, // This would be from real email data
-          sms: 0, // This would be from real SMS data
+          email: 0,
+          sms: 0,
           note: notesCount,
           total: notesCount,
         },
@@ -149,12 +135,10 @@ export default function ChatsPage() {
     }
   }, [selectedLeadId, leadActivities, leadMessages, updateLeadActivity]);
 
-  // Log any lead loading errors
   if (leadsError) {
     console.error("Lead query error:", leadsError);
   }
 
-  // Use a mobile-friendly adaptive layout
   if (isMobile) {
     return (
       <div className="h-full bg-background flex flex-col">
@@ -179,10 +163,9 @@ export default function ChatsPage() {
     );
   }
 
-  // For desktop, use a split layout with fixed heights
   return (
     <div className="h-full bg-background flex overflow-hidden">
-      <div className="w-[240px] flex-shrink-0 border-r">
+      <div className="w-[200px] flex-shrink-0 border-r">
         <LeadSidebar
           leads={leads}
           selectedLeadId={selectedLeadId}
