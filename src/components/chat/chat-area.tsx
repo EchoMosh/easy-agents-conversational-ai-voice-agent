@@ -9,23 +9,33 @@ import { useToast } from "@/components/ui/use-toast";
 import { ChatMessages } from "./chat-messages";
 import { ActivityMonitor } from "./activity-monitor";
 import useChatStore from "@/hooks/use-chat-store";
-import { Mail } from "lucide-react";
+import { Mail, ChevronLeft } from "lucide-react";
 import { fetchLeadActivities } from "@/utils/supabase-activity-utils";
 import { ActivityType } from "./types/activity-types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
+import { Button } from "@/components/ui/button";
 
 interface ChatAreaProps {
   selectedLead: Lead | undefined;
   messageType: "email" | "sms" | "note";
   onMessageTypeChange: (type: "email" | "sms" | "note") => void;
+  onBack?: () => void;
 }
 
 export function ChatArea({
   selectedLead,
   messageType,
   onMessageTypeChange,
+  onBack,
 }: ChatAreaProps) {
   const { toast } = useToast();
   const { setSelectedLeadId, setMessageType } = useChatStore();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (selectedLead) {
@@ -135,7 +145,7 @@ export function ChatArea({
 
   if (!selectedLead) {
     return (
-      <div className="flex-1 flex items-center justify-center h-[calc(100vh-4rem)]">
+      <div className="flex-1 flex items-center justify-center h-full">
         <div className="text-center space-y-2">
           <Mail className="h-12 w-12 mx-auto text-muted-foreground/50" />
           <p className="text-muted-foreground">
@@ -146,16 +156,22 @@ export function ChatArea({
     );
   }
 
-  return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
-      <div className="w-[75%] flex flex-col border-r">
-        <div className="border-b p-4 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
+  // For mobile, use a different layout
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="border-b p-3 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            {onBack && (
+              <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
               {selectedLead.name[0].toUpperCase()}
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">
+              <h2 className="text-sm font-semibold text-foreground">
                 {selectedLead.name}
               </h2>
               <p className="text-xs text-muted-foreground">
@@ -177,10 +193,52 @@ export function ChatArea({
           />
         </div>
       </div>
+    );
+  }
 
-      <div className="w-[25%]">
+  // For desktop, use ResizablePanelGroup
+  return (
+    <ResizablePanelGroup
+      direction="horizontal"
+      className="h-full overflow-hidden"
+    >
+      <ResizablePanel defaultSize={75} minSize={50} maxSize={85}>
+        <div className="flex flex-col h-full overflow-hidden">
+          <div className="border-b p-3 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+                {selectedLead.name[0].toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">
+                  {selectedLead.name}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {selectedLead.email || selectedLead.phone || "No contact info"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-hidden">
+            <ChatMessages lead={selectedLead} />
+          </div>
+
+          <div className="flex-shrink-0">
+            <MessageComposer
+              messageType={messageType}
+              onMessageTypeChange={onMessageTypeChange}
+              leadId={selectedLead.id}
+            />
+          </div>
+        </div>
+      </ResizablePanel>
+
+      <ResizableHandle withHandle />
+
+      <ResizablePanel defaultSize={25} minSize={15} maxSize={40}>
         <ActivityMonitor lead={selectedLead} activities={activities || []} />
-      </div>
-    </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }

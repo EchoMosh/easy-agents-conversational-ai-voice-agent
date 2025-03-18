@@ -7,6 +7,7 @@ import { ChatPage } from "@/pages/dashboard/chat";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Phone } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Function to get initials from full name
 function getInitials(name: string): string {
@@ -63,23 +64,24 @@ interface ChatContactProps {
 
 export function ChatContact({ lead }: ChatContactProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors text-sm hover:bg-muted/70",
+          "w-full flex items-center gap-2 px-2 py-2 rounded-md transition-colors text-xs hover:bg-muted/70",
           isOpen
             ? "bg-primary text-primary-foreground"
             : "text-foreground"
         )}
       >
-        <div className="relative">
-          <Avatar className="h-10 w-10 border border-transparent">
+        <div className="relative flex-shrink-0">
+          <Avatar className={cn("h-8 w-8 border border-transparent", isMobile && "h-7 w-7")}>
             <AvatarFallback
               className={cn(
-                "text-sm font-medium",
+                "text-xs font-medium",
                 isOpen
                   ? "bg-primary-foreground/20 text-primary-foreground"
                   : getAvatarColor(lead.name)
@@ -88,14 +90,14 @@ export function ChatContact({ lead }: ChatContactProps) {
               {getInitials(lead.name)}
             </AvatarFallback>
           </Avatar>
-          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-background" />
+          <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 border-2 border-background" />
         </div>
         
-        <div className="flex flex-col items-start gap-0.5 overflow-hidden">
+        <div className="flex flex-col items-start gap-0.5 overflow-hidden w-full">
           <div className="flex justify-between items-center w-full">
-            <p className="font-medium leading-none">{lead.name}</p>
-            {lead.status && (
-              <Badge variant={isOpen ? "secondary" : "outline"} className="text-xs ml-2">
+            <p className="font-medium leading-none truncate">{lead.name}</p>
+            {lead.status && !isMobile && (
+              <Badge variant={isOpen ? "secondary" : "outline"} className="text-[0.65rem] ml-1 px-1 h-4">
                 {lead.status}
               </Badge>
             )}
@@ -103,28 +105,28 @@ export function ChatContact({ lead }: ChatContactProps) {
           
           {lead.email && (
             <p className={cn(
-              "text-xs flex items-center gap-1",
+              "text-[0.65rem] flex items-center gap-1",
               isOpen ? "text-primary-foreground/80" : "text-muted-foreground"
             )}>
-              <Mail className="h-3 w-3" />
-              <span className="truncate max-w-[150px]">{lead.email}</span>
+              <Mail className="h-2.5 w-2.5" />
+              <span className="truncate max-w-[120px]">{lead.email}</span>
             </p>
           )}
           
           {!lead.email && lead.phone && (
             <p className={cn(
-              "text-xs flex items-center gap-1",
+              "text-[0.65rem] flex items-center gap-1",
               isOpen ? "text-primary-foreground/80" : "text-muted-foreground"
             )}>
-              <Phone className="h-3 w-3" />
-              <span>{lead.phone}</span>
+              <Phone className="h-2.5 w-2.5" />
+              <span className="truncate max-w-[120px]">{lead.phone}</span>
             </p>
           )}
         </div>
       </button>
 
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="right" className="w-[400px] sm:w-[400px] p-0">
+        <SheetContent side="right" className="p-0 sm:max-w-md w-full">
           <ChatPage leadId={lead.id} />
         </SheetContent>
       </Sheet>
