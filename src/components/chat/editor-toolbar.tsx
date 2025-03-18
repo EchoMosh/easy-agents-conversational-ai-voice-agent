@@ -1,16 +1,16 @@
-import { 
-  Bold, 
-  Italic, 
-  Underline as UnderlineIcon, 
-  Link as LinkIcon, 
-  ListOrdered, 
-  List, 
-  Smile, 
-  Paperclip 
+import {
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  Link as LinkIcon,
+  ListOrdered,
+  List,
+  Smile,
+  Paperclip,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Editor } from '@tiptap/react';
+import { Editor } from "@tiptap/react";
 
 interface EditorToolbarProps {
   editor: Editor | null;
@@ -27,14 +27,14 @@ export function EditorToolbar({
   showSmileButton = true,
   showAttachButton = true,
   onSmileClick,
-  onAttachClick
+  onAttachClick,
 }: EditorToolbarProps) {
   if (!editor) return null;
 
   const handleLinkClick = () => {
     // Get the current selected text
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('URL', previousUrl);
+    const previousUrl = editor.getAttributes("link").href;
+    const url = window.prompt("URL", previousUrl);
 
     // cancelled
     if (url === null) {
@@ -42,13 +42,13 @@ export function EditorToolbar({
     }
 
     // empty
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
 
     // update link
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   };
 
   return (
@@ -57,10 +57,7 @@ export function EditorToolbar({
         type="button"
         variant="ghost"
         size="icon"
-        className={cn(
-          "h-8 w-8",
-          editor.isActive('bold') ? "bg-muted" : ""
-        )}
+        className={cn("h-8 w-8", editor.isActive("bold") ? "bg-muted" : "")}
         onClick={() => editor.chain().focus().toggleBold().run()}
       >
         <Bold className="h-4 w-4" />
@@ -69,10 +66,7 @@ export function EditorToolbar({
         type="button"
         variant="ghost"
         size="icon"
-        className={cn(
-          "h-8 w-8",
-          editor.isActive('italic') ? "bg-muted" : ""
-        )}
+        className={cn("h-8 w-8", editor.isActive("italic") ? "bg-muted" : "")}
         onClick={() => editor.chain().focus().toggleItalic().run()}
       >
         <Italic className="h-4 w-4" />
@@ -83,9 +77,9 @@ export function EditorToolbar({
         size="icon"
         className={cn(
           "h-8 w-8",
-          editor.isActive('underline') ? "bg-muted" : ""
+          editor.isActive("underline") ? "bg-muted" : ""
         )}
-        onClick={() => editor.chain().focus().toggleMark('underline').run()}
+        onClick={() => editor.chain().focus().toggleMark("underline").run()}
       >
         <UnderlineIcon className="h-4 w-4" />
       </Button>
@@ -93,10 +87,7 @@ export function EditorToolbar({
         type="button"
         variant="ghost"
         size="icon"
-        className={cn(
-          "h-8 w-8",
-          editor.isActive('link') ? "bg-muted" : ""
-        )}
+        className={cn("h-8 w-8", editor.isActive("link") ? "bg-muted" : "")}
         onClick={handleLinkClick}
       >
         <LinkIcon className="h-4 w-4" />
@@ -107,7 +98,7 @@ export function EditorToolbar({
         size="icon"
         className={cn(
           "h-8 w-8",
-          editor.isActive('bulletList') ? "bg-muted" : ""
+          editor.isActive("bulletList") ? "bg-muted" : ""
         )}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       >
@@ -119,13 +110,13 @@ export function EditorToolbar({
         size="icon"
         className={cn(
           "h-8 w-8",
-          editor.isActive('orderedList') ? "bg-muted" : ""
+          editor.isActive("orderedList") ? "bg-muted" : ""
         )}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
       >
         <ListOrdered className="h-4 w-4" />
       </Button>
-      
+
       {showSmileButton && (
         <Button
           type="button"
@@ -137,7 +128,7 @@ export function EditorToolbar({
           <Smile className="h-4 w-4" />
         </Button>
       )}
-      
+
       {showAttachButton && (
         <Button
           type="button"

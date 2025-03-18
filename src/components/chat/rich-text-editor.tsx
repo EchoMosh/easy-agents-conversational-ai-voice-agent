@@ -1,11 +1,6 @@
-
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Underline from './extensions/underline-extension';
-import { cn } from '@/lib/utils';
-import { useCallback, useEffect } from 'react';
-import Link from '@tiptap/extension-link';
+import { EditorContent, Editor } from "@tiptap/react";
+import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 interface RichTextEditorProps {
   value: string;
@@ -14,42 +9,18 @@ interface RichTextEditorProps {
   className?: string;
   minHeight?: string;
   onKeyDown?: (e: React.KeyboardEvent) => void;
+  editor: Editor | null;
 }
 
 export function RichTextEditor({
   value,
   onChange,
-  placeholder = 'Write something...',
+  placeholder = "Write something...",
   className,
-  minHeight = 'min-h-[80px]',
+  minHeight = "min-h-[80px]",
   onKeyDown,
+  editor,
 }: RichTextEditorProps) {
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-blue-500 underline',
-        },
-      }),
-      Placeholder.configure({
-        placeholder,
-        emptyEditorClass: 'is-editor-empty',
-      }),
-    ],
-    content: value,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
-    editorProps: {
-      attributes: {
-        class: `focus:outline-none ${minHeight} w-full`,
-      },
-    },
-  });
-
   // Update content when value changes externally
   useEffect(() => {
     if (editor && editor.getHTML() !== value) {
@@ -69,13 +40,15 @@ export function RichTextEditor({
   }
 
   return (
-    <div 
+    <div
       className={cn("rich-text-editor", className)}
       onKeyDown={handleKeyDown}
     >
       <EditorContent editor={editor} />
-      
-      <style dangerouslySetInnerHTML={{ __html: `
+
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .ProseMirror {
           padding: 0.5rem;
           outline: none;
@@ -91,6 +64,18 @@ export function RichTextEditor({
           padding-left: 1.5rem;
         }
         
+        .ProseMirror ul {
+          list-style-type: disc;
+        }
+        
+        .ProseMirror ol {
+          list-style-type: decimal;
+        }
+        
+        .ProseMirror li {
+          margin-bottom: 0.25rem;
+        }
+        
         .ProseMirror a {
           color: #3b82f6;
           text-decoration: underline;
@@ -103,7 +88,9 @@ export function RichTextEditor({
           pointer-events: none;
           height: 0;
         }
-      `}} />
+      `,
+        }}
+      />
     </div>
   );
 }
