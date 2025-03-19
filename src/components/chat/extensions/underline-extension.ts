@@ -1,3 +1,4 @@
+
 import { Mark, mergeAttributes } from '@tiptap/core'
 
 const Underline = Mark.create({
@@ -25,6 +26,14 @@ const Underline = Mark.create({
 
   renderHTML({ HTMLAttributes }) {
     return ['u', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
+  },
+
+  addCommands() {
+    return {
+      toggleUnderline: () => ({ commands }) => {
+        return commands.toggleMark(this.name)
+      },
+    }
   },
 
   addKeyboardShortcuts() {
