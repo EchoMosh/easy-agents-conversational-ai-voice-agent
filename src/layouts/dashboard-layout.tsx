@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { WorkspaceProvider } from "@/context/workspace-context";
 import { useState } from "react";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Import the header component directly
 import DashboardHeader from "@/components/dashboard/page";
@@ -58,15 +59,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <WorkspaceProvider>
-      <div className="flex h-screen w-full bg-white dark:bg-gray-950">
-        <AppSidebar />
-        <div className="flex flex-col flex-1 overflow-y-auto">
-          <DashboardHeader />
-          <div className="flex-1">
-            {children || <Outlet />}
+      <SidebarProvider>
+        <div className="flex h-screen w-full bg-white dark:bg-gray-950">
+          <AppSidebar />
+          <div className="flex flex-col flex-1 overflow-y-auto">
+            <DashboardHeader />
+            <div className="flex-1">
+              {children || <Outlet />}
+            </div>
           </div>
         </div>
-      </div>
+      </SidebarProvider>
     </WorkspaceProvider>
   );
 }

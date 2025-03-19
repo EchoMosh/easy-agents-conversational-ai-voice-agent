@@ -23,7 +23,6 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
-  useSidebar,
 } from "@/components/ui/sidebar";
 
 import { UserProfileSection } from "./sidebar/user-profile-section";
@@ -70,7 +69,6 @@ const appMenuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { state } = useSidebar();
 
   return (
     <Sidebar
@@ -95,32 +93,20 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={location.pathname.startsWith(item.url)}
-                    tooltip={state === "collapsed" ? item.title : undefined}
+                    tooltip={item.title}
                   >
                     <NavLink
                       to={item.url}
                       className={({ isActive }) =>
-                        `relative flex items-center ${
-                          state !== "collapsed" ? "gap-3" : "justify-center"
-                        } ${
+                        `relative flex items-center gap-3 ${
                           isActive
                             ? "font-medium"
                             : "text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white"
                         }`
                       }
                     >
-                      <div
-                        className={`flex items-center justify-center ${
-                          state === "collapsed" ? "w-full" : ""
-                        }`}
-                      >
-                        <item.icon className="h-5 w-5 flex-shrink-0" />
-                      </div>
-                      {state !== "collapsed" ? (
-                        <span>{item.title}</span>
-                      ) : (
-                        <span className="sr-only">{item.title}</span>
-                      )}
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
