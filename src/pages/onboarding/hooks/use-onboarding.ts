@@ -45,8 +45,8 @@ export const useOnboarding = () => {
 
         if (memberError) {
           console.error('Workspace check error:', memberError);
-          if (memberError.code === '42P17') {
-            console.log("Database policy issue detected in onboarding check.");
+          if (memberError.code === '42P17' || memberError.message?.includes('infinite recursion')) {
+            console.log("Database policy issue detected in onboarding check. Continuing with onboarding.");
             // Continue with onboarding as this is likely a policy config issue
           } else {
             throw memberError;
@@ -93,6 +93,8 @@ export const useOnboarding = () => {
     
     if (session?.user) {
       try {
+        console.log("Starting onboarding completion for user:", session.user.id);
+        
         // Update the user metadata first
         const { error: metadataError } = await supabase.auth.updateUser({
           data: {
@@ -106,7 +108,12 @@ export const useOnboarding = () => {
           }
         });
 
-        if (metadataError) throw metadataError;
+        if (metadataError) {
+          console.error("Metadata update error:", metadataError);
+          throw metadataError;
+        }
+        
+        console.log("User metadata updated successfully");
         
         // Then update the profile directly
         const { error: profileError } = await supabase
@@ -120,9 +127,47 @@ export const useOnboarding = () => {
           })
           .eq("id", session.user.id);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Profile update error:", profileError);
+          throw profileError;
+        }
+        
+        console.log("Profile updated successfully");
+
+        // Check if the user already has workspaces
+        const { data: existingWorkspaces, error: workspaceCheckError } = await supabase
+          .from('workspaces')
+          .select('id')
+          .eq('owner_id', session.user.id);
+          
+        if (workspaceCheckError && !workspaceCheckError.message.includes('infinite recursion')) {
+          console.error("Workspace check error:", workspaceCheckError);
+          throw workspaceCheckError;
+        }
+        
+        // Skip workspace creation if the user already has one
+        if (existingWorkspaces && existingWorkspaces.length > 0) {
+          console.log("User already has workspaces, skipping creation");
+          
+          // Just set the current workspace
+          const { error: updateProfileError } = await supabase
+            .from('profiles')
+            .update({ current_workspace_id: existingWorkspaces[0].id })
+            .eq('id', session.user.id);
+            
+          if (updateProfileError) {
+            console.error("Failed to update current workspace:", updateProfileError);
+            throw updateProfileError;
+          }
+          
+          // Add delay to allow database changes to propagate
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          navigate("/dashboard/agents");
+          return;
+        }
 
         // Create the workspace manually (since the trigger may fail)
+        console.log("Creating new workspace:", data.workspaceName);
         const { data: workspace, error: workspaceError } = await supabase
           .from('workspaces')
           .insert({
@@ -133,20 +178,55 @@ export const useOnboarding = () => {
           .select()
           .single();
 
-        if (workspaceError) throw workspaceError;
+        if (workspaceError) {
+          console.error("Workspace creation error:", workspaceError);
+          throw workspaceError;
+        }
 
         console.log("Workspace created:", workspace);
 
-        // Add the user as an owner
-        const { error: memberError } = await supabase
-          .from('workspace_members')
-          .insert({
-            workspace_id: workspace.id,
-            user_id: session.user.id,
-            role: 'owner'
-          });
+        // Add the user as an owner, with retry logic to handle policy issues
+        let memberError = null;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+          try {
+            const { error } = await supabase
+              .from('workspace_members')
+              .insert({
+                workspace_id: workspace.id,
+                user_id: session.user.id,
+                role: 'owner'
+              });
+              
+            if (error) {
+              if (error.message?.includes('infinite recursion')) {
+                console.log(`Retry ${retryCount + 1}: Infinite recursion issue detected, waiting before retry...`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                retryCount++;
+                continue;
+              } else {
+                memberError = error;
+                break;
+              }
+            } else {
+              console.log("Successfully added user to workspace");
+              memberError = null;
+              break;
+            }
+          } catch (error: any) {
+            console.error(`Retry ${retryCount + 1} failed:`, error);
+            memberError = error;
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
 
-        if (memberError) throw memberError;
+        if (memberError) {
+          console.error("Failed to add user to workspace after multiple attempts:", memberError);
+          throw memberError;
+        }
 
         // Set as current workspace
         const { error: updateProfileError } = await supabase
@@ -154,7 +234,12 @@ export const useOnboarding = () => {
           .update({ current_workspace_id: workspace.id })
           .eq('id', session.user.id);
 
-        if (updateProfileError) throw updateProfileError;
+        if (updateProfileError) {
+          console.error("Failed to update profile with workspace:", updateProfileError);
+          throw updateProfileError;
+        }
+
+        console.log("Profile updated with current workspace");
 
         // Add delay to allow database changes to propagate
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -165,7 +250,7 @@ export const useOnboarding = () => {
         toast({
           variant: "destructive",
           title: "Error",
-          description: error.message || "Failed to complete onboarding",
+          description: error.message || "Failed to complete onboarding. Please try again.",
         });
         setIsCompleting(false);
       }

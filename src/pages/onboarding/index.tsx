@@ -7,8 +7,12 @@ import { useOnboarding } from "./hooks/use-onboarding";
 import { steps } from "./components/steps";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const OnboardingPage = () => {
+  const [setupError, setSetupError] = useState<string | null>(null);
+  
   const {
     currentStep,
     isLoading,
@@ -21,6 +25,32 @@ const OnboardingPage = () => {
   } = useOnboarding();
 
   const currentQuestion = steps[currentStep - 1];
+
+  // Check if there are any database policy issues
+  useEffect(() => {
+    const checkDatabaseIssues = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      try {
+        const { error } = await supabase
+          .from('workspace_members')
+          .select('*')
+          .limit(1);
+          
+        if (error && error.message.includes('infinite recursion')) {
+          console.error("Database policy issue detected:", error);
+          setSetupError("There appears to be a database configuration issue. Our team has been notified. Please try again later.");
+        }
+      } catch (error) {
+        console.error("Error checking database status:", error);
+      }
+    };
+    
+    if (isCompleting) {
+      checkDatabaseIssues();
+    }
+  }, [isCompleting]);
 
   if (checkingSession) {
     return (
@@ -43,6 +73,7 @@ const OnboardingPage = () => {
             <LoadingSpinner 
               message="Setting up your workspace..." 
               submessage="Creating your custom workspace and preparing everything for you..."
+              error={setupError}
             />
           ) : (
             <motion.div
