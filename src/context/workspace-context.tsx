@@ -15,6 +15,7 @@ interface WorkspaceContextType {
   isLoading: boolean;
   switchWorkspace: (workspace: Workspace) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
+  createDefaultWorkspace: () => Promise<Workspace | null>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -102,6 +103,76 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const createDefaultWorkspace = async (): Promise<Workspace | null> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return null;
+
+      // Generate a default workspace name based on the user's email
+      const email = session.user.email || '';
+      const username = email.split('@')[0];
+      const defaultWorkspaceName = `${username}'s Workspace`;
+
+      // Create the new workspace
+      const { data: workspace, error: workspaceError } = await supabase
+        .from('workspaces')
+        .insert({
+          name: defaultWorkspaceName,
+          icon: 'building',
+          owner_id: session.user.id
+        })
+        .select()
+        .single();
+
+      if (workspaceError) throw workspaceError;
+
+      // Add the user as an owner
+      const { error: memberError } = await supabase
+        .from('workspace_members')
+        .insert({
+          workspace_id: workspace.id,
+          user_id: session.user.id,
+          role: 'owner'
+        });
+
+      if (memberError) throw memberError;
+
+      // Set as current workspace
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ current_workspace_id: workspace.id })
+        .eq('id', session.user.id);
+
+      if (profileError) throw profileError;
+
+      const newWorkspace = {
+        id: workspace.id,
+        name: workspace.name,
+        icon: workspace.icon || 'building',
+      };
+
+      // Update local state
+      setWorkspaces(prev => [...prev, newWorkspace]);
+      setCurrentWorkspace(newWorkspace);
+
+      toast({
+        title: "Workspace created",
+        description: `Default workspace "${defaultWorkspaceName}" created`,
+      });
+
+      return newWorkspace;
+    } catch (error) {
+      console.error('Error creating default workspace:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create default workspace",
+      });
+      return null;
+    }
+  };
+
   const switchWorkspace = async (workspace: Workspace) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -142,6 +213,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     isLoading,
     switchWorkspace,
     refreshWorkspaces: fetchWorkspaces,
+    createDefaultWorkspace,
   };
 
   return (
