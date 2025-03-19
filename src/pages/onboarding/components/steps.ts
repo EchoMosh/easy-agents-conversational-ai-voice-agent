@@ -19,10 +19,18 @@ export const steps: Step[] = [
     question: "What would you like to name your workspace?",
     field: "workspaceName",
     type: "text",
-    description: "Don't worry, you can change this later",
+    description: "This is where you'll manage your leads, agents, and other resources",
   },
   {
     id: 4,
+    question: "Choose an icon for your workspace",
+    field: "workspaceIcon",
+    type: "icon",
+    description: "Select an icon that represents your workspace",
+    options: ["building", "briefcase", "globe", "house", "factory"],
+  },
+  {
+    id: 5,
     question: "What type of business are you in?",
     field: "businessType",
     type: "select",
@@ -36,7 +44,7 @@ export const steps: Step[] = [
     ],
   },
   {
-    id: 5,
+    id: 6,
     question: "How many employees do you have?",
     field: "employeeCount",
     type: "select",

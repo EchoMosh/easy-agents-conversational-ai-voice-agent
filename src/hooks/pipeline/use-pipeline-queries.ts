@@ -1,178 +1,116 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, withWorkspace } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
+import { useWorkspace } from "@/context/workspace-context";
 
-export function usePipelineQueries(selectedPipelineId: string | undefined) {
+export function usePipelineQueries(selectedPipelineId?: string) {
   const queryClient = useQueryClient();
-
-  const { 
-    data: pipelines = [], 
-    refetch: refetchPipelines, 
+  const { currentWorkspace } = useWorkspace();
+  
+  // Fetch pipelines
+  const {
+    data: pipelines = [],
     isLoading: isPipelinesLoading,
-    isFetching: isPipelinesFetching,
-    isPending: isPipelinesPending
+    refetch: refetchPipelines,
   } = useQuery({
-    queryKey: ["pipelines"],
+    queryKey: ["pipelines", currentWorkspace?.id],
     queryFn: async () => {
-      console.log("Fetching pipelines...");
+      if (!currentWorkspace?.id) return [];
+      
       const { data, error } = await supabase
         .from("pipelines")
         .select("*")
+        .eq("workspace_id", currentWorkspace.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        toast.error("Failed to load pipelines");
+        throw error;
+      }
       
-      const rawPipelines = data || [];
-      console.log("Pipelines fetched:", rawPipelines.length);
-      
-      // Process pipelines and ensure each column is unique by ID
-      const processedPipelines = rawPipelines.map(pipeline => {
-        const convertedPipeline = convertJsonToPipeline(pipeline);
-        
-        // Deduplicate columns by ID
-        const uniqueColumnsMap = new Map();
-        convertedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
-        
-        // Add debugging info about duplicates if they exist
-        if (convertedPipeline.columns.length !== uniqueColumnsMap.size) {
-          console.warn(`Pipeline ${convertedPipeline.id} had duplicate columns. Original: ${convertedPipeline.columns.length}, Unique: ${uniqueColumnsMap.size}`);
-          console.warn("Original columns:", convertedPipeline.columns.map(c => ({ id: c.id, title: c.title })));
-          console.warn("Deduplicated columns:", Array.from(uniqueColumnsMap.values()).map(c => ({ id: c.id, title: c.title })));
-        }
-        
-        convertedPipeline.columns = Array.from(uniqueColumnsMap.values());
-        
-        return convertedPipeline;
-      });
-      
-      return processedPipelines;
+      return (data || []).map(convertJsonToPipeline);
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
+    enabled: !!currentWorkspace?.id,
   });
 
-  const { 
-    data: leads = [], 
-    refetch: refetchLeads, 
+  // Fetch leads for the selected pipeline or all leads if no pipeline is selected
+  const {
+    data: leads = [],
     isLoading: isLeadsLoading,
-    isFetching: isLeadsFetching,
-    isPending: isLeadsPending 
+    refetch: refetchLeads,
   } = useQuery({
-    queryKey: ["leads"],
+    queryKey: ["leads", selectedPipelineId, currentWorkspace?.id],
     queryFn: async () => {
-      console.log("Fetching all leads...");
+      if (!currentWorkspace?.id) return [];
       
-      // Always fetch all leads regardless of the selected pipeline
-      const { data, error } = await supabase
+      let query = supabase
         .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select(`
+          *,
+          variables:lead_variables(*),
+          tags:lead_tags(tag_id)
+        `)
+        .eq("workspace_id", currentWorkspace.id);
       
-      if (error) throw error;
-      
-      console.log("All leads fetched:", data?.length);
-      
-      // Get all pipelines to determine valid statuses
-      const pipelinesResponse = await supabase
-        .from("pipelines")
-        .select("*");
-      
-      const allPipelines = pipelinesResponse.data || [];
-      const pipelineStatusMap = new Map<string, string>();
-      
-      // Create a map of pipeline_id -> first column title for default status
-      allPipelines.forEach(pipeline => {
-        const pipelineObj = convertJsonToPipeline(pipeline);
-        if (pipelineObj.columns && pipelineObj.columns.length > 0) {
-          // Get unique columns first
-          const uniqueColumnsMap = new Map();
-          pipelineObj.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
-          const uniqueColumns = Array.from(uniqueColumnsMap.values());
-          
-          if (uniqueColumns.length > 0) {
-            pipelineStatusMap.set(pipelineObj.id, uniqueColumns[0].title.toLowerCase());
+      if (selectedPipelineId && selectedPipelineId !== "all") {
+        query = query.eq("pipeline_id", selectedPipelineId);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (error) {
+        toast.error("Failed to load leads");
+        throw error;
+      }
+
+      // Process the tags to get the actual tag data
+      const leadsWithTags = await Promise.all(
+        (data || []).map(async (lead) => {
+          if (!lead.tags || lead.tags.length === 0) {
+            return { ...lead, tags: [] };
           }
-        }
-      });
-      
-      // Make sure status is never null, set default value
-      const processedLeads = (data || []).map(lead => {
-        // If lead has pipeline_id but no status, set to first column of that pipeline
-        const defaultStatus = lead.pipeline_id ? pipelineStatusMap.get(lead.pipeline_id) || 'new' : 'new';
-        
-        return {
-          ...lead,
-          status: lead.status || defaultStatus,
-          // Ensure all other properties have default values if needed
-          name: lead.name || 'Unnamed Lead',
-          email: lead.email || null,
-          phone: lead.phone || null,
-          // Ensure pipeline_id is valid
-          pipeline_id: lead.pipeline_id || null
-        };
-      });
-      
-      // Log leads by pipeline for debugging
-      const leadsByPipeline = {};
-      processedLeads.forEach(lead => {
-        if (!leadsByPipeline[lead.pipeline_id]) {
-          leadsByPipeline[lead.pipeline_id] = 0;
-        }
-        leadsByPipeline[lead.pipeline_id]++;
-      });
-      console.log("Leads by pipeline:", leadsByPipeline);
-      
-      return processedLeads as Lead[];
+
+          const tagIds = lead.tags.map((tag: any) => tag.tag_id);
+          
+          const { data: tagsData, error: tagsError } = await supabase
+            .from("tags")
+            .select("*")
+            .in("id", tagIds);
+
+          if (tagsError) {
+            console.error("Failed to load tags", tagsError);
+            return { ...lead, tags: [] };
+          }
+
+          return { ...lead, tags: tagsData || [] };
+        })
+      );
+
+      return leadsWithTags as Lead[];
     },
-    enabled: true, // Always enabled to fetch all leads
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
+    enabled: !!currentWorkspace?.id,
   });
 
-  // Filter leads for the selected pipeline if needed (for convenience but not essential)
-  const filteredLeads = selectedPipelineId 
-    ? leads.filter(lead => lead.pipeline_id === selectedPipelineId)
-    : leads;
-
-  console.log(`Filtered leads for pipeline ${selectedPipelineId}: ${filteredLeads.length} out of ${leads.length} total leads`);
+  const isLoading = isPipelinesLoading || isLeadsLoading;
 
   const invalidateAndRefetch = async () => {
-    console.log("Starting invalidation and refetch...");
-    
-    // First invalidate the queries
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: ["pipelines"],
-        exact: false
-      }),
-      queryClient.invalidateQueries({
-        queryKey: ["leads"],
-        exact: false
-      })
-    ]);
-    
-    // Then explicitly trigger refetches
-    await Promise.all([
-      refetchPipelines(),
-      refetchLeads()
-    ]);
-    
-    console.log("Invalidation and refetch completed");
+    await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
+    await queryClient.invalidateQueries({ queryKey: ["leads"] });
+    await refetchPipelines();
+    await refetchLeads();
   };
 
   return {
     pipelines,
-    leads, // Return all leads, not just filtered ones
-    filteredLeads, // Also provide pre-filtered leads if needed
+    leads,
+    isLoading,
+    isPipelinesLoading,
+    isLeadsLoading,
     refetchPipelines,
     refetchLeads,
     invalidateAndRefetch,
-    isLoading: isPipelinesLoading || isLeadsLoading,
-    isFetching: isPipelinesFetching || isLeadsFetching,
-    isPending: isPipelinesPending || isLeadsPending
   };
 }

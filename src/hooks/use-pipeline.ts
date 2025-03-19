@@ -1,143 +1,134 @@
 
-import { useState, useEffect } from "react";
-import { Pipeline, PipelineColumn } from "@/types/pipeline";
+import { useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase, withWorkspace } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/context/workspace-context";
+import { Pipeline } from "@/types/pipeline";
 import { usePipelineQueries } from "./pipeline/use-pipeline-queries";
 import { usePipelineMutations } from "./pipeline/use-pipeline-mutations";
-export { defaultColumns } from "./pipeline/default-columns";
 
-export function usePipeline() {
+export const defaultColumns = [
+  { id: "1", title: "New", items: [] },
+  { id: "2", title: "Contacted", items: [] },
+  { id: "3", title: "Qualified", items: [] },
+  { id: "4", title: "Proposal", items: [] },
+  { id: "5", title: "Negotiation", items: [] },
+  { id: "6", title: "Won", items: [] },
+  { id: "7", title: "Lost", items: [] },
+];
+
+export const usePipeline = () => {
+  const { currentWorkspace } = useWorkspace();
   const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
-  const [editedColumns, setEditedColumns] = useState<PipelineColumn[]>([]);
   const [showNewPipelineDialog, setShowNewPipelineDialog] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { 
-    pipelines, 
-    leads, 
-    refetchPipelines, 
+  const {
+    pipelines,
+    leads,
+    isLoading,
+    refetchPipelines,
     refetchLeads,
     invalidateAndRefetch,
   } = usePipelineQueries(selectedPipeline?.id);
 
   const {
-    handleEditColumnTitle,
-    createNewPipeline,
-    handleDeletePipeline: deletePipeline,
-    handleEditPipelineName,
-  } = usePipelineMutations(refetchPipelines, refetchLeads);
+    updatePipelineName,
+    updateColumnTitle,
+    deletePipeline: deletePipelineMutation,
+    createPipeline: createPipelineMutation,
+  } = usePipelineMutations();
 
-  // Ensure selected pipeline has unique columns
-  useEffect(() => {
-    if (selectedPipeline) {
-      // Check for duplicate column IDs
-      const columnIds = selectedPipeline.columns.map(col => col.id);
-      const uniqueIds = new Set(columnIds);
-      
-      if (columnIds.length !== uniqueIds.size) {
-        console.warn("Fixing duplicate column IDs in selected pipeline", {
-          pipelineName: selectedPipeline.name,
-          pipelineId: selectedPipeline.id,
-          originalColumnCount: columnIds.length,
-          uniqueColumnCount: uniqueIds.size
-        });
-        
-        // Create a new pipeline object with unique columns
-        const uniqueColumnsMap = new Map();
-        selectedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
-        
-        setSelectedPipeline({
-          ...selectedPipeline,
-          columns: Array.from(uniqueColumnsMap.values())
-        });
+  const handleEditPipelineName = useCallback(
+    async (name: string) => {
+      if (!selectedPipeline) return;
+
+      try {
+        await updatePipelineName(selectedPipeline.id, name);
+        setSelectedPipeline({ ...selectedPipeline, name });
+        toast.success("Pipeline name updated");
+      } catch (error) {
+        console.error("Error updating pipeline name:", error);
+        toast.error("Failed to update pipeline name");
       }
-    }
-  }, [selectedPipeline]);
+    },
+    [selectedPipeline, updatePipelineName]
+  );
 
-  // Custom handler for adding a new stage that prevents duplicates
-  const handleAddStage = (stage: PipelineColumn) => {
-    if (!selectedPipeline) return;
-    
-    // Check if a column with this ID already exists
-    const existingColumn = selectedPipeline.columns.find(col => col.id === stage.id);
-    if (existingColumn) {
-      console.warn("Attempted to add a stage with duplicate ID, generating new ID", {
-        stageId: stage.id,
-        stageTitle: stage.title
-      });
-      
-      // Generate a new unique ID for the stage
-      stage = {
-        ...stage,
-        id: crypto.randomUUID()
-      };
-    }
-    
-    // Add the stage using the provided handler
-    if (selectedPipeline) {
-      const uniqueColumns = Array.from(
-        new Map(selectedPipeline.columns.map(col => [col.id, col])).values()
-      );
-      
-      // Create a new array with the unique existing columns plus the new stage
-      const newColumns = [...uniqueColumns, stage];
-      
-      // Update the selected pipeline
-      setSelectedPipeline({
-        ...selectedPipeline,
-        columns: newColumns
-      });
-    }
-  };
+  const handleEditColumnTitle = useCallback(
+    async (columnId: string, title: string) => {
+      if (!selectedPipeline) return;
+
+      try {
+        const updatedPipeline = await updateColumnTitle(
+          selectedPipeline,
+          columnId,
+          title
+        );
+        if (updatedPipeline) {
+          setSelectedPipeline(updatedPipeline);
+          toast.success("Column name updated");
+        }
+      } catch (error) {
+        console.error("Error updating column title:", error);
+        toast.error("Failed to update column title");
+      }
+    },
+    [selectedPipeline, updateColumnTitle]
+  );
+
+  const handleDeletePipeline = useCallback(
+    async (id: string, targetPipelineId?: string) => {
+      try {
+        await deletePipelineMutation(id, targetPipelineId);
+        toast.success("Pipeline deleted");
+        await invalidateAndRefetch();
+      } catch (error) {
+        console.error("Error deleting pipeline:", error);
+        toast.error("Failed to delete pipeline");
+      }
+    },
+    [deletePipelineMutation, invalidateAndRefetch]
+  );
+
+  const createNewPipeline = useCallback(
+    async (name: string) => {
+      if (!currentWorkspace?.id) {
+        toast.error("No workspace selected");
+        return;
+      }
+
+      try {
+        const newPipeline = await createPipelineMutation(name, currentWorkspace.id);
+        if (newPipeline) {
+          toast.success("Pipeline created");
+          await invalidateAndRefetch();
+          return newPipeline;
+        }
+      } catch (error) {
+        console.error("Error creating pipeline:", error);
+        toast.error("Failed to create pipeline");
+      }
+      return null;
+    },
+    [createPipelineMutation, invalidateAndRefetch, currentWorkspace]
+  );
 
   return {
-    // State
     pipelines,
     leads,
     selectedPipeline,
-    editedColumns,
+    isLoading,
     showNewPipelineDialog,
-
-    // State setters
     setSelectedPipeline,
-    setEditedColumns,
     setShowNewPipelineDialog,
-
-    // Queries
+    handleEditColumnTitle,
+    handleEditPipelineName,
+    handleDeletePipeline,
+    createNewPipeline,
     refetchPipelines,
     refetchLeads,
     invalidateAndRefetch,
-
-    // Actions
-    handleEditColumnTitle: (columnId: string, newTitle: string) => {
-      if (selectedPipeline) {
-        // Ensure we're working with unique columns
-        const uniqueColumnsMap = new Map();
-        selectedPipeline.columns.forEach(col => uniqueColumnsMap.set(col.id, col));
-        const uniqueColumns = Array.from(uniqueColumnsMap.values());
-        
-        // Create a pipeline with unique columns for the edit operation
-        const uniquePipeline = {
-          ...selectedPipeline,
-          columns: uniqueColumns
-        };
-        
-        handleEditColumnTitle(uniquePipeline, columnId, newTitle);
-      }
-    },
-    handleEditPipelineName: (name: string) => {
-      if (selectedPipeline) {
-        handleEditPipelineName(selectedPipeline.id, name);
-      }
-    },
-    handleDeletePipeline: async () => {
-      if (selectedPipeline) {
-        await deletePipeline(selectedPipeline.id);
-        setSelectedPipeline(null);
-      }
-    },
-    createNewPipeline: async (name: string) => {
-      await createNewPipeline(name);
-      setShowNewPipelineDialog(false);
-    },
-    handleAddStage,
   };
-}
+};

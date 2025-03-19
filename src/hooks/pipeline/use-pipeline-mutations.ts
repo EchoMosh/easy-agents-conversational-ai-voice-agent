@@ -1,156 +1,120 @@
 
-import { useMutation } from "@tanstack/react-query";
+import { supabase, withWorkspace } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/context/workspace-context";
+import { Pipeline } from "@/types/pipeline";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Pipeline, PipelineColumn } from "@/types/pipeline";
-import { defaultColumns } from "./default-columns";
-import { Json } from "@/integrations/supabase/types";
 
-// Helper to ensure no column has an empty title
-const ensureValidTitles = (columns: PipelineColumn[]): PipelineColumn[] => {
-  return columns.map(col => ({
-    ...col,
-    title: col.title || "Untitled Stage" // Provide default title if empty
-  }));
-};
+export function usePipelineMutations() {
+  const { currentWorkspace } = useWorkspace();
 
-// Helper to convert PipelineColumn[] to a JSON-compatible format
-const columnsToJson = (columns: PipelineColumn[]): Json => {
-  return columns as unknown as Json;
-};
+  const updatePipelineName = async (id: string, name: string) => {
+    const { error } = await supabase
+      .from("pipelines")
+      .update({ name })
+      .eq("id", id);
 
-export function usePipelineMutations(
-  refetchPipelines: () => void,
-  refetchLeads: () => void
-) {
-  // Create a new pipeline
-  const createNewPipeline = async (name: string) => {
-    try {
-      console.log("Creating new pipeline:", name);
-      
-      // Generate columns with default values
-      const columns = defaultColumns.map(col => ({
-        ...col,
-        id: crypto.randomUUID(),
-      }));
-      
-      // Insert the new pipeline
-      const { data, error } = await supabase
-        .from("pipelines")
-        .insert([
-          {
-            name,
-            columns: columnsToJson(ensureValidTitles(columns)),
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      toast.success("Pipeline created successfully");
-      refetchPipelines();
-      return data;
-    } catch (error) {
-      console.error("Error creating pipeline:", error);
-      toast.error("Failed to create pipeline");
+    if (error) {
+      console.error("Error updating pipeline name:", error);
       throw error;
     }
   };
 
-  // Edit a column title
-  const handleEditColumnTitle = async (pipeline: Pipeline, columnId: string, newTitle: string) => {
+  const updateColumnTitle = async (
+    pipeline: Pipeline,
+    columnId: string,
+    title: string
+  ) => {
     try {
-      // Exit if the title is blank
-      if (!newTitle.trim()) {
-        toast.error("Column title cannot be empty");
-        return;
-      }
-      
-      // Find the index of the column to update
-      const columnIndex = pipeline.columns.findIndex(col => col.id === columnId);
-      
-      if (columnIndex === -1) {
-        console.error("Column not found:", columnId);
-        toast.error("Column not found");
-        return;
-      }
-      
-      // Create a new array of columns with the updated title
-      const updatedColumns = [...pipeline.columns];
-      updatedColumns[columnIndex] = {
-        ...updatedColumns[columnIndex],
-        title: newTitle.trim()
-      };
-      
-      // Update the database with the new columns
+      // Find the column and update its title
+      const updatedColumns = pipeline.columns.map((column) => {
+        if (column.id === columnId) {
+          return { ...column, title };
+        }
+        return column;
+      });
+
+      // Update the pipeline with the new columns
       const { error } = await supabase
         .from("pipelines")
-        .update({
-          columns: columnsToJson(ensureValidTitles(updatedColumns))
-        })
+        .update({ columns: updatedColumns })
         .eq("id", pipeline.id);
 
       if (error) throw error;
-      
-      toast.success("Column title updated");
-      refetchPipelines();
+
+      // Return the updated pipeline
+      return {
+        ...pipeline,
+        columns: updatedColumns,
+      };
     } catch (error) {
       console.error("Error updating column title:", error);
-      toast.error("Failed to update column title");
+      throw error;
     }
   };
 
-  // Delete a pipeline
-  const handleDeletePipeline = async (pipelineId: string) => {
+  const deletePipeline = async (id: string, targetPipelineId?: string) => {
     try {
+      // If a target pipeline is specified, move all leads to it
+      if (targetPipelineId) {
+        const { error: updateError } = await supabase
+          .from("leads")
+          .update({ pipeline_id: targetPipelineId })
+          .eq("pipeline_id", id);
+
+        if (updateError) throw updateError;
+      }
+
       // Delete the pipeline
       const { error } = await supabase
         .from("pipelines")
         .delete()
-        .eq("id", pipelineId);
+        .eq("id", id);
 
       if (error) throw error;
-      
-      toast.success("Pipeline deleted successfully");
-      refetchPipelines();
     } catch (error) {
       console.error("Error deleting pipeline:", error);
-      toast.error("Failed to delete pipeline");
       throw error;
     }
   };
 
-  // Edit a pipeline name
-  const handleEditPipelineName = async (pipelineId: string, name: string) => {
+  const createPipeline = async (name: string, workspaceId: string) => {
     try {
-      // Exit if the name is blank
-      if (!name.trim()) {
-        toast.error("Pipeline name cannot be empty");
-        return;
+      if (!workspaceId) {
+        throw new Error("No workspace selected");
       }
-      
-      // Update the pipeline name
-      const { error } = await supabase
+
+      // Create the pipeline with default columns
+      const { data, error } = await supabase
         .from("pipelines")
-        .update({ name: name.trim() })
-        .eq("id", pipelineId);
+        .insert({
+          name,
+          workspace_id: workspaceId,
+          columns: [
+            { id: "1", title: "New", items: [] },
+            { id: "2", title: "Contacted", items: [] },
+            { id: "3", title: "Qualified", items: [] },
+            { id: "4", title: "Proposal", items: [] },
+            { id: "5", title: "Negotiation", items: [] },
+            { id: "6", title: "Won", items: [] },
+            { id: "7", title: "Lost", items: [] },
+          ],
+        })
+        .select()
+        .single();
 
       if (error) throw error;
-      
-      toast.success("Pipeline name updated");
-      refetchPipelines();
+
+      return data as unknown as Pipeline;
     } catch (error) {
-      console.error("Error updating pipeline name:", error);
-      toast.error("Failed to update pipeline name");
+      console.error("Error creating pipeline:", error);
+      throw error;
     }
   };
 
   return {
-    createNewPipeline,
-    handleEditColumnTitle,
-    handleDeletePipeline,
-    handleEditPipelineName,
+    updatePipelineName,
+    updateColumnTitle,
+    deletePipeline,
+    createPipeline,
   };
 }

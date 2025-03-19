@@ -1,0 +1,386 @@
+
+import { useState, useEffect } from "react";
+import { 
+  Building2, 
+  Briefcase, 
+  Globe, 
+  Home, 
+  Factory, 
+  ChevronsUpDown,
+  Plus,
+  Check,
+  Settings
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuShortcut,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { IconSelector } from "./icon-selector";
+
+interface Workspace {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+const iconMap = {
+  building: Building2,
+  briefcase: Briefcase,
+  globe: Globe,
+  house: Home,
+  factory: Factory,
+};
+
+export function WorkspaceSwitcher() {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showNewWorkspaceDialog, setShowNewWorkspaceDialog] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState("");
+  const [newWorkspaceIcon, setNewWorkspaceIcon] = useState("building");
+  const [isCreating, setIsCreating] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchWorkspaces();
+  }, []);
+
+  const fetchWorkspaces = async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
+      // Get all workspaces user is a member of
+      const { data: memberData, error: memberError } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', session.user.id);
+
+      if (memberError) throw memberError;
+
+      if (!memberData || memberData.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      const workspaceIds = memberData.map(m => m.workspace_id);
+
+      // Get workspace details
+      const { data: workspacesData, error: workspacesError } = await supabase
+        .from('workspaces')
+        .select('*')
+        .in('id', workspaceIds);
+
+      if (workspacesError) throw workspacesError;
+
+      // Get current workspace from profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('current_workspace_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') throw profileError;
+
+      const mappedWorkspaces = workspacesData.map(w => ({
+        id: w.id,
+        name: w.name,
+        icon: w.icon || 'building',
+      }));
+
+      setWorkspaces(mappedWorkspaces);
+
+      if (profile?.current_workspace_id) {
+        const current = mappedWorkspaces.find(w => w.id === profile.current_workspace_id);
+        if (current) {
+          setCurrentWorkspace(current);
+        } else if (mappedWorkspaces.length > 0) {
+          setCurrentWorkspace(mappedWorkspaces[0]);
+        }
+      } else if (mappedWorkspaces.length > 0) {
+        setCurrentWorkspace(mappedWorkspaces[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching workspaces:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load workspaces",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSwitchWorkspace = async (workspace: Workspace) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
+      // Update the current workspace in the profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({ current_workspace_id: workspace.id })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+
+      setCurrentWorkspace(workspace);
+      setShowDropdown(false);
+      
+      // Refresh the page to update all data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error switching workspace:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to switch workspace",
+      });
+    }
+  };
+
+  const handleCreateWorkspace = async () => {
+    if (!newWorkspaceName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Workspace name is required",
+      });
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
+      // Create the new workspace
+      const { data: workspace, error: workspaceError } = await supabase
+        .from('workspaces')
+        .insert({
+          name: newWorkspaceName,
+          icon: newWorkspaceIcon,
+          owner_id: session.user.id
+        })
+        .select()
+        .single();
+
+      if (workspaceError) throw workspaceError;
+
+      // Add the user as an owner
+      const { error: memberError } = await supabase
+        .from('workspace_members')
+        .insert({
+          workspace_id: workspace.id,
+          user_id: session.user.id,
+          role: 'owner'
+        });
+
+      if (memberError) throw memberError;
+
+      // Set as current workspace
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ current_workspace_id: workspace.id })
+        .eq('id', session.user.id);
+
+      if (profileError) throw profileError;
+
+      toast({
+        title: "Success",
+        description: "Workspace created successfully",
+      });
+
+      // Refresh workspaces
+      await fetchWorkspaces();
+      
+      // Close dialog and reset fields
+      setShowNewWorkspaceDialog(false);
+      setNewWorkspaceName("");
+      setNewWorkspaceIcon("building");
+      
+      // Refresh the page to update all data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating workspace:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create workspace",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const getIconComponent = (iconName: string) => {
+    const IconComponent = iconMap[iconName as keyof typeof iconMap] || Building2;
+    return <IconComponent />;
+  };
+
+  if (loading) {
+    return (
+      <div className="p-3 flex items-center gap-2">
+        <div className="h-10 w-10 flex items-center justify-center rounded-md bg-black text-white">
+          <Building2 className="h-5 w-5" />
+        </div>
+        <div className="flex-1">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <DropdownMenu open={showDropdown} onOpenChange={setShowDropdown}>
+        <DropdownMenuTrigger asChild>
+          <button
+            className={`flex w-full items-center gap-2 rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800`}
+          >
+            {currentWorkspace ? (
+              <>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-black text-white">
+                  {getIconComponent(currentWorkspace.icon)}
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-base font-medium">{currentWorkspace.name}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Workspace
+                  </div>
+                </div>
+                <ChevronsUpDown className="h-4 w-4 text-gray-500" />
+              </>
+            ) : (
+              <>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-black text-white">
+                  <Building2 className="h-5 w-5" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-base font-medium">No Workspace</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Create one to get started
+                  </div>
+                </div>
+                <ChevronsUpDown className="h-4 w-4 text-gray-500" />
+              </>
+            )}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-[280px]">
+          <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
+
+          {workspaces.length > 0 ? (
+            workspaces.map((workspace, index) => (
+              <DropdownMenuItem
+                key={workspace.id}
+                className="flex items-center gap-2 py-2"
+                onClick={() => handleSwitchWorkspace(workspace)}
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-md border">
+                  {getIconComponent(workspace.icon)}
+                </div>
+                <span>{workspace.name}</span>
+                {currentWorkspace?.id === workspace.id && (
+                  <Check className="ml-auto h-4 w-4" />
+                )}
+              </DropdownMenuItem>
+            ))
+          ) : (
+            <div className="px-2 py-2 text-sm text-gray-500">
+              No workspaces found
+            </div>
+          )}
+
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            className="flex items-center gap-2 py-2"
+            onClick={() => setShowNewWorkspaceDialog(true)}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-md border">
+              <Plus className="h-4 w-4" />
+            </div>
+            <span>Create workspace</span>
+          </DropdownMenuItem>
+          
+          {currentWorkspace && (
+            <DropdownMenuItem className="flex items-center gap-2 py-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md border">
+                <Settings className="h-4 w-4" />
+              </div>
+              <span>Workspace settings</span>
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={showNewWorkspaceDialog} onOpenChange={setShowNewWorkspaceDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create workspace</DialogTitle>
+            <DialogDescription>
+              Create a new workspace to organize your leads, agents, and resources.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">
+                Workspace name
+              </label>
+              <Input
+                id="name"
+                value={newWorkspaceName}
+                onChange={(e) => setNewWorkspaceName(e.target.value)}
+                placeholder="My Workspace"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Workspace icon
+              </label>
+              <IconSelector 
+                value={newWorkspaceIcon} 
+                onChange={setNewWorkspaceIcon} 
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowNewWorkspaceDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateWorkspace}
+              disabled={isCreating || !newWorkspaceName.trim()}
+            >
+              {isCreating ? "Creating..." : "Create workspace"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

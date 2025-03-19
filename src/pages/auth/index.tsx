@@ -67,7 +67,7 @@ const AuthPage = () => {
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
 
           if (profile?.onboarding_completed) {
             navigate("/dashboard/agents");

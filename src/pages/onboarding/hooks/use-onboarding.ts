@@ -14,6 +14,7 @@ export const useOnboarding = () => {
     firstName: "",
     lastName: "",
     workspaceName: "",
+    workspaceIcon: "building",
     businessType: "",
     employeeCount: "",
   });
@@ -59,6 +60,23 @@ export const useOnboarding = () => {
     
     if (session?.user) {
       try {
+        // The user profile and workspace will be created by the trigger
+        // We just need to update the metadata
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            workspaceName: data.workspaceName,
+            workspaceIcon: data.workspaceIcon,
+            businessType: data.businessType,
+            employeeCount: data.employeeCount,
+            onboardingCompleted: true
+          }
+        });
+
+        if (metadataError) throw metadataError;
+        
+        // Then update the profile directly
         const { error: profileError } = await supabase
           .from("profiles")
           .update({
