@@ -1,3 +1,4 @@
+
 import { Mail, Phone, Send, StickyNote, Smile, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -21,7 +22,7 @@ import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
 import Placeholder from "@tiptap/extension-placeholder";
-import Underline from "./extensions/underline-extension";
+import { Underline } from "./extensions/underline-extension";
 import Link from "@tiptap/extension-link";
 
 interface MessageComposerProps {

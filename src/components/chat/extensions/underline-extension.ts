@@ -1,5 +1,5 @@
 
-import { Mark, markPasteRule, mergeAttributes } from '@tiptap/core';
+import { Mark, markPasteRule, mergeAttributes, Command } from '@tiptap/core';
 import { toggleMark } from '@tiptap/pm/commands';
 import { EditorState } from '@tiptap/pm/state';
 
@@ -29,7 +29,7 @@ export const Underline = Mark.create({
     return ['u', mergeAttributes(HTMLAttributes), 0];
   },
   
-  // Commands
+  // Commands - fixed typing to return a Partial<RawCommands>
   addCommands() {
     return {
       setUnderline: () => ({ commands }) => {
