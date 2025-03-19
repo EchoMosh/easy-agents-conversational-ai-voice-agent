@@ -84,7 +84,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('current_workspace_id')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError && profileError.code !== 'PGRST116') {
         console.error("Error fetching profile:", profileError);
@@ -158,7 +158,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       console.log("Creating default workspace:", defaultWorkspaceName);
 
-      // Create the new workspace
+      // Step 1: Create the workspace with the user as owner
       const { data: workspace, error: workspaceError } = await supabase
         .from('workspaces')
         .insert({
@@ -191,41 +191,36 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       console.log("Workspace created:", workspace);
 
-      // Try to add the user as an owner
-      try {
-        const { error: memberError } = await supabase
-          .from('workspace_members')
-          .insert({
-            workspace_id: workspace.id,
-            user_id: session.user.id,
-            role: 'owner'
-          });
+      // Step 2: Add the user as an owner using the new policy
+      const { error: memberError } = await supabase
+        .from('workspace_members')
+        .insert({
+          workspace_id: workspace.id,
+          user_id: session.user.id,
+          role: 'owner'
+        });
 
-        if (memberError) {
-          console.error("Member addition error:", memberError);
-          // Continue anyway as we've at least created the workspace
-        }
-      } catch (memberError) {
-        console.error("Failed to add member, but continuing:", memberError);
-        // Continue with the process
+      if (memberError) {
+        console.error("Member addition error:", memberError);
+        // Even if this fails, continue with the process since the owner should be able to access the workspace
+      } else {
+        console.log("User added as owner successfully");
       }
 
-      // Set as current workspace
-      try {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ current_workspace_id: workspace.id })
-          .eq('id', session.user.id);
+      // Step 3: Set as current workspace
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ current_workspace_id: workspace.id })
+        .eq('id', session.user.id);
 
-        if (profileError) {
-          console.error("Profile update error:", profileError);
-          // Continue anyway
-        }
-      } catch (profileError) {
-        console.error("Failed to update profile, but continuing:", profileError);
-        // Continue with the process
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+        // Continue anyway as we've at least created the workspace
+      } else {
+        console.log("Profile updated with current workspace");
       }
 
+      // Create the workspace object for the state
       const newWorkspace = {
         id: workspace.id,
         name: workspace.name,
