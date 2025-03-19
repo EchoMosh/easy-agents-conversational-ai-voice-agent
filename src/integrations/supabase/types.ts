@@ -583,7 +583,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_workspace_member: {
+        Args: {
+          workspace_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       activity_type:

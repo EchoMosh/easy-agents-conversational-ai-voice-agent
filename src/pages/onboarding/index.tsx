@@ -22,6 +22,7 @@ const OnboardingPage = () => {
     handleInputChange,
     handleNext,
     handleKeyPress,
+    error: onboardingError
   } = useOnboarding();
 
   const currentQuestion = steps[currentStep - 1];
@@ -38,9 +39,11 @@ const OnboardingPage = () => {
           .select('*')
           .limit(1);
           
-        if (error && error.message.includes('infinite recursion')) {
-          console.error("Database policy issue detected:", error);
-          setSetupError("There appears to be a database configuration issue. Our team has been notified. Please try again later.");
+        if (error) {
+          console.error("Database check error:", error);
+          if (error.message.includes('infinite recursion') || error.code === '42P17') {
+            setSetupError("There appears to be a database configuration issue. Our team has been notified and is working on a fix.");
+          }
         }
       } catch (error) {
         console.error("Error checking database status:", error);
@@ -65,6 +68,8 @@ const OnboardingPage = () => {
     );
   }
 
+  const displayError = setupError || onboardingError;
+
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
       <div className="w-full max-w-md mx-auto px-4">
@@ -73,7 +78,7 @@ const OnboardingPage = () => {
             <LoadingSpinner 
               message="Setting up your workspace..." 
               submessage="Creating your custom workspace and preparing everything for you..."
-              error={setupError}
+              error={displayError}
             />
           ) : (
             <motion.div

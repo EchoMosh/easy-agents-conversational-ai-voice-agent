@@ -11,6 +11,7 @@ export const useOnboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<OnboardingData>({
     firstName: "",
     lastName: "",
@@ -89,6 +90,7 @@ export const useOnboarding = () => {
 
   const completeOnboarding = async () => {
     setIsCompleting(true);
+    setError(null);
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session?.user) {
@@ -166,7 +168,7 @@ export const useOnboarding = () => {
           return;
         }
 
-        // Create the workspace manually (since the trigger may fail)
+        // Create the workspace
         console.log("Creating new workspace:", data.workspaceName);
         const { data: workspace, error: workspaceError } = await supabase
           .from('workspaces')
@@ -201,8 +203,9 @@ export const useOnboarding = () => {
               });
               
             if (error) {
-              if (error.message?.includes('infinite recursion')) {
-                console.log(`Retry ${retryCount + 1}: Infinite recursion issue detected, waiting before retry...`);
+              console.error(`Attempt ${retryCount + 1} error:`, error);
+              if (error.message?.includes('infinite recursion') || error.code === '42P17') {
+                console.log(`Retry ${retryCount + 1}: Policy issue detected, waiting before retry...`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 retryCount++;
                 continue;
@@ -225,7 +228,8 @@ export const useOnboarding = () => {
 
         if (memberError) {
           console.error("Failed to add user to workspace after multiple attempts:", memberError);
-          throw memberError;
+          setError("Could not add you to the workspace. The issue has been logged and will be resolved soon.");
+          return;
         }
 
         // Set as current workspace
@@ -247,10 +251,12 @@ export const useOnboarding = () => {
         navigate("/dashboard/agents");
       } catch (error: any) {
         console.error('Onboarding error:', error);
+        const errorMessage = error.message || "Failed to complete onboarding. Please try again.";
+        setError(errorMessage);
         toast({
           variant: "destructive",
           title: "Error",
-          description: error.message || "Failed to complete onboarding. Please try again.",
+          description: errorMessage
         });
         setIsCompleting(false);
       }
@@ -288,6 +294,7 @@ export const useOnboarding = () => {
     isCompleting,
     data,
     checkingSession,
+    error,
     handleInputChange,
     handleNext,
     handleKeyPress,
