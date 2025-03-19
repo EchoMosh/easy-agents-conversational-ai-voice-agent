@@ -14,6 +14,13 @@ export const LoadingSpinner = ({
   submessage = "This might take a few moments...",
   error = null
 }: LoadingSpinnerProps) => {
+  // Check if the error message contains information about a database policy issue
+  const isDatabasePolicyError = error && (
+    error.includes("infinite recursion") || 
+    error.includes("policy for relation") || 
+    error.includes("Database Policy Error")
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -36,7 +43,9 @@ export const LoadingSpinner = ({
       </p>
       {error && (
         <p className="text-center text-sm mt-4">
-          We've detected a database issue that our team is working on. Please try refreshing the page and try again.
+          {isDatabasePolicyError 
+            ? "We've detected a database configuration issue. Our team has been notified and is working on a fix. Please try again later."
+            : "There was an error processing your request. Please try refreshing the page and try again."}
         </p>
       )}
     </motion.div>

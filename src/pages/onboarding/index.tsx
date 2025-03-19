@@ -41,8 +41,10 @@ const OnboardingPage = () => {
           
         if (error) {
           console.error("Database check error:", error);
-          if (error.message.includes('infinite recursion') || error.code === '42P17') {
-            setSetupError("There appears to be a database configuration issue. Our team has been notified and is working on a fix.");
+          if (error.message.includes('infinite recursion') || 
+              error.code === '42P17' ||
+              error.message.includes('policy for relation')) {
+            setSetupError("Database Policy Error: There appears to be a database configuration issue. Our team has been notified and is working on a fix.");
           }
         }
       } catch (error) {
