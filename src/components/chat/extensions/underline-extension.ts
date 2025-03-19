@@ -30,15 +30,21 @@ const Underline = Mark.create({
 
   addCommands() {
     return {
+      setUnderline: () => ({ commands }) => {
+        return commands.setMark(this.name)
+      },
       toggleUnderline: () => ({ commands }) => {
         return commands.toggleMark(this.name)
+      },
+      unsetUnderline: () => ({ commands }) => {
+        return commands.unsetMark(this.name)
       },
     }
   },
 
   addKeyboardShortcuts() {
     return {
-      'Mod-u': () => this.editor.commands.toggleUnderline(),
+      'Mod-u': () => this.editor.commands.toggleMark(this.name),
     }
   },
 })

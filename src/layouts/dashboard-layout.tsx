@@ -1,15 +1,19 @@
 
-import { useEffect } from "react";
+import { ReactNode, useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { WorkspaceProvider } from "@/context/workspace-context";
 import { useState } from "react";
 
-// Import the header component directly since it's a default export
+// Import the header component directly
 import DashboardHeader from "@/components/dashboard/page";
 
-export default function DashboardLayout() {
+interface DashboardLayoutProps {
+  children?: ReactNode;
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [user, setUser] = useState<any>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   const location = useLocation();
@@ -59,7 +63,7 @@ export default function DashboardLayout() {
         <div className="flex flex-col flex-1 overflow-y-auto">
           <DashboardHeader />
           <div className="flex-1">
-            <Outlet />
+            {children || <Outlet />}
           </div>
         </div>
       </div>
