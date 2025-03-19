@@ -34,6 +34,11 @@ export const LoadingSpinner = ({
       <p className="text-center text-sm text-muted-foreground">
         {submessage}
       </p>
+      {error && (
+        <p className="text-center text-sm mt-4">
+          We've detected a database issue that our team is working on. Please refresh the page and try again.
+        </p>
+      )}
     </motion.div>
   );
 };

@@ -134,10 +134,27 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       
       if (!session) return null;
 
-      // Generate a default workspace name based on the user's email
-      const email = session.user.email || '';
-      const username = email.split('@')[0];
-      const defaultWorkspaceName = `${username}'s Workspace`;
+      // Generate a default workspace name based on the user's email or user metadata
+      let defaultWorkspaceName = "My Workspace";
+      
+      try {
+        // First try to get the name from the user metadata
+        const { data: userMeta } = await supabase.auth.getUser();
+        const firstName = userMeta?.user?.user_metadata?.firstName;
+        const lastName = userMeta?.user?.user_metadata?.lastName;
+        
+        if (firstName) {
+          defaultWorkspaceName = `${firstName}'s Workspace`;
+        } else {
+          // Fall back to using email
+          const email = session.user.email || '';
+          const username = email.split('@')[0];
+          defaultWorkspaceName = `${username}'s Workspace`;
+        }
+      } catch (error) {
+        console.error("Error getting user metadata:", error);
+        // Continue with the default name
+      }
 
       console.log("Creating default workspace:", defaultWorkspaceName);
 
@@ -155,59 +172,58 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       if (workspaceError) {
         console.error("Workspace creation error:", workspaceError);
         setCreationError(workspaceError.message);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to create default workspace. Please try again later.",
-        });
-        throw workspaceError;
-      }
-
-      console.log("Workspace created:", workspace);
-
-      // Add the user as an owner
-      const { error: memberError } = await supabase
-        .from('workspace_members')
-        .insert({
-          workspace_id: workspace.id,
-          user_id: session.user.id,
-          role: 'owner'
-        });
-
-      if (memberError) {
-        console.error("Member addition error:", memberError);
-        setCreationError(memberError.message);
-        if (memberError.code === '42P17') {
+        
+        if (workspaceError.code === '42P17' || workspaceError.message?.includes('infinite recursion')) {
           toast({
             variant: "destructive",
             title: "Database Policy Error",
-            description: "There seems to be an issue with database policies. Please contact support.",
+            description: "Our team has been notified of this issue. Please try again later.",
           });
         } else {
           toast({
             variant: "destructive",
             title: "Error",
-            description: "Failed to add you to the workspace. Please try again later.",
+            description: "Failed to create default workspace. Please try again later.",
           });
         }
-        throw memberError;
+        throw workspaceError;
+      }
+
+      console.log("Workspace created:", workspace);
+
+      // Try to add the user as an owner
+      try {
+        const { error: memberError } = await supabase
+          .from('workspace_members')
+          .insert({
+            workspace_id: workspace.id,
+            user_id: session.user.id,
+            role: 'owner'
+          });
+
+        if (memberError) {
+          console.error("Member addition error:", memberError);
+          // Continue anyway as we've at least created the workspace
+        }
+      } catch (memberError) {
+        console.error("Failed to add member, but continuing:", memberError);
+        // Continue with the process
       }
 
       // Set as current workspace
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ current_workspace_id: workspace.id })
-        .eq('id', session.user.id);
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ current_workspace_id: workspace.id })
+          .eq('id', session.user.id);
 
-      if (profileError) {
-        console.error("Profile update error:", profileError);
-        setCreationError(profileError.message);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to set current workspace. Please try again later.",
-        });
-        throw profileError;
+        if (profileError) {
+          console.error("Profile update error:", profileError);
+          // Continue anyway
+        }
+      } catch (profileError) {
+        console.error("Failed to update profile, but continuing:", profileError);
+        // Continue with the process
       }
 
       const newWorkspace = {

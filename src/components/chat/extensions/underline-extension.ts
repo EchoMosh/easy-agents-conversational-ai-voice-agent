@@ -1,52 +1,55 @@
 
-import { Mark, mergeAttributes } from '@tiptap/core'
+import { Mark, markPasteRule, mergeAttributes } from '@tiptap/core';
+import { toggleMark } from '@tiptap/pm/commands';
+import { EditorState } from '@tiptap/pm/state';
 
-const Underline = Mark.create({
+export const Underline = Mark.create({
   name: 'underline',
-
-  addOptions() {
+  
+  // Default priority is 100, we set a higher value to ensure this mark is applied first
+  priority: 110,
+  
+  // Specify our attribute for this mark
+  addAttributes() {
     return {
-      HTMLAttributes: {},
-    }
+      // We can add more attributes here if needed
+    };
   },
-
+  
+  // How to parse the HTML
   parseHTML() {
     return [
-      {
-        tag: 'u',
-      },
-      {
-        style: 'text-decoration',
-        getAttrs: (value) => {
-          return typeof value === 'string' && value.includes('underline') ? {} : false;
-        },
-      },
-    ]
+      { tag: 'u' },
+      { style: 'text-decoration=underline' },
+    ];
   },
-
+  
+  // How to render the HTML
   renderHTML({ HTMLAttributes }) {
-    return ['u', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
+    return ['u', mergeAttributes(HTMLAttributes), 0];
   },
-
+  
+  // Commands
   addCommands() {
     return {
       setUnderline: () => ({ commands }) => {
-        return commands.setMark(this.name)
+        return commands.setMark('underline');
       },
       toggleUnderline: () => ({ commands }) => {
-        return commands.toggleMark(this.name)
+        return commands.toggleMark('underline');
       },
       unsetUnderline: () => ({ commands }) => {
-        return commands.unsetMark(this.name)
+        return commands.unsetMark('underline');
       },
-    }
+    };
   },
-
+  
+  // Keyboard shortcut
   addKeyboardShortcuts() {
     return {
-      'Mod-u': () => this.editor.commands.toggleUnderline(),
-    }
+      'Mod-u': ({ editor }) => {
+        return editor.commands.toggleMark('underline');
+      },
+    };
   },
-})
-
-export default Underline
+});
