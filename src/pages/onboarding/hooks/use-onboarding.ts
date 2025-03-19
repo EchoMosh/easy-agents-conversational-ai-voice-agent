@@ -94,27 +94,7 @@ export const useOnboarding = () => {
       try {
         console.log("Starting onboarding completion for user:", session.user.id);
         
-        // Update the user metadata first
-        const { error: metadataError } = await supabase.auth.updateUser({
-          data: {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            workspaceName: data.workspaceName,
-            workspaceIcon: data.workspaceIcon,
-            businessType: data.businessType,
-            employeeCount: data.employeeCount,
-            onboardingCompleted: true
-          }
-        });
-
-        if (metadataError) {
-          console.error("Metadata update error:", metadataError);
-          throw metadataError;
-        }
-        
-        console.log("User metadata updated successfully");
-        
-        // Then update the profile directly
+        // First update the user profile before creating workspace
         const { error: profileError } = await supabase
           .from("profiles")
           .update({
@@ -133,7 +113,28 @@ export const useOnboarding = () => {
         
         console.log("Profile updated successfully");
 
-        // Create the workspace using our updated context method
+        // Update the user metadata 
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            workspaceName: data.workspaceName,
+            workspaceIcon: data.workspaceIcon,
+            businessType: data.businessType,
+            employeeCount: data.employeeCount,
+            onboardingCompleted: true
+          }
+        });
+
+        if (metadataError) {
+          console.error("Metadata update error:", metadataError);
+          throw metadataError;
+        }
+        
+        console.log("User metadata updated successfully");
+
+        // Create the workspace using context method
+        // The database trigger will automatically add the user as a member
         try {
           console.log("Creating workspace using context method");
           const workspace = await createDefaultWorkspace();

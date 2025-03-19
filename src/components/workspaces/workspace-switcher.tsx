@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   Building2, 
   Briefcase, 
@@ -20,7 +20,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -34,12 +33,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconSelector } from "./icon-selector";
 import { useWorkspace } from "@/context/workspace-context";
-
-interface Workspace {
-  id: string;
-  name: string;
-  icon: string;
-}
 
 const iconMap = {
   building: Building2,

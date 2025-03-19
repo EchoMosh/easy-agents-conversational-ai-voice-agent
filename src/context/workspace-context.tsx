@@ -49,13 +49,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       if (memberError) {
         console.error("Error fetching workspace members:", memberError);
-        if (memberError.code === '42P17') {
-          setCreationError("Database policy issue detected. Please contact support.");
-          navigate('/onboarding');
-          setIsLoading(false);
-          return;
-        }
-        throw memberError;
+        setIsLoading(false);
+        return;
       }
 
       if (!memberData || memberData.length === 0) {
@@ -173,25 +168,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         console.error("Workspace creation error:", workspaceError);
         setCreationError(workspaceError.message);
         
-        if (workspaceError.code === '42P17' || workspaceError.message?.includes('infinite recursion')) {
-          toast({
-            variant: "destructive",
-            title: "Database Policy Error",
-            description: "Our team has been notified of this issue. Please try again later.",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to create default workspace. Please try again later.",
-          });
-        }
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create default workspace. Please try again later.",
+        });
+        
         throw workspaceError;
       }
 
       console.log("Workspace created:", workspace);
-
-      // No need to manually add the user as a member - the database trigger takes care of this
 
       // Set as current workspace
       const { error: profileError } = await supabase
