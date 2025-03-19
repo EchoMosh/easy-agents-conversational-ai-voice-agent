@@ -37,41 +37,38 @@ export const useOnboarding = () => {
       }
 
       // Check if user has any workspaces
-      const { data: memberData, error: memberError } = await supabase
-        .from('workspace_members')
-        .select('workspace_id')
-        .eq('user_id', session.user.id);
+      try {
+        const { data: memberData, error: memberError } = await supabase
+          .from('workspace_members')
+          .select('workspace_id')
+          .eq('user_id', session.user.id);
 
-      if (memberError) {
-        if (memberError.code === '42P17') {
-          console.log("Database policy issue detected in onboarding check.");
-          toast({
-            variant: "destructive",
-            title: "Database Error",
-            description: "There seems to be an issue with database policies. Please contact support.",
-          });
-        } else {
+        if (memberError) {
           console.error('Workspace check error:', memberError);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to check workspaces. Please try again later.",
-          });
+          if (memberError.code === '42P17') {
+            console.log("Database policy issue detected in onboarding check.");
+            // Continue with onboarding as this is likely a policy config issue
+          } else {
+            throw memberError;
+          }
         }
-      }
 
-      // If user has workspaces and onboarding is completed, redirect to dashboard
-      if (memberData && memberData.length > 0) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', session.user.id)
-          .maybeSingle();
+        // If user has workspaces and onboarding is completed, redirect to dashboard
+        if (memberData && memberData.length > 0) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', session.user.id)
+            .maybeSingle();
 
-        if (profile?.onboarding_completed) {
-          navigate("/dashboard/agents");
-          return;
+          if (profile?.onboarding_completed) {
+            navigate("/dashboard/agents");
+            return;
+          }
         }
+      } catch (error) {
+        console.error("Failed to check workspace membership:", error);
+        // Continue with onboarding
       }
       
       setCheckingSession(false);
@@ -96,8 +93,7 @@ export const useOnboarding = () => {
     
     if (session?.user) {
       try {
-        // The user profile and workspace will be created by the trigger
-        // We just need to update the metadata
+        // Update the user metadata first
         const { error: metadataError } = await supabase.auth.updateUser({
           data: {
             firstName: data.firstName,
@@ -126,26 +122,44 @@ export const useOnboarding = () => {
 
         if (profileError) throw profileError;
 
+        // Create the workspace manually (since the trigger may fail)
+        const { data: workspace, error: workspaceError } = await supabase
+          .from('workspaces')
+          .insert({
+            name: data.workspaceName,
+            icon: data.workspaceIcon,
+            owner_id: session.user.id
+          })
+          .select()
+          .single();
+
+        if (workspaceError) throw workspaceError;
+
+        console.log("Workspace created:", workspace);
+
+        // Add the user as an owner
+        const { error: memberError } = await supabase
+          .from('workspace_members')
+          .insert({
+            workspace_id: workspace.id,
+            user_id: session.user.id,
+            role: 'owner'
+          });
+
+        if (memberError) throw memberError;
+
+        // Set as current workspace
+        const { error: updateProfileError } = await supabase
+          .from('profiles')
+          .update({ current_workspace_id: workspace.id })
+          .eq('id', session.user.id);
+
+        if (updateProfileError) throw updateProfileError;
+
+        // Add delay to allow database changes to propagate
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Check if a workspace was created during this process
-        const { data: workspaces, error: workspacesError } = await supabase
-          .from('workspaces')
-          .select('*')
-          .eq('owner_id', session.user.id)
-          .limit(1);
-
-        if (!workspacesError && workspaces && workspaces.length > 0) {
-          navigate("/dashboard/agents");
-        } else {
-          // Something went wrong with workspace creation, show an error
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to set up your workspace. Please try again.",
-          });
-          setIsCompleting(false);
-        }
+        navigate("/dashboard/agents");
       } catch (error: any) {
         console.error('Onboarding error:', error);
         toast({

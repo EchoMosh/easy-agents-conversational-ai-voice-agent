@@ -5,6 +5,8 @@ import { ProgressBar } from "./components/progress-bar";
 import { QuestionForm } from "./components/question-form";
 import { useOnboarding } from "./hooks/use-onboarding";
 import { steps } from "./components/steps";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const OnboardingPage = () => {
   const {
@@ -24,7 +26,10 @@ const OnboardingPage = () => {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
         <div className="w-full max-w-md mx-auto px-4">
-          <LoadingSpinner message="Checking your session..." />
+          <LoadingSpinner 
+            message="Checking your session..." 
+            submessage="We're verifying your account details..."
+          />
         </div>
       </div>
     );
@@ -35,7 +40,10 @@ const OnboardingPage = () => {
       <div className="w-full max-w-md mx-auto px-4">
         <AnimatePresence mode="wait">
           {isCompleting ? (
-            <LoadingSpinner message="Setting up your workspace..." />
+            <LoadingSpinner 
+              message="Setting up your workspace..." 
+              submessage="Creating your custom workspace and preparing everything for you..."
+            />
           ) : (
             <motion.div
               key="questions"
