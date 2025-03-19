@@ -36,7 +36,7 @@ export const LoadingSpinner = ({
       </p>
       {error && (
         <p className="text-center text-sm mt-4">
-          We've detected a database issue that our team is working on. Please refresh the page and try again.
+          We've detected a database issue that our team is working on. Please try refreshing the page and try again.
         </p>
       )}
     </motion.div>
