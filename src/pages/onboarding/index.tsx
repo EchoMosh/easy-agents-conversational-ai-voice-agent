@@ -1,5 +1,4 @@
 
-import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingSpinner } from "./components/loading-spinner";
 import { ProgressBar } from "./components/progress-bar";
@@ -13,24 +12,30 @@ const OnboardingPage = () => {
     isLoading,
     isCompleting,
     data,
-    checkSession,
+    checkingSession,
     handleInputChange,
     handleNext,
     handleKeyPress,
   } = useOnboarding();
 
-  useEffect(() => {
-    checkSession();
-  }, []);
-
   const currentQuestion = steps[currentStep - 1];
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
+        <div className="w-full max-w-md mx-auto px-4">
+          <LoadingSpinner message="Checking your session..." />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
       <div className="w-full max-w-md mx-auto px-4">
         <AnimatePresence mode="wait">
           {isCompleting ? (
-            <LoadingSpinner />
+            <LoadingSpinner message="Setting up your workspace..." />
           ) : (
             <motion.div
               key="questions"

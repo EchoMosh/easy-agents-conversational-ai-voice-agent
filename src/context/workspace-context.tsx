@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Workspace {
   id: string;
@@ -16,6 +17,7 @@ interface WorkspaceContextType {
   switchWorkspace: (workspace: Workspace) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
   createDefaultWorkspace: () => Promise<Workspace | null>;
+  creationError: string | null;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -24,11 +26,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [creationError, setCreationError] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const fetchWorkspaces = async () => {
     try {
       setIsLoading(true);
+      console.log("Fetching workspaces...");
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -42,10 +47,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         .select('workspace_id')
         .eq('user_id', session.user.id);
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Error fetching workspace members:", memberError);
+        // If there's an error fetching workspace members, navigate to onboarding
+        if (memberError.code === '42P17') {
+          setCreationError("Database policy issue detected. Please contact support.");
+          navigate('/onboarding');
+          setIsLoading(false);
+          return;
+        }
+        throw memberError;
+      }
 
       if (!memberData || memberData.length === 0) {
+        console.log("No workspaces found, redirecting to onboarding");
         setIsLoading(false);
+        navigate('/onboarding');
         return;
       }
 
@@ -57,7 +74,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         .select('*')
         .in('id', workspaceIds);
 
-      if (workspacesError) throw workspacesError;
+      if (workspacesError) {
+        console.error("Error fetching workspaces:", workspacesError);
+        throw workspacesError;
+      }
 
       // Get current workspace from profile
       const { data: profile, error: profileError } = await supabase
@@ -66,7 +86,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         .eq('id', session.user.id)
         .single();
 
-      if (profileError && profileError.code !== 'PGRST116') throw profileError;
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error("Error fetching profile:", profileError);
+        throw profileError;
+      }
 
       const mappedWorkspaces = workspacesData.map(w => ({
         id: w.id,
@@ -74,6 +97,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         icon: w.icon || 'building',
       }));
 
+      console.log("Fetched workspaces:", mappedWorkspaces);
       setWorkspaces(mappedWorkspaces);
 
       if (profile?.current_workspace_id) {
@@ -105,6 +129,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const createDefaultWorkspace = async (): Promise<Workspace | null> => {
     try {
+      setCreationError(null);
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) return null;
@@ -113,6 +138,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       const email = session.user.email || '';
       const username = email.split('@')[0];
       const defaultWorkspaceName = `${username}'s Workspace`;
+
+      console.log("Creating default workspace:", defaultWorkspaceName);
 
       // Create the new workspace
       const { data: workspace, error: workspaceError } = await supabase
@@ -125,7 +152,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         .select()
         .single();
 
-      if (workspaceError) throw workspaceError;
+      if (workspaceError) {
+        console.error("Workspace creation error:", workspaceError);
+        setCreationError(workspaceError.message);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create default workspace. Please try again later.",
+        });
+        throw workspaceError;
+      }
+
+      console.log("Workspace created:", workspace);
 
       // Add the user as an owner
       const { error: memberError } = await supabase
@@ -136,7 +174,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           role: 'owner'
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Member addition error:", memberError);
+        setCreationError(memberError.message);
+        if (memberError.code === '42P17') {
+          toast({
+            variant: "destructive",
+            title: "Database Policy Error",
+            description: "There seems to be an issue with database policies. Please contact support.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to add you to the workspace. Please try again later.",
+          });
+        }
+        throw memberError;
+      }
 
       // Set as current workspace
       const { error: profileError } = await supabase
@@ -144,7 +199,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         .update({ current_workspace_id: workspace.id })
         .eq('id', session.user.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+        setCreationError(profileError.message);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to set current workspace. Please try again later.",
+        });
+        throw profileError;
+      }
 
       const newWorkspace = {
         id: workspace.id,
@@ -162,13 +226,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       });
 
       return newWorkspace;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating default workspace:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create default workspace",
-      });
+      setCreationError(error.message || "Unknown error");
       return null;
     }
   };
@@ -214,6 +274,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     switchWorkspace,
     refreshWorkspaces: fetchWorkspaces,
     createDefaultWorkspace,
+    creationError,
   };
 
   return (

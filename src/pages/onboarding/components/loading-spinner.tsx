@@ -1,22 +1,22 @@
 
 import { motion } from "framer-motion";
 
-export const LoadingSpinner = () => {
+interface LoadingSpinnerProps {
+  message?: string;
+}
+
+export const LoadingSpinner = ({ message = "Setting up your workspace..." }: LoadingSpinnerProps) => {
   return (
     <motion.div
-      key="completing"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="text-center space-y-4"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center justify-center space-y-4"
     >
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-        className="mx-auto w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
-      />
-      <h2 className="text-2xl font-bold">Setting up your workspace...</h2>
-      <p className="text-muted-foreground">Almost there!</p>
+      <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+      <p className="text-center text-lg font-medium">{message}</p>
+      <p className="text-center text-sm text-muted-foreground">
+        This might take a few moments...
+      </p>
     </motion.div>
   );
 };

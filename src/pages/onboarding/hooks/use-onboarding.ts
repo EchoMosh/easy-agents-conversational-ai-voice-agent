@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ export const useOnboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [data, setData] = useState<OnboardingData>({
     firstName: "",
     lastName: "",
@@ -22,23 +23,58 @@ export const useOnboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  useEffect(() => {
+    checkSession();
+  }, []);
+
   const checkSession = async () => {
     try {
+      setCheckingSession(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
         return;
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('onboarding_completed')
-        .eq('id', session.user.id)
-        .maybeSingle();
+      // Check if user has any workspaces
+      const { data: memberData, error: memberError } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', session.user.id);
 
-      if (profile?.onboarding_completed) {
-        navigate("/dashboard/agents");
+      if (memberError) {
+        if (memberError.code === '42P17') {
+          console.log("Database policy issue detected in onboarding check.");
+          toast({
+            variant: "destructive",
+            title: "Database Error",
+            description: "There seems to be an issue with database policies. Please contact support.",
+          });
+        } else {
+          console.error('Workspace check error:', memberError);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to check workspaces. Please try again later.",
+          });
+        }
       }
+
+      // If user has workspaces and onboarding is completed, redirect to dashboard
+      if (memberData && memberData.length > 0) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (profile?.onboarding_completed) {
+          navigate("/dashboard/agents");
+          return;
+        }
+      }
+      
+      setCheckingSession(false);
     } catch (error: any) {
       console.error('Session check error:', error);
       toast({
@@ -91,7 +127,25 @@ export const useOnboarding = () => {
         if (profileError) throw profileError;
 
         await new Promise(resolve => setTimeout(resolve, 2000));
-        navigate("/dashboard/agents");
+
+        // Check if a workspace was created during this process
+        const { data: workspaces, error: workspacesError } = await supabase
+          .from('workspaces')
+          .select('*')
+          .eq('owner_id', session.user.id)
+          .limit(1);
+
+        if (!workspacesError && workspaces && workspaces.length > 0) {
+          navigate("/dashboard/agents");
+        } else {
+          // Something went wrong with workspace creation, show an error
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to set up your workspace. Please try again.",
+          });
+          setIsCompleting(false);
+        }
       } catch (error: any) {
         console.error('Onboarding error:', error);
         toast({
@@ -134,7 +188,7 @@ export const useOnboarding = () => {
     isLoading,
     isCompleting,
     data,
-    checkSession,
+    checkingSession,
     handleInputChange,
     handleNext,
     handleKeyPress,

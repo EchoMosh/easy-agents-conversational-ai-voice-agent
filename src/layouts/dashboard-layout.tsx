@@ -1,11 +1,12 @@
 
 import { ReactNode, useEffect } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { WorkspaceProvider, useWorkspace } from "@/context/workspace-context";
 import { useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { toast } from "@/hooks/use-toast";
 
 // Import the header component directly
 import DashboardHeader from "@/components/dashboard/page";
@@ -15,20 +16,35 @@ interface DashboardLayoutProps {
 }
 
 function Dashboard({ children }: { children?: ReactNode }) {
-  const { currentWorkspace, workspaces, isLoading, createDefaultWorkspace } = useWorkspace();
+  const { currentWorkspace, workspaces, isLoading, createDefaultWorkspace, creationError } = useWorkspace();
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleNoWorkspace = async () => {
-      if (!isLoading && workspaces.length === 0 && !isCreatingWorkspace) {
+      if (!isLoading && workspaces.length === 0 && !isCreatingWorkspace && !creationError) {
+        console.log("No workspaces found, creating default workspace");
         setIsCreatingWorkspace(true);
-        await createDefaultWorkspace();
+        const workspace = await createDefaultWorkspace();
         setIsCreatingWorkspace(false);
+        
+        if (!workspace) {
+          console.log("Failed to create workspace, redirecting to onboarding");
+          navigate('/onboarding');
+        }
       }
     };
 
     handleNoWorkspace();
-  }, [isLoading, workspaces, createDefaultWorkspace, isCreatingWorkspace]);
+  }, [isLoading, workspaces, createDefaultWorkspace, isCreatingWorkspace, creationError, navigate]);
+
+  // If there was an error creating the workspace, redirect to onboarding
+  useEffect(() => {
+    if (creationError) {
+      console.log("Workspace creation error detected, redirecting to onboarding");
+      navigate('/onboarding');
+    }
+  }, [creationError, navigate]);
 
   if (isLoading || isCreatingWorkspace) {
     return <div className="h-screen w-full flex items-center justify-center">
@@ -37,6 +53,7 @@ function Dashboard({ children }: { children?: ReactNode }) {
   }
 
   if (!currentWorkspace) {
+    console.log("No current workspace, redirecting to onboarding");
     return <Navigate to="/onboarding" />;
   }
 
@@ -64,6 +81,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const checkUser = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        console.log("Session check:", session ? "Valid session" : "No session");
         setUser(session?.user || null);
       } catch (error) {
         console.error("Error checking session:", error);
@@ -77,6 +95,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state change:", event);
         setUser(session?.user || null);
       }
     );
@@ -95,6 +114,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // If not logged in, redirect to auth
   if (!user) {
+    console.log("No user, redirecting to auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
