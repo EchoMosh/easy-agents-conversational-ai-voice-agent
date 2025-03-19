@@ -29,16 +29,16 @@ export const Underline = Mark.create({
     return ['u', mergeAttributes(HTMLAttributes), 0];
   },
   
-  // Commands - fixed typing to return a Partial<RawCommands>
+  // Commands - properly typed to return a Command object
   addCommands() {
     return {
-      setUnderline: () => ({ commands }) => {
+      setUnderline: (): Command => ({ commands }) => {
         return commands.setMark('underline');
       },
-      toggleUnderline: () => ({ commands }) => {
+      toggleUnderline: (): Command => ({ commands }) => {
         return commands.toggleMark('underline');
       },
-      unsetUnderline: () => ({ commands }) => {
+      unsetUnderline: (): Command => ({ commands }) => {
         return commands.unsetMark('underline');
       },
     };

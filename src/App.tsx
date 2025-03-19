@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
@@ -23,6 +24,7 @@ import DashboardPage from "@/pages/dashboard/dashboard";
 import CalendarPage from "@/pages/dashboard/calendar";
 import LeadScraperPage from "@/pages/dashboard/lead-scraper";
 import ProtectedRoute from "@/components/auth/protected-route";
+import { WorkspaceProvider } from "@/context/workspace-context";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -37,8 +39,12 @@ function App() {
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
 
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
+            {/* Protected routes wrapped with WorkspaceProvider */}
+            <Route element={
+              <WorkspaceProvider>
+                <ProtectedRoute />
+              </WorkspaceProvider>
+            }>
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route path="/dashboard/overview" element={<DashboardPage />} />
