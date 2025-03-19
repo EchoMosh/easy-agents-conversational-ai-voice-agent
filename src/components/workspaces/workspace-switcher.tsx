@@ -33,6 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconSelector } from "./icon-selector";
+import { useWorkspace } from "@/context/workspace-context";
 
 interface Workspace {
   id: string;
@@ -50,116 +51,18 @@ const iconMap = {
 
 export function WorkspaceSwitcher() {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showNewWorkspaceDialog, setShowNewWorkspaceDialog] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [newWorkspaceIcon, setNewWorkspaceIcon] = useState("building");
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchWorkspaces();
-  }, []);
-
-  const fetchWorkspaces = async () => {
-    try {
-      setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) return;
-
-      // Get all workspaces user is a member of
-      const { data: memberData, error: memberError } = await supabase
-        .from('workspace_members')
-        .select('workspace_id')
-        .eq('user_id', session.user.id);
-
-      if (memberError) throw memberError;
-
-      if (!memberData || memberData.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      const workspaceIds = memberData.map(m => m.workspace_id);
-
-      // Get workspace details
-      const { data: workspacesData, error: workspacesError } = await supabase
-        .from('workspaces')
-        .select('*')
-        .in('id', workspaceIds);
-
-      if (workspacesError) throw workspacesError;
-
-      // Get current workspace from profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('current_workspace_id')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileError && profileError.code !== 'PGRST116') throw profileError;
-
-      const mappedWorkspaces = workspacesData.map(w => ({
-        id: w.id,
-        name: w.name,
-        icon: w.icon || 'building',
-      }));
-
-      setWorkspaces(mappedWorkspaces);
-
-      if (profile?.current_workspace_id) {
-        const current = mappedWorkspaces.find(w => w.id === profile.current_workspace_id);
-        if (current) {
-          setCurrentWorkspace(current);
-        } else if (mappedWorkspaces.length > 0) {
-          setCurrentWorkspace(mappedWorkspaces[0]);
-        }
-      } else if (mappedWorkspaces.length > 0) {
-        setCurrentWorkspace(mappedWorkspaces[0]);
-      }
-    } catch (error) {
-      console.error('Error fetching workspaces:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load workspaces",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSwitchWorkspace = async (workspace: Workspace) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) return;
-
-      // Update the current workspace in the profile
-      const { error } = await supabase
-        .from('profiles')
-        .update({ current_workspace_id: workspace.id })
-        .eq('id', session.user.id);
-
-      if (error) throw error;
-
-      setCurrentWorkspace(workspace);
-      setShowDropdown(false);
-      
-      // Refresh the page to update all data
-      window.location.reload();
-    } catch (error) {
-      console.error('Error switching workspace:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to switch workspace",
-      });
-    }
-  };
+  const { 
+    currentWorkspace, 
+    workspaces, 
+    isLoading, 
+    switchWorkspace, 
+    refreshWorkspaces 
+  } = useWorkspace();
 
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim()) {
@@ -177,7 +80,7 @@ export function WorkspaceSwitcher() {
       
       if (!session) return;
 
-      // Create the new workspace
+      // Create the new workspace - the database trigger will handle member creation
       const { data: workspace, error: workspaceError } = await supabase
         .from('workspaces')
         .insert({
@@ -189,17 +92,6 @@ export function WorkspaceSwitcher() {
         .single();
 
       if (workspaceError) throw workspaceError;
-
-      // Add the user as an owner
-      const { error: memberError } = await supabase
-        .from('workspace_members')
-        .insert({
-          workspace_id: workspace.id,
-          user_id: session.user.id,
-          role: 'owner'
-        });
-
-      if (memberError) throw memberError;
 
       // Set as current workspace
       const { error: profileError } = await supabase
@@ -215,7 +107,7 @@ export function WorkspaceSwitcher() {
       });
 
       // Refresh workspaces
-      await fetchWorkspaces();
+      await refreshWorkspaces();
       
       // Close dialog and reset fields
       setShowNewWorkspaceDialog(false);
@@ -241,7 +133,7 @@ export function WorkspaceSwitcher() {
     return <IconComponent />;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-3 flex items-center gap-2">
         <div className="h-10 w-10 flex items-center justify-center rounded-md bg-black text-white">
@@ -292,11 +184,11 @@ export function WorkspaceSwitcher() {
           <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
 
           {workspaces.length > 0 ? (
-            workspaces.map((workspace, index) => (
+            workspaces.map((workspace) => (
               <DropdownMenuItem
                 key={workspace.id}
                 className="flex items-center gap-2 py-2"
-                onClick={() => handleSwitchWorkspace(workspace)}
+                onClick={() => switchWorkspace(workspace)}
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-md border">
                   {getIconComponent(workspace.icon)}

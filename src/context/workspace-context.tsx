@@ -41,7 +41,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Get all workspaces user is a member of
+      // Get all workspaces where user is a member - using the simplified RLS policy
       const { data: memberData, error: memberError } = await supabase
         .from('workspace_members')
         .select('workspace_id')
@@ -49,7 +49,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       if (memberError) {
         console.error("Error fetching workspace members:", memberError);
-        // If there's an error fetching workspace members, navigate to onboarding
         if (memberError.code === '42P17') {
           setCreationError("Database policy issue detected. Please contact support.");
           navigate('/onboarding');
@@ -158,7 +157,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       console.log("Creating default workspace:", defaultWorkspaceName);
 
-      // Step 1: Create the workspace with the user as owner
+      // Create the workspace with the user as owner
+      // The database trigger will automatically add the user as a member
       const { data: workspace, error: workspaceError } = await supabase
         .from('workspaces')
         .insert({
@@ -191,23 +191,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       console.log("Workspace created:", workspace);
 
-      // Step 2: Add the user as an owner using the new policy
-      const { error: memberError } = await supabase
-        .from('workspace_members')
-        .insert({
-          workspace_id: workspace.id,
-          user_id: session.user.id,
-          role: 'owner'
-        });
+      // No need to manually add the user as a member - the database trigger takes care of this
 
-      if (memberError) {
-        console.error("Member addition error:", memberError);
-        // Even if this fails, continue with the process since the owner should be able to access the workspace
-      } else {
-        console.log("User added as owner successfully");
-      }
-
-      // Step 3: Set as current workspace
+      // Set as current workspace
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ current_workspace_id: workspace.id })

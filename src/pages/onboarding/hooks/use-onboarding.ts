@@ -48,12 +48,7 @@ export const useOnboarding = () => {
 
         if (memberError) {
           console.error('Workspace check error:', memberError);
-          if (memberError.code === '42P17' || memberError.message?.includes('infinite recursion')) {
-            console.log("Database policy issue detected in onboarding check. Continuing with onboarding.");
-            // Continue with onboarding as this is likely a policy config issue
-          } else {
-            throw memberError;
-          }
+          // Continue with onboarding regardless of error type - the user will create a workspace
         }
 
         // If user has workspaces and onboarding is completed, redirect to dashboard
@@ -138,7 +133,7 @@ export const useOnboarding = () => {
         
         console.log("Profile updated successfully");
 
-        // Use the createDefaultWorkspace function from context which has been updated to work with the new policies
+        // Create the workspace using our updated context method
         try {
           console.log("Creating workspace using context method");
           const workspace = await createDefaultWorkspace();
@@ -154,18 +149,13 @@ export const useOnboarding = () => {
             
         } catch (workspaceError: any) {
           console.error("Workspace creation error:", workspaceError);
-          if (workspaceError.message?.includes('infinite recursion') || 
-              workspaceError.code === '42P17') {
-            setError("Database policy issue detected. Please try again later.");
-          } else {
-            setError(workspaceError.message || "Failed to create workspace");
-          }
+          setError(workspaceError.message || "Failed to create workspace");
           setIsCompleting(false);
           return;
         }
 
         // Add delay to allow database changes to propagate
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         navigate("/dashboard/agents");
       } catch (error: any) {
