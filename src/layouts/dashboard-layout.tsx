@@ -2,9 +2,12 @@
 import { useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
-import { DashboardHeader } from "@/components/dashboard/page";
 import { supabase } from "@/integrations/supabase/client";
 import { WorkspaceProvider } from "@/context/workspace-context";
+import { useState } from "react";
+
+// Import the header component directly since it's a default export
+import DashboardHeader from "@/components/dashboard/page";
 
 export default function DashboardLayout() {
   const [user, setUser] = useState<any>(null);
@@ -63,6 +66,3 @@ export default function DashboardLayout() {
     </WorkspaceProvider>
   );
 }
-
-// Add the missing useState import
-import { useState } from "react";

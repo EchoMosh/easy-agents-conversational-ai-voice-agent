@@ -1,8 +1,9 @@
 
 import { supabase, withWorkspace } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/context/workspace-context";
-import { Pipeline } from "@/types/pipeline";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 export function usePipelineMutations() {
   const { currentWorkspace } = useWorkspace();
@@ -33,10 +34,17 @@ export function usePipelineMutations() {
         return column;
       });
 
+      // Convert columns to Json for Supabase
+      const columnsJson = updatedColumns.map(col => ({
+        id: col.id,
+        title: col.title,
+        color: col.color
+      })) as Json;
+
       // Update the pipeline with the new columns
       const { error } = await supabase
         .from("pipelines")
-        .update({ columns: updatedColumns })
+        .update({ columns: columnsJson })
         .eq("id", pipeline.id);
 
       if (error) throw error;
@@ -83,21 +91,31 @@ export function usePipelineMutations() {
         throw new Error("No workspace selected");
       }
 
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("No authenticated user");
+      }
+
+      // Convert columns to Json for Supabase
+      const columnsJson = [
+        { id: "1", title: "New", color: "bg-blue-500", items: [] },
+        { id: "2", title: "Contacted", color: "bg-yellow-500", items: [] },
+        { id: "3", title: "Qualified", color: "bg-green-500", items: [] },
+        { id: "4", title: "Proposal", color: "bg-purple-500", items: [] },
+        { id: "5", title: "Negotiation", color: "bg-indigo-500", items: [] },
+        { id: "6", title: "Won", color: "bg-emerald-500", items: [] },
+        { id: "7", title: "Lost", color: "bg-red-500", items: [] },
+      ] as Json;
+
       // Create the pipeline with default columns
       const { data, error } = await supabase
         .from("pipelines")
         .insert({
           name,
           workspace_id: workspaceId,
-          columns: [
-            { id: "1", title: "New", items: [] },
-            { id: "2", title: "Contacted", items: [] },
-            { id: "3", title: "Qualified", items: [] },
-            { id: "4", title: "Proposal", items: [] },
-            { id: "5", title: "Negotiation", items: [] },
-            { id: "6", title: "Won", items: [] },
-            { id: "7", title: "Lost", items: [] },
-          ],
+          user_id: user.id,
+          columns: columnsJson
         })
         .select()
         .single();

@@ -4,18 +4,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase, withWorkspace } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/context/workspace-context";
-import { Pipeline } from "@/types/pipeline";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { usePipelineQueries } from "./pipeline/use-pipeline-queries";
 import { usePipelineMutations } from "./pipeline/use-pipeline-mutations";
 
-export const defaultColumns = [
-  { id: "1", title: "New", items: [] },
-  { id: "2", title: "Contacted", items: [] },
-  { id: "3", title: "Qualified", items: [] },
-  { id: "4", title: "Proposal", items: [] },
-  { id: "5", title: "Negotiation", items: [] },
-  { id: "6", title: "Won", items: [] },
-  { id: "7", title: "Lost", items: [] },
+export const defaultColumns: PipelineColumn[] = [
+  { id: "1", title: "New", color: "bg-blue-500" },
+  { id: "2", title: "Contacted", color: "bg-yellow-500" },
+  { id: "3", title: "Qualified", color: "bg-green-500" },
+  { id: "4", title: "Proposal", color: "bg-purple-500" },
+  { id: "5", title: "Negotiation", color: "bg-indigo-500" },
+  { id: "6", title: "Won", color: "bg-emerald-500" },
+  { id: "7", title: "Lost", color: "bg-red-500" },
 ];
 
 export const usePipeline = () => {

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Lead } from "@/pages/dashboard/leads";
-import { Pipeline } from "@/types/pipeline";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { PipelineHeader } from "@/components/pipelines/pipeline-header";
 import { PipelineStages } from "@/components/pipelines/pipeline-stages";
 import { LeadDetailsDialog } from "@/components/pipelines/lead-details-dialog";
@@ -86,6 +86,13 @@ export default function PipelinesPage() {
   // Check if the selected pipeline has any leads
   const hasLeads = leads?.some(lead => lead.pipeline_id === selectedPipeline?.id) || false;
 
+  // Ensure we use properly typed columns that include the color property
+  const pipelineColumns: PipelineColumn[] = selectedPipeline?.columns.map(col => ({
+    id: col.id,
+    title: col.title,
+    color: col.color || "bg-gray-500" // Default color if missing
+  })) || defaultColumns;
+
   return (
     <div className="relative">
       <div className="px-4 md:px-8 py-6 min-h-screen bg-gradient-to-b from-background to-muted/10 w-full">
@@ -125,7 +132,7 @@ export default function PipelinesPage() {
         <LeadDetailsDialog
           lead={selectedLead}
           onClose={() => setSelectedLead(null)}
-          columns={selectedPipeline?.columns || defaultColumns}
+          columns={pipelineColumns}
         />
 
         <DeletePipelineDialog
