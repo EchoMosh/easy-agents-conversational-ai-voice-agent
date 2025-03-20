@@ -93,6 +93,7 @@ export function AppSidebar() {
                     asChild
                     isActive={location.pathname.startsWith(item.url)}
                     tooltip={item.title}
+                    className="group-data-[collapsible=icon]:justify-center" 
                   >
                     <NavLink
                       to={item.url}
