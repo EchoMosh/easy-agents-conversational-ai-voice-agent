@@ -9,7 +9,7 @@ import {
   Settings,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   Sidebar,
@@ -71,43 +71,66 @@ const appMenuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { setOpen } = useSidebar();
+  const sidebarRef = useRef<HTMLDivElement>(null);
   
-  // Auto-collapse sidebar and add hover effect
+  // Initialize and set up hover behavior
   useEffect(() => {
-    // Initialize sidebar as collapsed
+    // Start with sidebar collapsed
     setOpen(false);
-    console.log("Initializing sidebar as collapsed");
+    console.log("Sidebar initialized as collapsed");
     
-    // Select the sidebar element correctly using its data attribute
-    const sidebarElement = document.querySelector("[data-sidebar='sidebar']");
-    console.log("Found sidebar element:", !!sidebarElement);
+    // Direct DOM manipulation as a fallback approach
+    const handleHoverIn = () => {
+      console.log("Hover in detected");
+      setOpen(true);
+    };
     
-    if (sidebarElement) {
-      const handleMouseEnter = () => {
-        console.log("Mouse entered sidebar");
-        setOpen(true);
-      };
-      
-      const handleMouseLeave = () => {
-        console.log("Mouse left sidebar");
-        setOpen(false);
-      };
-      
-      console.log("Adding event listeners to sidebar");
-      sidebarElement.addEventListener("mouseenter", handleMouseEnter);
-      sidebarElement.addEventListener("mouseleave", handleMouseLeave);
+    const handleHoverOut = () => {
+      console.log("Hover out detected");
+      setOpen(false);
+    };
+    
+    // Add event listeners directly to the Sidebar component
+    if (sidebarRef.current) {
+      console.log("Adding hover listeners to sidebar ref");
+      sidebarRef.current.addEventListener('mouseenter', handleHoverIn);
+      sidebarRef.current.addEventListener('mouseleave', handleHoverOut);
       
       return () => {
-        console.log("Removing event listeners from sidebar");
-        sidebarElement.removeEventListener("mouseenter", handleMouseEnter);
-        sidebarElement.removeEventListener("mouseleave", handleMouseLeave);
+        if (sidebarRef.current) {
+          sidebarRef.current.removeEventListener('mouseenter', handleHoverIn);
+          sidebarRef.current.removeEventListener('mouseleave', handleHoverOut);
+        }
       };
+    } else {
+      // Fallback to document.querySelector approach
+      console.log("Sidebar ref not available, using querySelector fallback");
+      
+      // Try different approaches to find the sidebar element
+      setTimeout(() => {
+        const sidebarElement = document.querySelector("[data-sidebar='sidebar']") || 
+                              document.querySelector(".group\\/sidebar-wrapper") ||
+                              document.querySelector("[class*='sidebar']");
+        
+        console.log("Fallback sidebar element found:", !!sidebarElement);
+        
+        if (sidebarElement) {
+          sidebarElement.addEventListener('mouseenter', handleHoverIn);
+          sidebarElement.addEventListener('mouseleave', handleHoverOut);
+          
+          return () => {
+            sidebarElement.removeEventListener('mouseenter', handleHoverIn);
+            sidebarElement.removeEventListener('mouseleave', handleHoverOut);
+          };
+        }
+      }, 500); // Short delay to ensure the DOM is ready
     }
   }, [setOpen]);
 
   return (
     <Sidebar
-      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white transition-all duration-300 ease-in-out"
+      ref={sidebarRef}
+      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white transition-all duration-300 ease-in-out hover:w-[var(--sidebar-width)]"
       collapsible="icon"
     >
       <SidebarHeader className="p-0">

@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
@@ -20,10 +19,10 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = "14rem"; // Increased from 12rem to 14rem
-const SIDEBAR_WIDTH_MOBILE = "16rem"; // Increased from 15rem to 16rem
-const SIDEBAR_WIDTH_ICON = "4rem"; // Increased from 3.5rem to 4rem
-const SIDEBAR_KEYBOARD_SHORTCUT = "\\"; // Changed from 'b' to '\' (backslash)
+const SIDEBAR_WIDTH = "14rem";
+const SIDEBAR_WIDTH_MOBILE = "16rem";
+const SIDEBAR_WIDTH_ICON = "4rem";
+const SIDEBAR_KEYBOARD_SHORTCUT = "\\";
 
 type SidebarContext = {
   state: "expanded" | "collapsed";
@@ -167,7 +166,21 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+    const { isMobile, state, openMobile, setOpenMobile, setOpen } = useSidebar();
+
+    const handleMouseEnter = React.useCallback(() => {
+      if (!isMobile) {
+        console.log("Sidebar component: mouse enter");
+        setOpen(true);
+      }
+    }, [isMobile, setOpen]);
+
+    const handleMouseLeave = React.useCallback(() => {
+      if (!isMobile) {
+        console.log("Sidebar component: mouse leave");
+        setOpen(false);
+      }
+    }, [isMobile, setOpen]);
 
     if (collapsible === "none") {
       return (
@@ -234,6 +247,8 @@ const Sidebar = React.forwardRef<
               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
             className
           )}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           {...props}
         >
           <div
