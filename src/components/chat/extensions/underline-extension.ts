@@ -32,14 +32,8 @@ export const Underline = Mark.create({
   // Commands that can be called from the editor
   addCommands() {
     return {
-      setUnderline: () => ({ chain }) => {
-        return chain().setMark(this.name).run();
-      },
-      toggleUnderline: () => ({ chain }) => {
-        return chain().toggleMark(this.name).run();
-      },
-      unsetUnderline: () => ({ chain }) => {
-        return chain().unsetMark(this.name).run();
+      toggleUnderline: () => ({ commands }) => {
+        return commands.toggleMark(this.name);
       },
     };
   },

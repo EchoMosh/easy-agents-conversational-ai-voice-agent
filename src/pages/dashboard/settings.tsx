@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ThemeSelector } from "@/components/theme/theme-selector";
 
 interface SettingsTabInfo {
   id: string;
@@ -36,7 +37,6 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(tabFromUrl || "dashboard");
   const [isMounted, setIsMounted] = useState(false);
 
-  // Tabs configuration
   const tabs: SettingsTabInfo[] = [
     {
       id: "dashboard",
@@ -92,7 +92,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar for large screens */}
         <div className="hidden lg:block w-64 shrink-0">
           <div className="sticky top-8 space-y-2">
             {tabs.map((tab) => (
@@ -122,7 +121,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Tabs for mobile/tablet */}
         <div className="lg:hidden mb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-4 w-full">
@@ -146,7 +144,6 @@ export default function SettingsPage() {
           </Tabs>
         </div>
 
-        {/* Main content */}
         <div className="flex-1">
           <Card className="border-none shadow-sm">
             <CardContent className="p-0 pb-12">
@@ -178,6 +175,16 @@ export default function SettingsPage() {
                             </div>
                           </CardContent>
                         </Card>
+                      </div>
+
+                      <Separator />
+
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">Theme Style</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Choose a color theme for your workspace
+                        </p>
+                        <ThemeSelector />
                       </div>
 
                       <Separator />
