@@ -110,7 +110,7 @@ export function PipelineStage({
             <div className="space-y-2">
               {/* Show preview lead at the top if this is the target column */}
               {isPreviewTarget && previewLead && (
-                <div className="pb-2 transition-opacity duration-200 animate-pulse">
+                <div className="transition-all duration-300 opacity-80 pb-2">
                   <LeadCard 
                     key={`preview-${previewLead.id}`}
                     lead={previewLead}

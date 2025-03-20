@@ -1,12 +1,11 @@
 
 import { DragEndEvent, DragOverEvent, UniqueIdentifier } from "@dnd-kit/core";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Pipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { toast } from "sonner";
-import { useDebounce } from "@/hooks/use-debounce";
 
 export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[], refetchLeads: () => void) {
   const { toast } = useToast();
@@ -17,19 +16,6 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
   // Add a 'lastDragTarget' to track the last drag target type to prevent flickering
   const lastDragTarget = useRef<{ type: string; id: string | null }>({ type: "", id: null });
   
-  // Debounced setters to prevent rapid state changes
-  const debouncedSetPreviewColumnId = useDebounce((id: string | null) => {
-    if (id !== previewColumnId) {
-      setPreviewColumnId(id);
-    }
-  }, 50);
-  
-  const debouncedSetPreviewIndex = useDebounce((index: number | null) => {
-    if (index !== previewIndex) {
-      setPreviewIndex(index);
-    }
-  }, 50);
-
   // Handle drag over (preview)
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
@@ -56,20 +42,29 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     
     // Prioritize Column drops over Task drops to reduce flickering
     if (overType === "Column") {
-      // Direct drop on column
-      debouncedSetPreviewColumnId(overId);
-      // Reset index for drop at the end
-      debouncedSetPreviewIndex(null);
+      // Direct drop on column - with small delay to reduce flicker
+      setTimeout(() => {
+        if (lastDragTarget.current.type === "Column") {
+          setPreviewColumnId(overId);
+          // Reset index for drop at the end
+          setPreviewIndex(null);
+        }
+      }, 50);
     } else if (overType === "Task") {
-      // Dropping over another task - only update if the column is different
+      // Dropping over another task - only update if stable for a moment
       const overColumnId = over.data?.current?.columnId;
       const overIndex = over.data?.current?.index;
       
-      if (overColumnId && (overColumnId !== previewColumnId || overIndex !== previewIndex)) {
-        debouncedSetPreviewColumnId(overColumnId);
-        if (typeof overIndex === 'number') {
-          debouncedSetPreviewIndex(overIndex);
-        }
+      if (overColumnId) {
+        setTimeout(() => {
+          // Only update if we're still over the same task after the delay
+          if (lastDragTarget.current.id === overId && lastDragTarget.current.type === "Task") {
+            setPreviewColumnId(overColumnId);
+            if (typeof overIndex === 'number') {
+              setPreviewIndex(overIndex);
+            }
+          }
+        }, 100);
       }
     }
   };

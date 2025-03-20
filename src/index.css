@@ -182,12 +182,12 @@
 /* Preview card styles */
 .task-card-preview {
   @apply border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-md;
-  transition: opacity 200ms ease-in-out, transform 200ms ease-in-out;
+  transition: all 300ms ease-in-out;
 }
 
 .column-preview-target {
   @apply ring-2 ring-blue-400;
-  transition: box-shadow 150ms ease-in-out;
+  transition: all 150ms ease-in-out;
 }
 
 /* Animation for preview items */
@@ -198,7 +198,7 @@
 }
 
 .preview-pulse {
-  animation: preview-pulse 1.5s ease-in-out infinite;
+  animation: preview-pulse 2s ease-in-out infinite;
 }
 
 /* Pipeline stage styles */
@@ -230,3 +230,20 @@
   transition: transform 150ms ease;
 }
 
+/* Smoother drag preview transitions */
+.drag-preview {
+  transition: all 200ms ease-out;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* Prevent flickering during drags */
+.kanban-column {
+  transition: box-shadow 300ms ease-out, border-color 300ms ease-out;
+}
+
+/* Make the drag overlay more visible */
+.dnd-overlay {
+  z-index: 100;
+  pointer-events: none;
+}
