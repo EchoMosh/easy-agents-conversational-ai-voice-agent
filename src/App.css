@@ -7,10 +7,10 @@
   transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em rgba(245, 158, 11, 0.6));
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em rgba(245, 158, 11, 0.6));
 }
 
 @keyframes logo-spin {
@@ -47,12 +47,12 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(245, 158, 11, 0.2);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.4);
+  background: rgba(245, 158, 11, 0.4);
 }
 
 /* Apply custom scrollbars to the body */
@@ -66,12 +66,12 @@ body::-webkit-scrollbar-track {
 }
 
 body::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(245, 158, 11, 0.15);
   border-radius: 10px;
 }
 
 body::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(245, 158, 11, 0.3);
 }
 
 /* Glow effect for elements */
@@ -87,7 +87,7 @@ body::-webkit-scrollbar-thumb:hover {
   right: -1px;
   bottom: -1px;
   border-radius: inherit;
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
