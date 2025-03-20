@@ -80,7 +80,7 @@ export default function PipelinesPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <div className="flex-1 px-4 md:px-8 py-6 flex flex-col bg-gradient-to-b from-background to-muted/10">
+      <div className="flex-1 px-4 md:px-8 pt-4 pb-0 flex flex-col bg-gradient-to-b from-background to-muted/10">
         <PipelineHeader 
           pipelines={pipelines || []}
           selectedPipeline={selectedPipeline}
@@ -89,7 +89,7 @@ export default function PipelinesPage() {
         />
 
         {selectedPipeline && (
-          <div className="mt-6 flex-1 overflow-hidden">
+          <div className="mt-4 flex-1 overflow-hidden">
             <PipelineStages
               selectedPipeline={selectedPipeline}
               leads={leads || []}

@@ -1,3 +1,4 @@
+
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineName } from "./components/pipeline-name";
@@ -193,14 +194,14 @@ export function PipelineStages({
   }
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full flex flex-col">
       <PipelineName
         name={cleanedPipeline.name}
         onEditPipelineName={onEditPipelineName}
         onDeletePipeline={onDeletePipeline}
       />
 
-      <div className="mt-4 h-[calc(100vh-200px)] overflow-hidden">
+      <div className="mt-4 flex-1 overflow-hidden">
         <KanbanBoard
           pipeline={cleanedPipeline}
           leads={leads}
