@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/context/workspace-context";
@@ -12,6 +13,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { AgentsTable } from "@/components/agents/agents-table";
 import { CreateAgentForm } from "@/components/agents/create-agent-form";
 import { Agent } from "@/types/agent";
@@ -19,9 +21,8 @@ import { Agent } from "@/types/agent";
 const AgentsPage = () => {
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
-
-  // Import the workspace context
   const { currentWorkspace } = useWorkspace();
 
   // Update query key to include workspace ID to ensure proper cache invalidation
@@ -169,13 +170,6 @@ const AgentsPage = () => {
     setIsCreating(false);
   };
 
-  const handleAutomationsClick = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Automations feature is under development",
-    });
-  };
-
   // Listen for create-agent events from the header button
   useEffect(() => {
     const handleCreateAgent = () => {
@@ -191,14 +185,26 @@ const AgentsPage = () => {
 
   return (
     <div className="w-full p-8 bg-background text-foreground relative">
-      <div className="flex justify-end mb-8">
-        <div className="flex gap-2">
+      <div className="flex items-center justify-between mb-8">
+        <div className="text-2xl font-semibold">Agents</div>
+        <div className="flex gap-4 items-center">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search agents..."
+              className="pl-9 w-[250px]"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
           <Button onClick={() => setIsCreating(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Create Agent
           </Button>
         </div>
       </div>
+      
       {isLoading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -206,7 +212,10 @@ const AgentsPage = () => {
       )}
 
       {!isLoading && agents && (
-        <AgentsTable agents={agents} onDelete={handleDeleteAgent} />
+        <AgentsTable 
+          agents={agents} 
+          onDelete={handleDeleteAgent} 
+        />
       )}
 
       <Dialog
