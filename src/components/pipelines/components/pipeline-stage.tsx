@@ -110,7 +110,7 @@ export function PipelineStage({
             <div className="space-y-2">
               {/* Show preview lead at the top if this is the target column */}
               {isPreviewTarget && previewLead && (
-                <div className="transition-all duration-300 opacity-80 pb-2">
+                <div className="transition-all duration-300 opacity-80 pb-2" data-preview-lead={previewLead.id}>
                   <LeadCard 
                     key={`preview-${previewLead.id}`}
                     lead={previewLead}
@@ -136,6 +136,7 @@ export function PipelineStage({
                     onClick={() => onLeadClick(lead)} 
                     pipelines={allPipelines}
                     currentPipelineId={currentPipelineId}
+                    data-draggable-id={lead.id}
                   />
                 ))
               )}

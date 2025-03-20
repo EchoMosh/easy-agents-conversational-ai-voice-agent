@@ -16,6 +16,9 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
   // Add a 'lastDragTarget' to track the last drag target type to prevent flickering
   const lastDragTarget = useRef<{ type: string; id: string | null }>({ type: "", id: null });
   
+  // Track update timeout to ensure we can clear it properly
+  const updateTimeoutRef = useRef<number | null>(null);
+  
   // Handle drag over (preview)
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
@@ -134,6 +137,16 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     // Set updating state to prevent multiple simultaneous updates
     setIsUpdating(true);
 
+    // Set a safety timeout to reset isUpdating state after 5 seconds if something goes wrong
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+    
+    updateTimeoutRef.current = window.setTimeout(() => {
+      setIsUpdating(false);
+      updateTimeoutRef.current = null;
+    }, 5000);
+
     try {
       console.log(`Moving lead ${activeId} to pipeline ${selectedPipeline.id}, status ${newStatus}`);
       
@@ -167,6 +180,12 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       // Force refetch to revert to correct state in case of error
       refetchLeads();
     } finally {
+      // Clear the safety timeout
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+        updateTimeoutRef.current = null;
+      }
+      
       // Delay resetting isUpdating to prevent quick double-updates
       setTimeout(() => {
         setIsUpdating(false);
@@ -174,11 +193,27 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     }
   };
 
+  // Function to forcibly reset the drag state - can be called in emergency situations
+  const resetDragState = () => {
+    setIsUpdating(false);
+    setPreviewColumnId(null);
+    setPreviewIndex(null);
+    lastDragTarget.current = { type: "", id: null };
+    
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+      updateTimeoutRef.current = null;
+    }
+    
+    console.log("Drag state forcibly reset");
+  };
+
   return { 
     handleDragEnd, 
     handleDragOver, 
     isUpdating, 
     previewColumnId,
-    previewIndex 
+    previewIndex,
+    resetDragState
   };
 }

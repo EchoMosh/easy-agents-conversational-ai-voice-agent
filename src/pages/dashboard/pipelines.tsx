@@ -13,6 +13,7 @@ import { useDeletePipeline } from "@/hooks/pipeline/use-delete-pipeline";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
 import { usePipelineColumns } from "@/hooks/pipeline/use-pipeline-columns";
 import { defaultColumns } from "@/hooks/use-pipeline";
+import { toast } from "sonner";
 
 export default function PipelinesPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -62,7 +63,14 @@ export default function PipelinesPage() {
     onDelete,
   } = useDeletePipeline(handleDeletePipeline, selectedPipeline?.id);
 
-  const { handleDragEnd, handleDragOver, isUpdating, previewColumnId, previewIndex } = usePipelineDrag(selectedPipeline, leads, invalidateAndRefetch);
+  const { 
+    handleDragEnd, 
+    handleDragOver, 
+    isUpdating, 
+    previewColumnId, 
+    previewIndex,
+    resetDragState  // Include the new reset function
+  } = usePipelineDrag(selectedPipeline, leads, invalidateAndRefetch);
   
   const {
     handleAddStage,
@@ -78,6 +86,48 @@ export default function PipelinesPage() {
     title: col.title,
     color: col.color || "bg-gray-500" // Default color if missing
   })) || defaultColumns;
+  
+  // Add emergency recovery button if we detect a stuck state
+  const [isDragStuck, setIsDragStuck] = useState(false);
+  
+  // Check for stuck drags periodically
+  useEffect(() => {
+    const checkForStuckDrags = () => {
+      const draggedElements = document.querySelectorAll('[aria-pressed="true"]');
+      const isStuck = draggedElements.length > 0 && !isUpdating;
+      
+      if (isStuck) {
+        console.log("Detected potentially stuck drag state");
+        setIsDragStuck(true);
+      } else {
+        setIsDragStuck(false);
+      }
+    };
+    
+    const intervalId = setInterval(checkForStuckDrags, 5000);
+    return () => clearInterval(intervalId);
+  }, [isUpdating]);
+
+  const handleResetDragState = () => {
+    resetDragState();
+    
+    // Also reset any stuck elements in the DOM
+    const draggedElements = document.querySelectorAll('[aria-pressed="true"]');
+    if (draggedElements.length > 0) {
+      console.log("Resetting stuck drag elements:", draggedElements.length);
+      draggedElements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.setAttribute('aria-pressed', 'false');
+        }
+      });
+    }
+    
+    // Force a refetch to ensure data is up to date
+    invalidateAndRefetch();
+    setIsDragStuck(false);
+    
+    toast.success("Drag state has been reset");
+  };
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -89,6 +139,17 @@ export default function PipelinesPage() {
             onCreatePipeline={() => setShowNewPipelineDialog(true)}
             onSelectPipeline={handleSelectPipeline}
           />
+          
+          {isDragStuck && (
+            <div className="flex justify-end mb-2">
+              <button 
+                onClick={handleResetDragState}
+                className="text-xs bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded"
+              >
+                Reset Stuck Drag State
+              </button>
+            </div>
+          )}
         </div>
 
         {selectedPipeline && (

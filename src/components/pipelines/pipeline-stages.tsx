@@ -2,7 +2,7 @@
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineName } from "./components/pipeline-name";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { KanbanBoard } from "./components/kanban/KanbanBoard";
@@ -47,6 +47,26 @@ export function PipelineStages({
   
   // Find the currently dragged lead for preview
   const [previewLead, setPreviewLead] = useState<Lead | null>(null);
+  const isFirstRender = useRef(true);
+  
+  // Reset drag on pipeline change to prevent state mismatch
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    
+    // Find drag-related elements and reset their state
+    const draggedElements = document.querySelectorAll('[aria-pressed="true"]');
+    if (draggedElements.length > 0) {
+      console.log("Found elements still in dragged state. Resetting...");
+      draggedElements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.setAttribute('aria-pressed', 'false');
+        }
+      });
+    }
+  }, [selectedPipeline]);
   
   // When previewColumnId changes, find the corresponding lead
   useEffect(() => {
