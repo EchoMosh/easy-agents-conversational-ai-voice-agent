@@ -1,3 +1,4 @@
+
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { useDndContext, type UniqueIdentifier } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
@@ -70,7 +71,7 @@ export function BoardColumn({
   };
 
   const variants = cva(
-    "h-[400px] max-h-[400px] w-[280px] max-w-full bg-primary-foreground flex flex-col flex-shrink-0 shadow-md rounded-md border",
+    "w-[280px] max-w-full bg-primary-foreground flex flex-col flex-shrink-0 shadow-md rounded-md border",
     {
       variants: {
         dragging: {
@@ -94,15 +95,16 @@ export function BoardColumn({
         ...style,
         borderTopColor: colorVar,
         borderTopWidth: colorVar ? "4px" : undefined,
+        height: "100%", // Ensure the card takes full height
       }}
       className={
         variants({
           dragging: isOverlay ? "overlay" : isDragging ? "over" : undefined,
-        }) + (isPreviewTarget ? " ring-2 ring-blue-400" : "")
+        }) + (isPreviewTarget ? " ring-2 ring-blue-400" : "") + " h-full"
       }
     >
       <CardHeader
-        className="p-3 font-medium border-b text-left flex flex-row justify-between items-center rounded-t-md"
+        className="p-3 font-medium border-b text-left flex flex-row justify-between items-center rounded-t-md flex-shrink-0"
         style={{
           backgroundColor: colorVar ? `${colorVar}15` : "var(--muted)",
           borderBottomColor: colorVar || "var(--border)",
@@ -119,8 +121,8 @@ export function BoardColumn({
         </Button>
         <span className="ml-auto font-semibold">{column.title}</span>
       </CardHeader>
-      <ScrollArea>
-        <CardContent className="flex flex-grow flex-col gap-2 p-3 pt-2">
+      <ScrollArea className="flex-grow">
+        <CardContent className="flex flex-grow flex-col gap-2 p-3 pt-2 h-full">
           <SortableContext items={tasksIds}>
             {/* If we have a preview lead at the top of the column (no specific index) */}
             {previewLead && previewIndex === null && (
@@ -197,8 +199,8 @@ interface BoardContainerProps {
 
 export function BoardContainer({ children }: BoardContainerProps) {
   return (
-    <div className="w-full overflow-x-auto px-4">
-      <div className="flex gap-4 pb-2 min-w-max">{children}</div>
+    <div className="w-full h-full overflow-auto">
+      <div className="flex gap-4 p-3 min-w-max h-full">{children}</div>
     </div>
   );
 }

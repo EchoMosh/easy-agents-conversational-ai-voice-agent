@@ -1,3 +1,4 @@
+
 import { useRef, useMemo } from "react";
 import { BoardColumn, BoardContainer } from "./BoardColumn";
 import { BoardDragOverlay } from "./board-drag-overlay";
@@ -94,6 +95,7 @@ export function KanbanBoard({
       onDragStart={(event) => handleDragStart(event, leads)}
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
+      className="h-full"
     >
       <BoardContainer>
         <SortableContext

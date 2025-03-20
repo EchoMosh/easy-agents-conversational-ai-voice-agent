@@ -38,8 +38,8 @@
 
 /* Enhanced Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -53,6 +53,25 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(99, 102, 241, 0.4);
+}
+
+/* Apply custom scrollbars to the body */
+body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 10px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.3);
 }
 
 /* Glow effect for elements */
@@ -118,4 +137,16 @@
 
 .variable-selector-popup .zoom-in-95 {
   animation-name: zoom-in;
+}
+
+/* Ensure no vertical scrolling on main content */
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Dashboard container adjustments */
+.dashboard-container {
+  height: 100vh;
+  overflow: hidden;
 }
