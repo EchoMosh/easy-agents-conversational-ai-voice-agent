@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Building2, 
@@ -33,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconSelector } from "./icon-selector";
 import { useWorkspace } from "@/context/workspace-context";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const iconMap = {
   building: Building2,
@@ -56,6 +56,8 @@ export function WorkspaceSwitcher() {
     switchWorkspace, 
     refreshWorkspaces 
   } = useWorkspace();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim()) {
@@ -73,7 +75,6 @@ export function WorkspaceSwitcher() {
       
       if (!session) return;
 
-      // Create the new workspace - the database trigger will handle member creation
       const { data: workspace, error: workspaceError } = await supabase
         .from('workspaces')
         .insert({
@@ -86,7 +87,6 @@ export function WorkspaceSwitcher() {
 
       if (workspaceError) throw workspaceError;
 
-      // Set as current workspace
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ current_workspace_id: workspace.id })
@@ -99,15 +99,12 @@ export function WorkspaceSwitcher() {
         description: "Workspace created successfully",
       });
 
-      // Refresh workspaces
       await refreshWorkspaces();
       
-      // Close dialog and reset fields
       setShowNewWorkspaceDialog(false);
       setNewWorkspaceName("");
       setNewWorkspaceIcon("building");
       
-      // Refresh the page to update all data
       window.location.reload();
     } catch (error) {
       console.error('Error creating workspace:', error);
@@ -132,7 +129,7 @@ export function WorkspaceSwitcher() {
         <div className="h-10 w-10 flex items-center justify-center rounded-md bg-black text-white">
           <Building2 className="h-5 w-5" />
         </div>
-        <div className="flex-1">Loading...</div>
+        <div className="flex-1 group-data-[collapsible=icon]:hidden">Loading...</div>
       </div>
     );
   }
@@ -142,14 +139,14 @@ export function WorkspaceSwitcher() {
       <DropdownMenu open={showDropdown} onOpenChange={setShowDropdown}>
         <DropdownMenuTrigger asChild>
           <button
-            className={`flex w-full items-center gap-2 rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800`}
+            className={`flex w-full items-center gap-2 rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800 ${isCollapsed ? "justify-center" : ""}`}
           >
             {currentWorkspace ? (
               <>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-black text-white">
                   {getIconComponent(currentWorkspace.icon)}
                 </div>
-                <div className="flex-1 min-w-0 text-left">
+                <div className={`flex-1 min-w-0 text-left ${isCollapsed ? "hidden" : ""}`}>
                   <div className="text-base font-medium truncate">
                     {currentWorkspace.name}
                   </div>
@@ -157,20 +154,20 @@ export function WorkspaceSwitcher() {
                     Workspace
                   </div>
                 </div>
-                <ChevronsUpDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                <ChevronsUpDown className={`h-4 w-4 text-gray-500 flex-shrink-0 ${isCollapsed ? "hidden" : "ml-auto"}`} />
               </>
             ) : (
               <>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-black text-white">
                   <Building2 className="h-5 w-5" />
                 </div>
-                <div className="flex-1 min-w-0 text-left">
+                <div className={`flex-1 min-w-0 text-left ${isCollapsed ? "hidden" : ""}`}>
                   <div className="text-base font-medium truncate">No Workspace</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     Create one to get started
                   </div>
                 </div>
-                <ChevronsUpDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                <ChevronsUpDown className={`h-4 w-4 text-gray-500 flex-shrink-0 ${isCollapsed ? "hidden" : "ml-auto"}`} />
               </>
             )}
           </button>

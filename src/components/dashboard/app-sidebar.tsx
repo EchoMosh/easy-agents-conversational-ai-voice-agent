@@ -106,7 +106,9 @@ export function AppSidebar() {
                       }
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
-                      <span>{item.title}</span>
+                      <span className="group-data-[collapsible=icon]:hidden">
+                        {item.title}
+                      </span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
