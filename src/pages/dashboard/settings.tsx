@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { SidebarSettings } from "@/components/settings/sidebar-settings";
 import { DashboardSettings } from "@/components/settings/dashboard-settings";
+import { WorkspaceSettings } from "@/components/settings/workspace-settings";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AccountSettings } from "@/components/settings/account-settings";
@@ -13,6 +15,7 @@ import {
   Sparkles,
   LucideIcon,
   ExternalLink,
+  Building,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +31,9 @@ interface SettingsTabInfo {
 }
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(tabFromUrl || "dashboard");
   const [isMounted, setIsMounted] = useState(false);
 
   // Tabs configuration
@@ -37,7 +42,6 @@ export default function SettingsPage() {
       id: "dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
-      isNew: true,
     },
     {
       id: "appearance",
@@ -48,6 +52,12 @@ export default function SettingsPage() {
       id: "sidebar",
       label: "Sidebar",
       icon: PanelLeft,
+    },
+    {
+      id: "workspace",
+      label: "Workspace",
+      icon: Building,
+      isNew: true,
     },
     {
       id: "account",
@@ -196,6 +206,8 @@ export default function SettingsPage() {
                   )}
 
                   {activeTab === "sidebar" && <SidebarSettings />}
+
+                  {activeTab === "workspace" && <WorkspaceSettings />}
 
                   {activeTab === "account" && <AccountSettings />}
                 </div>

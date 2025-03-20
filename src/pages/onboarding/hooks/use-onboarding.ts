@@ -133,11 +133,11 @@ export const useOnboarding = () => {
         
         console.log("User metadata updated successfully");
 
-        // Create the workspace using context method
+        // Create the workspace using context method with the name from onboarding
         // The database trigger will automatically add the user as a member
         try {
-          console.log("Creating workspace using context method");
-          const workspace = await createDefaultWorkspace();
+          console.log("Creating workspace using context method with name:", data.workspaceName);
+          const workspace = await createDefaultWorkspace(data.workspaceName, data.workspaceIcon);
           
           if (!workspace) {
             console.error("Workspace creation returned empty workspace");

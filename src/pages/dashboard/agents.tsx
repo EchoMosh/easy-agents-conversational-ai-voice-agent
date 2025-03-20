@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useWorkspace } from "@/context/workspace-context";
 import {
   Dialog,
   DialogContent,
@@ -20,19 +21,25 @@ const AgentsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const queryClient = useQueryClient();
 
+  // Import the workspace context
+  const { currentWorkspace } = useWorkspace();
+
+  // Update query key to include workspace ID to ensure proper cache invalidation
   const { data: agents = [], isLoading } = useQuery({
-    queryKey: ["agents"],
+    queryKey: ["agents", currentWorkspace?.id],
     queryFn: async () => {
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
         if (!session?.user?.id) throw new Error("Not authenticated");
+        if (!currentWorkspace?.id) throw new Error("No workspace selected");
 
         const { data, error } = await supabase
           .from("agents")
           .select("*")
           .eq("user_id", session.user.id)
+          .eq("workspace_id", currentWorkspace.id)
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -127,7 +134,10 @@ const AgentsPage = () => {
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ["agents"] });
+      // Include workspace ID in query invalidation
+      await queryClient.invalidateQueries({
+        queryKey: ["agents", currentWorkspace?.id],
+      });
 
       toast({
         title: "Success",
@@ -144,7 +154,10 @@ const AgentsPage = () => {
   };
 
   const handleCreateSuccess = async (agentId: string) => {
-    await queryClient.invalidateQueries({ queryKey: ["agents"] });
+    // Include workspace ID in query invalidation
+    await queryClient.invalidateQueries({
+      queryKey: ["agents", currentWorkspace?.id],
+    });
     setIsCreating(false);
     toast({
       title: "Success",

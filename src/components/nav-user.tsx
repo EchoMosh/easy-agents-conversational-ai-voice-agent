@@ -7,7 +7,10 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  Settings,
+  Building,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -36,6 +39,7 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const navigate = useNavigate();
 
   return (
     <SidebarMenu>
@@ -84,6 +88,12 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              <DropdownMenuItem
+                onClick={() => navigate("/dashboard/settings?tab=workspace")}
+              >
+                <Building className="mr-2 h-4 w-4" />
+                Workspace Settings
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
