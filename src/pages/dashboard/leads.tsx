@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";
@@ -80,20 +81,19 @@ export default function LeadsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-end mb-6">
-        <AddLeadDialog
-          isOpen={isNewLeadOpen}
-          onOpenChange={setIsNewLeadOpen}
-          onSuccess={invalidateAndRefetch}
-        />
-      </div>
-
       <SearchAndFilters
         selectedPipelineId={selectedPipelineId}
         setSelectedPipelineId={setSelectedPipelineId}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         pipelines={pipelines}
+        addLeadDialog={
+          <AddLeadDialog
+            isOpen={isNewLeadOpen}
+            onOpenChange={setIsNewLeadOpen}
+            onSuccess={invalidateAndRefetch}
+          />
+        }
       />
 
       <LeadsTable

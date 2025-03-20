@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
+import { ReactNode } from "react";
 
 interface SearchAndFiltersProps {
   selectedPipelineId: string | undefined;
@@ -10,6 +11,7 @@ interface SearchAndFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   pipelines: Array<{ id: string; name: string }>;
+  addLeadDialog?: ReactNode;
 }
 
 export function SearchAndFilters({
@@ -17,10 +19,11 @@ export function SearchAndFilters({
   setSelectedPipelineId,
   searchQuery,
   setSearchQuery,
-  pipelines
+  pipelines,
+  addLeadDialog
 }: SearchAndFiltersProps) {
   return (
-    <div className="flex gap-4 mb-4">
+    <div className="flex flex-wrap gap-4 mb-4 items-end">
       <div className="w-64">
         <Label htmlFor="pipelineFilter">Filter by Pipeline</Label>
         <Select 
@@ -54,6 +57,11 @@ export function SearchAndFilters({
             className="pl-10"
           />
         </div>
+      </div>
+
+      {/* Add Lead button */}
+      <div className="ml-auto">
+        {addLeadDialog}
       </div>
     </div>
   );
