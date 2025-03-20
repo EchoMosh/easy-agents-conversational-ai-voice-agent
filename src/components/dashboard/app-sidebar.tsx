@@ -9,6 +9,7 @@ import {
   Settings,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 import {
   Sidebar,
@@ -21,8 +22,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   SidebarSeparator,
+  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 import { WorkspaceSwitcher } from "@/components/workspaces/workspace-switcher";
@@ -68,10 +70,37 @@ const appMenuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { setOpen } = useSidebar();
+  
+  // Auto-collapse sidebar and add hover effect
+  useEffect(() => {
+    // Initialize sidebar as collapsed
+    setOpen(false);
+    
+    const sidebarElement = document.querySelector(".narrow-sidebar");
+    
+    if (sidebarElement) {
+      const handleMouseEnter = () => {
+        setOpen(true);
+      };
+      
+      const handleMouseLeave = () => {
+        setOpen(false);
+      };
+      
+      sidebarElement.addEventListener("mouseenter", handleMouseEnter);
+      sidebarElement.addEventListener("mouseleave", handleMouseLeave);
+      
+      return () => {
+        sidebarElement.removeEventListener("mouseenter", handleMouseEnter);
+        sidebarElement.removeEventListener("mouseleave", handleMouseLeave);
+      };
+    }
+  }, [setOpen]);
 
   return (
     <Sidebar
-      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white narrow-sidebar"
+      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white narrow-sidebar transition-width duration-300"
       collapsible="icon"
     >
       <SidebarHeader className="p-0">
