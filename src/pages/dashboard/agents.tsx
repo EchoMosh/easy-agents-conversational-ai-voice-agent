@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
@@ -177,11 +178,16 @@ const AgentsPage = () => {
     };
   }, []);
 
+  const filteredAgents = agents.filter(agent => 
+    agent.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    agent.role.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="w-full p-8 bg-background text-foreground relative">
       <div className="flex items-center justify-between mb-8">
-        <div className="flex gap-4 items-center">
-          <div className="relative">
+        <div className="flex flex-1 gap-4 items-center">
+          <div className="relative max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
@@ -206,7 +212,7 @@ const AgentsPage = () => {
 
       {!isLoading && agents && (
         <AgentsTable 
-          agents={agents} 
+          agents={filteredAgents} 
           onDelete={handleDeleteAgent} 
         />
       )}
