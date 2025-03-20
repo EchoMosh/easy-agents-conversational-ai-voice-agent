@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
@@ -186,22 +185,20 @@ const AgentsPage = () => {
   return (
     <div className="w-full p-8 bg-background text-foreground relative">
       <div className="flex items-center justify-between mb-8">
-        <div className="flex flex-1 gap-4 items-center">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search agents..."
-              className="pl-9 w-[250px]"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Button onClick={() => setIsCreating(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Agent
-          </Button>
+        <div className="relative max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search agents..."
+            className="pl-9 w-[250px]"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
+        <Button onClick={() => setIsCreating(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create Agent
+        </Button>
       </div>
       
       {isLoading && (
