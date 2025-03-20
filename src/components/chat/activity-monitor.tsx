@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 import { Activity as ActivityIcon, BarChart2, Layers, ThumbsUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
