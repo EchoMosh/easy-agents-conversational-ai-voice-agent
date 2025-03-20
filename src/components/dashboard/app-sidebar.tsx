@@ -25,7 +25,6 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-import { UserProfileSection } from "./sidebar/user-profile-section";
 import { WorkspaceSwitcher } from "@/components/workspaces/workspace-switcher";
 
 // Define app-specific menu items
@@ -118,7 +117,7 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarSeparator className="mb-2 mt-0 bg-gray-700/50" />
-        <UserProfileSection />
+        {/* UserProfileSection has been removed from here */}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
