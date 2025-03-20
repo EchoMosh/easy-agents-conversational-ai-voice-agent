@@ -8,6 +8,7 @@ import { ChatHeader } from "./chat-area/chat-header";
 import { ChatContainer } from "./chat-area/chat-container";
 import { useChatActivities } from "./chat-area/use-chat-activities";
 import { usePipelineData } from "./chat-area/use-pipeline-data";
+import { Activity } from "./types/activity-types";
 
 interface ChatAreaProps {
   selectedLead: Lead | undefined;

@@ -1,13 +1,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchLeadActivities } from "@/utils/supabase-activity-utils";
-import { ActivityType } from "../types/activity-types";
+import { Activity, ActivityType } from "../types/activity-types";
 
 export function useChatActivities(leadId: string | undefined) {
   return useQuery({
     queryKey: ["lead-activities", leadId],
     queryFn: async () => {
-      if (!leadId) return [];
+      if (!leadId) return [] as Activity[];
       
       try {
         const activities = await fetchLeadActivities(leadId, 30);
@@ -39,11 +39,11 @@ export function useChatActivities(leadId: string | undefined) {
             content: activity.content || `Activity related to ${leadId}`,
             timestamp: activity.created_at,
             metadata
-          };
+          } as Activity;
         });
       } catch (error) {
         console.error("Error fetching lead activities:", error);
-        return [];
+        return [] as Activity[];
       }
     },
     enabled: !!leadId,

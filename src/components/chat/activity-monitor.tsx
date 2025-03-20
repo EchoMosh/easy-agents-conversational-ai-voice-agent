@@ -1,5 +1,6 @@
+
 import { Lead } from "@/pages/dashboard/leads";
-import { Activity, BarChart2, Layers, ThumbsUp } from "lucide-react";
+import { Activity as ActivityIcon, BarChart2, Layers, ThumbsUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,7 +23,7 @@ import {
 import { formatDistanceToNow, format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Activity as ActivityType } from "./types/activity-types";
+import { Activity } from "./types/activity-types";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -33,7 +34,7 @@ import {
 
 interface ActivityMonitorProps {
   lead: Lead;
-  activities?: ActivityType[];
+  activities?: Activity[];
 }
 
 export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps) {

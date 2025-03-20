@@ -4,14 +4,14 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActivityMonitor } from "../activity-monitor";
 import { Lead } from "@/pages/dashboard/leads";
-import { ActivityType } from "../types/activity-types";
+import { Activity } from "../types/activity-types";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActivityMonitorDrawerProps {
   show: boolean;
   onClose: () => void;
   lead: Lead;
-  activities: ActivityType[];
+  activities: Activity[];
 }
 
 export function ActivityMonitorDrawer({ 
@@ -73,7 +73,7 @@ export function ActivityMonitorDrawer({
         </Button>
       </div>
       <div className="overflow-y-auto h-[calc(100%-40px)]">
-        <ActivityMonitor lead={lead} activities={activities || []} />
+        <ActivityMonitor lead={lead} activities={activities} />
       </div>
     </motion.div>
   );

@@ -5,14 +5,14 @@ import { MessageComposer } from "../message-composer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatePresence } from "framer-motion";
 import { ActivityMonitorDrawer } from "./activity-monitor-drawer";
-import { ActivityType } from "../types/activity-types";
+import { Activity } from "../types/activity-types";
 
 interface ChatContainerProps {
   selectedLead: Lead;
   messageType: "email" | "sms" | "note";
   onMessageTypeChange: (type: "email" | "sms" | "note") => void;
   showActivityMonitor: boolean;
-  activities: ActivityType[];
+  activities: Activity[];
   onCloseActivityMonitor: () => void;
 }
 

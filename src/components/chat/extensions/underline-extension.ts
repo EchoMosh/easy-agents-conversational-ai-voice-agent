@@ -1,5 +1,5 @@
 
-import { Mark, markPasteRule, mergeAttributes, Command } from '@tiptap/core';
+import { Mark, markPasteRule, mergeAttributes } from '@tiptap/core';
 import { toggleMark } from '@tiptap/pm/commands';
 import { EditorState } from '@tiptap/pm/state';
 
@@ -29,17 +29,17 @@ export const Underline = Mark.create({
     return ['u', mergeAttributes(HTMLAttributes), 0];
   },
   
-  // Commands - properly typed to return a Command object
+  // Commands that can be called from the editor
   addCommands() {
     return {
-      setUnderline: () => ({ commands }): Command => {
-        return commands.setMark('underline');
+      setUnderline: () => ({ chain }) => {
+        return chain().setMark('underline').run();
       },
-      toggleUnderline: () => ({ commands }): Command => {
-        return commands.toggleMark('underline');
+      toggleUnderline: () => ({ chain }) => {
+        return chain().toggleMark('underline').run();
       },
-      unsetUnderline: () => ({ commands }): Command => {
-        return commands.unsetMark('underline');
+      unsetUnderline: () => ({ chain }) => {
+        return chain().unsetMark('underline').run();
       },
     };
   },
