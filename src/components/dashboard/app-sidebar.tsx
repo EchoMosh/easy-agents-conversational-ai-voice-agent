@@ -77,7 +77,8 @@ export function AppSidebar() {
     // Initialize sidebar as collapsed
     setOpen(false);
     
-    const sidebarElement = document.querySelector(".narrow-sidebar");
+    // Select the sidebar element correctly using its data attribute
+    const sidebarElement = document.querySelector("[data-sidebar='sidebar']");
     
     if (sidebarElement) {
       const handleMouseEnter = () => {
@@ -100,7 +101,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white narrow-sidebar transition-width duration-300"
+      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white transition-all duration-300 ease-in-out"
       collapsible="icon"
     >
       <SidebarHeader className="p-0">
