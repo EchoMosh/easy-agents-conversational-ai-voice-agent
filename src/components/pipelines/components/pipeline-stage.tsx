@@ -25,6 +25,7 @@ interface PipelineStageProps {
   currentPipelineId?: string;
   isPreviewTarget?: boolean;
   previewLead?: Lead | null;
+  isOverlay?: boolean;
 }
 
 export function PipelineStage({
@@ -43,7 +44,8 @@ export function PipelineStage({
   allPipelines = [],
   currentPipelineId,
   isPreviewTarget = false,
-  previewLead = null
+  previewLead = null,
+  isOverlay = false
 }: PipelineStageProps) {
   const isEditing = editingColumnId === column.id;
 

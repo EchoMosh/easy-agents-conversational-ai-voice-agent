@@ -1,46 +1,73 @@
 
-import { createPortal } from "react-dom";
-import { DragOverlay } from "@dnd-kit/core";
+import { Active, DragOverlay } from "@dnd-kit/core";
 import { Lead } from "@/pages/dashboard/leads";
-import { PipelineColumn } from "@/types/pipeline";
+import { KanbanTask } from "./task";
 import { KanbanColumn } from "./column";
-import { TaskCard } from "./TaskCard";
-import { type ActiveItem } from "./hooks/use-kanban-drag";
+import { PipelineColumn } from "@/types/pipeline";
 
-interface DragOverlayContainerProps {
-  activeItem: ActiveItem | null;
-  activeLead?: Lead | null;
-  activeColumn?: PipelineColumn | null;
-  getColumnLeads?: (columnId: string) => Lead[];
+interface DragOverlayProps {
+  active: Active | null;
+  activeId: string | null;
+  activeData: any;
+  column: PipelineColumn | null;
+  columnLeads: Lead[];
 }
 
-export function DragOverlayContainer({ 
-  activeItem, 
-  activeLead, 
-  activeColumn,
-  getColumnLeads = () => []
-}: DragOverlayContainerProps) {
-  if (!activeItem) return null;
-  
-  // Determine what to render in the overlay based on the active item type
-  return createPortal(
-    <DragOverlay>
-      {activeItem.type === "Column" && activeColumn && (
+export function BoardDragOverlay({
+  active,
+  activeId,
+  activeData,
+  column,
+  columnLeads,
+}: DragOverlayProps) {
+  if (!active || !activeId) {
+    return null;
+  }
+
+  // If no data, just render a basic overlay
+  if (!activeData) {
+    return (
+      <DragOverlay className="dnd-overlay">
+        <div className="bg-card p-4 rounded-md shadow-lg">
+          {activeId}
+        </div>
+      </DragOverlay>
+    );
+  }
+
+  // If it's a column being dragged
+  if (activeData.type === "Column" && column) {
+    return (
+      <DragOverlay className="dnd-overlay">
         <KanbanColumn
-          column={activeColumn}
-          columnLeads={getColumnLeads(activeColumn.id)}
-          isOverlay
+          column={column}
+          columnLeads={columnLeads}
+          isOverlay={true}
         />
-      )}
-      {activeItem.type === "Task" && activeLead && (
-        <TaskCard
-          lead={activeLead}
-          isOverlay
-          columnId={activeItem.id && activeItem.type === "Task" ? 
-            activeItem.id.toString().split('-')[0] || "unknown" : "unknown"}
+      </DragOverlay>
+    );
+  }
+  
+  // If it's a task being dragged
+  if (activeData.type === "Task") {
+    return (
+      <DragOverlay className="dnd-overlay">
+        <KanbanTask
+          lead={activeData.lead}
+          columnId={activeData.columnId}
+          onClick={() => {}}
+          isPreview={true}
         />
-      )}
-    </DragOverlay>,
-    document.body
+      </DragOverlay>
+    );
+  }
+
+  // Fallback overlay
+  return (
+    <DragOverlay className="dnd-overlay">
+      <div className="bg-card p-4 rounded-md shadow-lg">
+        {activeId}
+      </div>
+    </DragOverlay>
   );
 }

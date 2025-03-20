@@ -15,39 +15,41 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface KanbanColumnProps {
   column: PipelineColumn;
   columnLeads: Lead[];
-  isEditing: boolean;
-  isCollapsed: boolean;
-  editingColumnTitle: string;
-  onEditColumnTitle: (e: React.KeyboardEvent) => void;
-  setEditingColumnTitle: (title: string) => void;
-  handleColorChange: (columnId: string, color: string) => void;
-  onDeleteStage: (column: PipelineColumn) => void;
-  toggleColumnCollapse: () => void;
-  setEditingColumnId: (id: string) => void;
-  onLeadClick: (lead: Lead) => void;
+  isEditing?: boolean;
+  isCollapsed?: boolean;
+  editingColumnTitle?: string;
+  onEditColumnTitle?: (e: React.KeyboardEvent) => void;
+  setEditingColumnTitle?: (title: string) => void;
+  handleColorChange?: (columnId: string, color: string) => void;
+  onDeleteStage?: (column: PipelineColumn) => void;
+  toggleColumnCollapse?: () => void;
+  setEditingColumnId?: (id: string) => void;
+  onLeadClick?: (lead: Lead) => void;
   currentPipelineId?: string;
   isPreviewTarget?: boolean;
   previewLead?: Lead | null;
   allPipelines?: Pipeline[];
+  isOverlay?: boolean;
 }
 
 export function KanbanColumn({
   column,
   columnLeads,
-  isEditing,
-  isCollapsed,
-  editingColumnTitle,
-  onEditColumnTitle,
-  setEditingColumnTitle,
-  handleColorChange,
-  onDeleteStage,
-  toggleColumnCollapse,
-  setEditingColumnId,
-  onLeadClick,
+  isEditing = false,
+  isCollapsed = false,
+  editingColumnTitle = "",
+  onEditColumnTitle = () => {},
+  setEditingColumnTitle = () => {},
+  handleColorChange = () => {},
+  onDeleteStage = () => {},
+  toggleColumnCollapse = () => {},
+  setEditingColumnId = () => {},
+  onLeadClick = () => {},
   currentPipelineId,
   isPreviewTarget = false,
   previewLead = null,
   allPipelines = [],
+  isOverlay = false,
 }: KanbanColumnProps) {
   const {
     attributes,
@@ -155,6 +157,7 @@ export function KanbanColumn({
                       lead={previewLead}
                       columnId={column.id}
                       onClick={() => {}}
+                      isPreview={true}
                     />
                   </div>
                 )}

@@ -2,7 +2,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Lead } from "@/pages/dashboard/leads";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Mail, Phone } from "lucide-react";
 
 interface KanbanTaskProps {
@@ -27,12 +27,15 @@ export function KanbanTask({ lead, columnId, onClick, isPreview = false }: Kanba
       lead,
       columnId,
     },
+    disabled: isPreview,
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const style = transform
+    ? {
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }
+    : undefined;
 
   return (
     <div
@@ -41,36 +44,28 @@ export function KanbanTask({ lead, columnId, onClick, isPreview = false }: Kanba
       {...attributes}
       {...listeners}
       className={`touch-manipulation ${
-        isDragging ? "opacity-50" : "opacity-100"
+        isDragging ? "task-card-dragging" : ""
       } ${isPreview ? "task-card-preview" : ""}`}
+      onClick={!isDragging ? onClick : undefined}
     >
-      <Card 
-        className={`bg-card hover:bg-accent/40 cursor-pointer border border-border shadow-sm ${
-          isPreview ? "border-primary bg-primary/10" : ""
-        }`}
-        onClick={onClick}
-      >
-        <CardContent className="p-3">
-          <div className="space-y-2">
-            <div className="font-medium text-sm text-foreground">{lead.name}</div>
-            
-            <div className="space-y-1">
-              {lead.email && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Mail className="h-3 w-3" />
-                  <span className="truncate max-w-[200px]">{lead.email}</span>
-                </div>
-              )}
-              
-              {lead.phone && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Phone className="h-3 w-3" />
-                  <span>{lead.phone}</span>
-                </div>
-              )}
+      <Card className="bg-card border-border p-3 rounded-md shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer">
+        <div className="space-y-1">
+          <h4 className="font-medium text-card-foreground">
+            {lead.first_name} {lead.last_name}
+          </h4>
+          {lead.email && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Mail className="h-3 w-3" />
+              <span>{lead.email}</span>
             </div>
-          </div>
-        </CardContent>
+          )}
+          {lead.phone && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Phone className="h-3 w-3" />
+              <span>{lead.phone}</span>
+            </div>
+          )}
+        </div>
       </Card>
     </div>
   );

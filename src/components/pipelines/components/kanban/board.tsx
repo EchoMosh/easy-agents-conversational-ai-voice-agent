@@ -1,200 +1,163 @@
 
-import { useMemo } from "react";
-import {
-  DndContext,
-  DragEndEvent,
-  DragOverEvent,
-  PointerSensor,
-  useSensor,
+import { FC, useEffect, useMemo, useState } from "react";
+import { 
+  DndContext, 
+  DragStartEvent, 
+  DragOverEvent, 
+  DragEndEvent, 
+  useSensor, 
   useSensors,
+  DragOverlay,
+  UniqueIdentifier,
+  TouchSensor,
+  MouseSensor,
+  KeyboardSensor,
+  closestCorners
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { Lead } from "@/pages/dashboard/leads";
-import { Pipeline, PipelineColumn } from "@/types/pipeline";
-import { KanbanColumn } from "./column";
-import { DeleteStageDialog } from "../delete-stage-dialog";
-import { AddStageButton } from "../add-stage-button";
+import { arrayMove, horizontalListSortingStrategy, SortableContext } from "@dnd-kit/sortable";
+import { restrictToParentElement, restrictToHorizontalAxis, restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { useKanbanDrag } from "./hooks/use-kanban-drag";
-import { useColumnEditor } from "./hooks/use-column-editor";
-import { DragOverlayContainer } from "./drag-overlay";
-import { useBoardAccessibility } from "./board-accessibility";
+import { BoardDragOverlay } from "./drag-overlay";
+import { useBoardColumns } from "./hooks/use-board-columns";
+import { KanbanColumn } from "./column";
+import { Pipeline, PipelineColumn } from "@/types/pipeline";
+import { Lead } from "@/pages/dashboard/leads";
 
-export interface KanbanBoardProps {
-  pipeline: Pipeline;
+interface BoardProps {
+  pipelines: Pipeline[];
+  selectedPipeline: Pipeline | null;
   leads: Lead[];
-  onDragEnd: (event: DragEndEvent) => void;
-  onDragOver?: (event: DragOverEvent) => void;
+  onLeadClick: (lead: Lead) => void;
+  onEditColumnTitle: (columnId: string, title: string) => void;
+  onAddStage: () => void;
+  onDeleteStage: (column: PipelineColumn) => void;
+  onReorderColumns: (columns: PipelineColumn[]) => void;
   previewColumnId?: string | null;
   previewIndex?: number | null;
   previewLead?: Lead | null;
-  onEditColumnTitle: (columnId: string, newTitle: string) => void;
-  onLeadClick: (lead: Lead) => void;
-  onAddStage: (stage: PipelineColumn) => void;
-  onDeleteStage: (column: PipelineColumn) => Promise<void>;
-  onReorderColumns: (columns: PipelineColumn[]) => void;
-  isAddingStage?: boolean;
 }
 
-export function KanbanBoard({
-  pipeline,
+const Board: FC<BoardProps> = ({
+  pipelines,
+  selectedPipeline,
   leads,
-  onDragEnd: onExternalDragEnd,
-  onDragOver: onExternalDragOver,
-  previewColumnId,
-  previewIndex,
-  previewLead,
-  onEditColumnTitle,
   onLeadClick,
+  onEditColumnTitle,
   onAddStage,
   onDeleteStage,
   onReorderColumns,
-  isAddingStage = false,
-}: KanbanBoardProps) {
-  // Setup drag and drop sensors with lower activation constraint for easier dragging
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 1, // Reduced to make dragging easier to start
-      },
-    })
-  );
-
-  // Get all column IDs for SortableContext
-  const columnsId = useMemo(() => 
-    pipeline.columns.map((col) => col.id), 
-  [pipeline.columns]);
-
-  // Get map of column titles for accessibility
-  const columnTitles = useMemo(() => {
-    const titles: Record<string, string> = {};
-    pipeline.columns.forEach(col => {
-      titles[col.id] = col.title || "Unnamed Column";
-    });
-    return titles;
-  }, [pipeline.columns]);
-
-  // Setup drag and drop hooks
+  previewColumnId = null,
+  previewIndex = null,
+  previewLead = null,
+}) => {
+  if (!selectedPipeline) return null;
+  
   const {
     activeItem,
-    previewLeadItem,
     pickedUpLeadColumn,
     getColumnLeads,
     handleDragStart,
     handleDragOver,
     handleDragEnd,
-    getDraggingLeadData
-  } = useKanbanDrag({
-    pipeline,
-    leads,
-    onDragEnd: onExternalDragEnd,
-    onDragOver: onExternalDragOver,
-    onReorderColumns
-  });
+    getDraggingLeadData,
+  } = useKanbanDrag(selectedPipeline, leads);
 
-  // Setup column editing hooks
   const {
     editingColumnId,
-    setEditingColumnId,
     editingColumnTitle,
-    setEditingColumnTitle,
-    stageToDelete,
-    setStageToDelete,
-    isDeleting,
-    handleKeyDown,
-    handleDeleteStage,
-    toggleColumnCollapse,
-    isColumnCollapsed,
-    handleConfirmDeleteStage,
-    handleAddNewStage
-  } = useColumnEditor({
-    onEditColumnTitle,
-    onAddStage,
-    onDeleteStage,
-    getColumnLeads
-  });
+    collapsedColumns,
+    handleEditColumnTitleChange,
+    handleEditColumnTitle,
+    handleFinishEditColumnTitle,
+    handleToggleColumnCollapse,
+    handleDeleteColumn,
+    handleColorChange,
+  } = useBoardColumns(onEditColumnTitle, onDeleteStage);
 
-  // Setup accessibility announcements
-  const announcements = useBoardAccessibility({
-    columnsId,
-    columnTitles,
-    getDraggingLeadData,
-    pickedUpLeadColumn: pickedUpLeadColumn.current
-  });
+  // Prepare columns for sortable context
+  const columnIds = useMemo(() => {
+    return selectedPipeline.columns.map(column => column.id);
+  }, [selectedPipeline]);
 
-  // Find active column and lead based on the active item
-  const activeColumn = activeItem?.type === "Column" 
-    ? pipeline.columns.find(col => col.id === activeItem.id)
-    : null;
-
-  const activeLead = activeItem?.type === "Task"
-    ? leads.find(lead => lead.id === activeItem.id)
-    : null;
+  // Define sensors for drag operations
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: e => {
+        return [0, 0];  // Provide default coordinates
+      },
+    })
+  );
 
   return (
-    <div className="h-full">
-      <DndContext
-        accessibility={{ announcements }}
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex gap-4 h-full overflow-x-auto pb-4 pt-2 px-2">
-          <SortableContext
-            items={columnsId}
-            strategy={horizontalListSortingStrategy}
-          >
-            {pipeline.columns.map((column) => (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                columnLeads={getColumnLeads(column.id)}
-                isEditing={editingColumnId === column.id}
-                isCollapsed={isColumnCollapsed(column.id)}
-                editingColumnTitle={editingColumnTitle}
-                onEditColumnTitle={handleKeyDown}
-                setEditingColumnTitle={setEditingColumnTitle}
-                handleColorChange={(colId, color) => {
-                  // Update color in pipeline columns
-                  const newColumns = pipeline.columns.map(col => 
-                    col.id === colId ? { ...col, color } : col
-                  );
-                  onReorderColumns(newColumns);
-                }}
-                onDeleteStage={handleDeleteStage}
-                toggleColumnCollapse={() => toggleColumnCollapse(column.id)}
-                setEditingColumnId={setEditingColumnId}
-                onLeadClick={onLeadClick}
-                currentPipelineId={pipeline.id}
-                isPreviewTarget={previewColumnId === column.id}
-                previewLead={column.id === previewColumnId ? previewLead : null}
-              />
-            ))}
-          </SortableContext>
-          
-          <AddStageButton
-            onAddStage={handleAddNewStage}
-            isLoading={isAddingStage}
-          />
-        </div>
-        
-        <DragOverlayContainer 
-          activeItem={activeItem}
-          activeLead={activeLead}
-          activeColumn={activeColumn}
-          getColumnLeads={getColumnLeads}
-        />
-      </DndContext>
-      
-      <DeleteStageDialog
-        stageToDelete={stageToDelete}
-        onClose={() => setStageToDelete(null)}
-        onConfirm={handleConfirmDeleteStage}
-        isDeleting={isDeleting}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      modifiers={[restrictToParentElement]}
+    >
+      <div className="h-full w-full">
+        <SortableContext
+          items={columnIds}
+          strategy={horizontalListSortingStrategy}
+        >
+          <div className={`column-container ${activeItem ? 'column-container-dragging' : ''}`}>
+            {selectedPipeline.columns.map((column) => {
+              const columnLeads = getColumnLeads(column.id);
+              const isCollapsed = collapsedColumns.includes(column.id);
+              const isPreviewTarget = previewColumnId === column.id;
+              
+              return (
+                <KanbanColumn
+                  key={column.id}
+                  column={column}
+                  columnLeads={columnLeads}
+                  isEditing={editingColumnId === column.id}
+                  isCollapsed={isCollapsed}
+                  editingColumnTitle={editingColumnTitle}
+                  onEditColumnTitle={handleFinishEditColumnTitle}
+                  setEditingColumnTitle={handleEditColumnTitleChange}
+                  handleColorChange={handleColorChange}
+                  onDeleteStage={(col) => handleDeleteColumn(col)}
+                  toggleColumnCollapse={() => handleToggleColumnCollapse(column.id)}
+                  setEditingColumnId={handleEditColumnTitle}
+                  onLeadClick={onLeadClick}
+                  currentPipelineId={selectedPipeline.id}
+                  isPreviewTarget={isPreviewTarget}
+                  previewLead={isPreviewTarget ? previewLead : null}
+                  allPipelines={pipelines}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </div>
+
+      <BoardDragOverlay
+        active={activeItem}
+        activeId={activeItem?.id as string}
+        activeData={activeItem?.data?.current}
+        column={activeItem?.data?.current?.type === "Column" ? activeItem.data.current.column : null}
+        columnLeads={
+          activeItem?.data?.current?.type === "Column" && activeItem?.data?.current?.column
+            ? getColumnLeads(activeItem.data.current.column.id)
+            : []
+        }
       />
-    </div>
+    </DndContext>
   );
-}
+};
+
+export default Board;

@@ -73,6 +73,7 @@
 .column-container {
   @apply px-3 flex gap-4 overflow-x-auto pb-1 snap-x;
   height: 100%;
+  background-color: hsl(var(--background));
 }
 
 .column-container-dragging {
@@ -123,6 +124,7 @@
 .pipeline-stages-container {
   @apply flex gap-4 overflow-x-auto pb-1 px-3 snap-x;
   height: 100%;
+  background-color: hsl(var(--background));
 }
 
 /* Card styles for leads */
