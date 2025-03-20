@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 
-type ThemeStyle = "amber" | "default" | "blue" | "green";
+type ThemeStyle = "default" | "blue" | "green";
 
 interface ThemeContextType {
   themeStyle: ThemeStyle;
@@ -13,12 +13,16 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeStyle, setThemeStyle] = useState<ThemeStyle>(() => {
-    // Get stored theme style from localStorage or default to 'amber'
+    // Get stored theme style from localStorage or default to 'default'
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("themeStyle");
-      return (stored as ThemeStyle) || "amber";
+      // If stored value is 'amber' (previously used), change to 'default'
+      if (stored === 'amber') {
+        return 'default';
+      }
+      return (stored as ThemeStyle) || "default";
     }
-    return "amber";
+    return "default";
   });
   
   const { setTheme } = useTheme();

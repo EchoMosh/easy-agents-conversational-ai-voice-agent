@@ -9,13 +9,6 @@ export function ThemeSelector() {
 
   const themes = [
     {
-      id: "amber",
-      name: "Amber",
-      description: "Warm amber accents with neutral backgrounds",
-      primaryColor: "bg-[hsl(47.9,95.8%,53.1%)]",
-      secondaryColor: "bg-[hsl(60,4.8%,95.9%)]",
-    },
-    {
       id: "default",
       name: "Classic",
       description: "Clean monochromatic design with neutral colors",
@@ -43,7 +36,7 @@ export function ThemeSelector() {
       <h3 className="text-xl font-medium">Theme Style</h3>
       <p className="text-muted-foreground">Choose a color theme for your workspace</p>
       
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {themes.map((theme) => (
           <Button
             key={theme.id}
@@ -52,7 +45,7 @@ export function ThemeSelector() {
               "relative h-auto flex-col items-start justify-start p-4 text-left",
               themeStyle === theme.id && "border-2 border-primary"
             )}
-            onClick={() => setThemeStyle(theme.id as "amber" | "default" | "blue" | "green")}
+            onClick={() => setThemeStyle(theme.id as "default" | "blue" | "green")}
           >
             {themeStyle === theme.id && (
               <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
