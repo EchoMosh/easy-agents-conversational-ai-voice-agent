@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
@@ -25,7 +24,6 @@ const AgentsPage = () => {
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
 
-  // Update query key to include workspace ID to ensure proper cache invalidation
   const { data: agents = [], isLoading } = useQuery({
     queryKey: ["agents", currentWorkspace?.id],
     queryFn: async () => {
@@ -65,7 +63,6 @@ const AgentsPage = () => {
               flowData = { nodes: [], edges: [] };
             }
 
-            // Set default language to "en" if not specified
             if (!agent.language) {
               agent.language = "en";
             }
@@ -111,7 +108,7 @@ const AgentsPage = () => {
             console.error(`Error parsing flow for agent ${agent.id}:`, e);
             return {
               ...agent,
-              language: agent.language || "en", // Ensure language default is "en"
+              language: agent.language || "en",
               flow: {
                 nodes: [],
                 edges: [],
@@ -135,7 +132,6 @@ const AgentsPage = () => {
 
       if (error) throw error;
 
-      // Include workspace ID in query invalidation
       await queryClient.invalidateQueries({
         queryKey: ["agents", currentWorkspace?.id],
       });
@@ -155,7 +151,6 @@ const AgentsPage = () => {
   };
 
   const handleCreateSuccess = async (agentId: string) => {
-    // Include workspace ID in query invalidation
     await queryClient.invalidateQueries({
       queryKey: ["agents", currentWorkspace?.id],
     });
@@ -170,7 +165,6 @@ const AgentsPage = () => {
     setIsCreating(false);
   };
 
-  // Listen for create-agent events from the header button
   useEffect(() => {
     const handleCreateAgent = () => {
       setIsCreating(true);
@@ -186,7 +180,6 @@ const AgentsPage = () => {
   return (
     <div className="w-full p-8 bg-background text-foreground relative">
       <div className="flex items-center justify-between mb-8">
-        <div className="text-2xl font-semibold">Agents</div>
         <div className="flex gap-4 items-center">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
