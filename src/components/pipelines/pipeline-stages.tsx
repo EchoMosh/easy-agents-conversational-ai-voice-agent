@@ -193,14 +193,14 @@ export function PipelineStages({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       <PipelineName
         name={cleanedPipeline.name}
         onEditPipelineName={onEditPipelineName}
         onDeletePipeline={onDeletePipeline}
       />
 
-      <div className="mt-4 h-auto min-h-[calc(100vh-200px)] overflow-visible px-4">
+      <div className="mt-4 h-[calc(100vh-200px)] overflow-hidden">
         <KanbanBoard
           pipeline={cleanedPipeline}
           leads={leads}
@@ -219,22 +219,6 @@ export function PipelineStages({
           onReorderColumns={onReorderColumns}
           isAddingStage={isAddingStage}
         />
-
-        <div className="mt-4 flex justify-center">
-          <AddStageButton
-            onAddStage={() => {
-              const newStage: PipelineColumn = {
-                id: crypto.randomUUID(),
-                title: "New Stage",
-                color: "bg-gray-500",
-              };
-              setIsAddingStage(true);
-              onAddStage(newStage);
-              setTimeout(() => setIsAddingStage(false), 1000);
-            }}
-            isLoading={isAddingStage}
-          />
-        </div>
       </div>
     </div>
   );

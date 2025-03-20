@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Lead } from "@/pages/dashboard/leads";
@@ -55,17 +54,6 @@ export default function PipelinesPage() {
     }
   }, [pipelines, location.search, setSelectedPipeline, selectedPipeline]);
 
-  const handleSelectPipeline = (pipeline: Pipeline) => {
-    console.log("Pipeline selected:", pipeline.name);
-    setSelectedPipeline(pipeline);
-    navigate(`/dashboard/pipelines?selected=${pipeline.id}`, { replace: true });
-    
-    // This forces a re-render with the updated pipeline selection
-    setTimeout(() => {
-      invalidateAndRefetch();
-    }, 100);
-  };
-
   const {
     showDeleteDialog,
     setShowDeleteDialog,
@@ -73,7 +61,6 @@ export default function PipelinesPage() {
     onDelete,
   } = useDeletePipeline(handleDeletePipeline, selectedPipeline?.id);
 
-  // When we change a lead's pipeline or status, make sure to refetch the data
   const { handleDragEnd, handleDragOver, isUpdating, previewColumnId, previewIndex } = usePipelineDrag(selectedPipeline, leads, invalidateAndRefetch);
   
   const {
@@ -83,10 +70,8 @@ export default function PipelinesPage() {
 
   const otherPipelines = pipelines?.filter(p => p.id !== selectedPipeline?.id) || [];
   
-  // Check if the selected pipeline has any leads
   const hasLeads = leads?.some(lead => lead.pipeline_id === selectedPipeline?.id) || false;
 
-  // Ensure we use properly typed columns that include the color property
   const pipelineColumns: PipelineColumn[] = selectedPipeline?.columns.map(col => ({
     id: col.id,
     title: col.title,
@@ -94,8 +79,8 @@ export default function PipelinesPage() {
   })) || defaultColumns;
 
   return (
-    <div className="relative">
-      <div className="px-4 md:px-8 py-6 min-h-screen bg-gradient-to-b from-background to-muted/10 w-full">
+    <div className="h-screen flex flex-col overflow-hidden">
+      <div className="flex-1 px-4 md:px-8 py-6 flex flex-col bg-gradient-to-b from-background to-muted/10">
         <PipelineHeader 
           pipelines={pipelines || []}
           selectedPipeline={selectedPipeline}
@@ -104,7 +89,7 @@ export default function PipelinesPage() {
         />
 
         {selectedPipeline && (
-          <div className="mt-6 w-full">
+          <div className="mt-6 flex-1 overflow-hidden">
             <PipelineStages
               selectedPipeline={selectedPipeline}
               leads={leads || []}
@@ -146,4 +131,15 @@ export default function PipelinesPage() {
       </div>
     </div>
   );
+
+  function handleSelectPipeline(pipeline: Pipeline) {
+    console.log("Pipeline selected:", pipeline.name);
+    setSelectedPipeline(pipeline);
+    navigate(`/dashboard/pipelines?selected=${pipeline.id}`, { replace: true });
+    
+    // This forces a re-render with the updated pipeline selection
+    setTimeout(() => {
+      invalidateAndRefetch();
+    }, 100);
+  }
 }
