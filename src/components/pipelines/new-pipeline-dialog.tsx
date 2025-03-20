@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, KeyboardEvent } from "react";
 import { NewPipelineDialogProps } from "@/types/pipeline-types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +50,13 @@ export function NewPipelineDialog({
     }
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -66,6 +73,7 @@ export function NewPipelineDialog({
               id="name"
               value={newPipelineName}
               onChange={(e) => setNewPipelineName(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Enter pipeline name..."
               autoFocus
             />
