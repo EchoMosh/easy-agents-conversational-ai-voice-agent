@@ -42,7 +42,7 @@ export function ActivityMonitor({ lead, activities = [] }: ActivityMonitorProps)
     <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
       <div className="p-1.5 border-b flex items-center justify-between flex-shrink-0">
         <h2 className="text-xs font-semibold flex items-center gap-1">
-          <Activity className="h-3.5 w-3.5 text-primary" />
+          <ActivityIcon className="h-3.5 w-3.5 text-primary" />
           Activity Monitor
         </h2>
         <Badge variant="outline" className="font-mono text-[10px] py-0 px-1.5">
