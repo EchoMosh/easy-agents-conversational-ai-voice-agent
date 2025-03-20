@@ -42,6 +42,8 @@ export function NewPipelineDialog({
       
       await onSubmit(newPipelineName);
       setNewPipelineName("");
+      // Close the dialog after successful pipeline creation
+      onOpenChange(false);
     } catch (error) {
       console.error("Error in pipeline dialog:", error);
       toast.error("Failed to create pipeline. Please try again.");
