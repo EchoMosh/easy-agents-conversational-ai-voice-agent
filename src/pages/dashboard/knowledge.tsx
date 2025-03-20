@@ -26,7 +26,7 @@ export default function KnowledgePage() {
       window.removeEventListener("create-knowledge", handleCreateKnowledge);
     };
   }, []);
-  return <div className="flex flex-col w-full items-center">
+  return <div className="flex flex-col w-full items-center mt-10">
       <div className="flex flex-col space-y-6 w-[90%]">
         <div className="flex justify-end">
           <Button onClick={() => setIsDialogOpen(true)}>
