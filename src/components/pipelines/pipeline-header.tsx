@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Pipeline } from "@/types/pipeline";
@@ -25,40 +26,45 @@ export function PipelineHeader({
 
   return (
     <div className="mb-8">
-      <div className="flex justify-end mb-6">
-        <Button onClick={onCreatePipeline}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Pipeline
-        </Button>
-      </div>
-
       {pipelines && pipelines.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
-          {pipelines.map((pipeline) => (
-            <Button
-              key={pipeline.id}
-              variant={
-                selectedPipeline?.id === pipeline.id ? "subtle" : "clean"
-              }
-              onClick={() => handlePipelineClick(pipeline)}
-              size="sm"
-              className={`
-                font-medium rounded-full px-4 transition-all
-                ${
-                  selectedPipeline?.id === pipeline.id
-                    ? "bg-gray-100 dark:bg-gray-800 shadow-sm"
-                    : "hover:bg-gray-50 dark:hover:bg-gray-900"
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {pipelines.map((pipeline) => (
+              <Button
+                key={pipeline.id}
+                variant={
+                  selectedPipeline?.id === pipeline.id ? "subtle" : "clean"
                 }
-              `}
-            >
-              {pipeline.name}
-            </Button>
-          ))}
+                onClick={() => handlePipelineClick(pipeline)}
+                size="sm"
+                className={`
+                  font-medium rounded-full px-4 transition-all
+                  ${
+                    selectedPipeline?.id === pipeline.id
+                      ? "bg-gray-100 dark:bg-gray-800 shadow-sm"
+                      : "hover:bg-gray-50 dark:hover:bg-gray-900"
+                  }
+                `}
+              >
+                {pipeline.name}
+              </Button>
+            ))}
+          </div>
+          <Button onClick={onCreatePipeline}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Pipeline
+          </Button>
         </div>
       ) : (
-        <p className="text-muted-foreground mt-3">
-          Create your first pipeline to start managing leads.
-        </p>
+        <div className="flex justify-between items-center">
+          <p className="text-muted-foreground">
+            Create your first pipeline to start managing leads.
+          </p>
+          <Button onClick={onCreatePipeline}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Pipeline
+          </Button>
+        </div>
       )}
     </div>
   );
