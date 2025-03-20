@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useWorkspace } from "@/context/workspace-context";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UserPlus, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export default function ChatsPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -190,7 +188,6 @@ export default function ChatsPage() {
           <p className="text-muted-foreground">
             Create contacts in the Leads section to start chatting with them.
           </p>
-          <Button>Go to Leads</Button>
         </div>
       </div>
     );
