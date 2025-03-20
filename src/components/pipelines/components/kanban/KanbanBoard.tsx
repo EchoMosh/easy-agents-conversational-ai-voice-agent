@@ -32,6 +32,7 @@ export interface KanbanBoardProps {
   onDragOver?: (event: DragOverEvent) => void;
   previewColumnId?: string | null;
   previewIndex?: number | null;
+  previewLead?: Lead | null;
   onEditColumnTitle: (columnId: string, newTitle: string) => void;
   onLeadClick: (lead: Lead) => void;
   onAddStage: (stage: PipelineColumn) => void;
@@ -47,6 +48,7 @@ export function KanbanBoard({
   onDragOver: onExternalDragOver,
   previewColumnId,
   previewIndex,
+  previewLead,
   onEditColumnTitle,
   onLeadClick,
   onAddStage,
@@ -110,7 +112,7 @@ export function KanbanBoard({
               isPreviewTarget={
                 previewColumnId === col.id || currentOver === col.id
               }
-              previewLead={col.id === previewColumnId ? activeLead : null}
+              previewLead={col.id === previewColumnId ? previewLead || activeLead : null}
               previewIndex={col.id === previewColumnId ? previewIndex : null}
             />
           ))}

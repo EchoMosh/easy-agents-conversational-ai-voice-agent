@@ -23,6 +23,8 @@ interface PipelineStageProps {
   onLeadClick: (lead: Lead) => void;
   allPipelines?: Pipeline[];
   currentPipelineId?: string;
+  isPreviewTarget?: boolean;
+  previewLead?: Lead | null;
 }
 
 export function PipelineStage({
@@ -39,12 +41,11 @@ export function PipelineStage({
   setEditingColumnId,
   onLeadClick,
   allPipelines = [],
-  currentPipelineId
+  currentPipelineId,
+  isPreviewTarget = false,
+  previewLead = null
 }: PipelineStageProps) {
   const isEditing = editingColumnId === column.id;
-
-  // Log the leads for this column to help with debugging
-  console.log(`Column "${column.title}" has ${columnLeads.length} leads in pipeline ${currentPipelineId}`);
 
   // Extract color without the bg- prefix for the dot
   const colorClass = column.color.replace('bg-', '');
@@ -54,7 +55,10 @@ export function PipelineStage({
 
   return (
     <div className="h-full min-w-[300px] w-[350px] flex-shrink-0 flex-grow-0">
-      <Card className="h-full w-full flex flex-col border-t-4 border-x border-b rounded-lg shadow-sm overflow-hidden bg-white dark:bg-gray-900"
+      <Card 
+        className={`h-full w-full flex flex-col border-t-4 border-x border-b rounded-lg shadow-sm overflow-hidden bg-white dark:bg-gray-900 transition-all duration-150 ${
+          isPreviewTarget ? "ring-2 ring-blue-400" : ""
+        }`}
         style={{ 
           borderTopColor: `var(--${colorClass})` 
         }}
@@ -104,7 +108,21 @@ export function PipelineStage({
         <CardContent className="p-2 flex-1 overflow-hidden">
           <ScrollArea className="h-full pr-1">
             <div className="space-y-2">
-              {columnLeads.length === 0 ? (
+              {/* Show preview lead at the top if this is the target column */}
+              {isPreviewTarget && previewLead && (
+                <div className="pb-2 transition-opacity duration-200 animate-pulse">
+                  <LeadCard 
+                    key={`preview-${previewLead.id}`}
+                    lead={previewLead}
+                    onClick={() => {}}
+                    pipelines={allPipelines}
+                    currentPipelineId={currentPipelineId}
+                    isPreview={true}
+                  />
+                </div>
+              )}
+              
+              {columnLeads.length === 0 && !previewLead ? (
                 <div className="min-h-[80px] flex items-center justify-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/20">
                   <p className="text-sm text-muted-foreground/70 text-center px-4">
                     Drop leads here

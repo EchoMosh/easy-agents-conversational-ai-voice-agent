@@ -16,15 +16,23 @@ interface LeadCardProps {
   onClick?: () => void;
   pipelines?: Pipeline[];
   currentPipelineId?: string;
+  isPreview?: boolean;
 }
 
-export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: LeadCardProps) {
+export function LeadCard({ 
+  lead, 
+  onClick, 
+  pipelines = [], 
+  currentPipelineId,
+  isPreview = false 
+}: LeadCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isMoving, setIsMoving] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
+    disabled: isPreview, // Disable dragging for preview leads
   });
 
   const style = transform
@@ -36,7 +44,7 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
     : undefined;
 
   const handleMoveToPipeline = async (pipelineId: string) => {
-    if (isMoving || pipelineId === lead.pipeline_id) return;
+    if (isMoving || pipelineId === lead.pipeline_id || isPreview) return;
     
     setIsMoving(true);
     try {
@@ -105,6 +113,38 @@ export function LeadCard({ lead, onClick, pipelines = [], currentPipelineId }: L
 
   // Filter out current pipeline from options
   const otherPipelines = pipelines.filter(p => p.id !== currentPipelineId);
+
+  // For preview cards, render a simplified version
+  if (isPreview) {
+    return (
+      <Card
+        className={cn(
+          "transition-all border border-blue-400 bg-blue-50/50 dark:bg-blue-900/20 shadow-md",
+          "rounded-md"
+        )}
+      >
+        <CardContent className="p-4 space-y-3">
+          <h3 className="font-medium text-base">
+            {lead.name || "Unnamed Lead"}
+          </h3>
+          
+          {lead.email && (
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+              <Mail className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
+              <span>{lead.email}</span>
+            </div>
+          )}
+          
+          {lead.phone && (
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+              <Phone className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
+              <span>{lead.phone}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <ContextMenu>

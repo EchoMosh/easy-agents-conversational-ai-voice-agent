@@ -1,17 +1,34 @@
 
 import { DragEndEvent, DragOverEvent, UniqueIdentifier } from "@dnd-kit/core";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Pipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[], refetchLeads: () => void) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [previewColumnId, setPreviewColumnId] = useState<string | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  
+  // Add a 'lastDragTarget' to track the last drag target type to prevent flickering
+  const lastDragTarget = useRef<{ type: string; id: string | null }>({ type: "", id: null });
+  
+  // Debounced setters to prevent rapid state changes
+  const debouncedSetPreviewColumnId = useDebounce((id: string | null) => {
+    if (id !== previewColumnId) {
+      setPreviewColumnId(id);
+    }
+  }, 50);
+  
+  const debouncedSetPreviewIndex = useDebounce((index: number | null) => {
+    if (index !== previewIndex) {
+      setPreviewIndex(index);
+    }
+  }, 50);
 
   // Handle drag over (preview)
   const handleDragOver = (event: DragOverEvent) => {
@@ -22,45 +39,46 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     // Get data from the event
     const activeType = active.data?.current?.type;
     const overType = over.data?.current?.type;
+    const overId = String(over.id);
     
-    console.log("Drag Over:", { 
-      activeId: String(active.id),
-      activeType, 
-      overId: String(over.id), 
-      overType,
-      overData: over.data?.current
-    });
+    // Skip processing if the event is the same as the last one to reduce flickering
+    if (lastDragTarget.current.type === overType && lastDragTarget.current.id === overId) {
+      return;
+    }
     
-    // If we're dragging a task over a column, show preview
-    if (activeType === "Task") {
-      if (overType === "Column") {
-        // Direct drop on column
-        setPreviewColumnId(String(over.id));
-        // Reset index for drop at the end
-        setPreviewIndex(null);
-      } else if (overType === "Task") {
-        // Dropping over another task
-        const overColumnId = over.data?.current?.columnId;
-        const overIndex = over.data?.current?.index;
-        
-        if (overColumnId) {
-          setPreviewColumnId(overColumnId);
-          if (typeof overIndex === 'number') {
-            setPreviewIndex(overIndex);
-          }
+    // Update the last drag target
+    lastDragTarget.current = { type: overType || "", id: overId };
+    
+    // Only handle Task dragging
+    if (activeType !== "Task") {
+      return;
+    }
+    
+    // Prioritize Column drops over Task drops to reduce flickering
+    if (overType === "Column") {
+      // Direct drop on column
+      debouncedSetPreviewColumnId(overId);
+      // Reset index for drop at the end
+      debouncedSetPreviewIndex(null);
+    } else if (overType === "Task") {
+      // Dropping over another task - only update if the column is different
+      const overColumnId = over.data?.current?.columnId;
+      const overIndex = over.data?.current?.index;
+      
+      if (overColumnId && (overColumnId !== previewColumnId || overIndex !== previewIndex)) {
+        debouncedSetPreviewColumnId(overColumnId);
+        if (typeof overIndex === 'number') {
+          debouncedSetPreviewIndex(overIndex);
         }
       }
-    } else {
-      // Reset preview
-      setPreviewColumnId(null);
-      setPreviewIndex(null);
     }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
-    // Clear preview state
+    // Clear preview state and last drag target
     setPreviewColumnId(null);
     setPreviewIndex(null);
+    lastDragTarget.current = { type: "", id: null };
     
     const { active, over } = event;
     
@@ -73,14 +91,6 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     // Get types from the data
     const activeType = active.data?.current?.type;
     const overType = over.data?.current?.type;
-    
-    console.log("Drag End:", { 
-      activeId, 
-      activeType, 
-      overId, 
-      overType,
-      overData: over.data?.current
-    });
     
     // If we're not dragging a task, return
     if (activeType !== "Task") return;

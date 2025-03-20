@@ -1,3 +1,4 @@
+
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineName } from "./components/pipeline-name";
@@ -43,6 +44,27 @@ export function PipelineStages({
   const { handleDeleteStage } = useStages(onReorderColumns);
   const [cleanedPipeline, setCleanedPipeline] = useState<Pipeline | null>(null);
   const [isAddingStage, setIsAddingStage] = useState(false);
+  
+  // Find the currently dragged lead for preview
+  const [previewLead, setPreviewLead] = useState<Lead | null>(null);
+  
+  // When previewColumnId changes, find the corresponding lead
+  useEffect(() => {
+    if (!previewColumnId || !leads || leads.length === 0) {
+      setPreviewLead(null);
+      return;
+    }
+    
+    // Look for a lead that's being dragged currently
+    const draggedLead = leads.find(lead => {
+      const draggedEl = document.querySelector(`[data-draggable-id="${lead.id}"]`);
+      return draggedEl && draggedEl.getAttribute('aria-pressed') === 'true';
+    });
+    
+    if (draggedLead) {
+      setPreviewLead(draggedLead);
+    }
+  }, [previewColumnId, leads]);
 
   // Check if we have a valid pipeline before proceeding
   if (!selectedPipeline) {
@@ -210,6 +232,7 @@ export function PipelineStages({
           onDragOver={onDragOver}
           previewColumnId={previewColumnId}
           previewIndex={previewIndex}
+          previewLead={previewLead}
           onEditColumnTitle={onEditColumnTitle}
           onLeadClick={onLeadClick}
           onAddStage={(stage) => {
