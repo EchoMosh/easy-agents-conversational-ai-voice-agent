@@ -9,9 +9,10 @@ interface KanbanTaskProps {
   lead: Lead;
   columnId: string;
   onClick: () => void;
+  isPreview?: boolean;
 }
 
-export function KanbanTask({ lead, columnId, onClick }: KanbanTaskProps) {
+export function KanbanTask({ lead, columnId, onClick, isPreview = false }: KanbanTaskProps) {
   const {
     attributes,
     listeners,
@@ -41,10 +42,12 @@ export function KanbanTask({ lead, columnId, onClick }: KanbanTaskProps) {
       {...listeners}
       className={`touch-manipulation ${
         isDragging ? "opacity-50" : "opacity-100"
-      }`}
+      } ${isPreview ? "task-card-preview" : ""}`}
     >
       <Card 
-        className="bg-card hover:bg-accent/40 cursor-pointer border border-border shadow-sm"
+        className={`bg-card hover:bg-accent/40 cursor-pointer border border-border shadow-sm ${
+          isPreview ? "border-primary bg-primary/10" : ""
+        }`}
         onClick={onClick}
       >
         <CardContent className="p-3">

@@ -22,10 +22,17 @@ export function ThemeSelector() {
       primaryColor: "bg-[hsl(240,5.9%,10%)]",
       secondaryColor: "bg-[hsl(240,4.8%,95.9%)]",
     },
+    {
+      id: "blue",
+      name: "Blue",
+      description: "Modern blue design with clean interface",
+      primaryColor: "bg-[hsl(221.2,83.2%,53.3%)]",
+      secondaryColor: "bg-[hsl(210,40%,96.1%)]",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {themes.map((theme) => (
         <Button
           key={theme.id}
@@ -34,7 +41,7 @@ export function ThemeSelector() {
             "relative h-auto flex-col items-start justify-start p-4 text-left",
             themeStyle === theme.id && "border-2 border-primary"
           )}
-          onClick={() => setThemeStyle(theme.id as "amber" | "default")}
+          onClick={() => setThemeStyle(theme.id as "amber" | "default" | "blue")}
         >
           {themeStyle === theme.id && (
             <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
