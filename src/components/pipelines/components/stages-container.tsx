@@ -171,12 +171,12 @@ export function StagesContainer({
   };
 
   return (
-    <div className="pt-4">
+    <div className="h-full">
       <DndContext 
         collisionDetection={closestCenter}
         onDragEnd={onDragEnd}
       >
-        <ScrollArea className="w-full">
+        <ScrollArea className="w-full h-full">
           <div className="pipeline-stages-container">
             <SortableContext 
               items={selectedPipeline.columns.map((col) => col.id)}

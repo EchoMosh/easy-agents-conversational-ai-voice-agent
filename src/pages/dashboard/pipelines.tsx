@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Lead } from "@/pages/dashboard/leads";
@@ -79,9 +80,9 @@ export default function PipelinesPage() {
   })) || defaultColumns;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-background to-muted/10">
-        <div className="px-4 md:px-6 pt-3">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-4 md:px-6 pt-2 pb-1">
           <PipelineHeader 
             pipelines={pipelines || []}
             selectedPipeline={selectedPipeline}
@@ -91,7 +92,7 @@ export default function PipelinesPage() {
         </div>
 
         {selectedPipeline && (
-          <div className="mt-2 flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden">
             <PipelineStages
               selectedPipeline={selectedPipeline}
               leads={leads || []}

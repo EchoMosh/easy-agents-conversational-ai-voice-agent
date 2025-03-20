@@ -95,7 +95,6 @@ export function KanbanBoard({
       onDragStart={(event) => handleDragStart(event, leads)}
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
-      className="h-full"
     >
       <BoardContainer>
         <SortableContext

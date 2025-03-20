@@ -101,6 +101,17 @@
     @apply bg-background text-foreground;
     height: 100vh;
     margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  #root {
+    height: 100vh;
     overflow: hidden;
   }
 }
@@ -119,8 +130,8 @@
 
 /* Make sure scroll containers have proper padding for overflows */
 .scroll-container {
-  padding-bottom: 1rem;
-  margin-bottom: -1rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: -0.5rem;
 }
 
 /* Touch manipulation ensures better performance on mobile devices */
@@ -131,7 +142,7 @@
 /* Kanban board styles */
 .board-column {
   @apply min-w-[300px] w-[350px] flex-shrink-0 flex-grow-0 bg-primary-foreground flex flex-col snap-center;
-  height: calc(100% - 24px);
+  height: 100%;
   max-height: 100%;
 }
 
@@ -144,12 +155,12 @@
 }
 
 .column-header {
-  @apply p-4 font-semibold border-b-2 text-left flex flex-row justify-between items-center;
+  @apply p-3 font-semibold border-b-2 text-left flex flex-row justify-between items-center;
 }
 
 .column-container {
-  @apply px-4 flex gap-5 overflow-x-auto pb-2 snap-x;
-  height: calc(100% - 20px);
+  @apply px-3 flex gap-4 overflow-x-auto pb-1 snap-x;
+  height: 100%;
 }
 
 .column-container-dragging {
@@ -184,13 +195,13 @@
 }
 
 .pipeline-stages-container {
-  @apply flex gap-5 overflow-x-auto pb-2 px-4 snap-x;
+  @apply flex gap-4 overflow-x-auto pb-1 px-3 snap-x;
   height: 100%;
 }
 
 /* Card styles for leads */
 .lead-card {
-  @apply p-4 rounded-md border border-gray-200 hover:border-blue-400 transition-all;
+  @apply p-3 rounded-md border border-gray-200 hover:border-blue-400 transition-all;
 }
 
 /* Colored dots for stages */
