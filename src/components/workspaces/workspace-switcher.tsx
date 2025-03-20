@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useThemeStyle } from "@/context/theme-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +59,7 @@ export function WorkspaceSwitcher() {
     refreshWorkspaces 
   } = useWorkspace();
   const { state } = useSidebar();
+  const { themeStyle } = useThemeStyle();
   const isCollapsed = state === "collapsed";
 
   // Debug hook to log sidebar state changes
@@ -150,7 +152,7 @@ export function WorkspaceSwitcher() {
   if (isLoading) {
     return (
       <div className="p-3 flex items-center gap-2">
-        <div className="h-10 w-10 flex items-center justify-center rounded-md bg-black text-white">
+        <div className="h-10 w-10 flex items-center justify-center rounded-md bg-primary text-primary-foreground">
           <Building2 className="h-5 w-5" />
         </div>
         <div className="flex-1 group-data-[collapsible=icon]:hidden">Loading...</div>
@@ -167,7 +169,7 @@ export function WorkspaceSwitcher() {
           >
             {currentWorkspace ? (
               <>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-black text-white">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   {getIconComponent(currentWorkspace.icon)}
                 </div>
                 <div className={`flex-1 min-w-0 text-left ${isCollapsed ? "hidden" : ""}`}>
@@ -182,7 +184,7 @@ export function WorkspaceSwitcher() {
               </>
             ) : (
               <>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-black text-white">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <Building2 className="h-5 w-5" />
                 </div>
                 <div className={`flex-1 min-w-0 text-left ${isCollapsed ? "hidden" : ""}`}>
@@ -206,7 +208,7 @@ export function WorkspaceSwitcher() {
                 className="flex items-center gap-2 py-2"
                 onClick={() => switchWorkspace(workspace)}
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-md border">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-primary/10 text-primary">
                   {getIconComponent(workspace.icon)}
                 </div>
                 <span className="truncate flex-1 min-w-0">{workspace.name}</span>
@@ -226,7 +228,7 @@ export function WorkspaceSwitcher() {
             className="flex items-center gap-2 py-2"
             onClick={() => setShowNewWorkspaceDialog(true)}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-md border">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-primary/10 text-primary">
               <Plus className="h-4 w-4" />
             </div>
             <span>Create workspace</span>
@@ -234,7 +236,7 @@ export function WorkspaceSwitcher() {
           
           {currentWorkspace && (
             <DropdownMenuItem className="flex items-center gap-2 py-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md border">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-primary/10 text-primary">
                 <Settings className="h-4 w-4" />
               </div>
               <span>Workspace settings</span>

@@ -83,7 +83,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Sparkles className="mr-2 h-4 w-4" />
+                <Sparkles className="mr-2 h-4 w-4 text-primary" />
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -92,25 +92,25 @@ export function NavUser({
               <DropdownMenuItem
                 onClick={() => navigate("/dashboard/settings?tab=workspace")}
               >
-                <Building className="mr-2 h-4 w-4" />
+                <Building className="mr-2 h-4 w-4 text-primary" />
                 Workspace Settings
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <BadgeCheck className="mr-2 h-4 w-4" />
+                <BadgeCheck className="mr-2 h-4 w-4 text-primary" />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <CreditCard className="mr-2 h-4 w-4" />
+                <CreditCard className="mr-2 h-4 w-4 text-primary" />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Bell className="mr-2 h-4 w-4" />
+                <Bell className="mr-2 h-4 w-4 text-primary" />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-2 h-4 w-4 text-primary" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

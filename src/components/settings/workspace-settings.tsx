@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useWorkspace } from "@/context/workspace-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +38,6 @@ import {
   Bot,
   Sparkles,
   Zap,
-  X,
 } from "lucide-react";
 
 // Icons available for workspaces
@@ -255,8 +255,8 @@ export function WorkspaceSettings() {
         <Card>
           <CardContent className="pt-6 space-y-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <IconComponent className="h-6 w-6 text-primary" />
+              <div className="p-3 bg-primary/10 rounded-lg text-primary">
+                <IconComponent className="h-6 w-6" />
               </div>
               <div>
                 <h3 className="text-lg font-medium">{currentWorkspace.name}</h3>
