@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,8 +45,8 @@ export default function KnowledgePage() {
   }, []);
 
   return (
-    <div className="flex flex-col w-full">
-      <div className="flex flex-col space-y-6 w-full">
+    <div className="flex flex-col w-full items-center">
+      <div className="flex flex-col space-y-6 w-[70%]">
         <div className="flex justify-end">
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
