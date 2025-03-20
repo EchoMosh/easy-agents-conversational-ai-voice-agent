@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { User, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,17 +58,17 @@ export function UserProfileSection() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex w-full items-center gap-3 rounded-md p-2 text-left text-sm outline-none ring-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-            <Avatar className="h-8 w-8 rounded-lg border bg-white">
+            <Avatar className="h-8 w-8 rounded-lg border bg-white flex-shrink-0">
               <AvatarImage src={avatarUrl} alt={username} />
               <AvatarFallback className="rounded-lg">
                 <User className="h-4 w-4" />
               </AvatarFallback>
             </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
+            <div className="grid flex-1 min-w-0 text-left text-sm leading-tight">
               <span className="truncate font-semibold">{username}</span>
               <span className="truncate text-xs opacity-70">{email}</span>
             </div>
-            <ChevronsUpDown className="ml-auto size-4 opacity-70" />
+            <ChevronsUpDown className="ml-auto size-4 opacity-70 flex-shrink-0" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -78,13 +79,13 @@ export function UserProfileSection() {
         >
           <DropdownMenuLabel className="p-0 font-normal">
             <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
                 <AvatarImage src={avatarUrl} alt={username} />
                 <AvatarFallback className="rounded-lg">
                   <User className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 min-w-0 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{username}</span>
                 <span className="truncate text-xs opacity-70">{email}</span>
               </div>

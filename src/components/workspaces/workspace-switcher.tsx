@@ -149,26 +149,28 @@ export function WorkspaceSwitcher() {
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-black text-white">
                   {getIconComponent(currentWorkspace.icon)}
                 </div>
-                <div className="flex-1 text-left">
-                  <div className="text-base font-medium">{currentWorkspace.name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-base font-medium truncate">
+                    {currentWorkspace.name}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     Workspace
                   </div>
                 </div>
-                <ChevronsUpDown className="h-4 w-4 text-gray-500" />
+                <ChevronsUpDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
               </>
             ) : (
               <>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-black text-white">
                   <Building2 className="h-5 w-5" />
                 </div>
-                <div className="flex-1 text-left">
-                  <div className="text-base font-medium">No Workspace</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-base font-medium truncate">No Workspace</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     Create one to get started
                   </div>
                 </div>
-                <ChevronsUpDown className="h-4 w-4 text-gray-500" />
+                <ChevronsUpDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
               </>
             )}
           </button>
@@ -186,9 +188,9 @@ export function WorkspaceSwitcher() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-md border">
                   {getIconComponent(workspace.icon)}
                 </div>
-                <span>{workspace.name}</span>
+                <span className="truncate flex-1 min-w-0">{workspace.name}</span>
                 {currentWorkspace?.id === workspace.id && (
-                  <Check className="ml-auto h-4 w-4" />
+                  <Check className="ml-auto h-4 w-4 flex-shrink-0" />
                 )}
               </DropdownMenuItem>
             ))
