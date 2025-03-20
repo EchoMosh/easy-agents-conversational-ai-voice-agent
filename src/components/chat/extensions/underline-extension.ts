@@ -1,6 +1,5 @@
 
 import { Mark, markInputRule, markPasteRule, mergeAttributes } from '@tiptap/core';
-import { toggleMark } from '@tiptap/pm/commands';
 
 export const Underline = Mark.create({
   name: 'underline',
@@ -30,7 +29,7 @@ export const Underline = Mark.create({
   addCommands() {
     return {
       toggleUnderline: () => ({ commands }) => {
-        return commands.toggleMark(this.name);
+        return commands.toggleMark('underline');
       },
     };
   },

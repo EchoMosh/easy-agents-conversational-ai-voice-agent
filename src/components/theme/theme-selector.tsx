@@ -29,10 +29,17 @@ export function ThemeSelector() {
       primaryColor: "bg-[hsl(221.2,83.2%,53.3%)]",
       secondaryColor: "bg-[hsl(210,40%,96.1%)]",
     },
+    {
+      id: "green",
+      name: "Green",
+      description: "Fresh green theme with nature-inspired colors",
+      primaryColor: "bg-[hsl(142.1,76.2%,36.3%)]",
+      secondaryColor: "bg-[hsl(240,4.8%,95.9%)]",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {themes.map((theme) => (
         <Button
           key={theme.id}
@@ -41,7 +48,7 @@ export function ThemeSelector() {
             "relative h-auto flex-col items-start justify-start p-4 text-left",
             themeStyle === theme.id && "border-2 border-primary"
           )}
-          onClick={() => setThemeStyle(theme.id as "amber" | "default" | "blue")}
+          onClick={() => setThemeStyle(theme.id as "amber" | "default" | "blue" | "green")}
         >
           {themeStyle === theme.id && (
             <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">

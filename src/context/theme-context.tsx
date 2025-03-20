@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 
-type ThemeStyle = "amber" | "default" | "blue";
+type ThemeStyle = "amber" | "default" | "blue" | "green";
 
 interface ThemeContextType {
   themeStyle: ThemeStyle;
