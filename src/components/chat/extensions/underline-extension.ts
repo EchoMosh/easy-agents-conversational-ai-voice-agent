@@ -29,7 +29,7 @@ export const Underline = Mark.create({
   addCommands() {
     return {
       toggleUnderline: () => ({ commands }) => {
-        return commands.toggleMark('underline');
+        return commands.toggleMark(this.name);
       },
     };
   },
