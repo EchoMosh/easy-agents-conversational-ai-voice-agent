@@ -7,15 +7,14 @@ import {
   Pencil, 
   Trash, 
   CheckCircle, 
-  XCircle, 
-  Share2, 
+  XCircle,
   Search,
+  MoreHorizontal,
+  Circle,
   ChevronDown,
-  ChevronUp,
-  MoreHorizontal
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -25,12 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AgentFlowPreview } from "./agent-flow-preview";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
@@ -39,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AgentsTableProps {
   agents: Agent[];
@@ -51,12 +45,7 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedAgents, setExpandedAgents] = useState<Record<string, boolean>>({});
-
-  const getAvatarUrl = (agentId: string, role: string) => {
-    const seed = `${agentId}-${role}`;
-    return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&size=200`;
-  };
+  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
 
   const handleDelete = (agentId: string) => {
     setSelectedAgentId(agentId);
@@ -102,12 +91,29 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
     );
   }, [agents, searchQuery]);
 
-  const toggleAgentExpansion = (agentId: string) => {
-    setExpandedAgents(prev => ({
-      ...prev,
-      [agentId]: !prev[agentId]
-    }));
+  // Toggle selection of a single agent
+  const toggleAgentSelection = (agentId: string) => {
+    setSelectedAgents(prev => 
+      prev.includes(agentId) 
+        ? prev.filter(id => id !== agentId)
+        : [...prev, agentId]
+    );
   };
+
+  // Toggle selection of all agents
+  const toggleAllAgents = () => {
+    if (selectedAgents.length === filteredAgents.length) {
+      setSelectedAgents([]);
+    } else {
+      setSelectedAgents(filteredAgents.map(agent => agent.id));
+    }
+  };
+
+  // Check if all agents are selected
+  const isAllSelected = filteredAgents.length > 0 && selectedAgents.length === filteredAgents.length;
+
+  // Check if some but not all agents are selected
+  const isSomeSelected = selectedAgents.length > 0 && selectedAgents.length < filteredAgents.length;
 
   if (agents.length === 0) {
     return (
@@ -133,6 +139,25 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+        {selectedAgents.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {selectedAgents.length} selected
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+              onClick={() => {
+                // Functionality for bulk delete would go here
+                alert(`Delete ${selectedAgents.length} agents`);
+              }}
+            >
+              <Trash className="h-4 w-4 mr-1" />
+              Delete Selected
+            </Button>
+          </div>
+        )}
       </div>
 
       {filteredAgents.length === 0 ? (
@@ -145,7 +170,18 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="w-[300px] font-medium">Agent</TableHead>
+                  <TableHead className="w-[40px] p-0">
+                    <div className="flex items-center justify-center h-full pl-4">
+                      <Checkbox 
+                        checked={isAllSelected} 
+                        indeterminate={isSomeSelected}
+                        onCheckedChange={toggleAllAgents}
+                        aria-label="Select all agents"
+                        className="data-[state=indeterminate]:bg-primary"
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[250px] font-medium">Agent</TableHead>
                   <TableHead className="font-medium">Status</TableHead>
                   <TableHead className="font-medium">ID</TableHead>
                   <TableHead className="font-medium">Created</TableHead>
@@ -154,117 +190,105 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
               </TableHeader>
               <TableBody>
                 {filteredAgents.map((agent) => (
-                  <React.Fragment key={agent.id}>
-                    <TableRow className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-10 w-10 rounded-md border border-primary/10 bg-secondary/20">
-                            <AvatarImage 
-                              src={getAvatarUrl(agent.id, agent.role)} 
-                              alt={agent.name} 
-                            />
-                            <AvatarFallback className="rounded-md bg-gradient-to-br from-primary/10 to-primary/5">
-                              {agent.name ? agent.name.substring(0, 2).toUpperCase() : "AG"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="space-y-0.5">
-                            <p className="font-medium text-foreground">{agent.name}</p>
-                            <p className="text-xs text-muted-foreground capitalize">{agent.role.replace('_', ' ')}</p>
-                          </div>
+                  <TableRow 
+                    key={agent.id}
+                    className="border-b border-border/30 hover:bg-muted/20 transition-colors"
+                    data-selected={selectedAgents.includes(agent.id)}
+                  >
+                    <TableCell className="p-0">
+                      <div className="flex items-center justify-center h-full pl-4">
+                        <Checkbox 
+                          checked={selectedAgents.includes(agent.id)}
+                          onCheckedChange={() => toggleAgentSelection(agent.id)}
+                          aria-label={`Select ${agent.name}`}
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10">
+                          <Circle 
+                            className="h-6 w-6 stroke-primary" 
+                            strokeWidth={1.5} 
+                            fill="transparent"
+                          />
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={agent.is_active ? "default" : "outline"}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs ${
-                            agent.is_active 
-                              ? 'bg-green-100/50 text-green-800 hover:bg-green-100/50 dark:bg-green-900/30 dark:text-green-200 dark:hover:bg-green-900/30' 
-                              : 'bg-secondary/30 text-muted-foreground'
-                          }`}
+                        <div className="space-y-0.5">
+                          <p className="font-medium text-foreground">{agent.name}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{agent.role.replace('_', ' ')}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={agent.is_active ? "default" : "outline"}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs ${
+                          agent.is_active 
+                            ? 'bg-green-100/50 text-green-800 hover:bg-green-100/50 dark:bg-green-900/30 dark:text-green-200 dark:hover:bg-green-900/30' 
+                            : 'bg-secondary/30 text-muted-foreground'
+                        }`}
+                      >
+                        {agent.is_active ? (
+                          <>
+                            <CheckCircle className="w-3 h-3" />
+                            Active
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-3 h-3" />
+                            Inactive
+                          </>
+                        )}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {agent.id ? agent.id.substring(0, 8) : "N/A"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-muted-foreground">
+                        {agent.created_at ? new Date(agent.created_at).toLocaleDateString() : "Recently"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditFlow(agent.id)}
+                          className="h-8 w-8 p-0"
                         >
-                          {agent.is_active ? (
-                            <>
-                              <CheckCircle className="w-3 h-3" />
-                              Active
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-3 h-3" />
-                              Inactive
-                            </>
-                          )}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs font-mono text-muted-foreground">
-                          {agent.id ? agent.id.substring(0, 8) : "N/A"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs text-muted-foreground">
-                          {agent.created_at ? new Date(agent.created_at).toLocaleDateString() : "Recently"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleAgentExpansion(agent.id)}
-                            className="h-8 text-xs"
-                          >
-                            <span className="mr-1">Flow</span>
-                            {expandedAgents[agent.id] ? 
-                              <ChevronUp className="w-3 h-3" /> : 
-                              <ChevronDown className="w-3 h-3" />
-                            }
-                          </Button>
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[160px]">
-                              <DropdownMenuItem onClick={() => handleEditFlow(agent.id)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                <span>Edit</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDelete(agent.id)}
-                                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/10"
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                <span>Delete</span>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow className={expandedAgents[agent.id] ? "border-t-0" : "hidden"}>
-                      <TableCell colSpan={5} className="p-0 border-t-0 bg-secondary/10">
-                        <Collapsible open={expandedAgents[agent.id]} className="w-full">
-                          <CollapsibleContent className="px-4 py-3">
-                            <div className="pt-1 w-full">
-                              <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground">
-                                <Share2 className="h-3 w-3" />
-                                <span>Flow Preview</span>
-                              </div>
-                              <div className="rounded-lg overflow-hidden border border-border/50 bg-card/80">
-                                <AgentFlowPreview flowData={agent.flow} maxHeight={180} />
-                              </div>
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </TableCell>
-                    </TableRow>
-                  </React.Fragment>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-[160px]">
+                            <DropdownMenuItem onClick={() => handleEditFlow(agent.id)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              <span>Edit</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(agent.id)}
+                              className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/10"
+                            >
+                              <Trash className="mr-2 h-4 w-4" />
+                              <span>Delete</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>
