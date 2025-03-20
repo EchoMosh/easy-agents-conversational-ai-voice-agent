@@ -8,6 +8,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { UserProfileSection } from "@/components/dashboard/sidebar/user-profile-section";
 
 export default function DashboardHeader() {
   const location = useLocation();
@@ -66,12 +67,26 @@ export default function DashboardHeader() {
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2">
-      <div className="flex items-center gap-2 px-4">
+    <header className="flex h-16 shrink-0 items-center justify-between px-4">
+      <div className="flex items-center gap-2">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <div className="text-lg font-semibold">{getPageTitle()}</div>
       </div>
+      
+      {/* User profile section in the top right */}
+      <div className="flex items-center">
+        <HeaderProfileSection />
+      </div>
     </header>
+  );
+}
+
+// Separate component for the header profile section
+function HeaderProfileSection() {
+  return (
+    <div className="relative">
+      <UserProfileSection />
+    </div>
   );
 }
