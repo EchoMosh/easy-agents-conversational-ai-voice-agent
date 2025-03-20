@@ -56,18 +56,18 @@ export function PipelineStage({
   return (
     <div className="h-full min-w-[300px] w-[350px] flex-shrink-0 flex-grow-0">
       <Card 
-        className={`h-full w-full flex flex-col border-t-4 border-x border-b rounded-lg shadow-sm overflow-hidden bg-white dark:bg-gray-900 transition-all duration-150 ${
-          isPreviewTarget ? "ring-2 ring-blue-400" : ""
+        className={`h-full w-full flex flex-col border-t-4 rounded-lg shadow-sm overflow-hidden ${
+          isPreviewTarget ? "ring-2 ring-primary" : ""
         }`}
         style={{ 
           borderTopColor: `var(--${colorClass})` 
         }}
       >
-        <CardHeader className="flex flex-row items-center justify-between p-3 pb-2 border-b border-gray-100 dark:border-gray-800 shrink-0">
+        <CardHeader className="flex flex-row items-center justify-between p-3 pb-2 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
             {!isEditing ? (
-              <h3 className="text-lg font-semibold truncate max-w-[150px]">{displayTitle}</h3>
+              <h3 className="text-lg font-semibold truncate max-w-[150px] text-foreground">{displayTitle}</h3>
             ) : (
               <StageHeader
                 column={column}
@@ -85,7 +85,7 @@ export function PipelineStage({
           </div>
           
           <div className="flex items-center gap-1">
-            <span className="text-sm font-medium mr-1">{columnLeads.length}</span>
+            <span className="text-sm font-medium mr-1 text-foreground">{columnLeads.length}</span>
             <Button 
               variant="ghost" 
               size="icon" 
@@ -105,7 +105,7 @@ export function PipelineStage({
           </div>
         </CardHeader>
 
-        <CardContent className="p-2 flex-1 overflow-hidden">
+        <CardContent className="p-2 flex-1 overflow-hidden bg-background">
           <ScrollArea className="h-full pr-1">
             <div className="space-y-2">
               {/* Show preview lead at the top if this is the target column */}
@@ -123,8 +123,8 @@ export function PipelineStage({
               )}
               
               {columnLeads.length === 0 && !previewLead ? (
-                <div className="min-h-[80px] flex items-center justify-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/20">
-                  <p className="text-sm text-muted-foreground/70 text-center px-4">
+                <div className="min-h-[80px] flex items-center justify-center border border-dashed border-border rounded-lg bg-secondary/50">
+                  <p className="text-sm text-muted-foreground text-center px-4">
                     Drop leads here
                   </p>
                 </div>

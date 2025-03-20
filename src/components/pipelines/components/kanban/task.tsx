@@ -44,12 +44,12 @@ export function KanbanTask({ lead, columnId, onClick }: KanbanTaskProps) {
       }`}
     >
       <Card 
-        className="bg-card hover:bg-accent/40 cursor-pointer border border-border/50 shadow-sm"
+        className="bg-card hover:bg-accent/40 cursor-pointer border border-border shadow-sm"
         onClick={onClick}
       >
         <CardContent className="p-3">
           <div className="space-y-2">
-            <div className="font-medium text-sm">{lead.name}</div>
+            <div className="font-medium text-sm text-foreground">{lead.name}</div>
             
             <div className="space-y-1">
               {lead.email && (

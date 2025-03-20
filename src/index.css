@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -52,7 +53,7 @@
 
 /* Kanban board styles */
 .board-column {
-  @apply min-w-[300px] w-[350px] flex-shrink-0 flex-grow-0 bg-primary-foreground flex flex-col snap-center;
+  @apply min-w-[300px] w-[350px] flex-shrink-0 flex-grow-0 flex flex-col snap-center;
   height: 100%;
   max-height: 100%;
 }
@@ -79,7 +80,7 @@
 }
 
 .task-card {
-  @apply bg-card border border-border/50 shadow-sm;
+  @apply bg-card border border-border shadow-sm;
 }
 
 .task-card-dragging {
@@ -92,12 +93,12 @@
 
 /* Preview card styles */
 .task-card-preview {
-  @apply border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-md;
+  @apply border-primary bg-primary/10 shadow-md;
   transition: all 300ms ease-in-out;
 }
 
 .column-preview-target {
-  @apply ring-2 ring-blue-400;
+  @apply ring-2 ring-primary;
   transition: all 150ms ease-in-out;
 }
 
@@ -126,7 +127,7 @@
 
 /* Card styles for leads */
 .lead-card {
-  @apply p-3 rounded-md border border-gray-200 hover:border-blue-400 transition-all;
+  @apply p-3 rounded-md border hover:border-primary transition-all;
 }
 
 /* Colored dots for stages */
