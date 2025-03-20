@@ -1,7 +1,6 @@
 
-import { Mark, markPasteRule, mergeAttributes } from '@tiptap/core';
+import { Mark, markInputRule, markPasteRule, mergeAttributes } from '@tiptap/core';
 import { toggleMark } from '@tiptap/pm/commands';
-import { EditorState } from '@tiptap/pm/state';
 
 export const Underline = Mark.create({
   name: 'underline',
@@ -11,9 +10,7 @@ export const Underline = Mark.create({
   
   // Specify our attribute for this mark
   addAttributes() {
-    return {
-      // We can add more attributes here if needed
-    };
+    return {};
   },
   
   // How to parse the HTML
@@ -43,5 +40,25 @@ export const Underline = Mark.create({
     return {
       'Mod-u': () => this.editor.commands.toggleMark(this.name),
     };
+  },
+  
+  // Add input rules for markdown-like syntax
+  addInputRules() {
+    return [
+      markInputRule({
+        find: /(?:__)([^_]+)(?:__)$/,
+        type: this.type,
+      }),
+    ];
+  },
+  
+  // Add paste rules to handle pasting underlined content
+  addPasteRules() {
+    return [
+      markPasteRule({
+        find: /(?:__)([^_]+)(?:__)/g,
+        type: this.type,
+      }),
+    ];
   },
 });

@@ -48,9 +48,6 @@ export function PipelineStage({
   isOverlay = false
 }: PipelineStageProps) {
   const isEditing = editingColumnId === column.id;
-
-  // Extract color without the bg- prefix for the dot
-  const colorClass = column.color.replace('bg-', '');
   
   // Make sure column title is never empty
   const displayTitle = column.title || "Untitled Stage";
@@ -58,16 +55,13 @@ export function PipelineStage({
   return (
     <div className="h-full min-w-[300px] w-[350px] flex-shrink-0 flex-grow-0">
       <Card 
-        className={`h-full w-full flex flex-col border-t-4 rounded-lg shadow-sm overflow-hidden ${
+        className={`h-full w-full flex flex-col rounded-lg shadow-sm overflow-hidden ${
           isPreviewTarget ? "ring-2 ring-primary" : ""
         }`}
-        style={{ 
-          borderTopColor: `var(--${colorClass})` 
-        }}
       >
-        <CardHeader className="flex flex-row items-center justify-between p-3 pb-2 border-b border-border shrink-0">
+        <CardHeader className={`flex flex-row items-center justify-between p-3 pb-2 border-b border-border shrink-0 ${column.color}`}>
           <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
+            <div className="w-3 h-3 rounded-full bg-background"></div>
             {!isEditing ? (
               <h3 className="text-lg font-semibold truncate max-w-[150px] text-foreground">{displayTitle}</h3>
             ) : (

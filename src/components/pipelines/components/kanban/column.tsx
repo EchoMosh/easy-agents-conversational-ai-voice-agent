@@ -90,20 +90,17 @@ export function KanbanColumn({
       {...attributes}
     >
       <Card 
-        className={`h-full w-full flex flex-col border-t-4 border-x border-b rounded-lg shadow-sm overflow-hidden ${
+        className={`h-full w-full flex flex-col rounded-lg shadow-sm overflow-hidden ${
           isPreviewTarget ? "ring-2 ring-primary" : ""
-        }`}
-        style={{ 
-          borderTopColor: `hsl(var(--${colorClass}))` 
-        }}
+        } border border-border`}
       >
         <CardHeader 
-          className="flex flex-row items-center justify-between p-3 pb-2 border-b border-border shrink-0"
+          className={`flex flex-row items-center justify-between p-3 pb-2 border-b border-border shrink-0 ${column.color}`}
           {...listeners}
         >
           <div className="flex items-center gap-2">
             <div 
-              className={`w-3 h-3 rounded-full ${column.color}`}
+              className="w-3 h-3 rounded-full bg-background"
               aria-labelledby={headingId}
             ></div>
             {!isEditing ? (
