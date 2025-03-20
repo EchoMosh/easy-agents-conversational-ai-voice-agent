@@ -92,10 +92,13 @@ export function usePipelineMutations() {
       }
 
       // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("No authenticated user");
+      const { data: authData, error: authError } = await supabase.auth.getSession();
+      
+      if (authError || !authData.session) {
+        throw new Error("Authentication required to create pipeline");
       }
+      
+      const userId = authData.session.user.id;
 
       // Convert columns to Json for Supabase
       const columnsJson = [
@@ -114,7 +117,7 @@ export function usePipelineMutations() {
         .insert({
           name,
           workspace_id: workspaceId,
-          user_id: user.id,
+          user_id: userId,
           columns: columnsJson
         })
         .select()
