@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Pipeline } from "@/types/pipeline";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 interface PipelineHeaderProps {
   pipelines: Pipeline[];
@@ -30,24 +31,21 @@ export function PipelineHeader({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             {pipelines.map((pipeline) => (
-              <Button
+              <Badge
                 key={pipeline.id}
-                variant={
-                  selectedPipeline?.id === pipeline.id ? "subtle" : "clean"
-                }
-                onClick={() => handlePipelineClick(pipeline)}
-                size="sm"
+                variant={selectedPipeline?.id === pipeline.id ? "default" : "secondary"}
                 className={`
-                  font-medium rounded-full px-4 transition-all
+                  px-4 py-2 text-sm font-medium cursor-pointer rounded-full transition-all
                   ${
                     selectedPipeline?.id === pipeline.id
-                      ? "bg-gray-100 dark:bg-gray-800 shadow-sm"
-                      : "hover:bg-gray-50 dark:hover:bg-gray-900"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:bg-secondary/80"
                   }
                 `}
+                onClick={() => handlePipelineClick(pipeline)}
               >
                 {pipeline.name}
-              </Button>
+              </Badge>
             ))}
           </div>
           <Button onClick={onCreatePipeline}>
