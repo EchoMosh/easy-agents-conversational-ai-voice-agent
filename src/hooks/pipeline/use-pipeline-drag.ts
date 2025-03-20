@@ -38,8 +38,8 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     // Update the last drag target
     lastDragTarget.current = { type: overType || "", id: overId };
     
-    // Handle both Task and LibraryLead dragging
-    if (activeType !== "Task" && activeType !== "LibraryLead") {
+    // Only handle Task dragging
+    if (activeType !== "Task") {
       return;
     }
     
@@ -90,11 +90,8 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     const activeType = active.data?.current?.type;
     const overType = over.data?.current?.type;
     
-    // Check if we're dragging from library or within pipeline
-    const isFromLibrary = activeType === "LibraryLead";
-    
-    // If we're not dragging a task or library lead, return
-    if (activeType !== "Task" && activeType !== "LibraryLead") return;
+    // If we're not dragging a task, return
+    if (activeType !== "Task") return;
     
     // Find the target column - either directly if dropping on column, or from the task's column if dropping on task
     let targetColumnId = '';
@@ -115,26 +112,10 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       return;
     }
     
-    // Find the lead being dragged - handle both regular leads and library leads
-    let leadId = '';
-    if (isFromLibrary) {
-      // Extract the real lead ID from the library-prefixed ID
-      leadId = activeId.startsWith('library-') ? activeId.substring(8) : activeId;
-      
-      // Get the actual lead object
-      const libraryLead = active.data?.current?.lead;
-      if (!libraryLead) {
-        console.error("Library lead data not found:", active.data?.current);
-        return;
-      }
-    } else {
-      // Regular lead from a column
-      leadId = activeId;
-    }
-    
-    const lead = leads.find(l => l.id === leadId);
+    // Find the lead being dragged
+    const lead = leads.find(l => l.id === activeId);
     if (!lead) {
-      console.error("Lead not found:", leadId);
+      console.error("Lead not found:", activeId);
       return;
     }
 
@@ -148,7 +129,7 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     const newStatus = targetColumn.title;
     
     // Check if the lead is already in the target status and pipeline
-    if (!isFromLibrary && lead.status === newStatus && lead.pipeline_id === selectedPipeline.id) {
+    if (lead.status === newStatus && lead.pipeline_id === selectedPipeline.id) {
       console.log("Lead already in the target status and pipeline");
       return;
     }
@@ -167,7 +148,7 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     }, 5000);
 
     try {
-      console.log(`Moving lead ${leadId} to pipeline ${selectedPipeline.id}, status ${newStatus}`);
+      console.log(`Moving lead ${activeId} to pipeline ${selectedPipeline.id}, status ${newStatus}`);
       
       // Update the database
       const { error } = await supabase
@@ -177,16 +158,14 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
           pipeline_id: selectedPipeline.id,
           updated_at: new Date().toISOString() // Add timestamp to ensure trigger fires
         })
-        .eq("id", leadId);
+        .eq("id", activeId);
 
       if (error) throw error;
 
       // Show success toast after the update succeeds
       toast({
-        title: isFromLibrary ? "Lead added to pipeline" : "Lead status updated",
-        description: isFromLibrary 
-          ? `Lead added to ${newStatus} column` 
-          : `Lead moved to ${newStatus}`,
+        title: "Lead status updated",
+        description: `Lead moved to ${newStatus}`,
       });
       
       // Refetch leads to ensure UI is in sync with server state
@@ -195,9 +174,7 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       console.error("Error updating lead status:", error);
       toast({
         title: "Error",
-        description: isFromLibrary 
-          ? "Failed to add lead to pipeline" 
-          : "Failed to update lead status",
+        description: "Failed to update lead status",
         variant: "destructive",
       });
       // Force refetch to revert to correct state in case of error

@@ -8,19 +8,15 @@ import { PipelineStages } from "@/components/pipelines/pipeline-stages";
 import { LeadDetailsDialog } from "@/components/pipelines/lead-details-dialog";
 import { NewPipelineDialog } from "@/components/pipelines/new-pipeline-dialog";
 import { DeletePipelineDialog } from "@/components/pipelines/delete-pipeline-dialog";
-import { LeadLibraryDrawer } from "@/components/pipelines/lead-library/lead-library-drawer";
 import { usePipeline } from "@/hooks/use-pipeline";
 import { useDeletePipeline } from "@/hooks/pipeline/use-delete-pipeline";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
 import { usePipelineColumns } from "@/hooks/pipeline/use-pipeline-columns";
 import { defaultColumns } from "@/hooks/use-pipeline";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Library } from "lucide-react";
 
 export default function PipelinesPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [showLeadLibrary, setShowLeadLibrary] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -73,7 +69,7 @@ export default function PipelinesPage() {
     isUpdating, 
     previewColumnId, 
     previewIndex,
-    resetDragState
+    resetDragState  // Include the new reset function
   } = usePipelineDrag(selectedPipeline, leads, invalidateAndRefetch);
   
   const {
@@ -137,24 +133,12 @@ export default function PipelinesPage() {
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="px-4 md:px-6 pt-2 pb-1">
-          <div className="flex justify-between items-center">
-            <PipelineHeader 
-              pipelines={pipelines || []}
-              selectedPipeline={selectedPipeline}
-              onCreatePipeline={() => setShowNewPipelineDialog(true)}
-              onSelectPipeline={handleSelectPipeline}
-            />
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="ml-2" 
-              onClick={() => setShowLeadLibrary(true)}
-            >
-              <Library className="h-4 w-4 mr-2" />
-              Lead Library
-            </Button>
-          </div>
+          <PipelineHeader 
+            pipelines={pipelines || []}
+            selectedPipeline={selectedPipeline}
+            onCreatePipeline={() => setShowNewPipelineDialog(true)}
+            onSelectPipeline={handleSelectPipeline}
+          />
           
           {isDragStuck && (
             <div className="flex justify-end mb-2">
@@ -207,14 +191,6 @@ export default function PipelinesPage() {
           isDeleting={isDeleting}
           hasLeads={hasLeads}
           otherPipelines={otherPipelines}
-        />
-        
-        <LeadLibraryDrawer
-          open={showLeadLibrary}
-          onOpenChange={setShowLeadLibrary}
-          currentPipelineId={selectedPipeline?.id}
-          pipelineLeads={leads?.filter(lead => lead.pipeline_id === selectedPipeline?.id) || []}
-          allLeads={leads || []}
         />
       </div>
     </div>

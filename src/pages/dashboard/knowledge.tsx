@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KnowledgeFileUploader } from "@/components/knowledge/knowledge-file-uploader";
 import { KnowledgeUrlImporter } from "@/components/knowledge/knowledge-url-importer";
 import { KnowledgeTextEntry } from "@/components/knowledge/knowledge-text-entry";
-
 export default function KnowledgePage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -28,9 +26,8 @@ export default function KnowledgePage() {
       window.removeEventListener("create-knowledge", handleCreateKnowledge);
     };
   }, []);
-  
   return <div className="flex flex-col w-full items-center mt-10">
-      <div className="flex flex-col space-y-6 w-[70%]">
+      <div className="flex flex-col space-y-6 w-[90%]">
         <div className="flex justify-end">
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
