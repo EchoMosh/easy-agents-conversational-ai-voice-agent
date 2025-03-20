@@ -76,23 +76,29 @@ export function AppSidebar() {
   useEffect(() => {
     // Initialize sidebar as collapsed
     setOpen(false);
+    console.log("Initializing sidebar as collapsed");
     
     // Select the sidebar element correctly using its data attribute
     const sidebarElement = document.querySelector("[data-sidebar='sidebar']");
+    console.log("Found sidebar element:", !!sidebarElement);
     
     if (sidebarElement) {
       const handleMouseEnter = () => {
+        console.log("Mouse entered sidebar");
         setOpen(true);
       };
       
       const handleMouseLeave = () => {
+        console.log("Mouse left sidebar");
         setOpen(false);
       };
       
+      console.log("Adding event listeners to sidebar");
       sidebarElement.addEventListener("mouseenter", handleMouseEnter);
       sidebarElement.addEventListener("mouseleave", handleMouseLeave);
       
       return () => {
+        console.log("Removing event listeners from sidebar");
         sidebarElement.removeEventListener("mouseenter", handleMouseEnter);
         sidebarElement.removeEventListener("mouseleave", handleMouseLeave);
       };

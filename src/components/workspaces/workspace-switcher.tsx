@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Building2, 
   Briefcase, 
@@ -59,6 +59,29 @@ export function WorkspaceSwitcher() {
   } = useWorkspace();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  // Debug hook to log sidebar state changes
+  useEffect(() => {
+    console.log("Sidebar state:", state);
+    console.log("Is collapsed:", isCollapsed);
+    
+    // Log DOM structure to help debug
+    setTimeout(() => {
+      const sidebarElements = document.querySelectorAll('[data-sidebar]');
+      console.log("All sidebar elements:", sidebarElements);
+      
+      const mainSidebar = document.querySelector('[data-sidebar="sidebar"]');
+      console.log("Main sidebar element:", mainSidebar);
+      
+      if (mainSidebar) {
+        console.log("Sidebar attributes:", {
+          classList: Array.from(mainSidebar.classList),
+          dataState: mainSidebar.getAttribute('data-state'),
+          dataCollapsible: mainSidebar.getAttribute('data-collapsible'),
+        });
+      }
+    }, 1000);
+  }, [state, isCollapsed]);
 
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim()) {
