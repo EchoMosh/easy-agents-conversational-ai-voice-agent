@@ -13,6 +13,9 @@ import { toast } from "sonner";
 import { LeadVariables } from "../lead-variables";
 import { LeadVariable } from "@/pages/dashboard/leads";
 import { NewVariableForm } from "../variables/new-variable-form";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { TagsManager } from "./tags/tags-manager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface EditVariablesDialogProps {
   lead: any;
@@ -31,10 +34,13 @@ export function EditVariablesDialog({
   const [isLoading, setIsLoading] = useState(true);
   const [newVariables, setNewVariables] = useState<{name: string; value: string}[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("variables");
+  const [tags, setTags] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen && lead?.id) {
       fetchVariables();
+      fetchTags();
     }
   }, [isOpen, lead?.id]);
 
@@ -54,6 +60,22 @@ export function EditVariablesDialog({
       toast.error("Failed to load variables");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("lead_tags")
+        .select("tag:tag_id(*)")
+        .eq("lead_id", lead.id);
+
+      if (error) throw error;
+      const formattedTags = data.map(item => item.tag);
+      setTags(formattedTags || []);
+    } catch (error) {
+      console.error("Error fetching tags:", error);
+      toast.error("Failed to load tags");
     }
   };
 
@@ -150,78 +172,96 @@ export function EditVariablesDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Manage Variables for {lead?.name}</DialogTitle>
+          <DialogTitle>Manage Fields for {lead?.name}</DialogTitle>
         </DialogHeader>
         
-        <div className="pt-4 space-y-6">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <>
-              {/* Current Variables */}
-              <LeadVariables
-                leadId={lead.id}
-                variables={variables}
-                onEdit={handleEditVariable}
-                onDelete={handleDeleteVariable}
-                onAddClick={handleAddVariable}
-                onVariablesUpdated={() => {
-                  fetchVariables();
-                  onLeadUpdated();
-                }}
-              />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="variables">Variables</TabsTrigger>
+            <TabsTrigger value="tags">Tags</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="variables" className="pt-2 space-y-6">
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                {/* Current Variables */}
+                <ScrollArea className="h-[280px] pr-4">
+                  <LeadVariables
+                    leadId={lead.id}
+                    variables={variables}
+                    onEdit={handleEditVariable}
+                    onDelete={handleDeleteVariable}
+                    onAddClick={handleAddVariable}
+                    onVariablesUpdated={() => {
+                      fetchVariables();
+                      onLeadUpdated();
+                    }}
+                  />
 
-              {/* New Variables Forms */}
-              {newVariables.length > 0 && (
-                <div className="border-t pt-4 mt-6">
-                  <h3 className="text-lg font-medium mb-4">Add New Variables</h3>
-                  <div className="space-y-3">
-                    {newVariables.map((variable, index) => (
-                      <NewVariableForm
-                        key={index}
-                        name={variable.name}
-                        value={variable.value}
-                        onChange={(field, value) => handleNewVariableChange(index, field, value)}
-                        onRemove={() => handleRemoveNewVariable(index)}
-                      />
-                    ))}
-                    {newVariables.some(v => v.name.includes(' ')) && (
-                      <p className="text-xs text-amber-600 mt-2">
-                        Note: Spaces in variable names will be converted to underscores when saved
-                      </p>
-                    )}
+                  {/* New Variables Forms */}
+                  {newVariables.length > 0 && (
+                    <div className="border-t pt-4 mt-6">
+                      <h3 className="text-lg font-medium mb-4">Add New Variables</h3>
+                      <div className="space-y-3">
+                        {newVariables.map((variable, index) => (
+                          <NewVariableForm
+                            key={index}
+                            name={variable.name}
+                            value={variable.value}
+                            onChange={(field, value) => handleNewVariableChange(index, field, value)}
+                            onRemove={() => handleRemoveNewVariable(index)}
+                          />
+                        ))}
+                        {newVariables.some(v => v.name.includes(' ')) && (
+                          <p className="text-xs text-amber-600 mt-2">
+                            Note: Spaces in variable names will be converted to underscores when saved
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </ScrollArea>
+
+                {/* Add Variable Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddVariable}
+                  className="w-full"
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add New Variable
+                </Button>
+
+                {/* Save Button (only shown if there are new variables) */}
+                {newVariables.length > 0 && (
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      onClick={handleSaveVariables}
+                      disabled={isSaving}
+                    >
+                      {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      Save {newVariables.length} Variable{newVariables.length !== 1 ? 's' : ''}
+                    </Button>
                   </div>
-                </div>
-              )}
-
-              {/* Add Variable Button */}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddVariable}
-                className="w-full"
-              >
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add New Variable
-              </Button>
-
-              {/* Save Button (only shown if there are new variables) */}
-              {newVariables.length > 0 && (
-                <div className="flex justify-end pt-2">
-                  <Button
-                    onClick={handleSaveVariables}
-                    disabled={isSaving}
-                  >
-                    {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Save {newVariables.length} Variable{newVariables.length !== 1 ? 's' : ''}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                )}
+              </>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="tags" className="pt-2">
+            <ScrollArea className="h-[280px] pr-4">
+              <TagsManager 
+                leadId={lead.id} 
+                tags={tags} 
+              />
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

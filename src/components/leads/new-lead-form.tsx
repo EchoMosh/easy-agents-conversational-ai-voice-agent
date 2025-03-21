@@ -10,6 +10,8 @@ import { ContactInfoForm } from "./components/contact-info-form";
 import { CustomVariables } from "./components/custom-variables";
 import { useWorkspace } from "@/context/workspace-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { v4 as uuidv4 } from "uuid";
+import { Tag } from "@/types/tag-types";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
@@ -23,6 +25,7 @@ interface Variable {
 export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [variables, setVariables] = useState<Variable[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [phone, setPhone] = useState("");
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
   const [activeTab, setActiveTab] = useState("contact");
@@ -44,6 +47,34 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
     },
     enabled: !!currentWorkspace?.id,
   });
+
+  const handleAddTag = async (name: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        toast.error("You must be logged in to create tags");
+        return;
+      }
+
+      // Create a temporary tag ID for UI purposes
+      const tempTag: Tag = {
+        id: uuidv4(),
+        name,
+        color: "gray",
+        user_id: userData.user.id
+      };
+      
+      setTags([...tags, tempTag]);
+      toast.success("Tag added");
+    } catch (error) {
+      console.error("Error adding tag:", error);
+      toast.error("Failed to add tag");
+    }
+  };
+
+  const handleRemoveTag = (id: string) => {
+    setTags(tags.filter(tag => tag.id !== id));
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -96,6 +127,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
 
       if (leadError) throw leadError;
 
+      // Process variables if any exist
       if (variables.length > 0) {
         const { error: variablesError } = await supabase
           .from("lead_variables")
@@ -105,6 +137,38 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
             value: v.value
           })));
         if (variablesError) throw variablesError;
+      }
+
+      // Process tags if any exist
+      if (tags.length > 0) {
+        // First create any new tags
+        for (const tag of tags) {
+          // Check if this is a temporary tag (created during this session)
+          if (tag.id.includes('-')) {
+            // Create the actual tag in the database
+            const { data: newTag, error: newTagError } = await supabase
+              .from('tags')
+              .insert({
+                name: tag.name,
+                color: tag.color,
+                user_id: user.id
+              })
+              .select()
+              .single();
+              
+            if (newTagError) throw newTagError;
+            
+            // Associate the tag with the lead
+            const { error: linkError } = await supabase
+              .from('lead_tags')
+              .insert({
+                lead_id: leadData.id,
+                tag_id: newTag.id
+              });
+              
+            if (linkError) throw linkError;
+          }
+        }
       }
 
       toast.success("Lead added successfully");
@@ -127,7 +191,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       >
         <TabsList className="grid w-full grid-cols-2 mb-2">
           <TabsTrigger value="contact" className="text-gray-800">Contact Info</TabsTrigger>
-          <TabsTrigger value="variables" className="text-gray-800">Variables</TabsTrigger>
+          <TabsTrigger value="variables" className="text-gray-800">Fields & Tags</TabsTrigger>
         </TabsList>
 
         <TabsContent value="contact" className="space-y-4 pt-2">
@@ -156,6 +220,9 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
             variables={variables}
             onAddVariable={(variable) => setVariables([...variables, variable])}
             onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
+            tags={tags}
+            onAddTag={handleAddTag}
+            onRemoveTag={handleRemoveTag}
           />
         </TabsContent>
       </Tabs>
@@ -165,7 +232,11 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         disabled={isLoading || !currentWorkspace} 
         className="w-full h-11 text-base bg-primary/90 hover:bg-primary transition-all duration-200 text-white"
       >
-        {isLoading ? "Adding..." : `Save Lead${variables.length > 0 ? ` with ${variables.length} Variable${variables.length === 1 ? '' : 's'}` : ''}`}
+        {isLoading ? "Adding..." : `Save Lead${
+          (variables.length > 0 || tags.length > 0) 
+            ? ` with ${variables.length + tags.length} Field${variables.length + tags.length === 1 ? '' : 's'}` 
+            : ''
+        }`}
       </Button>
     </form>
   );

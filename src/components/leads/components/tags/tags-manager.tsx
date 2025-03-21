@@ -13,13 +13,22 @@ import { useQueryClient } from "@tanstack/react-query";
 interface TagsManagerProps {
   leadId: string;
   tags: Tag[];
+  isNewLead?: boolean;
+  onAddTagForNewLead?: (name: string) => void;
+  onRemoveTagForNewLead?: (id: string) => void;
 }
 
 interface CreateTagData {
   name: string;
 }
 
-export function TagsManager({ leadId, tags }: TagsManagerProps) {
+export function TagsManager({ 
+  leadId, 
+  tags, 
+  isNewLead = false,
+  onAddTagForNewLead,
+  onRemoveTagForNewLead
+}: TagsManagerProps) {
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +44,14 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
     setIsSubmitting(true);
 
     try {
+      // If we're in new lead form mode, use the provided callback
+      if (isNewLead && onAddTagForNewLead) {
+        onAddTagForNewLead(data.name);
+        setIsAddingTag(false);
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       
@@ -106,6 +123,13 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
     setIsSubmitting(true);
 
     try {
+      // If we're in new lead form mode, use the provided callback
+      if (isNewLead && onRemoveTagForNewLead) {
+        onRemoveTagForNewLead(tagId);
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('lead_tags')
         .delete()

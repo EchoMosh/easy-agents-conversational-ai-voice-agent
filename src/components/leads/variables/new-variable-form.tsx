@@ -1,4 +1,3 @@
-
 import { Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +22,10 @@ export function NewVariableForm({
     setShowNameWarning(name.includes(' '));
   }, [name]);
 
+  const handleNameChange = (newName: string) => {
+    onChange("name", newName);
+  };
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
@@ -31,7 +34,7 @@ export function NewVariableForm({
             <Input
               placeholder="Variable name"
               value={name}
-              onChange={(e) => onChange("name", e.target.value)}
+              onChange={(e) => handleNameChange(e.target.value)}
               required
               className="h-11 text-base border border-border/50 bg-background/50 hover:bg-background/80 focus-visible:ring-1 transition-colors"
             />
