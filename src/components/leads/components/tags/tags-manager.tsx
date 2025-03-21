@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Tag } from "@/types/tag-types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { EmptyState } from "./empty-state";
 
 interface TagsManagerProps {
   leadId: string;
@@ -45,7 +45,6 @@ export function TagsManager({
   const handleCreateTag = async (data: CreateTagData) => {
     if (isSubmitting) return;
     
-    // Trim the tag name and limit its length
     const trimmedName = data.name.trim();
     
     if (!trimmedName) {
@@ -53,13 +52,11 @@ export function TagsManager({
       return;
     }
     
-    // Check if tag name is too long
     if (trimmedName.length > MAX_TAG_LENGTH) {
       toast.error(`Tag name must be ${MAX_TAG_LENGTH} characters or less`);
       return;
     }
     
-    // Check for duplicate tag
     const isDuplicate = tags.some(tag => 
       tag.name.toLowerCase() === trimmedName.toLowerCase()
     );
@@ -72,7 +69,6 @@ export function TagsManager({
     setIsSubmitting(true);
 
     try {
-      // If we're in new lead form mode, use the provided callback
       if (isNewLead && onAddTagForNewLead) {
         onAddTagForNewLead(trimmedName);
         setIsAddingTag(false);
@@ -88,7 +84,6 @@ export function TagsManager({
         return;
       }
 
-      // First create the tag
       const { data: tag, error: tagError } = await supabase
         .from('tags')
         .insert({
@@ -100,7 +95,6 @@ export function TagsManager({
 
       if (tagError) throw tagError;
 
-      // Then check if this tag is already linked to this lead
       const { data: existingTags, error: checkError } = await supabase
         .from('lead_tags')
         .select('tag_id')
@@ -114,7 +108,6 @@ export function TagsManager({
         return;
       }
 
-      // Then create the lead_tag association
       const { error: linkError } = await supabase
         .from('lead_tags')
         .insert({
@@ -138,7 +131,6 @@ export function TagsManager({
   const handleUpdateTag = async (data: CreateTagData) => {
     if (!editingTag || isSubmitting) return;
     
-    // Trim the tag name and limit its length
     const trimmedName = data.name.trim();
     
     if (!trimmedName) {
@@ -146,13 +138,11 @@ export function TagsManager({
       return;
     }
     
-    // Check if tag name is too long
     if (trimmedName.length > MAX_TAG_LENGTH) {
       toast.error(`Tag name must be ${MAX_TAG_LENGTH} characters or less`);
       return;
     }
     
-    // Check for duplicate tag (but exclude the current tag being edited)
     const isDuplicate = tags.some(tag => 
       tag.name.toLowerCase() === trimmedName.toLowerCase() && 
       tag.id !== editingTag.id
@@ -191,7 +181,6 @@ export function TagsManager({
     setIsSubmitting(true);
 
     try {
-      // If we're in new lead form mode, use the provided callback
       if (isNewLead && onRemoveTagForNewLead) {
         onRemoveTagForNewLead(tagId);
         setIsSubmitting(false);
@@ -214,6 +203,10 @@ export function TagsManager({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const openAddTagDialog = () => {
+    setIsAddingTag(true);
   };
 
   return (
@@ -239,16 +232,21 @@ export function TagsManager({
           </DialogContent>
         </Dialog>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {tags.map((tag) => (
-          <TagBadge
-            key={tag.id}
-            tag={tag}
-            onEdit={() => setEditingTag(tag)}
-            onDelete={() => handleDeleteTag(tag.id)}
-          />
-        ))}
-      </div>
+      
+      {tags.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <TagBadge
+              key={tag.id}
+              tag={tag}
+              onEdit={() => setEditingTag(tag)}
+              onDelete={() => handleDeleteTag(tag.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState onAddClick={openAddTagDialog} />
+      )}
 
       <Dialog open={!!editingTag} onOpenChange={(open) => !open && setEditingTag(null)}>
         <DialogContent className="sm:max-w-[425px]">

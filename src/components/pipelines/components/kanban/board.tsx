@@ -10,7 +10,7 @@ import {
   useSensors 
 } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
-import { KanbanColumn as Column } from "./column"; // Updated import path with correct component name
+import { KanbanColumn } from "./column"; // Fixed import path
 import { Card } from "./card";
 import { Lead } from "@/pages/dashboard/leads";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
@@ -126,6 +126,7 @@ export function Board() {
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
       onDragCancel={handleDragCancel}
@@ -134,7 +135,7 @@ export function Board() {
         <SortableContext items={columns.map((column) => column.id)}>
           <div className="board flex gap-4 p-4 h-[calc(100vh-8rem)] items-start overflow-x-auto">
             {columns.map((column) => (
-              <Column
+              <KanbanColumn
                 key={column.id}
                 id={column.id}
                 title={column.title}
@@ -152,7 +153,7 @@ export function Board() {
                     )) || null}
                   </div>
                 </SortableContext>
-              </Column>
+              </KanbanColumn>
             ))}
           </div>
         </SortableContext>
