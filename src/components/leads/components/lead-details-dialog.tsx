@@ -1,6 +1,88 @@
 
 import { X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Lead } from "@/pages/dashboard/leads";
+import { PipelineColumn } from "@/types/pipeline";
 
-export function LeadDetailsDialog() {
-  return <div>Lead Details Dialog</div>;
+interface LeadDetailsDialogProps {
+  lead: Lead | null;
+  onClose: () => void;
+  columns?: PipelineColumn[];
+}
+
+export function LeadDetailsDialog({ lead, onClose, columns = [] }: LeadDetailsDialogProps) {
+  if (!lead) return null;
+  
+  return (
+    <Dialog open={!!lead} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader className="flex items-center justify-between">
+          <DialogTitle>Lead Details: {lead.name}</DialogTitle>
+          <button 
+            onClick={onClose} 
+            className="rounded-full p-1 hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </DialogHeader>
+        
+        <div className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Contact Information</h3>
+              <div className="mt-2 space-y-2">
+                <p className="text-sm">
+                  <span className="font-medium">Email:</span> {lead.email || "Not provided"}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Phone:</span> {lead.phone || "Not provided"}
+                </p>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Status Information</h3>
+              <div className="mt-2 space-y-2">
+                <p className="text-sm">
+                  <span className="font-medium">Status:</span> {lead.status || "None"}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Created:</span> {new Date(lead.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {lead.variables && lead.variables.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-gray-500">Variables</h3>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {lead.variables.map((variable) => (
+                  <div key={variable.id} className="border rounded p-2 text-sm">
+                    <span className="font-medium">{variable.name}:</span> {variable.value || "Not set"}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {lead.tags && lead.tags.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-gray-500">Tags</h3>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {lead.tags.map((tag: any) => (
+                  <span 
+                    key={tag.id || tag.tag?.id} 
+                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                  >
+                    {tag.name || tag.tag?.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

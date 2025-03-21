@@ -12,7 +12,10 @@ import { useWorkspace } from "@/context/workspace-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { v4 as uuidv4 } from "uuid";
 import { Tag } from "@/types/tag-types";
-import { Info } from "lucide-react";
+import { Info, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { TagsManager } from "./components/tags/tags-manager";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
@@ -228,14 +231,16 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           
           <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
             <div className="relative p-4">
-              <CustomVariables
-                variables={variables}
-                onAddVariable={(variable) => setVariables([...variables, variable])}
-                onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
-                tags={[]}
-                onAddTag={undefined}
-                onRemoveTag={undefined}
-              />
+              <ScrollArea className="h-60">
+                <CustomVariables
+                  variables={variables}
+                  onAddVariable={(variable) => setVariables([...variables, variable])}
+                  onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
+                  tags={[]}
+                  onAddTag={undefined}
+                  onRemoveTag={undefined}
+                />
+              </ScrollArea>
             </div>
           </div>
         </TabsContent>
@@ -251,7 +256,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           
           <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
             <div className="relative p-4">
-              {onAddTag && onRemoveTag && (
+              <ScrollArea className="h-60">
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
                     <Badge 
@@ -273,14 +278,14 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                     </Badge>
                   ))}
                 </div>
-              )}
-              <TagsManager 
-                leadId={''} // temporary ID for new leads
-                tags={tags}
-                isNewLead={true}
-                onAddTagForNewLead={handleAddTag}
-                onRemoveTagForNewLead={handleRemoveTag}
-              />
+                <TagsManager 
+                  leadId={''} // temporary ID for new leads
+                  tags={tags}
+                  isNewLead={true}
+                  onAddTagForNewLead={handleAddTag}
+                  onRemoveTagForNewLead={handleRemoveTag}
+                />
+              </ScrollArea>
             </div>
           </div>
         </TabsContent>

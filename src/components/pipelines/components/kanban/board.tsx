@@ -33,7 +33,7 @@ interface BoardProps {
   onLeadClick: (lead: Lead) => void;
   onEditColumnTitle: (columnId: string, title: string) => void;
   onAddStage: () => void;
-  onDeleteStage: (column: PipelineColumn) => void;
+  onDeleteStage: (column: PipelineColumn) => Promise<void>;
   onReorderColumns: (columns: PipelineColumn[]) => void;
   previewColumnId?: string | null;
   previewIndex?: number | null;
@@ -151,7 +151,7 @@ const Board: FC<BoardProps> = ({
                   onEditColumnTitle={handleFinishEditColumnTitle}
                   setEditingColumnTitle={handleEditColumnTitleChange}
                   handleColorChange={handleColorChange}
-                  onDeleteStage={(col) => handleDeleteStage(col)}
+                  onDeleteStage={onDeleteStage}
                   toggleColumnCollapse={() => toggleColumnCollapse(column.id)}
                   setEditingColumnId={setEditingColumnId}
                   onLeadClick={onLeadClick}
@@ -167,7 +167,7 @@ const Board: FC<BoardProps> = ({
       </div>
 
       <BoardDragOverlay
-        active={activeItem as Active | null}
+        active={activeItem ? (activeItem as unknown as Active) : null}
         activeId={activeItem?.id as string}
         activeData={activeItem?.data?.current}
         column={activeItem?.data?.current?.type === "Column" ? activeItem.data.current.column : null}
