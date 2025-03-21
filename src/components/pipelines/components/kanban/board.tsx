@@ -10,10 +10,11 @@ import {
   useSensors 
 } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
-import { Column } from "./column-preview";
+import { Column } from "./column"; // Corrected import path
 import { Card } from "./card";
 import { Lead } from "@/pages/dashboard/leads";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
+import { useBoardSensors } from "./hooks/use-board-sensors";
 
 interface ActiveItem {
   id: string;
@@ -21,21 +22,99 @@ interface ActiveItem {
   data: any;
 }
 
+// Extending the hook with mock data for development
 export function Board() {
+  // Temporary mock data until we properly connect to the pipeline data
+  const [columns, setColumns] = useState([
+    { id: "1", title: "New", color: "blue" },
+    { id: "2", title: "Contacted", color: "yellow" },
+    { id: "3", title: "Qualified", color: "green" }
+  ]);
+  
+  const [leads, setLeads] = useState<Record<string, Lead[]>>({
+    "1": [
+      { id: "l1", name: "John Doe", email: "john@example.com", phone: "123-456-7890", status: "New", pipeline_id: "1", created_at: "", user_id: "", updated_at: "" },
+      { id: "l2", name: "Jane Smith", email: "jane@example.com", phone: "123-456-7890", status: "New", pipeline_id: "1", created_at: "", user_id: "", updated_at: "" }
+    ],
+    "2": [
+      { id: "l3", name: "Bob Johnson", email: "bob@example.com", phone: "123-456-7890", status: "Contacted", pipeline_id: "1", created_at: "", user_id: "", updated_at: "" }
+    ],
+    "3": [
+      { id: "l4", name: "Alice Brown", email: "alice@example.com", phone: "123-456-7890", status: "Qualified", pipeline_id: "1", created_at: "", user_id: "", updated_at: "" }
+    ]
+  });
+  
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeColumn, setActiveColumn] = useState<ActiveItem | null>(null);
+  const [containers, setContainers] = useState(Object.keys(leads));
+  
+  // Get the sensors from our custom hook
+  const sensors = useBoardSensors();
+  
+  // Connect to the pipeline drag hook for actual drag handling
   const { 
-    columns, 
-    leads, 
-    sensors,
-    containers, 
-    activeId, 
-    activeColumn,
-    setActiveColumn,
-    handleDragStart, 
-    handleDragOver, 
-    handleDragEnd, 
-    handleDragCancel,
-    handleLeadClick
+    handleDragEnd: onDragEnd, 
+    handleDragOver: onDragOver, 
+    isUpdating, 
+    previewColumnId, 
+    previewIndex,
+    resetDragState
   } = usePipelineDrag();
+  
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setActiveId(active.id.toString());
+    
+    const activeData = active.data.current;
+    if (activeData?.type === 'column') {
+      const column = columns.find(col => col.id === active.id);
+      if (column) {
+        setActiveColumn({
+          id: active.id.toString(),
+          type: 'column',
+          data: column,
+          x: 0, // These will be updated in drag move
+          y: 0
+        } as any);
+      }
+    } else if (activeData?.type === 'lead') {
+      const columnId = activeData.columnId;
+      const lead = leads[columnId]?.find(l => l.id === active.id);
+      if (lead) {
+        setActiveColumn({
+          id: active.id.toString(),
+          type: 'lead',
+          data: lead,
+          x: 0, // These will be updated in drag move
+          y: 0
+        } as any);
+      }
+    }
+  };
+  
+  const handleDragMove = (event: DragMoveEvent) => {
+    if (!activeColumn) return;
+    
+    const { delta } = event;
+    setActiveColumn(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        x: delta.x,
+        y: delta.y
+      };
+    });
+  };
+  
+  const handleDragCancel = () => {
+    setActiveId(null);
+    setActiveColumn(null);
+  };
+  
+  const handleLeadClick = (lead: Lead) => {
+    console.log("Lead clicked:", lead);
+    // Implement your lead click handler
+  };
 
   if (!columns) {
     return <div>Loading...</div>;
@@ -45,8 +124,8 @@ export function Board() {
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
       onDragCancel={handleDragCancel}
     >
       <div className="board-wrapper mx-auto flex">
