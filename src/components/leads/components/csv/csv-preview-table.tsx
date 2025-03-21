@@ -2,7 +2,7 @@
 import React from "react";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { ColumnMapSelector } from "./column-map-selector";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export interface CsvData {
   headers: string[];
@@ -31,15 +31,15 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
 
   return (
     <div className="border border-gray-200 rounded-md">
-      <ScrollArea className="h-[280px]">
-        <div className="min-w-full w-max">
-          <Table>
+      <ScrollArea className="h-[280px] w-full" type="hover">
+        <div className="w-fit min-w-full">
+          <Table className="w-max">
             <TableHeader className="bg-gray-50 sticky top-0 z-10">
               <TableRow>
                 {columnMappings.map((mapping, index) => (
                   <TableHead 
                     key={index} 
-                    className="py-2 px-3 text-xs font-medium text-gray-700 bg-gray-50 border-b min-w-[180px]"
+                    className="py-2 px-3 text-xs font-medium text-gray-700 bg-gray-50 border-b min-w-[200px]"
                   >
                     <ColumnMapSelector
                       csvHeader={mapping.csvHeader}
@@ -59,7 +59,7 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
                   {row.map((cell, cellIndex) => (
                     <TableCell 
                       key={cellIndex} 
-                      className="py-2 px-3 text-sm text-gray-800 border-t border-gray-100 whitespace-nowrap overflow-hidden text-ellipsis max-w-[220px]"
+                      className="py-2 px-3 text-sm text-gray-800 border-t border-gray-100 whitespace-nowrap overflow-hidden text-ellipsis min-w-[200px]"
                       title={cell}
                     >
                       {cell || <span className="text-gray-400 italic text-xs">empty</span>}
@@ -70,6 +70,7 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
             </TableBody>
           </Table>
         </div>
+        <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </div>
   );
