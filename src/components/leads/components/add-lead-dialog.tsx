@@ -1,8 +1,9 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, UserPlus } from "lucide-react";
 import { NewLeadForm } from "@/components/leads/new-lead-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,13 @@ const contentVariants = {
 export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialogProps) {
   const [mode, setMode] = useState<"single" | "bulk" | null>(null);
   
+  // Reset mode when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setMode(null);
+    }
+  }, [isOpen]);
+
   const handleSelectMode = (selectedMode: "single" | "bulk") => {
     setMode(selectedMode);
   };
@@ -56,9 +64,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
         <Plus className="h-4 w-4 mr-2" />
         Add Lead
       </Button>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl bg-gradient-to-br from-white to-gray-50 rounded-xl will-change-transform z-[101]">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-blue-50/50 pointer-events-none" />
-        
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl rounded-xl will-change-transform z-[101] bg-white">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-2xl font-bold text-gray-800">
             Add Leads
@@ -85,7 +91,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
               <Card 
                 className={cn(
                   "cursor-pointer overflow-hidden border-2 hover:border-primary transition-all duration-150",
-                  "bg-gradient-to-br from-white to-purple-50 will-change-transform"
+                  "bg-white will-change-transform"
                 )}
                 onClick={() => handleSelectMode("single")}
               >
@@ -99,8 +105,8 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
                       <UserPlus className="h-10 w-10 text-primary" />
                     </div>
                   </motion.div>
-                  <h3 className="text-lg font-medium">Add Single Lead</h3>
-                  <p className="text-sm text-center text-muted-foreground mt-2">
+                  <h3 className="text-lg font-medium text-gray-800">Add Single Lead</h3>
+                  <p className="text-sm text-center text-gray-600 mt-2">
                     Manually add a new lead with contact details
                   </p>
                 </CardContent>
@@ -118,7 +124,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
               <Card 
                 className={cn(
                   "cursor-pointer overflow-hidden border-2 hover:border-primary transition-all duration-150",
-                  "bg-gradient-to-br from-white to-blue-50 will-change-transform"
+                  "bg-white will-change-transform"
                 )}
                 onClick={() => handleSelectMode("bulk")}
               >
@@ -132,8 +138,8 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
                       <Upload className="h-10 w-10 text-blue-500" />
                     </div>
                   </motion.div>
-                  <h3 className="text-lg font-medium">Bulk Upload</h3>
-                  <p className="text-sm text-center text-muted-foreground mt-2">
+                  <h3 className="text-lg font-medium text-gray-800">Bulk Upload</h3>
+                  <p className="text-sm text-center text-gray-600 mt-2">
                     Upload a CSV file with multiple leads
                   </p>
                 </CardContent>
@@ -150,14 +156,6 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setMode(null)} 
-              className="mb-4 hover:bg-primary/10 transition-colors"
-            >
-              ← Back to options
-            </Button>
             <NewLeadForm onSuccess={() => {
               handleClose();
               onSuccess();
@@ -173,22 +171,13 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setMode(null)} 
-              className="mb-4 hover:bg-primary/10 transition-colors"
-            >
-              ← Back to options
-            </Button>
-            
             <div className="space-y-4">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
                 whileHover={{ scale: 1.01 }}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors bg-white/50 backdrop-blur-sm will-change-transform"
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors bg-white will-change-transform"
               >
                 <div className="flex flex-col items-center justify-center gap-2">
                   <motion.div
@@ -203,13 +192,13 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
                   >
                     <Upload className="h-8 w-8 text-blue-500" />
                   </motion.div>
-                  <p className="text-sm font-medium mt-2">
+                  <p className="text-sm font-medium mt-2 text-gray-800">
                     Drag and drop a CSV file here, or click to browse
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-600">
                     File should include: name, email, phone, status
                   </p>
-                  <Button variant="outline" size="sm" className="mt-3 bg-white">
+                  <Button variant="outline" size="sm" className="mt-3 bg-white text-gray-800">
                     Select File
                   </Button>
                 </div>
@@ -219,7 +208,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
-                className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-md"
+                className="text-xs text-gray-600 bg-gray-100 p-3 rounded-md"
               >
                 <p className="mb-1 font-medium">Requirements:</p>
                 <ul className="list-disc pl-4 space-y-1">
@@ -235,10 +224,10 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
                 transition={{ duration: 0.2 }}
                 className="flex justify-end pt-4"
               >
-                <Button onClick={handleClose} variant="outline" className="mr-2">
+                <Button onClick={handleClose} variant="outline" className="mr-2 text-gray-800">
                   Cancel
                 </Button>
-                <Button disabled className="ml-2 bg-primary hover:bg-primary/90">
+                <Button disabled className="ml-2 bg-primary hover:bg-primary/90 text-white">
                   Upload Leads
                 </Button>
               </motion.div>

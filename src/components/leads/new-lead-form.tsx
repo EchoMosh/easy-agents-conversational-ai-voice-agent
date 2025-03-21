@@ -53,6 +53,11 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       return;
     }
 
+    if (!phone.trim()) {
+      toast.error("Phone number is required");
+      return;
+    }
+
     setIsLoading(true);
     const formData = new FormData(e.currentTarget);
     const firstName = formData.get("firstName") as string;
@@ -121,14 +126,15 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2 mb-2">
-          <TabsTrigger value="contact">Contact Info</TabsTrigger>
-          <TabsTrigger value="variables">Variables & Tags</TabsTrigger>
+          <TabsTrigger value="contact" className="text-gray-800">Contact Info</TabsTrigger>
+          <TabsTrigger value="variables" className="text-gray-800">Variables</TabsTrigger>
         </TabsList>
 
         <TabsContent value="contact" className="space-y-4 pt-2">
           <ContactInfoForm 
             phone={phone}
             onPhoneChange={setPhone}
+            required={true}
           />
           
           <div className="pt-2">
@@ -139,7 +145,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
               refetchPipelines={refetchPipelines}
               required={false}
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-gray-600 mt-1">
               Pipeline selection is optional
             </p>
           </div>
@@ -157,7 +163,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       <Button 
         type="submit" 
         disabled={isLoading || !currentWorkspace} 
-        className="w-full h-11 text-base bg-primary/90 hover:bg-primary transition-all duration-200"
+        className="w-full h-11 text-base bg-primary/90 hover:bg-primary transition-all duration-200 text-white"
       >
         {isLoading ? "Adding..." : `Save Lead${variables.length > 0 ? ` with ${variables.length} Variable${variables.length === 1 ? '' : 's'}` : ''}`}
       </Button>
