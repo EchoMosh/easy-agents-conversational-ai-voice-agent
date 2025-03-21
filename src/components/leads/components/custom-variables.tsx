@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Plus, Tag, X, Info } from "lucide-react";
+import { Plus, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,29 +78,9 @@ export function CustomVariables({
 
   return (
     <div className="pt-4">
-      <div className="flex items-center justify-between mb-4">
-        <Label className="text-lg font-medium text-gray-800">Custom Fields</Label>
-        <Tabs 
-          value={activeTab} 
-          onValueChange={(value) => setActiveTab(value as "variables" | "tags")} 
-          className="w-auto"
-        >
-          <TabsList className="grid w-[240px] grid-cols-2">
-            <TabsTrigger value="variables" className="text-sm">Variables</TabsTrigger>
-            <TabsTrigger value="tags" className="text-sm">Tags</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
       <TabsContent value="variables" className="mt-0" hidden={activeTab !== "variables"}>
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-start gap-2">
-            <h3 className="text-base font-medium text-gray-800">Variables</h3>
-            <div className="bg-blue-50/50 p-1.5 rounded-md border border-blue-100/50 flex items-start text-xs text-blue-700/80 max-w-md">
-              <Info className="h-3 w-3 mt-0.5 mr-1.5 flex-shrink-0 text-blue-400" />
-              <p className="text-[11px] text-blue-600/80">For storing data that can be used in workflows</p>
-            </div>
-          </div>
+          <h3 className="text-base font-medium text-gray-800">Variables</h3>
           <Dialog open={isAddingVariable} onOpenChange={setIsAddingVariable}>
             <DialogTrigger asChild>
               <Button type="button" variant="outline" size="sm" className="h-9 px-4 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors text-gray-800">
@@ -187,13 +167,7 @@ export function CustomVariables({
 
       <TabsContent value="tags" className="mt-0" hidden={activeTab !== "tags"}>
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-start gap-2">
-            <h3 className="text-base font-medium text-gray-800">Tags</h3>
-            <div className="bg-green-50/50 p-1.5 rounded-md border border-green-100/50 flex items-start text-xs text-green-700/80 max-w-md">
-              <Info className="h-3 w-3 mt-0.5 mr-1.5 flex-shrink-0 text-green-400" />
-              <p className="text-[11px] text-green-600/80">For organizing and filtering your leads</p>
-            </div>
-          </div>
+          <h3 className="text-base font-medium text-gray-800">Tags</h3>
           <Dialog open={isAddingTag} onOpenChange={setIsAddingTag}>
             <DialogTrigger asChild>
               <Button type="button" variant="outline" size="sm" className="h-9 px-4 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors text-gray-800">

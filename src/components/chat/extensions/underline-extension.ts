@@ -30,7 +30,13 @@ export const UnderlineExtension = Mark.create({
   parseHTML() {
     return [
       { tag: 'u' },
-      { style: 'text-decoration', getAttrs: (value) => (value === 'underline') ? {} : false },
+      { 
+        style: 'text-decoration', 
+        getAttrs: (value) => {
+          if (value === 'underline') return {};
+          return false;
+        } 
+      },
     ];
   },
 

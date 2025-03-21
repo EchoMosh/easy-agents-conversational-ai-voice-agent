@@ -45,11 +45,11 @@ export function Card({ lead, isOverlay = false, onClick }: CardProps) {
       {...listeners}
     >
       <h3 className="font-medium text-gray-900 truncate">{lead.name}</h3>
-      {lead.company && (
-        <p className="text-sm text-gray-500 truncate">{lead.company}</p>
-      )}
       {lead.email && (
         <p className="text-sm text-gray-500 truncate">{lead.email}</p>
+      )}
+      {lead.phone && (
+        <p className="text-sm text-gray-500 truncate">{lead.phone}</p>
       )}
     </div>
   );
