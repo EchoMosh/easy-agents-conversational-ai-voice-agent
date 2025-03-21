@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,8 +11,6 @@ import { useWorkspace } from "@/context/workspace-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { v4 as uuidv4 } from "uuid";
 import { Tag } from "@/types/tag-types";
-import { Info, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { TagsManager } from "./components/tags/tags-manager";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -60,7 +57,6 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         return;
       }
 
-      // Create a temporary tag ID for UI purposes
       const tempTag: Tag = {
         id: uuidv4(),
         name,
@@ -70,7 +66,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       
       setTags([...tags, tempTag]);
       toast.success("Tag added");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding tag:", error);
       toast.error("Failed to add tag");
     }
@@ -105,11 +101,9 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         throw new Error("No authenticated user found");
       }
 
-      // Find the selected pipeline if one was chosen
       const selectedPipeline = selectedPipelineId ? 
         pipelines.find(p => p.id === selectedPipelineId) : null;
       
-      // Get the first column's title to use as the initial status if a pipeline was selected
       let initialStatus = 'new';
       if (selectedPipeline && selectedPipeline.columns.length > 0) {
         initialStatus = selectedPipeline.columns[0].title;
@@ -131,7 +125,6 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
 
       if (leadError) throw leadError;
 
-      // Process variables if any exist
       if (variables.length > 0) {
         const { error: variablesError } = await supabase
           .from("lead_variables")
@@ -143,13 +136,9 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         if (variablesError) throw variablesError;
       }
 
-      // Process tags if any exist
       if (tags.length > 0) {
-        // First create any new tags
         for (const tag of tags) {
-          // Check if this is a temporary tag (created during this session)
           if (tag.id.includes('-')) {
-            // Create the actual tag in the database
             const { data: newTag, error: newTagError } = await supabase
               .from('tags')
               .insert({
@@ -162,7 +151,6 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
               
             if (newTagError) throw newTagError;
             
-            // Associate the tag with the lead
             const { error: linkError } = await supabase
               .from('lead_tags')
               .insert({
@@ -186,27 +174,27 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <Tabs 
         defaultValue="contact" 
         value={activeTab} 
         onValueChange={setActiveTab} 
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-3 mb-2">
-          <TabsTrigger value="contact" className="text-gray-800">Contact Info</TabsTrigger>
-          <TabsTrigger value="variables" className="text-gray-800">Variables</TabsTrigger>
-          <TabsTrigger value="tags" className="text-gray-800">Tags</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 mb-2 bg-gray-100/70">
+          <TabsTrigger value="contact" className="text-gray-800 data-[state=active]:bg-white">Contact Info</TabsTrigger>
+          <TabsTrigger value="variables" className="text-gray-800 data-[state=active]:bg-white">Variables</TabsTrigger>
+          <TabsTrigger value="tags" className="text-gray-800 data-[state=active]:bg-white">Tags</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="contact" className="space-y-4 pt-2">
+        <TabsContent value="contact" className="space-y-4 pt-1 mt-0">
           <ContactInfoForm 
             phone={phone}
             onPhoneChange={setPhone}
             required={true}
           />
           
-          <div className="pt-2">
+          <div className="pt-1">
             <PipelineSelect
               pipelines={pipelines}
               selectedPipelineId={selectedPipelineId}
@@ -220,71 +208,37 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="variables" className="space-y-4 pt-2">
-          <div className="flex items-start gap-2 mb-4">
-            <Info className="h-4 w-4 mt-1 text-blue-500" />
-            <p className="text-sm text-blue-700">
-              Variables are custom fields that can be used in workflows and automations. 
-              Use them to store important lead information you'll need later.
-            </p>
-          </div>
-          
-          <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
-            <div className="relative p-4">
-              <ScrollArea className="h-60">
-                <CustomVariables
-                  variables={variables}
-                  onAddVariable={(variable) => setVariables([...variables, variable])}
-                  onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
-                  tags={[]}
-                  onAddTag={undefined}
-                  onRemoveTag={undefined}
-                />
+        <TabsContent value="variables" className="pt-1 mt-0">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="relative">
+              <ScrollArea className="h-[280px]">
+                <div className="p-3 pt-0">
+                  <CustomVariables
+                    variables={variables}
+                    onAddVariable={(variable) => setVariables([...variables, variable])}
+                    onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
+                  />
+                </div>
               </ScrollArea>
             </div>
           </div>
         </TabsContent>
         
-        <TabsContent value="tags" className="space-y-4 pt-2">
-          <div className="flex items-start gap-2 mb-4">
-            <Info className="h-4 w-4 mt-1 text-green-500" />
-            <p className="text-sm text-green-700">
-              Tags help you organize and filter your leads. Use them to categorize leads by source, 
-              priority, status, or any other classification that makes sense for your workflow.
-            </p>
-          </div>
-          
-          <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
-            <div className="relative p-4">
-              <ScrollArea className="h-60">
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <Badge 
-                      key={tag.id} 
-                      variant="secondary" 
-                      className="pl-3 pr-2 py-1.5 h-8 text-sm bg-green-50 hover:bg-green-100 
-                        transition-all duration-200 border border-green-100 shadow-sm text-green-800"
-                    >
-                      <span className="font-medium">{tag.name}</span>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleRemoveTag(tag.id)} 
-                        className="h-5 w-5 ml-2 hover:bg-green-200 rounded-full"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
+        <TabsContent value="tags" className="pt-1 mt-0">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="relative">
+              <ScrollArea className="h-[280px]">
+                <div className="p-3 pt-0">
+                  <div className="pt-4">
+                    <TagsManager 
+                      leadId={''} // temporary ID for new leads
+                      tags={tags}
+                      isNewLead={true}
+                      onAddTagForNewLead={handleAddTag}
+                      onRemoveTagForNewLead={handleRemoveTag}
+                    />
+                  </div>
                 </div>
-                <TagsManager 
-                  leadId={''} // temporary ID for new leads
-                  tags={tags}
-                  isNewLead={true}
-                  onAddTagForNewLead={handleAddTag}
-                  onRemoveTagForNewLead={handleRemoveTag}
-                />
               </ScrollArea>
             </div>
           </div>

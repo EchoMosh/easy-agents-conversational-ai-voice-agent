@@ -149,13 +149,13 @@ export function TagsManager({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-gray-900">Tags</h3>
+        <h3 className="text-base font-medium text-gray-800">Lead Tags</h3>
         <Dialog open={isAddingTag} onOpenChange={setIsAddingTag}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8">
-              <PlusCircle className="w-4 h-4 mr-2" />
+            <Button variant="outline" size="sm" className="h-9 px-4">
+              <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
               Add Tag
             </Button>
           </DialogTrigger>

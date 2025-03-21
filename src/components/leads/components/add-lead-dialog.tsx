@@ -150,7 +150,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
         
         {mode === "single" && (
           <motion.div 
-            className="py-4 px-6"
+            className="py-2 px-6 pb-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

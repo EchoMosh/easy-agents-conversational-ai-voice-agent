@@ -77,9 +77,9 @@ export function CustomVariables({
   };
 
   return (
-    <div className="pt-8 py-0">
-      <div className="flex items-center justify-between mb-6">
-        <Label className="text-xl font-semibold text-gray-800">Custom Fields</Label>
+    <div className="pt-4">
+      <div className="flex items-center justify-between mb-4">
+        <Label className="text-lg font-medium text-gray-800">Custom Fields</Label>
         <Tabs 
           value={activeTab} 
           onValueChange={(value) => setActiveTab(value as "variables" | "tags")} 
@@ -95,16 +95,16 @@ export function CustomVariables({
       <TabsContent value="variables" className="mt-0" hidden={activeTab !== "variables"}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-start gap-2">
-            <h3 className="text-lg font-medium text-gray-800">Variables</h3>
-            <div className="bg-blue-50 p-1.5 rounded-md border border-blue-100 flex items-start text-xs text-blue-700 max-w-md">
-              <Info className="h-3.5 w-3.5 mt-0.5 mr-1.5 flex-shrink-0 text-blue-500" />
-              <p>Variables are custom fields that can be used in workflows. Use them to store important lead information you'll need later.</p>
+            <h3 className="text-base font-medium text-gray-800">Variables</h3>
+            <div className="bg-blue-50/50 p-1.5 rounded-md border border-blue-100/50 flex items-start text-xs text-blue-700/80 max-w-md">
+              <Info className="h-3 w-3 mt-0.5 mr-1.5 flex-shrink-0 text-blue-400" />
+              <p className="text-[11px] text-blue-600/80">For storing data that can be used in workflows</p>
             </div>
           </div>
           <Dialog open={isAddingVariable} onOpenChange={setIsAddingVariable}>
             <DialogTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="h-10 px-5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors text-gray-800">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button type="button" variant="outline" size="sm" className="h-9 px-4 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors text-gray-800">
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
                 Add Variable
               </Button>
             </DialogTrigger>
@@ -120,7 +120,7 @@ export function CustomVariables({
                     placeholder="e.g., Source (spaces will be converted to underscores)" 
                     value={newVariable.name} 
                     onChange={e => setNewVariable(prev => ({ ...prev, name: e.target.value }))}
-                    className="h-11 text-base border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
+                    className="h-10 text-base border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
                   />
                   {newVariable.name.includes(' ') && (
                     <p className="text-xs text-amber-600">
@@ -135,7 +135,7 @@ export function CustomVariables({
                     placeholder="e.g., Website" 
                     value={newVariable.value} 
                     onChange={e => setNewVariable(prev => ({ ...prev, value: e.target.value }))}
-                    className="h-11 text-base border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
+                    className="h-10 text-base border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
                   />
                 </div>
               </div>
@@ -153,8 +153,8 @@ export function CustomVariables({
           </Dialog>
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
-          <div className="relative p-6">
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <div className="relative p-3">
             <ScrollArea className="h-[200px] pr-4">
               {variables.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -171,12 +171,12 @@ export function CustomVariables({
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Tag className="w-8 h-8 mb-3 text-gray-400" />
+                  <Tag className="w-6 h-6 mb-2 text-gray-400" />
                   <p className="text-sm text-gray-600">
                     No variables added yet
                   </p>
-                  <p className="text-xs text-gray-500">
-                    Click "Add Variable" to store custom information for this lead
+                  <p className="text-xs text-gray-500 mt-1">
+                    Click "Add Variable" to store custom information
                   </p>
                 </div>
               )}
@@ -188,16 +188,16 @@ export function CustomVariables({
       <TabsContent value="tags" className="mt-0" hidden={activeTab !== "tags"}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-start gap-2">
-            <h3 className="text-lg font-medium text-gray-800">Tags</h3>
-            <div className="bg-green-50 p-1.5 rounded-md border border-green-100 flex items-start text-xs text-green-700 max-w-md">
-              <Info className="h-3.5 w-3.5 mt-0.5 mr-1.5 flex-shrink-0 text-green-500" />
-              <p>Tags help you organize and filter your leads. Use them to categorize leads by source, priority, status, or any other classification.</p>
+            <h3 className="text-base font-medium text-gray-800">Tags</h3>
+            <div className="bg-green-50/50 p-1.5 rounded-md border border-green-100/50 flex items-start text-xs text-green-700/80 max-w-md">
+              <Info className="h-3 w-3 mt-0.5 mr-1.5 flex-shrink-0 text-green-400" />
+              <p className="text-[11px] text-green-600/80">For organizing and filtering your leads</p>
             </div>
           </div>
           <Dialog open={isAddingTag} onOpenChange={setIsAddingTag}>
             <DialogTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="h-10 px-5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors text-gray-800">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button type="button" variant="outline" size="sm" className="h-9 px-4 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors text-gray-800">
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
                 Add Tag
               </Button>
             </DialogTrigger>
@@ -213,7 +213,7 @@ export function CustomVariables({
                     placeholder="e.g., High Priority" 
                     value={newTagName} 
                     onChange={e => setNewTagName(e.target.value)}
-                    className="h-11 text-base border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
+                    className="h-10 text-base border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
                   />
                 </div>
               </div>
@@ -231,8 +231,8 @@ export function CustomVariables({
           </Dialog>
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
-          <div className="relative p-6">
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <div className="relative p-3">
             <ScrollArea className="h-[200px] pr-4">
               {tags.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -256,12 +256,12 @@ export function CustomVariables({
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Tag className="w-8 h-8 mb-3 text-gray-400" />
+                  <Tag className="w-6 h-6 mb-2 text-gray-400" />
                   <p className="text-sm text-gray-600">
                     No tags added yet
                   </p>
-                  <p className="text-xs text-gray-500">
-                    Click "Add Tag" to help organize and categorize this lead
+                  <p className="text-xs text-gray-500 mt-1">
+                    Click "Add Tag" to help organize this lead
                   </p>
                 </div>
               )}
