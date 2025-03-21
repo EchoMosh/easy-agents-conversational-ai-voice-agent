@@ -25,7 +25,7 @@ export const Underline = Mark.create({
     return ['u', mergeAttributes(HTMLAttributes), 0];
   },
   
-  // Commands that can be called from the editor - fixed return type
+  // Commands that can be called from the editor
   addCommands() {
     return {
       setUnderline: () => ({ commands }) => {

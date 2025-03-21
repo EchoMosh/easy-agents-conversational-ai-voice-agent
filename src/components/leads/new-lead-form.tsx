@@ -9,6 +9,7 @@ import { PipelineSelect } from "./components/pipeline-select";
 import { ContactInfoForm } from "./components/contact-info-form";
 import { CustomVariables } from "./components/custom-variables";
 import { useWorkspace } from "@/context/workspace-context";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
@@ -24,6 +25,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const [variables, setVariables] = useState<Variable[]>([]);
   const [phone, setPhone] = useState("");
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("contact");
   const { currentWorkspace } = useWorkspace();
 
   const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
@@ -46,11 +48,6 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!selectedPipelineId) {
-      toast.error("Please select a pipeline");
-      return;
-    }
-
     if (!currentWorkspace?.id) {
       toast.error("No workspace selected");
       return;
@@ -68,13 +65,13 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         throw new Error("No authenticated user found");
       }
 
-      // Find the selected pipeline
-      const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
+      // Find the selected pipeline if one was chosen
+      const selectedPipeline = selectedPipelineId ? 
+        pipelines.find(p => p.id === selectedPipelineId) : null;
       
-      // Get the first column's title to use as the initial status
+      // Get the first column's title to use as the initial status if a pipeline was selected
       let initialStatus = 'new';
       if (selectedPipeline && selectedPipeline.columns.length > 0) {
-        // Get the first column's title
         initialStatus = selectedPipeline.columns[0].title;
       }
 
@@ -85,7 +82,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           email: email || null,
           phone: phone || null,
           user_id: user.id,
-          pipeline_id: selectedPipelineId,
+          pipeline_id: selectedPipelineId || null,
           status: initialStatus,
           workspace_id: currentWorkspace.id
         }])
@@ -116,26 +113,46 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="space-y-6">
-        <PipelineSelect
-          pipelines={pipelines}
-          selectedPipelineId={selectedPipelineId}
-          onPipelineChange={setSelectedPipelineId}
-          refetchPipelines={refetchPipelines}
-        />
-        
-        <ContactInfoForm 
-          phone={phone}
-          onPhoneChange={setPhone}
-        />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Tabs 
+        defaultValue="contact" 
+        value={activeTab} 
+        onValueChange={setActiveTab} 
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-2 mb-2">
+          <TabsTrigger value="contact">Contact Info</TabsTrigger>
+          <TabsTrigger value="variables">Variables & Tags</TabsTrigger>
+        </TabsList>
 
-        <CustomVariables
-          variables={variables}
-          onAddVariable={(variable) => setVariables([...variables, variable])}
-          onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
-        />
-      </div>
+        <TabsContent value="contact" className="space-y-4 pt-2">
+          <ContactInfoForm 
+            phone={phone}
+            onPhoneChange={setPhone}
+          />
+          
+          <div className="pt-2">
+            <PipelineSelect
+              pipelines={pipelines}
+              selectedPipelineId={selectedPipelineId}
+              onPipelineChange={setSelectedPipelineId}
+              refetchPipelines={refetchPipelines}
+              required={false}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Pipeline selection is optional
+            </p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="variables" className="space-y-4 pt-2">
+          <CustomVariables
+            variables={variables}
+            onAddVariable={(variable) => setVariables([...variables, variable])}
+            onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
+          />
+        </TabsContent>
+      </Tabs>
 
       <Button 
         type="submit" 
