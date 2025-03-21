@@ -30,7 +30,7 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
   const previewRows = data.rows.slice(0, maxPreviewRows);
 
   return (
-    <div className="border border-gray-200 rounded-md overflow-hidden">
+    <div className="border border-gray-200 rounded-md">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader className="bg-gray-50 sticky top-0 z-10">
@@ -38,7 +38,7 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
               {columnMappings.map((mapping, index) => (
                 <TableHead 
                   key={index} 
-                  className="py-2 px-3 text-xs font-medium text-gray-700 bg-gray-50 border-b"
+                  className="py-2 px-3 text-xs font-medium text-gray-700 bg-gray-50 border-b min-w-[150px]"
                 >
                   <ColumnMapSelector
                     csvHeader={mapping.csvHeader}
@@ -58,7 +58,8 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
                 {row.map((cell, cellIndex) => (
                   <TableCell 
                     key={cellIndex} 
-                    className="py-2 px-3 text-sm text-gray-800 border-t border-gray-100"
+                    className="py-2 px-3 text-sm text-gray-800 border-t border-gray-100 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
+                    title={cell}
                   >
                     {cell || <span className="text-gray-400 italic text-xs">empty</span>}
                   </TableCell>
@@ -70,4 +71,4 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
       </div>
     </div>
   );
-};
+}

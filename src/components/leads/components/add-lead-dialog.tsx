@@ -80,7 +80,13 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
         <Plus className="h-4 w-4 mr-2" />
         Add Lead
       </Button>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl rounded-xl will-change-transform z-[101] bg-white">
+      <DialogContent 
+        className={cn(
+          "p-0 overflow-hidden border-none shadow-xl rounded-xl will-change-transform z-[101] bg-white",
+          // Make dialog wider, especially for CSV preview mode
+          mode === "csvPreview" ? "sm:max-w-[750px] w-[90vw]" : "sm:max-w-[500px]"
+        )}
+      >
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-2xl font-bold text-gray-800">
             {mode === "csvPreview" ? "Import Leads from CSV" : "Add Leads"}

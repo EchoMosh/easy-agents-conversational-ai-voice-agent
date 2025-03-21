@@ -127,14 +127,16 @@ export const CsvPreviewStage: React.FC<CsvPreviewStageProps> = ({ onNext, onCanc
           </div>
           
           <ScrollArea className="h-[260px] border rounded-md">
-            {csvData && (
-              <CsvPreviewTable
-                data={csvData}
-                columnMappings={columnMappings}
-                onUpdateMapping={handleUpdateMapping}
-                maxPreviewRows={5}
-              />
-            )}
+            <div className="overflow-x-auto min-w-full w-max">
+              {csvData && (
+                <CsvPreviewTable
+                  data={csvData}
+                  columnMappings={columnMappings}
+                  onUpdateMapping={handleUpdateMapping}
+                  maxPreviewRows={5}
+                />
+              )}
+            </div>
           </ScrollArea>
 
           {error && (
