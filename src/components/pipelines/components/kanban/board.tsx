@@ -12,7 +12,9 @@ import {
   TouchSensor,
   MouseSensor,
   KeyboardSensor,
-  closestCorners
+  closestCorners,
+  type Active,
+  KeyboardCoordinateGetter
 } from "@dnd-kit/core";
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { restrictToParentElement, restrictToHorizontalAxis, restrictToVerticalAxis } from "@dnd-kit/modifiers";
@@ -22,6 +24,7 @@ import { useBoardColumns } from "./hooks/use-board-columns";
 import { KanbanColumn } from "./column";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
+import { useColumnEditor } from "./hooks/use-column-editor";
 
 interface BoardProps {
   pipelines: Pipeline[];
@@ -62,22 +65,25 @@ const Board: FC<BoardProps> = ({
     getDraggingLeadData,
   } = useKanbanDrag(selectedPipeline, leads);
 
+  // Use the column editor hook separately from board columns
   const {
     editingColumnId,
     editingColumnTitle,
-    collapsedColumns,
-    handleEditColumnTitleChange,
-    handleEditColumnTitle,
-    handleFinishEditColumnTitle,
-    handleToggleColumnCollapse,
-    handleDeleteColumn,
+    setEditingColumnId,
+    setEditingColumnTitle,
+    isColumnCollapsed,
+    toggleColumnCollapse,
+    handleDeleteStage,
     handleColorChange,
-  } = useBoardColumns(onEditColumnTitle, onDeleteStage);
+  } = useColumnEditor({
+    onEditColumnTitle,
+    onAddStage,
+    onDeleteStage,
+    getColumnLeads
+  });
 
-  // Prepare columns for sortable context
-  const columnIds = useMemo(() => {
-    return selectedPipeline.columns.map(column => column.id);
-  }, [selectedPipeline]);
+  // Get column IDs for sortable context
+  const { columnsId } = useBoardColumns(selectedPipeline, leads.filter(l => l.pipeline_id === selectedPipeline.id));
 
   // Define sensors for drag operations
   const sensors = useSensors(
@@ -93,11 +99,26 @@ const Board: FC<BoardProps> = ({
       },
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: e => {
-        return [0, 0];  // Provide default coordinates
-      },
+      // Fix the coordinate getter to return a Coordinates object
+      coordinateGetter: ((e: KeyboardEvent) => {
+        return {
+          x: 0,
+          y: 0
+        };
+      }) as KeyboardCoordinateGetter
     })
   );
+
+  const handleFinishEditColumnTitle = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && editingColumnId) {
+      onEditColumnTitle(editingColumnId, editingColumnTitle);
+      setEditingColumnId(null);
+    }
+  };
+
+  const handleEditColumnTitleChange = (title: string) => {
+    setEditingColumnTitle(title);
+  };
 
   return (
     <DndContext
@@ -110,13 +131,13 @@ const Board: FC<BoardProps> = ({
     >
       <div className="h-full w-full">
         <SortableContext
-          items={columnIds}
+          items={columnsId}
           strategy={horizontalListSortingStrategy}
         >
           <div className={`column-container ${activeItem ? 'column-container-dragging' : ''}`}>
             {selectedPipeline.columns.map((column) => {
               const columnLeads = getColumnLeads(column.id);
-              const isCollapsed = collapsedColumns.includes(column.id);
+              const isCollapsed = isColumnCollapsed(column.id);
               const isPreviewTarget = previewColumnId === column.id;
               
               return (
@@ -130,9 +151,9 @@ const Board: FC<BoardProps> = ({
                   onEditColumnTitle={handleFinishEditColumnTitle}
                   setEditingColumnTitle={handleEditColumnTitleChange}
                   handleColorChange={handleColorChange}
-                  onDeleteStage={(col) => handleDeleteColumn(col)}
-                  toggleColumnCollapse={() => handleToggleColumnCollapse(column.id)}
-                  setEditingColumnId={handleEditColumnTitle}
+                  onDeleteStage={(col) => handleDeleteStage(col)}
+                  toggleColumnCollapse={() => toggleColumnCollapse(column.id)}
+                  setEditingColumnId={setEditingColumnId}
                   onLeadClick={onLeadClick}
                   currentPipelineId={selectedPipeline.id}
                   isPreviewTarget={isPreviewTarget}
@@ -146,7 +167,7 @@ const Board: FC<BoardProps> = ({
       </div>
 
       <BoardDragOverlay
-        active={activeItem}
+        active={activeItem as Active | null}
         activeId={activeItem?.id as string}
         activeData={activeItem?.data?.current}
         column={activeItem?.data?.current?.type === "Column" ? activeItem.data.current.column : null}

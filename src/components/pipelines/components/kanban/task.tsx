@@ -51,7 +51,7 @@ export function KanbanTask({ lead, columnId, onClick, isPreview = false }: Kanba
       <Card className="bg-card border-border p-3 rounded-md shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer">
         <div className="space-y-1">
           <h4 className="font-medium text-card-foreground">
-            {lead.first_name} {lead.last_name}
+            {lead.name}
           </h4>
           {lead.email && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
