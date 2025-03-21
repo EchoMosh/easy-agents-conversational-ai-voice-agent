@@ -1,5 +1,6 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface ColumnMapSelectorProps {
   csvHeader: string;
@@ -13,17 +14,17 @@ export const ColumnMapSelector: React.FC<ColumnMapSelectorProps> = ({
   onChange,
 }) => {
   const fieldOptions = [
-    { value: "name", label: "Name" },
-    { value: "email", label: "Email" },
-    { value: "phone", label: "Phone" },
-    { value: "status", label: "Status" },
-    { value: "source", label: "Source" },
-    { value: null, label: "Ignore" },
+    { value: "name", label: "Name", required: true },
+    { value: "email", label: "Email", required: true },
+    { value: "phone", label: "Phone", required: false },
+    { value: "status", label: "Status", required: false },
+    { value: "source", label: "Source", required: false },
+    { value: null, label: "Ignore", required: false },
   ];
 
   return (
     <div className="space-y-1">
-      <p className="text-xs text-gray-500 truncate max-w-[120px]" title={csvHeader}>
+      <p className="text-xs font-medium text-gray-700 truncate max-w-[120px]" title={csvHeader}>
         {csvHeader}
       </p>
       <Select
@@ -33,7 +34,7 @@ export const ColumnMapSelector: React.FC<ColumnMapSelectorProps> = ({
         <SelectTrigger className="w-[120px] h-8 text-xs">
           <SelectValue placeholder="Map to..." />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" className="w-[120px] z-[9999]">
           {fieldOptions.map((option) => (
             <SelectItem
               key={option.value || "ignore"}
@@ -41,6 +42,11 @@ export const ColumnMapSelector: React.FC<ColumnMapSelectorProps> = ({
               className="text-xs"
             >
               {option.label}
+              {option.required && (
+                <Badge variant="outline" className="ml-1 py-0 text-[10px] font-normal">
+                  req
+                </Badge>
+              )}
             </SelectItem>
           ))}
         </SelectContent>

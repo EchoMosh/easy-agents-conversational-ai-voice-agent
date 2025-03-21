@@ -89,9 +89,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileData, onError 
 
   return (
     <div
-      className={`border-2 border-dashed rounded-lg p-8 text-center ${
-        isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/70'
-      } transition-colors`}
+      className={`border-2 border-dashed rounded-lg p-10 text-center ${
+        isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
+      } transition-colors duration-200`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -104,36 +104,35 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileData, onError 
         onChange={handleFileChange}
       />
       
-      <div className="flex flex-col items-center justify-center gap-3">
-        <div className={`rounded-full p-3 ${isDragging ? 'bg-primary/10' : 'bg-blue-500/10'}`}>
+      <div className="flex flex-col items-center justify-center gap-4">
+        <div className={`rounded-full p-4 ${isDragging ? 'bg-blue-100' : 'bg-blue-50'}`}>
           {isLoading ? (
-            <div className="h-10 w-10 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            <div className="h-10 w-10 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin" />
           ) : (
             <Upload className="h-10 w-10 text-blue-500" />
           )}
         </div>
         
         <div className="space-y-2">
-          <p className="text-base font-medium text-gray-800">
-            {isLoading ? 'Processing file...' : 'Drag and drop a CSV file here'}
+          <p className="text-lg font-medium text-gray-800">
+            {isLoading ? 'Processing file...' : 'Drag and drop your CSV file'}
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-base text-gray-600">
             or
           </p>
           <Button 
             variant="outline"
-            size="sm"
             type="button"
             disabled={isLoading}
             onClick={() => fileInputRef.current?.click()}
             className="mt-2"
           >
-            <FileText className="mr-1.5 h-4 w-4" />
+            <FileText className="mr-2 h-4 w-4" />
             Select CSV File
           </Button>
         </div>
         
-        <div className="text-xs text-gray-500 mt-4 max-w-sm">
+        <div className="text-sm text-gray-500 mt-4 max-w-md">
           <p>File should include columns for: name, email, phone, etc.</p>
           <p className="mt-1">Maximum file size: 5MB</p>
         </div>

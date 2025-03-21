@@ -2,6 +2,7 @@
 import React from "react";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { ColumnMapSelector } from "./column-map-selector";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface CsvData {
   headers: string[];
@@ -29,33 +30,44 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
   const previewRows = data.rows.slice(0, maxPreviewRows);
 
   return (
-    <div className="overflow-x-auto rounded-md border border-gray-200">
-      <Table>
-        <TableHeader className="bg-gray-50">
-          <TableRow>
-            {columnMappings.map((mapping, index) => (
-              <TableHead key={index} className="py-3 px-4 text-xs font-medium text-gray-700">
-                <ColumnMapSelector
-                  csvHeader={mapping.csvHeader}
-                  selectedField={mapping.fieldName}
-                  onChange={(value) => onUpdateMapping(index, value)}
-                />
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {previewRows.map((row, rowIndex) => (
-            <TableRow key={rowIndex} className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-              {row.map((cell, cellIndex) => (
-                <TableCell key={cellIndex} className="py-2 px-4 text-sm text-gray-800">
-                  {cell || <span className="text-gray-400 italic">empty</span>}
-                </TableCell>
+    <div className="border border-gray-200 rounded-md overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader className="bg-gray-50 sticky top-0 z-10">
+            <TableRow>
+              {columnMappings.map((mapping, index) => (
+                <TableHead 
+                  key={index} 
+                  className="py-2 px-3 text-xs font-medium text-gray-700 bg-gray-50 border-b"
+                >
+                  <ColumnMapSelector
+                    csvHeader={mapping.csvHeader}
+                    selectedField={mapping.fieldName}
+                    onChange={(value) => onUpdateMapping(index, value)}
+                  />
+                </TableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {previewRows.map((row, rowIndex) => (
+              <TableRow 
+                key={rowIndex} 
+                className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}
+              >
+                {row.map((cell, cellIndex) => (
+                  <TableCell 
+                    key={cellIndex} 
+                    className="py-2 px-3 text-sm text-gray-800 border-t border-gray-100"
+                  >
+                    {cell || <span className="text-gray-400 italic text-xs">empty</span>}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

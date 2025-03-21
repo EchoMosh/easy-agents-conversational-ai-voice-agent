@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileUploader } from "./file-uploader";
 import { CsvPreviewTable, CsvData, ColumnMapping } from "./csv-preview-table";
-import { Info, AlertCircle } from "lucide-react";
+import { Info, AlertCircle, FileText } from "lucide-react";
 
 interface CsvPreviewStageProps {
   onNext: (data: CsvData, mappings: ColumnMapping[]) => void;
@@ -25,11 +25,11 @@ export const CsvPreviewStage: React.FC<CsvPreviewStageProps> = ({ onNext, onCanc
         let fieldName: string | null = null;
         
         // Auto-map based on common header names
-        if (lowerHeader.includes("name")) fieldName = "name";
-        else if (lowerHeader.includes("email")) fieldName = "email";
-        else if (lowerHeader.includes("phone") || lowerHeader.includes("tel")) fieldName = "phone";
+        if (lowerHeader.includes("name") || lowerHeader === "company") fieldName = "name";
+        else if (lowerHeader.includes("email") || lowerHeader === "e-mail") fieldName = "email";
+        else if (lowerHeader.includes("phone") || lowerHeader.includes("tel") || lowerHeader === "mobile") fieldName = "phone";
         else if (lowerHeader.includes("status")) fieldName = "status";
-        else if (lowerHeader.includes("source")) fieldName = "source";
+        else if (lowerHeader.includes("source") || lowerHeader === "where from" || lowerHeader === "origin") fieldName = "source";
         
         return { csvHeader: header, fieldName };
       });
@@ -86,18 +86,19 @@ export const CsvPreviewStage: React.FC<CsvPreviewStageProps> = ({ onNext, onCanc
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {!csvData ? (
         <FileUploader onFileData={handleFileData} onError={setError} />
       ) : (
         <>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-700">
-                Preview: <span className="font-normal">{fileName}</span>
+              <h3 className="text-base font-medium text-gray-800 flex items-center">
+                <FileText className="mr-2 h-4 w-4 text-blue-500" />
+                {fileName}
               </h3>
-              <p className="text-xs text-gray-500">
-                {csvData.rows.length} rows found. Showing first {Math.min(5, csvData.rows.length)} rows.
+              <p className="text-sm text-gray-500 mt-1">
+                {csvData.rows.length} rows found • Showing first {Math.min(5, csvData.rows.length)} rows
               </p>
             </div>
             <Button
@@ -113,19 +114,19 @@ export const CsvPreviewStage: React.FC<CsvPreviewStageProps> = ({ onNext, onCanc
             </Button>
           </div>
           
-          <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
-            <div className="flex gap-2">
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+            <div className="flex gap-3">
               <Info className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm text-amber-800">Map your CSV columns to lead fields</p>
-                <p className="text-xs text-amber-700 mt-1">
+                <p className="text-sm font-medium text-amber-800">Map your CSV columns to lead fields</p>
+                <p className="text-sm text-amber-700 mt-1">
                   Name and Email are required. Select "Ignore" for columns you don't want to import.
                 </p>
               </div>
             </div>
           </div>
           
-          <ScrollArea className="h-[250px]">
+          <ScrollArea className="h-[260px] border rounded-md">
             {csvData && (
               <CsvPreviewTable
                 data={csvData}
