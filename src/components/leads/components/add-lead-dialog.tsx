@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, UserPlus } from "lucide-react";
@@ -14,7 +13,6 @@ interface AddLeadDialogProps {
   onSuccess: () => void;
 }
 
-// Animation variants for cards - optimized for performance
 const cardVariants = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.2 } },
@@ -22,7 +20,6 @@ const cardVariants = {
   tap: { scale: 0.98 }
 };
 
-// Animation variants for content transitions - simplified
 const contentVariants = {
   hidden: { opacity: 0 },
   visible: { 
@@ -59,7 +56,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
         <Plus className="h-4 w-4 mr-2" />
         Add Lead
       </Button>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl bg-gradient-to-br from-white to-gray-50 rounded-xl will-change-transform">
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl bg-gradient-to-br from-white to-gray-50 rounded-xl will-change-transform z-[101]">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-blue-50/50 pointer-events-none" />
         
         <DialogHeader className="p-6 pb-2">
