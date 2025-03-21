@@ -24,17 +24,17 @@ export const ColumnMapSelector: React.FC<ColumnMapSelectorProps> = ({
 
   return (
     <div className="space-y-1 w-full">
-      <p className="text-xs font-medium text-gray-700 truncate max-w-[180px]" title={csvHeader}>
+      <p className="text-xs font-medium text-gray-700 truncate max-w-[160px]" title={csvHeader}>
         {csvHeader}
       </p>
       <Select
         value={selectedField === null ? "ignore" : selectedField}
         onValueChange={(value) => onChange(value === "ignore" ? null : value)}
       >
-        <SelectTrigger className="w-[140px] h-8 text-xs">
+        <SelectTrigger className="w-full h-8 text-xs">
           <SelectValue placeholder="Map to..." />
         </SelectTrigger>
-        <SelectContent position="popper" className="w-[140px] z-[9999]">
+        <SelectContent position="popper" className="w-[160px] z-[9999]">
           {fieldOptions.map((option) => (
             <SelectItem
               key={option.value || "ignore"}

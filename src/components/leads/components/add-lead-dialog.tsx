@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, UserPlus } from "lucide-react";
@@ -79,7 +80,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
       <DialogContent 
         className={cn(
           "p-0 overflow-hidden border-none shadow-xl rounded-xl will-change-transform z-[101] bg-white",
-          mode === "csvPreview" ? "sm:max-w-[90vw] md:max-w-[900px] w-[95vw]" : "sm:max-w-[500px]"
+          mode === "csvPreview" ? "sm:max-w-[95vw] md:max-w-[1000px] lg:max-w-[1200px] w-[95vw]" : "sm:max-w-[500px]"
         )}
       >
         <DialogHeader className="p-6 pb-2">
