@@ -10,7 +10,7 @@ import {
   useSensors 
 } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
-import { Column } from "./column"; // Corrected import path
+import { KanbanColumn as Column } from "./column"; // Updated import path with correct component name
 import { Card } from "./card";
 import { Lead } from "@/pages/dashboard/leads";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
@@ -20,6 +20,8 @@ interface ActiveItem {
   id: string;
   type: 'column' | 'lead';
   data: any;
+  x: number; // Added x coordinate for drag positioning
+  y: number; // Added y coordinate for drag positioning
 }
 
 // Extending the hook with mock data for development
@@ -73,9 +75,9 @@ export function Board() {
           id: active.id.toString(),
           type: 'column',
           data: column,
-          x: 0, // These will be updated in drag move
+          x: 0, // Initialize with zero position
           y: 0
-        } as any);
+        });
       }
     } else if (activeData?.type === 'lead') {
       const columnId = activeData.columnId;
@@ -85,9 +87,9 @@ export function Board() {
           id: active.id.toString(),
           type: 'lead',
           data: lead,
-          x: 0, // These will be updated in drag move
+          x: 0, // Initialize with zero position
           y: 0
-        } as any);
+        });
       }
     }
   };
