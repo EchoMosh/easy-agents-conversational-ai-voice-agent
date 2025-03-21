@@ -1,195 +1,135 @@
 
-import { useState, useEffect, useRef } from "react";
-import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, KeyboardSensor, closestCorners } from "@dnd-kit/core";
-import { SortableContext, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { restrictToWindowEdges } from "@dnd-kit/modifiers";
-import { PipelineColumn } from "@/types/pipeline";
-import { Lead } from "@/pages/dashboard/leads";
-import { Column } from "./column";
+import { useEffect, useState } from "react";
+import { 
+  DndContext, 
+  DragEndEvent, 
+  DragMoveEvent, 
+  DragOverEvent, 
+  DragStartEvent,
+  useSensor, 
+  useSensors 
+} from "@dnd-kit/core";
+import { SortableContext } from "@dnd-kit/sortable";
+import { Column } from "./column-preview";
 import { Card } from "./card";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { Lead } from "@/pages/dashboard/leads";
+import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
 
-// Define the ActiveItem interface since it's not exported from use-pipeline-drag
 interface ActiveItem {
   id: string;
   type: 'column' | 'lead';
-  column?: PipelineColumn;
-  lead?: Lead;
-  fromColumn?: string;
+  data: any;
 }
 
-interface BoardProps {
-  columns: PipelineColumn[];
-  leads: Lead[];
-  onLeadClick: (lead: Lead) => void;
-  onColumnUpdate: (column: PipelineColumn) => Promise<void>;
-  onLeadUpdate: (lead: Lead, newStatus: string) => Promise<void>;
-  onColumnsReorder: (columns: PipelineColumn[]) => Promise<void>;
-}
+export function Board() {
+  const { 
+    columns, 
+    leads, 
+    sensors,
+    containers, 
+    activeId, 
+    activeColumn,
+    setActiveColumn,
+    handleDragStart, 
+    handleDragOver, 
+    handleDragEnd, 
+    handleDragCancel,
+    handleLeadClick
+  } = usePipelineDrag();
 
-export function Board({ 
-  columns, 
-  leads, 
-  onLeadClick, 
-  onColumnUpdate, 
-  onLeadUpdate,
-  onColumnsReorder
-}: BoardProps) {
-  const [activeItem, setActiveItem] = useState<ActiveItem | null>(null);
-  const [isReordering, setIsReordering] = useState(false);
-  const queryClient = useQueryClient();
-  const columnsRef = useRef<PipelineColumn[]>(columns);
-
-  useEffect(() => {
-    columnsRef.current = columns;
-  }, [columns]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragStart = (event: any) => {
-    const { active } = event;
-    
-    if (active.data.current?.type === 'column') {
-      setIsReordering(true);
-      setActiveItem({
-        id: active.id,
-        type: 'column',
-        column: active.data.current.column,
-      });
-    } else if (active.data.current?.type === 'lead') {
-      setActiveItem({
-        id: active.id,
-        type: 'lead',
-        lead: active.data.current.lead,
-        fromColumn: active.data.current.fromColumn,
-      });
-    }
-  };
-
-  const handleDragEnd = async (event: any) => {
-    const { active, over } = event;
-    
-    if (!over) {
-      setActiveItem(null);
-      setIsReordering(false);
-      return;
-    }
-
-    // Handle column reordering
-    if (active.data.current?.type === 'column' && over.data.current?.type === 'column') {
-      const oldIndex = columns.findIndex(col => col.id === active.id);
-      const newIndex = columns.findIndex(col => col.id === over.id);
-      
-      if (oldIndex !== newIndex) {
-        const newColumns = arrayMove(columns, oldIndex, newIndex);
-        
-        try {
-          await onColumnsReorder(newColumns);
-          toast.success("Pipeline columns reordered");
-        } catch (error) {
-          console.error("Error reordering columns:", error);
-          toast.error("Failed to reorder columns");
-        }
-      }
-    }
-    
-    // Handle lead moving between columns
-    if (active.data.current?.type === 'lead' && over.data.current?.type === 'column') {
-      const lead = active.data.current.lead;
-      const targetColumnId = over.id;
-      const targetColumn = columns.find(col => col.id === targetColumnId);
-      
-      if (targetColumn && lead.status !== targetColumn.title) {
-        try {
-          const updatedLead = { ...lead, status: targetColumn.title };
-          await onLeadUpdate(updatedLead, targetColumn.title);
-          
-          // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ['leads'] });
-          queryClient.invalidateQueries({ queryKey: ['pipeline'] });
-          
-          toast.success(`Moved ${lead.name} to ${targetColumn.title}`);
-        } catch (error) {
-          console.error("Error moving lead:", error);
-          toast.error("Failed to move lead");
-        }
-      }
-    }
-    
-    setActiveItem(null);
-    setIsReordering(false);
-  };
-
-  const handleDragOver = (event: any) => {
-    const { active, over } = event;
-    
-    // We only care about lead items being dragged over columns
-    if (!over || active.data.current?.type !== 'lead' || over.data.current?.type !== 'column') {
-      return;
-    }
-    
-    const activeColumnId = active.data.current.fromColumn;
-    const overColumnId = over.id;
-    
-    // If the lead is already in this column, do nothing
-    if (activeColumnId === overColumnId) {
-      return;
-    }
-  };
-
-  const getColumnLeads = (columnName: string) => {
-    return leads.filter(lead => lead.status === columnName);
-  };
+  if (!columns) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
       onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
-      <div className="flex gap-4 h-full overflow-x-auto pb-4">
-        <SortableContext items={columns.map(col => col.id)}>
-          {columns.map(column => (
-            <Column
-              key={column.id}
-              column={column}
-              leads={getColumnLeads(column.title)}
-              onLeadClick={onLeadClick}
-              onColumnUpdate={onColumnUpdate}
-              isReordering={isReordering}
-            />
-          ))}
+      <div className="board-wrapper mx-auto flex">
+        <SortableContext items={columns.map((column) => column.id)}>
+          <div className="board flex gap-4 p-4 h-[calc(100vh-8rem)] items-start overflow-x-auto">
+            {columns.map((column) => (
+              <Column
+                key={column.id}
+                id={column.id}
+                title={column.title}
+                color={column.color}
+                leadCount={leads[column.id]?.length || 0}
+              >
+                <SortableContext items={leads[column.id] || []}>
+                  <div className="tasks-container p-2 rounded-md min-h-[100px]">
+                    {leads[column.id]?.map((lead: Lead) => (
+                      <Card
+                        key={lead.id}
+                        lead={lead}
+                        onClick={() => handleLeadClick(lead)}
+                      />
+                    )) || null}
+                  </div>
+                </SortableContext>
+              </Column>
+            ))}
+          </div>
         </SortableContext>
+
+        {activeId && activeColumn && (
+          <div className="drag-overlay fixed inset-0 pointer-events-none z-50">
+            {/* Overlay representation of the dragging column */}
+            {activeColumn.type === "column" && activeColumn.data && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  transform: `translate(${activeColumn.x}px, ${activeColumn.y}px) rotate(-2deg)`,
+                  width: "300px",
+                  opacity: 0.8,
+                  transition: "transform 0.1s ease",
+                }}
+                className="column-drag-preview bg-white border border-gray-200 rounded-md shadow-md"
+              >
+                <div className={`column-header p-3 rounded-t-md text-white bg-${activeColumn.data.color || 'blue'}-600`}>
+                  <h3 className="font-medium truncate">{activeColumn.data.title}</h3>
+                </div>
+                <div className="p-2 rounded-b-md bg-white">
+                  {leads[activeColumn.data.id]?.slice(0, 2).map((lead: Lead) => (
+                    <div key={lead.id} className="p-2 mb-2 bg-gray-50 border rounded-md">
+                      <h4 className="font-medium truncate">{lead.name}</h4>
+                    </div>
+                  ))}
+                  {leads[activeColumn.data.id]?.length > 2 && (
+                    <div className="text-sm text-center text-gray-500">
+                      +{leads[activeColumn.data.id].length - 2} more
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Overlay representation of the dragging lead */}
+            {activeColumn.type === "lead" && activeColumn.data && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  transform: `translate(${activeColumn.x}px, ${activeColumn.y}px) rotate(2deg)`,
+                  width: "300px",
+                  opacity: 0.9,
+                  transition: "transform 0.1s ease",
+                }}
+                className="lead-drag-preview"
+              >
+                <Card lead={activeColumn.data} isOverlay />
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      
-      <DragOverlay modifiers={[restrictToWindowEdges]}>
-        {activeItem && activeItem.type === 'column' && activeItem.column && (
-          <Column
-            column={activeItem.column}
-            leads={getColumnLeads(activeItem.column.title)}
-            onLeadClick={onLeadClick}
-            onColumnUpdate={onColumnUpdate}
-            isOverlay
-          />
-        )}
-        
-        {activeItem && activeItem.type === 'lead' && activeItem.lead && (
-          <Card lead={activeItem.lead} isOverlay />
-        )}
-      </DragOverlay>
     </DndContext>
   );
 }
