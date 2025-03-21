@@ -137,23 +137,14 @@ export function Board() {
             {columns.map((column) => (
               <KanbanColumn
                 key={column.id}
-                id={column.id}
-                title={column.title}
-                color={column.color}
-                leadCount={leads[column.id]?.length || 0}
-              >
-                <SortableContext items={leads[column.id] || []}>
-                  <div className="tasks-container p-2 rounded-md min-h-[100px]">
-                    {leads[column.id]?.map((lead: Lead) => (
-                      <Card
-                        key={lead.id}
-                        lead={lead}
-                        onClick={() => handleLeadClick(lead)}
-                      />
-                    )) || null}
-                  </div>
-                </SortableContext>
-              </KanbanColumn>
+                column={{
+                  id: column.id,
+                  title: column.title,
+                  color: `bg-${column.color}-600`
+                }}
+                columnLeads={leads[column.id] || []}
+                onLeadClick={handleLeadClick}
+              />
             ))}
           </div>
         </SortableContext>
