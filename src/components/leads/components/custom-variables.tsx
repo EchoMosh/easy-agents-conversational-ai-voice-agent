@@ -25,17 +25,29 @@ export function CustomVariables({ variables, onAddVariable, onRemoveVariable }: 
 
   const handleAddVariable = () => {
     if (newVariable.name && newVariable.value) {
+      // Convert spaces to underscores in variable name
+      const formattedName = newVariable.name.replace(/\s+/g, '_');
+      
       // Check if variable name already exists
-      const isDuplicate = variables.some(v => v.name.toLowerCase() === newVariable.name.toLowerCase());
+      const isDuplicate = variables.some(v => v.name.toLowerCase() === formattedName.toLowerCase());
       if (isDuplicate) {
         toast.error("A variable with this name already exists", {
           description: "Please use a different name for your variable",
         });
         return;
       }
-      onAddVariable(newVariable);
+      
+      // Use the formatted name (with underscores instead of spaces)
+      onAddVariable({ name: formattedName, value: newVariable.value });
       setNewVariable({ name: "", value: "" });
       setIsAddingVariable(false);
+      
+      // Show a toast if the name was modified
+      if (formattedName !== newVariable.name) {
+        toast.info("Spaces converted to underscores", {
+          description: `"${newVariable.name}" was saved as "${formattedName}"`,
+        });
+      }
     }
   };
 
@@ -59,11 +71,16 @@ export function CustomVariables({ variables, onAddVariable, onRemoveVariable }: 
                 <Label htmlFor="variableName" className="text-sm font-medium text-gray-700">Variable name</Label>
                 <Input 
                   id="variableName" 
-                  placeholder="e.g., Source" 
+                  placeholder="e.g., Source (spaces will be converted to underscores)" 
                   value={newVariable.name} 
                   onChange={e => setNewVariable(prev => ({ ...prev, name: e.target.value }))}
                   className="h-11 text-base border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
                 />
+                {newVariable.name.includes(' ') && (
+                  <p className="text-xs text-amber-600">
+                    Will be saved as: {newVariable.name.replace(/\s+/g, '_')}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="variableValue" className="text-sm font-medium text-gray-700">Value</Label>

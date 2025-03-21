@@ -103,11 +103,22 @@ export function EditVariablesDialog({
 
     setIsSaving(true);
     try {
-      const variablesToAdd = newVariables.map(v => ({
-        lead_id: lead.id,
-        name: v.name.trim(),
-        value: v.value.trim() || null
-      }));
+      // Format variable names (convert spaces to underscores)
+      const variablesToAdd = newVariables.map(v => {
+        // Convert spaces to underscores
+        const formattedName = v.name.trim().replace(/\s+/g, '_');
+        
+        return {
+          lead_id: lead.id,
+          name: formattedName,
+          value: v.value.trim() || null
+        };
+      });
+
+      // Check for name modifications to show in notification
+      const modifiedNames = newVariables.filter(v => 
+        v.name.trim() !== v.name.trim().replace(/\s+/g, '_')
+      );
 
       const { error } = await supabase
         .from('lead_variables')
@@ -115,7 +126,15 @@ export function EditVariablesDialog({
 
       if (error) throw error;
 
-      toast.success(`Added ${newVariables.length} variable${newVariables.length > 1 ? 's' : ''}`);
+      if (modifiedNames.length > 0) {
+        toast.info(
+          "Spaces converted to underscores in variable names", 
+          { description: "Variables have been saved with underscores instead of spaces" }
+        );
+      } else {
+        toast.success(`Added ${newVariables.length} variable${newVariables.length > 1 ? 's' : ''}`);
+      }
+      
       setNewVariables([]);
       fetchVariables();
       onLeadUpdated();
@@ -168,6 +187,11 @@ export function EditVariablesDialog({
                         onRemove={() => handleRemoveNewVariable(index)}
                       />
                     ))}
+                    {newVariables.some(v => v.name.includes(' ')) && (
+                      <p className="text-xs text-amber-600 mt-2">
+                        Note: Spaces in variable names will be converted to underscores when saved
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
