@@ -63,7 +63,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
         <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-blue-50/50 pointer-events-none" />
         
         <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-500">
+          <DialogTitle className="text-2xl font-bold text-gray-800">
             Add Leads
           </DialogTitle>
         </DialogHeader>
