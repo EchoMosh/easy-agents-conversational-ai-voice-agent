@@ -7,6 +7,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CsvPreviewStage } from "./csv/csv-preview-stage";
+import { CsvData, ColumnMapping } from "./csv/csv-preview-table";
 
 interface AddLeadDialogProps {
   isOpen: boolean;
@@ -37,17 +39,31 @@ const contentVariants = {
 };
 
 export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialogProps) {
-  const [mode, setMode] = useState<"single" | "bulk" | null>(null);
+  const [mode, setMode] = useState<"select" | "single" | "bulk" | "csvPreview" | null>(null);
   
   // Reset mode when dialog closes
   useEffect(() => {
     if (!isOpen) {
       setMode(null);
+    } else if (mode === null) {
+      setMode("select");
     }
-  }, [isOpen]);
+  }, [isOpen, mode]);
 
   const handleSelectMode = (selectedMode: "single" | "bulk") => {
-    setMode(selectedMode);
+    if (selectedMode === "bulk") {
+      setMode("csvPreview");
+    } else {
+      setMode(selectedMode);
+    }
+  };
+
+  const handleCsvNext = (data: CsvData, mappings: ColumnMapping[]) => {
+    // Will be implemented in the next step
+    console.log("CSV data:", data);
+    console.log("Column mappings:", mappings);
+    // For now, just return to select mode
+    setMode("select");
   };
 
   const handleClose = () => {
@@ -67,11 +83,11 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl rounded-xl will-change-transform z-[101] bg-white">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-2xl font-bold text-gray-800">
-            Add Leads
+            {mode === "csvPreview" ? "Import Leads from CSV" : "Add Leads"}
           </DialogTitle>
         </DialogHeader>
         
-        {mode === null && (
+        {mode === "select" && (
           <motion.div 
             className="grid grid-cols-2 gap-4 p-6"
             initial="hidden"
@@ -163,75 +179,18 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
           </motion.div>
         )}
         
-        {mode === "bulk" && (
+        {mode === "csvPreview" && (
           <motion.div 
-            className="py-4 px-6"
+            className="py-2 px-6 pb-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            <div className="space-y-4">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-                whileHover={{ scale: 1.01 }}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors bg-white will-change-transform"
-              >
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <motion.div
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    transition={{ 
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 15,
-                      duration: 0.2
-                    }}
-                  >
-                    <Upload className="h-8 w-8 text-blue-500" />
-                  </motion.div>
-                  <p className="text-sm font-medium mt-2 text-gray-800">
-                    Drag and drop a CSV file here, or click to browse
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    File should include: name, email, phone, status
-                  </p>
-                  <Button variant="outline" size="sm" className="mt-3 bg-white text-gray-800">
-                    Select File
-                  </Button>
-                </div>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-                className="text-xs text-gray-600 bg-gray-100 p-3 rounded-md"
-              >
-                <p className="mb-1 font-medium">Requirements:</p>
-                <ul className="list-disc pl-4 space-y-1">
-                  <li>CSV format only</li>
-                  <li>Required fields: name, email</li>
-                  <li>Optional: phone, status, source</li>
-                </ul>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-                className="flex justify-end pt-4"
-              >
-                <Button onClick={handleClose} variant="outline" className="mr-2 text-gray-800">
-                  Cancel
-                </Button>
-                <Button disabled className="ml-2 bg-primary hover:bg-primary/90 text-white">
-                  Upload Leads
-                </Button>
-              </motion.div>
-            </div>
+            <CsvPreviewStage 
+              onNext={handleCsvNext} 
+              onCancel={() => setMode("select")} 
+            />
           </motion.div>
         )}
       </DialogContent>
