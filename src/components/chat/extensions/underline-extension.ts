@@ -1,6 +1,5 @@
 
 import { Mark, mergeAttributes } from '@tiptap/core';
-import { markRaw } from 'vue';
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -31,7 +30,7 @@ export const UnderlineExtension = Mark.create({
   parseHTML() {
     return [
       { tag: 'u' },
-      { style: 'text-decoration', getAttrs: (value) => value === 'underline' },
+      { style: 'text-decoration', getAttrs: (value) => (value === 'underline') ? {} : false },
     ];
   },
 

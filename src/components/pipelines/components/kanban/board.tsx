@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, KeyboardSensor, closestCorners } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -9,7 +10,15 @@ import { Card } from "./card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { ActiveItem } from '@/hooks/pipeline/use-pipeline-drag';
+
+// Define the ActiveItem interface since it's not exported from use-pipeline-drag
+interface ActiveItem {
+  id: string;
+  type: 'column' | 'lead';
+  column?: PipelineColumn;
+  lead?: Lead;
+  fromColumn?: string;
+}
 
 interface BoardProps {
   columns: PipelineColumn[];
@@ -101,16 +110,16 @@ export function Board({
       const targetColumnId = over.id;
       const targetColumn = columns.find(col => col.id === targetColumnId);
       
-      if (targetColumn && lead.status !== targetColumn.name) {
+      if (targetColumn && lead.status !== targetColumn.title) {
         try {
-          const updatedLead = { ...lead, status: targetColumn.name };
-          await onLeadUpdate(updatedLead, targetColumn.name);
+          const updatedLead = { ...lead, status: targetColumn.title };
+          await onLeadUpdate(updatedLead, targetColumn.title);
           
           // Invalidate queries to refresh data
           queryClient.invalidateQueries({ queryKey: ['leads'] });
           queryClient.invalidateQueries({ queryKey: ['pipeline'] });
           
-          toast.success(`Moved ${lead.name} to ${targetColumn.name}`);
+          toast.success(`Moved ${lead.name} to ${targetColumn.title}`);
         } catch (error) {
           console.error("Error moving lead:", error);
           toast.error("Failed to move lead");
@@ -157,7 +166,7 @@ export function Board({
             <Column
               key={column.id}
               column={column}
-              leads={getColumnLeads(column.name)}
+              leads={getColumnLeads(column.title)}
               onLeadClick={onLeadClick}
               onColumnUpdate={onColumnUpdate}
               isReordering={isReordering}
@@ -170,7 +179,7 @@ export function Board({
         {activeItem && activeItem.type === 'column' && activeItem.column && (
           <Column
             column={activeItem.column}
-            leads={getColumnLeads(activeItem.column.name)}
+            leads={getColumnLeads(activeItem.column.title)}
             onLeadClick={onLeadClick}
             onColumnUpdate={onColumnUpdate}
             isOverlay
