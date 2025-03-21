@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,17 +8,30 @@ import { Tag } from "@/types/tag-types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { EmptyState } from "./empty-state";
 
 interface TagsManagerProps {
   leadId: string;
   tags: Tag[];
+  isNewLead?: boolean;
+  onAddTagForNewLead?: (name: string) => void;
+  onRemoveTagForNewLead?: (id: string) => void;
 }
 
 interface CreateTagData {
   name: string;
 }
 
-export function TagsManager({ leadId, tags }: TagsManagerProps) {
+// Maximum tag name length
+const MAX_TAG_LENGTH = 25;
+
+export function TagsManager({ 
+  leadId, 
+  tags, 
+  isNewLead = false,
+  onAddTagForNewLead,
+  onRemoveTagForNewLead
+}: TagsManagerProps) {
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,9 +44,38 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
 
   const handleCreateTag = async (data: CreateTagData) => {
     if (isSubmitting) return;
+    
+    const trimmedName = data.name.trim();
+    
+    if (!trimmedName) {
+      toast.error("Tag name cannot be empty");
+      return;
+    }
+    
+    if (trimmedName.length > MAX_TAG_LENGTH) {
+      toast.error(`Tag name must be ${MAX_TAG_LENGTH} characters or less`);
+      return;
+    }
+    
+    const isDuplicate = tags.some(tag => 
+      tag.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      toast.error("This tag already exists for this lead");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
+      if (isNewLead && onAddTagForNewLead) {
+        onAddTagForNewLead(trimmedName);
+        setIsAddingTag(false);
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       
@@ -43,11 +84,10 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
         return;
       }
 
-      // First create the tag
       const { data: tag, error: tagError } = await supabase
         .from('tags')
         .insert({
-          name: data.name,
+          name: trimmedName,
           user_id: userData.user.id
         })
         .select()
@@ -55,7 +95,19 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
 
       if (tagError) throw tagError;
 
-      // Then create the lead_tag association
+      const { data: existingTags, error: checkError } = await supabase
+        .from('lead_tags')
+        .select('tag_id')
+        .eq('lead_id', leadId)
+        .eq('tag_id', tag.id);
+        
+      if (checkError) throw checkError;
+      
+      if (existingTags && existingTags.length > 0) {
+        toast.error("This tag is already associated with this lead");
+        return;
+      }
+
       const { error: linkError } = await supabase
         .from('lead_tags')
         .insert({
@@ -78,13 +130,36 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
 
   const handleUpdateTag = async (data: CreateTagData) => {
     if (!editingTag || isSubmitting) return;
+    
+    const trimmedName = data.name.trim();
+    
+    if (!trimmedName) {
+      toast.error("Tag name cannot be empty");
+      return;
+    }
+    
+    if (trimmedName.length > MAX_TAG_LENGTH) {
+      toast.error(`Tag name must be ${MAX_TAG_LENGTH} characters or less`);
+      return;
+    }
+    
+    const isDuplicate = tags.some(tag => 
+      tag.name.toLowerCase() === trimmedName.toLowerCase() && 
+      tag.id !== editingTag.id
+    );
+    
+    if (isDuplicate) {
+      toast.error("This tag already exists for this lead");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
       const { error } = await supabase
         .from('tags')
         .update({
-          name: data.name
+          name: trimmedName
         })
         .eq('id', editingTag.id);
 
@@ -106,6 +181,12 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
     setIsSubmitting(true);
 
     try {
+      if (isNewLead && onRemoveTagForNewLead) {
+        onRemoveTagForNewLead(tagId);
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('lead_tags')
         .delete()
@@ -124,14 +205,18 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
     }
   };
 
+  const openAddTagDialog = () => {
+    setIsAddingTag(true);
+  };
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-gray-900">Tags</h3>
+        <h3 className="text-base font-medium text-gray-800">Lead Tags</h3>
         <Dialog open={isAddingTag} onOpenChange={setIsAddingTag}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8">
-              <PlusCircle className="w-4 h-4 mr-2" />
+            <Button variant="outline" size="sm" className="h-9 px-4">
+              <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
               Add Tag
             </Button>
           </DialogTrigger>
@@ -142,20 +227,26 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
             <TagForm 
               onSubmit={handleCreateTag}
               isSubmitting={isSubmitting}
+              maxLength={MAX_TAG_LENGTH}
             />
           </DialogContent>
         </Dialog>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {tags.map((tag) => (
-          <TagBadge
-            key={tag.id}
-            tag={tag}
-            onEdit={() => setEditingTag(tag)}
-            onDelete={() => handleDeleteTag(tag.id)}
-          />
-        ))}
-      </div>
+      
+      {tags.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <TagBadge
+              key={tag.id}
+              tag={tag}
+              onEdit={() => setEditingTag(tag)}
+              onDelete={() => handleDeleteTag(tag.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState onAddClick={openAddTagDialog} />
+      )}
 
       <Dialog open={!!editingTag} onOpenChange={(open) => !open && setEditingTag(null)}>
         <DialogContent className="sm:max-w-[425px]">
@@ -167,6 +258,7 @@ export function TagsManager({ leadId, tags }: TagsManagerProps) {
               defaultValues={editingTag}
               onSubmit={handleUpdateTag}
               isSubmitting={isSubmitting}
+              maxLength={MAX_TAG_LENGTH}
             />
           )}
         </DialogContent>

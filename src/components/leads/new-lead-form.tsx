@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +8,11 @@ import { PipelineSelect } from "./components/pipeline-select";
 import { ContactInfoForm } from "./components/contact-info-form";
 import { CustomVariables } from "./components/custom-variables";
 import { useWorkspace } from "@/context/workspace-context";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { v4 as uuidv4 } from "uuid";
+import { Tag } from "@/types/tag-types";
+import { TagsManager } from "./components/tags/tags-manager";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
@@ -22,8 +26,10 @@ interface Variable {
 export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [variables, setVariables] = useState<Variable[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [phone, setPhone] = useState("");
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("contact");
   const { currentWorkspace } = useWorkspace();
 
   const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
@@ -43,16 +49,43 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
     enabled: !!currentWorkspace?.id,
   });
 
+  const handleAddTag = async (name: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        toast.error("You must be logged in to create tags");
+        return;
+      }
+
+      const tempTag: Tag = {
+        id: uuidv4(),
+        name,
+        color: "gray",
+        user_id: userData.user.id
+      };
+      
+      setTags([...tags, tempTag]);
+      toast.success("Tag added");
+    } catch (error: any) {
+      console.error("Error adding tag:", error);
+      toast.error("Failed to add tag");
+    }
+  };
+
+  const handleRemoveTag = (id: string) => {
+    setTags(tags.filter(tag => tag.id !== id));
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!selectedPipelineId) {
-      toast.error("Please select a pipeline");
+    if (!currentWorkspace?.id) {
+      toast.error("No workspace selected");
       return;
     }
 
-    if (!currentWorkspace?.id) {
-      toast.error("No workspace selected");
+    if (!phone.trim()) {
+      toast.error("Phone number is required");
       return;
     }
 
@@ -68,13 +101,11 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         throw new Error("No authenticated user found");
       }
 
-      // Find the selected pipeline
-      const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId);
+      const selectedPipeline = selectedPipelineId ? 
+        pipelines.find(p => p.id === selectedPipelineId) : null;
       
-      // Get the first column's title to use as the initial status
       let initialStatus = 'new';
       if (selectedPipeline && selectedPipeline.columns.length > 0) {
-        // Get the first column's title
         initialStatus = selectedPipeline.columns[0].title;
       }
 
@@ -85,7 +116,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           email: email || null,
           phone: phone || null,
           user_id: user.id,
-          pipeline_id: selectedPipelineId,
+          pipeline_id: selectedPipelineId || null,
           status: initialStatus,
           workspace_id: currentWorkspace.id
         }])
@@ -105,6 +136,33 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         if (variablesError) throw variablesError;
       }
 
+      if (tags.length > 0) {
+        for (const tag of tags) {
+          if (tag.id.includes('-')) {
+            const { data: newTag, error: newTagError } = await supabase
+              .from('tags')
+              .insert({
+                name: tag.name,
+                color: tag.color,
+                user_id: user.id
+              })
+              .select()
+              .single();
+              
+            if (newTagError) throw newTagError;
+            
+            const { error: linkError } = await supabase
+              .from('lead_tags')
+              .insert({
+                lead_id: leadData.id,
+                tag_id: newTag.id
+              });
+              
+            if (linkError) throw linkError;
+          }
+        }
+      }
+
       toast.success("Lead added successfully");
       onSuccess();
     } catch (error) {
@@ -116,33 +174,87 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="space-y-6">
-        <PipelineSelect
-          pipelines={pipelines}
-          selectedPipelineId={selectedPipelineId}
-          onPipelineChange={setSelectedPipelineId}
-          refetchPipelines={refetchPipelines}
-        />
-        
-        <ContactInfoForm 
-          phone={phone}
-          onPhoneChange={setPhone}
-        />
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <Tabs 
+        defaultValue="contact" 
+        value={activeTab} 
+        onValueChange={setActiveTab} 
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-3 mb-2 bg-gray-100/70">
+          <TabsTrigger value="contact" className="text-gray-800 data-[state=active]:bg-white">Contact Info</TabsTrigger>
+          <TabsTrigger value="variables" className="text-gray-800 data-[state=active]:bg-white">Variables</TabsTrigger>
+          <TabsTrigger value="tags" className="text-gray-800 data-[state=active]:bg-white">Tags</TabsTrigger>
+        </TabsList>
 
-        <CustomVariables
-          variables={variables}
-          onAddVariable={(variable) => setVariables([...variables, variable])}
-          onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
-        />
-      </div>
+        <TabsContent value="contact" className="space-y-4 pt-1 mt-0">
+          <ContactInfoForm 
+            phone={phone}
+            onPhoneChange={setPhone}
+            required={true}
+          />
+          
+          <div className="pt-1">
+            <PipelineSelect
+              pipelines={pipelines}
+              selectedPipelineId={selectedPipelineId}
+              onPipelineChange={setSelectedPipelineId}
+              refetchPipelines={refetchPipelines}
+              required={false}
+            />
+            <p className="text-xs text-gray-600 mt-1">
+              Pipeline selection is optional
+            </p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="variables" className="pt-1 mt-0">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="relative">
+              <ScrollArea className="h-[280px]">
+                <div className="p-3 pt-0">
+                  <CustomVariables
+                    variables={variables}
+                    onAddVariable={(variable) => setVariables([...variables, variable])}
+                    onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="tags" className="pt-1 mt-0">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="relative">
+              <ScrollArea className="h-[280px]">
+                <div className="p-3 pt-0">
+                  <div className="pt-4">
+                    <TagsManager 
+                      leadId={''} // temporary ID for new leads
+                      tags={tags}
+                      isNewLead={true}
+                      onAddTagForNewLead={handleAddTag}
+                      onRemoveTagForNewLead={handleRemoveTag}
+                    />
+                  </div>
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <Button 
         type="submit" 
         disabled={isLoading || !currentWorkspace} 
-        className="w-full h-11 text-base bg-primary/90 hover:bg-primary transition-all duration-200"
+        className="w-full h-11 text-base bg-primary/90 hover:bg-primary transition-all duration-200 text-white"
       >
-        {isLoading ? "Adding..." : `Save Lead${variables.length > 0 ? ` with ${variables.length} Variable${variables.length === 1 ? '' : 's'}` : ''}`}
+        {isLoading ? "Adding..." : `Save Lead${
+          (variables.length > 0 || tags.length > 0) 
+            ? ` with ${variables.length + tags.length} Field${variables.length + tags.length === 1 ? '' : 's'}` 
+            : ''
+        }`}
       </Button>
     </form>
   );

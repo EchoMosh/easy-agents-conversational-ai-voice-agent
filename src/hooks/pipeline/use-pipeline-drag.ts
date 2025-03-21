@@ -1,4 +1,3 @@
-
 import { DragEndEvent, DragOverEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,16 +5,22 @@ import { Pipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { toast } from "sonner";
 
+<<<<<<< HEAD
 // Constants for drag preview behavior - reduced for better responsiveness
 const DRAG_HYSTERESIS_TIME = 50; // ms to wait before switching targets (reduced from 150ms)
 const DRAG_POSITION_THRESHOLD = 5; // px distance before considering a real move (reduced from 10px)
 const DRAG_AREA_OVERLAP_THRESHOLD = 0.2; // 20% overlap to consider switching targets (reduced from 30%)
 
 export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[], refetchLeads: () => void) {
+=======
+export function usePipelineDrag(selectedPipeline?: Pipeline | null, leads?: Lead[], refetchLeads?: () => void) {
+  const { toast } = useToast();
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
   const [isUpdating, setIsUpdating] = useState(false);
   const [previewColumnId, setPreviewColumnId] = useState<string | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   
+<<<<<<< HEAD
   // Unified drag state tracking for stability with less aggressive thresholds
   const dragState = useRef({
     // Current preview target
@@ -38,8 +43,10 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     isDragActive: false,
     hasStateBeenReset: true,
   });
+=======
+  const lastDragTarget = useRef<{ type: string; id: string | null }>({ type: "", id: null });
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
   
-  // Track update timeout to ensure we can clear it properly
   const updateTimeoutRef = useRef<number | null>(null);
 
   // Simpler helper to update preview state safely - more direct
@@ -93,26 +100,43 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     }
   }, []);
   
+<<<<<<< HEAD
   // Improved drag over handler with better responsiveness
   const handleDragOver = useCallback((event: DragOverEvent) => {
+=======
+  const handleDragOver = (event: DragOverEvent) => {
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
     const { active, over } = event;
     
     if (!over || !selectedPipeline) return;
 
+<<<<<<< HEAD
     // Mark drag as active
     dragState.current.isDragActive = true;
     dragState.current.hasStateBeenReset = false;
 
     // Get data from the event
+=======
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
     const activeType = active.data?.current?.type;
     const overType = over.data?.current?.type;
     const overId = String(over.id);
     
+<<<<<<< HEAD
     // Only handle Task dragging
+=======
+    if (lastDragTarget.current.type === overType && lastDragTarget.current.id === overId) {
+      return;
+    }
+    
+    lastDragTarget.current = { type: overType || "", id: overId };
+    
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
     if (activeType !== "Task") {
       return;
     }
     
+<<<<<<< HEAD
     // Get current mouse position from the event
     const currentPosition = {
       x: event.activatorEvent ? (event.activatorEvent as MouseEvent).clientX : 0,
@@ -151,6 +175,13 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
         // Allow through anyway if we've made a significant movement
         if (distance < DRAG_POSITION_THRESHOLD * 2) {
           return;
+=======
+    if (overType === "Column") {
+      setTimeout(() => {
+        if (lastDragTarget.current.type === "Column") {
+          setPreviewColumnId(overId);
+          setPreviewIndex(null);
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
         }
       }
       
@@ -181,12 +212,24 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       const overIndex = over.data?.current?.index;
       
       if (overColumnId) {
+<<<<<<< HEAD
         updatePreviewState(overColumnId, typeof overIndex === 'number' ? overIndex : null);
+=======
+        setTimeout(() => {
+          if (lastDragTarget.current.id === overId && lastDragTarget.current.type === "Task") {
+            setPreviewColumnId(overColumnId);
+            if (typeof overIndex === 'number') {
+              setPreviewIndex(overIndex);
+            }
+          }
+        }, 100);
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
       }
     }
   }, [selectedPipeline, updatePreviewState]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
+<<<<<<< HEAD
     const { active, over } = event;
     
     if (!over || !selectedPipeline || isUpdating) {
@@ -195,27 +238,37 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     }
     
     // Get data from the event
+=======
+    setPreviewColumnId(null);
+    setPreviewIndex(null);
+    lastDragTarget.current = { type: "", id: null };
+    
+    const { active, over } = event;
+    
+    if (!over || !selectedPipeline || isUpdating || !leads) return;
+
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
     const activeId = String(active.id);
     const overId = String(over.id);
     
-    // Get types from the data
     const activeType = active.data?.current?.type;
     const overType = over.data?.current?.type;
     
+<<<<<<< HEAD
     // If we're not dragging a task, return
     if (activeType !== "Task") {
       completeResetDragState();
       return;
     }
+=======
+    if (activeType !== "Task") return;
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
     
-    // Find the target column - either directly if dropping on column, or from the task's column if dropping on task
     let targetColumnId = '';
     
     if (overType === "Column") {
-      // Direct drop on column
       targetColumnId = overId;
     } else if (overType === "Task") {
-      // Drop on another task - get its column
       targetColumnId = over.data?.current?.columnId;
       if (!targetColumnId) {
         console.error("Target task has no column information", over.data?.current);
@@ -223,13 +276,11 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
         return;
       }
     } else {
-      // Unknown drop target
       console.error("Unknown drop target type:", overType);
       completeResetDragState();
       return;
     }
     
-    // Find the lead being dragged
     const lead = leads.find(l => l.id === activeId);
     if (!lead) {
       console.error("Lead not found:", activeId);
@@ -237,8 +288,7 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       return;
     }
 
-    // Find the target column in the selected pipeline
-    const targetColumn = selectedPipeline.columns.find(col => col.id === targetColumnId);
+    const targetColumn = selectedPipeline?.columns.find(col => col.id === targetColumnId);
     if (!targetColumn) {
       console.error("Target column not found:", targetColumnId);
       completeResetDragState();
@@ -247,20 +297,21 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
 
     const newStatus = targetColumn.title;
     
-    // Check if the lead is already in the target status and pipeline
-    if (lead.status === newStatus && lead.pipeline_id === selectedPipeline.id) {
+    if (lead.status === newStatus && lead.pipeline_id === selectedPipeline?.id) {
       console.log("Lead already in the target status and pipeline");
       completeResetDragState();
       return;
     }
 
+<<<<<<< HEAD
     // Keep preview state active while updating to prevent jumping
     // We'll rely on the refetch to clear this state
     
     // Set updating state to prevent multiple simultaneous updates
+=======
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
     setIsUpdating(true);
 
-    // Set a safety timeout to reset isUpdating state after 5 seconds if something goes wrong
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
@@ -272,8 +323,9 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
     }, 5000);
 
     try {
-      console.log(`Moving lead ${activeId} to pipeline ${selectedPipeline.id}, status ${newStatus}`);
+      console.log(`Moving lead ${activeId} to pipeline ${selectedPipeline?.id}, status ${newStatus}`);
       
+<<<<<<< HEAD
       // Create an optimistic update to the lead for local state
       const updatedLead = {
         ...lead, 
@@ -282,17 +334,20 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       };
       
       // Update the database
+=======
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
       const { error } = await supabase
         .from("leads")
         .update({ 
           status: newStatus,
-          pipeline_id: selectedPipeline.id,
-          updated_at: new Date().toISOString() // Add timestamp to ensure trigger fires
+          pipeline_id: selectedPipeline?.id,
+          updated_at: new Date().toISOString()
         })
         .eq("id", activeId);
 
       if (error) throw error;
 
+<<<<<<< HEAD
       // Show success toast after the update succeeds
       toast.success("Lead status updated", {
         description: `Lead moved to ${newStatus}`,
@@ -311,21 +366,35 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
       completeResetDragState();
       
       // Force refetch to revert to correct state in case of error
+=======
+      toast({
+        title: "Lead status updated",
+        description: `Lead moved to ${newStatus}`,
+      });
+      
+      refetchLeads();
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update lead status",
+        variant: "destructive",
+      });
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
       refetchLeads();
     } finally {
-      // Clear the safety timeout
       if (updateTimeoutRef.current) {
         clearTimeout(updateTimeoutRef.current);
         updateTimeoutRef.current = null;
       }
       
-      // Delay resetting isUpdating to prevent quick double-updates
       setTimeout(() => {
         setIsUpdating(false);
       }, 500);
     }
   };
 
+<<<<<<< HEAD
   // Find and reset any stuck aria attributes in the DOM that might prevent future dragging
   const resetDOMState = useCallback(() => {
     // Find any elements with aria-pressed="true" and reset them
@@ -336,6 +405,13 @@ export function usePipelineDrag(selectedPipeline: Pipeline | null, leads: Lead[]
         el.setAttribute('aria-pressed', 'false');
       }
     });
+=======
+  const resetDragState = () => {
+    setIsUpdating(false);
+    setPreviewColumnId(null);
+    setPreviewIndex(null);
+    lastDragTarget.current = { type: "", id: null };
+>>>>>>> 3f3a7f10ef0c2254c951369f3b63cc2e81f81b62
     
     // Find any elements with data-dragging="true" and reset them
     const draggingElements = document.querySelectorAll('[data-dragging="true"]');
