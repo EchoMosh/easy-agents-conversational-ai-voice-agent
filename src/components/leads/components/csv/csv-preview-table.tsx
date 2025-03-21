@@ -31,44 +31,46 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
 
   return (
     <div className="border border-gray-200 rounded-md">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="bg-gray-50 sticky top-0 z-10">
-            <TableRow>
-              {columnMappings.map((mapping, index) => (
-                <TableHead 
-                  key={index} 
-                  className="py-2 px-3 text-xs font-medium text-gray-700 bg-gray-50 border-b min-w-[150px]"
-                >
-                  <ColumnMapSelector
-                    csvHeader={mapping.csvHeader}
-                    selectedField={mapping.fieldName}
-                    onChange={(value) => onUpdateMapping(index, value)}
-                  />
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {previewRows.map((row, rowIndex) => (
-              <TableRow 
-                key={rowIndex} 
-                className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}
-              >
-                {row.map((cell, cellIndex) => (
-                  <TableCell 
-                    key={cellIndex} 
-                    className="py-2 px-3 text-sm text-gray-800 border-t border-gray-100 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
-                    title={cell}
+      <ScrollArea className="h-[280px]" orientation="both">
+        <div className="min-w-full w-max">
+          <Table>
+            <TableHeader className="bg-gray-50 sticky top-0 z-10">
+              <TableRow>
+                {columnMappings.map((mapping, index) => (
+                  <TableHead 
+                    key={index} 
+                    className="py-2 px-3 text-xs font-medium text-gray-700 bg-gray-50 border-b min-w-[150px]"
                   >
-                    {cell || <span className="text-gray-400 italic text-xs">empty</span>}
-                  </TableCell>
+                    <ColumnMapSelector
+                      csvHeader={mapping.csvHeader}
+                      selectedField={mapping.fieldName}
+                      onChange={(value) => onUpdateMapping(index, value)}
+                    />
+                  </TableHead>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {previewRows.map((row, rowIndex) => (
+                <TableRow 
+                  key={rowIndex} 
+                  className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
+                  {row.map((cell, cellIndex) => (
+                    <TableCell 
+                      key={cellIndex} 
+                      className="py-2 px-3 text-sm text-gray-800 border-t border-gray-100 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
+                      title={cell}
+                    >
+                      {cell || <span className="text-gray-400 italic text-xs">empty</span>}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </ScrollArea>
     </div>
   );
 }

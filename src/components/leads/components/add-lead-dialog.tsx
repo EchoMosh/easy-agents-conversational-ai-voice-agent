@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, UserPlus } from "lucide-react";
@@ -41,7 +40,6 @@ const contentVariants = {
 export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialogProps) {
   const [mode, setMode] = useState<"select" | "single" | "bulk" | "csvPreview" | null>(null);
   
-  // Reset mode when dialog closes
   useEffect(() => {
     if (!isOpen) {
       setMode(null);
@@ -59,10 +57,8 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
   };
 
   const handleCsvNext = (data: CsvData, mappings: ColumnMapping[]) => {
-    // Will be implemented in the next step
     console.log("CSV data:", data);
     console.log("Column mappings:", mappings);
-    // For now, just return to select mode
     setMode("select");
   };
 
@@ -83,8 +79,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
       <DialogContent 
         className={cn(
           "p-0 overflow-hidden border-none shadow-xl rounded-xl will-change-transform z-[101] bg-white",
-          // Make dialog wider, especially for CSV preview mode
-          mode === "csvPreview" ? "sm:max-w-[750px] w-[90vw]" : "sm:max-w-[500px]"
+          mode === "csvPreview" ? "sm:max-w-[90vw] md:max-w-[900px] w-[95vw]" : "sm:max-w-[500px]"
         )}
       >
         <DialogHeader className="p-6 pb-2">
@@ -187,7 +182,7 @@ export function AddLeadDialog({ isOpen, onOpenChange, onSuccess }: AddLeadDialog
         
         {mode === "csvPreview" && (
           <motion.div 
-            className="py-2 px-6 pb-6"
+            className="py-2 px-6 pb-6 w-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

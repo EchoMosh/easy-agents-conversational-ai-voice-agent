@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,14 +16,12 @@ export const CsvPreviewStage: React.FC<CsvPreviewStageProps> = ({ onNext, onCanc
   const [columnMappings, setColumnMappings] = useState<ColumnMapping[]>([]);
   const [error, setError] = useState<string | null>(null);
   
-  // Auto-map columns when CSV data loads
   useEffect(() => {
     if (csvData) {
       const initialMappings = csvData.headers.map((header) => {
         const lowerHeader = header.toLowerCase().trim();
         let fieldName: string | null = null;
         
-        // Auto-map based on common header names
         if (lowerHeader.includes("name") || lowerHeader === "company") fieldName = "name";
         else if (lowerHeader.includes("email") || lowerHeader === "e-mail") fieldName = "email";
         else if (lowerHeader.includes("phone") || lowerHeader.includes("tel") || lowerHeader === "mobile") fieldName = "phone";
@@ -51,7 +48,6 @@ export const CsvPreviewStage: React.FC<CsvPreviewStageProps> = ({ onNext, onCanc
   };
 
   const validateMappings = () => {
-    // Check if required fields (name and email) are mapped
     const nameField = columnMappings.find(mapping => mapping.fieldName === "name");
     const emailField = columnMappings.find(mapping => mapping.fieldName === "email");
     
@@ -65,7 +61,6 @@ export const CsvPreviewStage: React.FC<CsvPreviewStageProps> = ({ onNext, onCanc
       return false;
     }
     
-    // Check for duplicate mappings
     const mappedFields = columnMappings
       .map(m => m.fieldName)
       .filter(field => field !== null);
@@ -86,7 +81,7 @@ export const CsvPreviewStage: React.FC<CsvPreviewStageProps> = ({ onNext, onCanc
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 w-full">
       {!csvData ? (
         <FileUploader onFileData={handleFileData} onError={setError} />
       ) : (
@@ -126,18 +121,16 @@ export const CsvPreviewStage: React.FC<CsvPreviewStageProps> = ({ onNext, onCanc
             </div>
           </div>
           
-          <ScrollArea className="h-[260px] border rounded-md">
-            <div className="overflow-x-auto min-w-full w-max">
-              {csvData && (
-                <CsvPreviewTable
-                  data={csvData}
-                  columnMappings={columnMappings}
-                  onUpdateMapping={handleUpdateMapping}
-                  maxPreviewRows={5}
-                />
-              )}
-            </div>
-          </ScrollArea>
+          <div className="w-full">
+            {csvData && (
+              <CsvPreviewTable
+                data={csvData}
+                columnMappings={columnMappings}
+                onUpdateMapping={handleUpdateMapping}
+                maxPreviewRows={5}
+              />
+            )}
+          </div>
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
