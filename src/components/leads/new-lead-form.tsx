@@ -12,6 +12,7 @@ import { useWorkspace } from "@/context/workspace-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { v4 as uuidv4 } from "uuid";
 import { Tag } from "@/types/tag-types";
+import { Info } from "lucide-react";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
@@ -189,9 +190,10 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         onValueChange={setActiveTab} 
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2 mb-2">
+        <TabsList className="grid w-full grid-cols-3 mb-2">
           <TabsTrigger value="contact" className="text-gray-800">Contact Info</TabsTrigger>
-          <TabsTrigger value="variables" className="text-gray-800">Fields & Tags</TabsTrigger>
+          <TabsTrigger value="variables" className="text-gray-800">Variables</TabsTrigger>
+          <TabsTrigger value="tags" className="text-gray-800">Tags</TabsTrigger>
         </TabsList>
 
         <TabsContent value="contact" className="space-y-4 pt-2">
@@ -216,14 +218,71 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         </TabsContent>
 
         <TabsContent value="variables" className="space-y-4 pt-2">
-          <CustomVariables
-            variables={variables}
-            onAddVariable={(variable) => setVariables([...variables, variable])}
-            onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
-            tags={tags}
-            onAddTag={handleAddTag}
-            onRemoveTag={handleRemoveTag}
-          />
+          <div className="flex items-start gap-2 mb-4">
+            <Info className="h-4 w-4 mt-1 text-blue-500" />
+            <p className="text-sm text-blue-700">
+              Variables are custom fields that can be used in workflows and automations. 
+              Use them to store important lead information you'll need later.
+            </p>
+          </div>
+          
+          <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
+            <div className="relative p-4">
+              <CustomVariables
+                variables={variables}
+                onAddVariable={(variable) => setVariables([...variables, variable])}
+                onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
+                tags={[]}
+                onAddTag={undefined}
+                onRemoveTag={undefined}
+              />
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="tags" className="space-y-4 pt-2">
+          <div className="flex items-start gap-2 mb-4">
+            <Info className="h-4 w-4 mt-1 text-green-500" />
+            <p className="text-sm text-green-700">
+              Tags help you organize and filter your leads. Use them to categorize leads by source, 
+              priority, status, or any other classification that makes sense for your workflow.
+            </p>
+          </div>
+          
+          <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
+            <div className="relative p-4">
+              {onAddTag && onRemoveTag && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <Badge 
+                      key={tag.id} 
+                      variant="secondary" 
+                      className="pl-3 pr-2 py-1.5 h-8 text-sm bg-green-50 hover:bg-green-100 
+                        transition-all duration-200 border border-green-100 shadow-sm text-green-800"
+                    >
+                      <span className="font-medium">{tag.name}</span>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleRemoveTag(tag.id)} 
+                        className="h-5 w-5 ml-2 hover:bg-green-200 rounded-full"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <TagsManager 
+                leadId={''} // temporary ID for new leads
+                tags={tags}
+                isNewLead={true}
+                onAddTagForNewLead={handleAddTag}
+                onRemoveTagForNewLead={handleRemoveTag}
+              />
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 

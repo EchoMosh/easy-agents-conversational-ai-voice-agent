@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Plus, Tag, X } from "lucide-react";
+import { Plus, Tag, X, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Tag as TagType } from "@/types/tag-types";
+import { Card } from "@/components/ui/card";
 
 interface Variable {
   name: string;
@@ -93,7 +94,13 @@ export function CustomVariables({
 
       <TabsContent value="variables" className="mt-0" hidden={activeTab !== "variables"}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-800">Variables</h3>
+          <div className="flex items-start gap-2">
+            <h3 className="text-lg font-medium text-gray-800">Variables</h3>
+            <div className="bg-blue-50 p-1.5 rounded-md border border-blue-100 flex items-start text-xs text-blue-700 max-w-md">
+              <Info className="h-3.5 w-3.5 mt-0.5 mr-1.5 flex-shrink-0 text-blue-500" />
+              <p>Variables are custom fields that can be used in workflows. Use them to store important lead information you'll need later.</p>
+            </div>
+          </div>
           <Dialog open={isAddingVariable} onOpenChange={setIsAddingVariable}>
             <DialogTrigger asChild>
               <Button type="button" variant="outline" size="sm" className="h-10 px-5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors text-gray-800">
@@ -169,7 +176,7 @@ export function CustomVariables({
                     No variables added yet
                   </p>
                   <p className="text-xs text-gray-500">
-                    Click "Add Variable" to start adding custom fields to this lead
+                    Click "Add Variable" to store custom information for this lead
                   </p>
                 </div>
               )}
@@ -180,7 +187,13 @@ export function CustomVariables({
 
       <TabsContent value="tags" className="mt-0" hidden={activeTab !== "tags"}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-800">Tags</h3>
+          <div className="flex items-start gap-2">
+            <h3 className="text-lg font-medium text-gray-800">Tags</h3>
+            <div className="bg-green-50 p-1.5 rounded-md border border-green-100 flex items-start text-xs text-green-700 max-w-md">
+              <Info className="h-3.5 w-3.5 mt-0.5 mr-1.5 flex-shrink-0 text-green-500" />
+              <p>Tags help you organize and filter your leads. Use them to categorize leads by source, priority, status, or any other classification.</p>
+            </div>
+          </div>
           <Dialog open={isAddingTag} onOpenChange={setIsAddingTag}>
             <DialogTrigger asChild>
               <Button type="button" variant="outline" size="sm" className="h-10 px-5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors text-gray-800">
@@ -224,7 +237,7 @@ export function CustomVariables({
               {tags.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
-                    <Badge key={tag.id} variant="secondary" className="pl-3 pr-2 py-1.5 h-8 text-sm bg-gray-100 hover:bg-gray-200 transition-all duration-200 border border-gray-200 shadow-sm text-gray-800">
+                    <Badge key={tag.id} variant="secondary" className="pl-3 pr-2 py-1.5 h-8 text-sm bg-green-50 hover:bg-green-100 transition-all duration-200 border border-green-100 shadow-sm text-green-800">
                       <Tag className="w-3 h-3 mr-2 opacity-50" />
                       <span className="font-medium">{tag.name}</span>
                       {onRemoveTag && (
@@ -233,7 +246,7 @@ export function CustomVariables({
                           variant="ghost" 
                           size="icon" 
                           onClick={() => onRemoveTag(tag.id)} 
-                          className="h-5 w-5 ml-2 hover:bg-gray-200 rounded-full"
+                          className="h-5 w-5 ml-2 hover:bg-green-200 rounded-full"
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -248,7 +261,7 @@ export function CustomVariables({
                     No tags added yet
                   </p>
                   <p className="text-xs text-gray-500">
-                    Click "Add Tag" to start adding tags to this lead
+                    Click "Add Tag" to help organize and categorize this lead
                   </p>
                 </div>
               )}
