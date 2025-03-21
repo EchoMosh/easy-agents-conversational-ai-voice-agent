@@ -1,12 +1,11 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Pipeline } from "@/types/pipeline";
+import { toast } from "sonner";
 
 export function usePipelineName() {
-  const { toast } = useToast();
   const [isUpdatingPipelineName, setIsUpdatingPipelineName] = useState(false);
   const queryClient = useQueryClient();
 
@@ -29,17 +28,10 @@ export function usePipelineName() {
         );
       });
 
-      toast({
-        title: "Pipeline updated",
-        description: "Pipeline name has been updated successfully"
-      });
+      toast.success("Pipeline name has been updated successfully");
     } catch (error) {
       console.error("Error updating pipeline name:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update pipeline name",
-        variant: "destructive"
-      });
+      toast.error("Failed to update pipeline name");
     } finally {
       setIsUpdatingPipelineName(false);
     }

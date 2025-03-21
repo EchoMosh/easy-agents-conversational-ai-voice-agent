@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Lead } from "@/pages/dashboard/leads";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
+import { useEffect, useRef } from "react";
+import "./kanban-styles.css";
 
 export interface Task {
   id: UniqueIdentifier;
@@ -55,6 +57,10 @@ export function TaskCard({
 
   if (!taskData) return null;
 
+  // Handle to track and reset element state if needed
+  const nodeRef = useRef<HTMLDivElement | null>(null);
+
+  // useSortable with better cleanup handling
   const {
     setNodeRef,
     attributes,
@@ -75,6 +81,34 @@ export function TaskCard({
       roleDescription: "Task",
     },
   });
+
+  // Store both refs - the dnd-kit one and our own local ref
+  const setRefs = (element: HTMLDivElement) => {
+    setNodeRef(element);
+    nodeRef.current = element;
+  };
+
+  // Effect to reset draggability if needed
+  useEffect(() => {
+    // If we're not dragging (anymore) and we have a valid node ref
+    if (!isDragging && nodeRef.current) {
+      const element = nodeRef.current;
+
+      // Sometimes dnd-kit leaves aria-pressed="true" which prevents future drags
+      // Force reset it to ensure this element stays draggable
+      if (
+        element.hasAttribute("aria-pressed") &&
+        element.getAttribute("aria-pressed") === "true"
+      ) {
+        element.setAttribute("aria-pressed", "false");
+      }
+
+      // Also ensure transform is cleared in case it got stuck
+      if (element.style.transform && !transform) {
+        element.style.transform = "";
+      }
+    }
+  }, [isDragging, transform]);
 
   const style = {
     transition,
@@ -97,12 +131,13 @@ export function TaskCard({
 
   return (
     <Card
-      ref={setNodeRef}
+      ref={setRefs}
       style={style}
       className={cn(
-        "bg-card border shadow-sm hover:shadow-md transition-shadow duration-200 relative rounded-md",
-        isDragging ? "opacity-50 z-10" : "opacity-100",
+        "bg-card border shadow-sm hover:shadow-md relative rounded-md task-card",
+        isDragging ? "opacity-50 z-10 task-card-dragging" : "opacity-100",
         isOverlay ? "ring-2 ring-primary shadow-md z-50" : "",
+        isPreview ? "task-card-preview" : "",
         previewStyles,
         "cursor-grab active:cursor-grabbing"
       )}

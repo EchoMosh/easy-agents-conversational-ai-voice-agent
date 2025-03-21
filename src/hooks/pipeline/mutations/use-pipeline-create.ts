@@ -1,12 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { defaultColumns } from "../default-columns";
+import { defaultColumns } from "@/hooks/use-pipeline";
 import { Pipeline } from "@/types/pipeline";
+import { toast } from "sonner";
 
 export function usePipelineCreate() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const createNewPipeline = async (name: string) => {
@@ -14,11 +13,7 @@ export function usePipelineCreate() {
     const userId = user.data.user?.id;
 
     if (!userId) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to create a pipeline",
-        variant: "destructive",
-      });
+      toast.error("You must be logged in to create a pipeline");
       return;
     }
 
@@ -47,17 +42,10 @@ export function usePipelineCreate() {
         return [...old, data];
       });
 
-      toast({
-        title: "Pipeline created",
-        description: "New pipeline has been created successfully",
-      });
+      toast.success("New pipeline has been created successfully");
     } catch (error) {
       console.error("Error creating pipeline:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create pipeline",
-        variant: "destructive",
-      });
+      toast.error("Failed to create pipeline");
     }
   };
 

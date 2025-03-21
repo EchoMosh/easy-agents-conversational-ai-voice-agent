@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 type LeadHandlingOption = "keep" | "move" | "delete";
 
@@ -12,7 +12,6 @@ export function useDeletePipeline(
   ) => Promise<void>,
   pipelineId?: string
 ) {
-  const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -25,11 +24,7 @@ export function useDeletePipeline(
       setShowDeleteDialog(false);
     } catch (error) {
       console.error("Error deleting pipeline:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete pipeline",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete pipeline");
     } finally {
       setIsDeleting(false);
     }

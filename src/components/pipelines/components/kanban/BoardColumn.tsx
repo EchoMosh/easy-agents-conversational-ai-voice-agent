@@ -1,4 +1,3 @@
-
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { useDndContext, type UniqueIdentifier } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { GripVertical } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Lead } from "@/pages/dashboard/leads";
+import "./kanban-styles.css";
 
 export interface Column {
   id: UniqueIdentifier;
@@ -32,6 +32,7 @@ interface BoardColumnProps {
   previewLead?: Lead | null;
   previewIndex?: number | null;
   onLeadClick?: (lead: Lead) => void;
+  className?: string;
 }
 
 export function BoardColumn({
@@ -100,7 +101,9 @@ export function BoardColumn({
       className={
         variants({
           dragging: isOverlay ? "overlay" : isDragging ? "over" : undefined,
-        }) + (isPreviewTarget ? " ring-2 ring-blue-400" : "") + " h-full"
+        }) +
+        (isPreviewTarget ? " ring-2 ring-blue-400" : "") +
+        " h-full"
       }
     >
       <CardHeader
@@ -126,8 +129,8 @@ export function BoardColumn({
           <SortableContext items={tasksIds}>
             {/* If we have a preview lead at the top of the column (no specific index) */}
             {previewLead && previewIndex === null && (
-              <div className="relative pb-1 animate-pulse">
-                <div className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-md opacity-50" />
+              <div className="relative pb-1 transition-all duration-200 ease-out">
+                <div className="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-md opacity-70" />
                 <TaskCard
                   lead={previewLead}
                   columnId={column.id.toString()}
@@ -142,8 +145,8 @@ export function BoardColumn({
                 if (previewLead && previewIndex === index) {
                   return (
                     <React.Fragment key={`preview-${index}`}>
-                      <div className="relative pb-1 animate-pulse">
-                        <div className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-md opacity-50" />
+                      <div className="relative pb-1 transition-all duration-200 ease-out">
+                        <div className="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-md opacity-70" />
                         <TaskCard
                           lead={previewLead}
                           columnId={column.id.toString()}
@@ -177,8 +180,8 @@ export function BoardColumn({
 
             {/* If we have a preview lead at the end of the column */}
             {previewLead && previewIndex === tasks.length && (
-              <div className="relative pb-1 animate-pulse">
-                <div className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-md opacity-50" />
+              <div className="relative pb-1 transition-all duration-200 ease-out">
+                <div className="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-md opacity-70" />
                 <TaskCard
                   lead={previewLead}
                   columnId={column.id.toString()}

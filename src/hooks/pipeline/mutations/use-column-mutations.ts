@@ -1,11 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export function useColumnMutations() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Helper function to get the first column/stage of a pipeline
@@ -23,11 +22,7 @@ export function useColumnMutations() {
     
     if (index === -1) {
       console.error("Column not found:", columnId);
-      toast({
-        title: "Error",
-        description: "Column not found",
-        variant: "destructive"
-      });
+      toast.error("Column not found");
       return;
     }
     
@@ -38,11 +33,7 @@ export function useColumnMutations() {
     
     if (duplicateTitle) {
       console.error("Duplicate column title:", newTitle);
-      toast({
-        title: "Error",
-        description: "A stage with this name already exists",
-        variant: "destructive"
-      });
+      toast.error("A stage with this name already exists");
       return;
     }
     
@@ -102,17 +93,10 @@ export function useColumnMutations() {
       });
 
       console.log("Column title updated successfully");
-      toast({
-        title: "Stage updated",
-        description: "Pipeline stage has been updated successfully"
-      });
+      toast.success("Pipeline stage has been updated successfully");
     } catch (error) {
       console.error("Error updating pipeline stage:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update pipeline stage",
-        variant: "destructive"
-      });
+      toast.error("Failed to update pipeline stage");
     }
   };
 

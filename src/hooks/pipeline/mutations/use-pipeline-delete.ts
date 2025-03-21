@@ -1,10 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Pipeline } from "@/types/pipeline";
+import { toast } from "sonner";
 
 export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: () => void) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const handleDeletePipeline = async (
@@ -54,10 +53,7 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
       await queryClient.invalidateQueries({ queryKey: ["leads"] });
 
       console.log("Pipeline deletion completed successfully");
-      toast({
-        title: "Pipeline deleted",
-        description: "Pipeline deleted successfully",
-      });
+      toast.success("Pipeline deleted successfully");
 
       // Refresh the data
       await Promise.all([
@@ -66,11 +62,7 @@ export function usePipelineDelete(refetchPipelines: () => void, refetchLeads: ()
       ]);
     } catch (error) {
       console.error("Error deleting pipeline:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete pipeline",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to delete pipeline");
       throw error;
     }
   };

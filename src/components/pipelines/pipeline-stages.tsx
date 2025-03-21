@@ -1,8 +1,9 @@
-
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineName } from "./components/pipeline-name";
 import { useState, useEffect, useRef } from "react";
+import { resetStuckDragAttributes } from "./components/kanban/reset-stuck-state";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { KanbanBoard } from "./components/kanban/KanbanBoard";
@@ -44,43 +45,38 @@ export function PipelineStages({
   const { handleDeleteStage } = useStages(onReorderColumns);
   const [cleanedPipeline, setCleanedPipeline] = useState<Pipeline | null>(null);
   const [isAddingStage, setIsAddingStage] = useState(false);
-  
+
   // Find the currently dragged lead for preview
   const [previewLead, setPreviewLead] = useState<Lead | null>(null);
   const isFirstRender = useRef(true);
-  
+
   // Reset drag on pipeline change to prevent state mismatch
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
-    
-    // Find drag-related elements and reset their state
-    const draggedElements = document.querySelectorAll('[aria-pressed="true"]');
-    if (draggedElements.length > 0) {
-      console.log("Found elements still in dragged state. Resetting...");
-      draggedElements.forEach(el => {
-        if (el instanceof HTMLElement) {
-          el.setAttribute('aria-pressed', 'false');
-        }
-      });
-    }
+
+    // Use our comprehensive reset utility to clean up any stuck state
+    resetStuckDragAttributes();
+    console.log("Reset drag state due to pipeline change");
   }, [selectedPipeline]);
-  
+
   // When previewColumnId changes, find the corresponding lead
   useEffect(() => {
     if (!previewColumnId || !leads || leads.length === 0) {
       setPreviewLead(null);
       return;
     }
-    
+
     // Look for a lead that's being dragged currently
-    const draggedLead = leads.find(lead => {
-      const draggedEl = document.querySelector(`[data-draggable-id="${lead.id}"]`);
-      return draggedEl && draggedEl.getAttribute('aria-pressed') === 'true';
+    const draggedLead = leads.find((lead) => {
+      const draggedEl = document.querySelector(
+        `[data-draggable-id="${lead.id}"]`
+      );
+      return draggedEl && draggedEl.getAttribute("aria-pressed") === "true";
     });
-    
+
     if (draggedLead) {
       setPreviewLead(draggedLead);
     }
@@ -245,25 +241,53 @@ export function PipelineStages({
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <KanbanBoard
-          pipeline={cleanedPipeline}
-          leads={leads}
-          onDragEnd={onDragEnd}
-          onDragOver={onDragOver}
-          previewColumnId={previewColumnId}
-          previewIndex={previewIndex}
-          previewLead={previewLead}
-          onEditColumnTitle={onEditColumnTitle}
-          onLeadClick={onLeadClick}
-          onAddStage={(stage) => {
-            setIsAddingStage(true);
-            onAddStage(stage);
-            setTimeout(() => setIsAddingStage(false), 1000);
+        <ErrorBoundary
+          onError={(error) => {
+            console.error("KanbanBoard error:", error);
+            // Reset all drag state on error
+            resetStuckDragAttributes();
           }}
-          onDeleteStage={handleDeleteStageClick}
-          onReorderColumns={onReorderColumns}
-          isAddingStage={isAddingStage}
-        />
+          fallback={
+            <div className="flex items-center justify-center h-full w-full">
+              <div className="p-4 bg-red-50 border border-red-200 rounded text-red-800 max-w-md">
+                <h2 className="text-lg font-semibold mb-2">Board Error</h2>
+                <p className="mb-4">
+                  There was a problem loading the board. Reset stuck state and
+                  try again.
+                </p>
+                <button
+                  onClick={() => {
+                    resetStuckDragAttributes();
+                    window.location.reload();
+                  }}
+                  className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Reset & Reload
+                </button>
+              </div>
+            </div>
+          }
+        >
+          <KanbanBoard
+            pipeline={cleanedPipeline}
+            leads={leads}
+            onDragEnd={onDragEnd}
+            onDragOver={onDragOver}
+            previewColumnId={previewColumnId}
+            previewIndex={previewIndex}
+            previewLead={previewLead}
+            onEditColumnTitle={onEditColumnTitle}
+            onLeadClick={onLeadClick}
+            onAddStage={(stage) => {
+              setIsAddingStage(true);
+              onAddStage(stage);
+              setTimeout(() => setIsAddingStage(false), 1000);
+            }}
+            onDeleteStage={handleDeleteStageClick}
+            onReorderColumns={onReorderColumns}
+            isAddingStage={isAddingStage}
+          />
+        </ErrorBoundary>
       </div>
     </div>
   );

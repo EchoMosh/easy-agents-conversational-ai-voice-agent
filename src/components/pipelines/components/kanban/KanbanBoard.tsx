@@ -1,4 +1,3 @@
-
 import { useRef, useMemo } from "react";
 import { BoardColumn, BoardContainer } from "./BoardColumn";
 import { BoardDragOverlay } from "./board-drag-overlay";
@@ -9,6 +8,7 @@ import {
   type DragStartEvent,
   UniqueIdentifier,
 } from "@dnd-kit/core";
+import "./kanban-styles.css";
 import {
   SortableContext,
   arrayMove,
@@ -112,7 +112,16 @@ export function KanbanBoard({
               isPreviewTarget={
                 previewColumnId === col.id || currentOver === col.id
               }
-              previewLead={col.id === previewColumnId ? previewLead || activeLead : null}
+              className={
+                previewColumnId === col.id || currentOver === col.id
+                  ? "column-preview-target"
+                  : ""
+              }
+              previewLead={
+                col.id === previewColumnId || currentOver === col.id
+                  ? previewLead || activeLead
+                  : null
+              }
               previewIndex={col.id === previewColumnId ? previewIndex : null}
             />
           ))}
@@ -175,20 +184,34 @@ export function KanbanBoard({
   }
 
   function handleDragEnd(event: DragEndEvent) {
-    resetDragState();
+    // First call external handler to manage task placement
+    // This way we make sure preview is maintained during database update
+    onExternalDragEnd(event);
 
+    // After the external handler has processed task movement,
+    // handle column reordering if needed
     const { active, over } = event;
-    if (!over) return;
+    if (!over) {
+      resetDragState();
+      return;
+    }
 
     const activeId = active.id;
     const overId = over.id;
 
-    if (!hasDraggableData(active)) return;
+    if (!hasDraggableData(active)) {
+      resetDragState();
+      return;
+    }
 
     const activeData = active.data.current;
 
-    if (activeId === overId) return;
+    if (activeId === overId) {
+      resetDragState();
+      return;
+    }
 
+    // Only handle column reordering ourselves (task movement is handled by external handler)
     const isActiveAColumn = activeData?.type === "Column";
     if (
       isActiveAColumn &&
@@ -211,9 +234,12 @@ export function KanbanBoard({
 
         onReorderColumns(newColumns);
       }
+
+      // Reset only for column reordering; for task movement, let the external handler do it
+      resetDragState();
     }
 
-    // Use the external handler for task drops
-    onExternalDragEnd(event);
+    // Note: We don't reset drag state for tasks here, that's handled by the external handler
+    // to maintain visual consistency during database updates
   }
 }

@@ -4,6 +4,7 @@ import { BoardColumn } from "./BoardColumn";
 import { TaskCard } from "./TaskCard";
 import { Lead } from "@/pages/dashboard/leads";
 import { Column } from "./BoardColumn";
+import "./kanban-styles.css";
 
 interface BoardDragOverlayProps {
   activeColumn: Column | null;
@@ -21,7 +22,7 @@ export function BoardDragOverlay({
   if (!activeColumn && !activeLead) return null;
 
   return createPortal(
-    <DragOverlay>
+    <DragOverlay className="dnd-overlay">
       {activeColumn && (
         <BoardColumn
           isOverlay
