@@ -22,6 +22,9 @@ interface CreateTagData {
   name: string;
 }
 
+// Maximum tag name length
+const MAX_TAG_LENGTH = 25;
+
 export function TagsManager({ 
   leadId, 
   tags, 
@@ -41,12 +44,37 @@ export function TagsManager({
 
   const handleCreateTag = async (data: CreateTagData) => {
     if (isSubmitting) return;
+    
+    // Trim the tag name and limit its length
+    const trimmedName = data.name.trim();
+    
+    if (!trimmedName) {
+      toast.error("Tag name cannot be empty");
+      return;
+    }
+    
+    // Check if tag name is too long
+    if (trimmedName.length > MAX_TAG_LENGTH) {
+      toast.error(`Tag name must be ${MAX_TAG_LENGTH} characters or less`);
+      return;
+    }
+    
+    // Check for duplicate tag
+    const isDuplicate = tags.some(tag => 
+      tag.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      toast.error("This tag already exists for this lead");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
       // If we're in new lead form mode, use the provided callback
       if (isNewLead && onAddTagForNewLead) {
-        onAddTagForNewLead(data.name);
+        onAddTagForNewLead(trimmedName);
         setIsAddingTag(false);
         setIsSubmitting(false);
         return;
@@ -64,13 +92,27 @@ export function TagsManager({
       const { data: tag, error: tagError } = await supabase
         .from('tags')
         .insert({
-          name: data.name,
+          name: trimmedName,
           user_id: userData.user.id
         })
         .select()
         .single();
 
       if (tagError) throw tagError;
+
+      // Then check if this tag is already linked to this lead
+      const { data: existingTags, error: checkError } = await supabase
+        .from('lead_tags')
+        .select('tag_id')
+        .eq('lead_id', leadId)
+        .eq('tag_id', tag.id);
+        
+      if (checkError) throw checkError;
+      
+      if (existingTags && existingTags.length > 0) {
+        toast.error("This tag is already associated with this lead");
+        return;
+      }
 
       // Then create the lead_tag association
       const { error: linkError } = await supabase
@@ -95,13 +137,39 @@ export function TagsManager({
 
   const handleUpdateTag = async (data: CreateTagData) => {
     if (!editingTag || isSubmitting) return;
+    
+    // Trim the tag name and limit its length
+    const trimmedName = data.name.trim();
+    
+    if (!trimmedName) {
+      toast.error("Tag name cannot be empty");
+      return;
+    }
+    
+    // Check if tag name is too long
+    if (trimmedName.length > MAX_TAG_LENGTH) {
+      toast.error(`Tag name must be ${MAX_TAG_LENGTH} characters or less`);
+      return;
+    }
+    
+    // Check for duplicate tag (but exclude the current tag being edited)
+    const isDuplicate = tags.some(tag => 
+      tag.name.toLowerCase() === trimmedName.toLowerCase() && 
+      tag.id !== editingTag.id
+    );
+    
+    if (isDuplicate) {
+      toast.error("This tag already exists for this lead");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
       const { error } = await supabase
         .from('tags')
         .update({
-          name: data.name
+          name: trimmedName
         })
         .eq('id', editingTag.id);
 
@@ -166,6 +234,7 @@ export function TagsManager({
             <TagForm 
               onSubmit={handleCreateTag}
               isSubmitting={isSubmitting}
+              maxLength={MAX_TAG_LENGTH}
             />
           </DialogContent>
         </Dialog>
@@ -191,6 +260,7 @@ export function TagsManager({
               defaultValues={editingTag}
               onSubmit={handleUpdateTag}
               isSubmitting={isSubmitting}
+              maxLength={MAX_TAG_LENGTH}
             />
           )}
         </DialogContent>

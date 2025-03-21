@@ -13,12 +13,22 @@ interface TagFormProps {
   defaultValues?: TagFormData;
   onSubmit: (data: TagFormData) => void;
   isSubmitting?: boolean;
+  maxLength?: number;
 }
 
-export function TagForm({ defaultValues, onSubmit, isSubmitting = false }: TagFormProps) {
-  const { register, handleSubmit } = useForm<TagFormData>({
+export function TagForm({ 
+  defaultValues, 
+  onSubmit, 
+  isSubmitting = false,
+  maxLength = 25
+}: TagFormProps) {
+  const { register, handleSubmit, watch } = useForm<TagFormData>({
     defaultValues: defaultValues || { name: "" }
   });
+  
+  const currentName = watch("name") || "";
+  const nameLength = currentName.length;
+  const isNameTooLong = nameLength > maxLength;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -26,13 +36,27 @@ export function TagForm({ defaultValues, onSubmit, isSubmitting = false }: TagFo
         <Label htmlFor="name">Name</Label>
         <Input
           id="name"
-          {...register("name", { required: true })}
+          {...register("name", { required: true, maxLength })}
           placeholder="Enter tag name"
-          className="h-10"
+          className={`h-10 ${isNameTooLong ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
           disabled={isSubmitting}
         />
+        <div className="flex justify-between text-xs">
+          <div className={`${isNameTooLong ? 'text-red-500' : 'text-gray-500'}`}>
+            {nameLength}/{maxLength}
+          </div>
+          {isNameTooLong && (
+            <div className="text-red-500">
+              Tag name is too long
+            </div>
+          )}
+        </div>
       </div>
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={isSubmitting || isNameTooLong || nameLength === 0}
+      >
         {isSubmitting ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
