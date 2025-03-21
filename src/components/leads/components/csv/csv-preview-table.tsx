@@ -31,9 +31,9 @@ export const CsvPreviewTable: React.FC<CsvPreviewTableProps> = ({
 
   return (
     <div className="border border-gray-200 rounded-md">
-      <ScrollArea className="h-[280px] w-full" type="hover">
-        <div className="w-fit min-w-full">
-          <Table className="w-max">
+      <ScrollArea className="h-[280px] w-full overflow-auto" type="always">
+        <div className="min-w-max">
+          <Table>
             <TableHeader className="bg-gray-50 sticky top-0 z-10">
               <TableRow>
                 {columnMappings.map((mapping, index) => (
