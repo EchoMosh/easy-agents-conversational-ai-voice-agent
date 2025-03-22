@@ -1,11 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+
 import { v4 as uuidv4 } from 'uuid';
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '@/integrations/supabase/client';
 
 interface LeadData {
   first_name?: string;
