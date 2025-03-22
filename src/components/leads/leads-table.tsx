@@ -190,6 +190,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
   const handleLoadMore = async () => {
     if (!onLoadMore) return;
     
+    console.log("Loading more leads...");
     setIsLoadingMore(true);
     try {
       await onLoadMore();
@@ -334,15 +335,15 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
         {hasMore && (
           <div className="p-4 border-t flex justify-center">
             <Button 
-              variant={isLoadingMore ? "outline" : "default"}
+              variant="default"
               onClick={handleLoadMore} 
               disabled={isLoadingMore}
-              className={`w-full max-w-xs transition-all duration-300 ${isLoadingMore ? 'bg-gray-50 dark:bg-gray-800' : ''}`}
+              className="w-full max-w-xs"
             >
               {isLoadingMore ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <LoadingSpinner className="h-5 w-5 text-primary" />
-                  <span>Loading more leads...</span>
+                <div className="flex items-center justify-center gap-2">
+                  <LoadingSpinner className="h-5 w-5" />
+                  <span>Loading...</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center">
