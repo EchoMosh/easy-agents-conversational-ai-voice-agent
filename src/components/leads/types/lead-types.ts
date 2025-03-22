@@ -27,6 +27,9 @@ export interface LeadTableHeaderProps {
   onToggleSelectAll: () => void;
   isAllSelected: boolean;
   isDeleting: boolean;
+  selectAllMode?: 'visible' | 'all';
+  visibleCount?: number;
+  totalCount?: number | null;
 }
 
 export interface LeadActionsProps {

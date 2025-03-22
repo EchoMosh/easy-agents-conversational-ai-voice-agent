@@ -3,20 +3,47 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LeadTableHeaderProps } from "../types/lead-types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Info } from "lucide-react";
 
-export function LeadTableHeader({ onToggleSelectAll, isAllSelected, isDeleting }: LeadTableHeaderProps) {
+export function LeadTableHeader({ 
+  onToggleSelectAll, 
+  isAllSelected, 
+  isDeleting,
+  selectAllMode,
+  visibleCount,
+  totalCount
+}: LeadTableHeaderProps) {
   return (
     <TableHeader className="bg-muted/30">
       <TableRow>
         <TableHead className="w-12">
-          <Checkbox
-            checked={isAllSelected}
-            onCheckedChange={onToggleSelectAll}
-            disabled={isDeleting}
-            className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground rounded-sm"
-            aria-label="Select all leads"
-          />
+          <div className="flex items-center gap-1">
+            <Checkbox
+              checked={isAllSelected}
+              onCheckedChange={onToggleSelectAll}
+              disabled={isDeleting}
+              className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground rounded-sm"
+              aria-label="Select all leads"
+            />
+            
+            {selectAllMode === 'all' && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 text-primary" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p className="text-xs">
+                      {totalCount 
+                        ? `All ${totalCount} leads are selected` 
+                        : "All matching leads are selected"
+                      }
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
         </TableHead>
         <TableHead className="font-medium">Name</TableHead>
         <TableHead className="font-medium">Email</TableHead>

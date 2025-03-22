@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { useWorkspace } from "@/context/workspace-context";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export function usePipelineQueries(selectedPipelineId?: string) {
   const queryClient = useQueryClient();
@@ -14,6 +14,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
   const [hasMoreLeads, setHasMoreLeads] = useState(true);
   const pageSize = 25; // Number of leads to load per page
   const accumulatedLeadsRef = useRef<Lead[]>([]);
+  const [totalFilteredCount, setTotalFilteredCount] = useState<number | null>(null);
   
   // Fetch pipelines
   const {
@@ -65,6 +66,47 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     },
     enabled: !!currentWorkspace?.id,
   });
+
+  // Fetch the total count of leads that match our filters
+  // This is used to display the total number of leads that match the filter
+  useEffect(() => {
+    const fetchTotalCount = async () => {
+      if (!currentWorkspace?.id) return;
+
+      try {
+        // Build the query based on filters
+        let query = supabase
+          .from("leads")
+          .select("id", { count: 'exact' })
+          .eq("workspace_id", currentWorkspace.id);
+        
+        // Add pipeline filter if a specific pipeline is selected
+        if (selectedPipelineId && selectedPipelineId !== "all") {
+          query = query.eq("pipeline_id", selectedPipelineId);
+        }
+
+        const { count, error } = await query;
+        
+        if (error) {
+          console.error("Failed to fetch total count", error);
+          return;
+        }
+        
+        if (count !== null) {
+          setTotalFilteredCount(count);
+          
+          // Dispatch a custom event with the total count
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('totalFilteredLeads', { detail: count }));
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching total count:", error);
+      }
+    };
+
+    fetchTotalCount();
+  }, [currentWorkspace?.id, selectedPipelineId]);
 
   // Fetch leads for the selected pipeline or all leads if no pipeline is selected
   const {
@@ -225,5 +267,6 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     invalidateAndRefetch,
     hasMoreLeads,
     loadMoreLeads,
+    totalFilteredCount
   };
 }

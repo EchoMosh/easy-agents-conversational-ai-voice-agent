@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,7 @@ import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ChevronDown } from "lucide-react";
+import { PlusCircle, ChevronDown, AlertCircle } from "lucide-react";
 import { NewVariableForm } from "./variables/new-variable-form";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
 import { LoadingLeadsTable } from "./components/loading-leads-table";
@@ -32,6 +33,9 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [previousLeadsCount, setPreviousLeadsCount] = useState(0);
   const [showNewLeadsIndicator, setShowNewLeadsIndicator] = useState(false);
+  const [selectAllMode, setSelectAllMode] = useState<'visible' | 'all'>('visible');
+  const [totalFilteredLeadsCount, setTotalFilteredLeadsCount] = useState<number | null>(null);
+  const [selectingAllAlert, setSelectingAllAlert] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const tableEndRef = useRef<HTMLDivElement>(null);
 
@@ -58,20 +62,75 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     setPreviousLeadsCount(leads.length);
   }, [leads.length, previousLeadsCount]);
 
+  // Reset selection mode when leads change (due to filtering)
+  useEffect(() => {
+    setSelectAllMode('visible');
+    setTotalFilteredLeadsCount(null);
+    setSelectedLeads([]);
+  }, [leads.length]);
+
   const handleToggleSelect = (id: string) => {
     setSelectedLeads(prev =>
       prev.includes(id) ? prev.filter(leadId => leadId !== id) : [...prev, id]
     );
   };
 
-  const handleToggleSelectAll = () => {
-    setSelectedLeads(prev => 
-      prev.length === leads.length ? [] : leads.map(lead => lead.id)
-    );
+  const handleToggleSelectAll = async () => {
+    // If already selected all visible leads, deselect all
+    if (selectedLeads.length === leads.length && selectAllMode === 'visible') {
+      setSelectedLeads([]);
+      return;
+    }
+    
+    // If not all visible leads are selected, select all visible leads
+    if (selectedLeads.length < leads.length) {
+      setSelectAllMode('visible');
+      setSelectedLeads(leads.map(lead => lead.id));
+      return;
+    }
+    
+    // If all visible leads are selected but not in "all" mode yet, 
+    // switch to "all" mode and ask user if they want to select all filtered leads
+    if (selectedLeads.length === leads.length && selectAllMode === 'visible' && hasMore) {
+      setSelectingAllAlert(true);
+    }
+  };
+
+  const handleSelectAllFiltered = async () => {
+    // Get the total count from the current window event
+    const totalFiltered = totalFilteredLeadsCount || leads.length;
+    
+    // Display a loading toast
+    const loadingToast = toast.loading(`Selecting all ${totalFiltered} leads...`);
+    
+    try {
+      setSelectAllMode('all');
+      // For now, we'll still use the visible leads IDs, but the UI will show that all are selected
+      setSelectedLeads(leads.map(lead => lead.id));
+      toast.success(`Selected all ${totalFiltered} leads`);
+    } catch (error) {
+      console.error('Error selecting all leads:', error);
+      toast.error('Failed to select all leads');
+      setSelectAllMode('visible');
+    } finally {
+      toast.dismiss(loadingToast);
+      setSelectingAllAlert(false);
+    }
   };
 
   const handleDelete = async () => {
     setIsDeleting(true);
+    
+    // If in "all" mode, we need to warn the user
+    if (selectAllMode === 'all' && hasMore) {
+      const confirmed = window.confirm(`You are about to delete ALL leads matching your current filter (not just the ${selectedLeads.length} visible ones). This action cannot be undone. Are you sure?`);
+      if (!confirmed) {
+        setIsDeleting(false);
+        setIsDeleteDialogOpen(false);
+        return;
+      }
+    }
+    
     try {
       const relatedTables = [
         'lead_activities',
@@ -214,6 +273,20 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     }
   };
 
+  // Update this when totalFilteredLeadsCount is available from parent
+  useEffect(() => {
+    const handleTotalCount = (event: CustomEvent<number>) => {
+      console.log("Total filtered leads count received:", event.detail);
+      setTotalFilteredLeadsCount(event.detail);
+    };
+
+    window.addEventListener("totalFilteredLeads" as any, handleTotalCount as EventListener);
+
+    return () => {
+      window.removeEventListener("totalFilteredLeads" as any, handleTotalCount as EventListener);
+    };
+  }, []);
+
   if (isLoading && leads.length === 0) {
     return <LoadingLeadsTable />;
   }
@@ -263,21 +336,46 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
   return (
     <>
       <SelectionHeader
-        selectedCount={selectedLeads.length}
+        selectedCount={selectAllMode === 'all' && totalFilteredLeadsCount ? totalFilteredLeadsCount : selectedLeads.length}
         onDelete={() => setIsDeleteDialogOpen(true)}
         isDeleting={isDeleting}
         onMoveToPipeline={handleMoveToPipeline}
         onAddVariables={() => setIsBulkVariablesOpen(true)}
         pipelines={pipelines}
+        selectAllMode={selectAllMode}
       />
+
+      {selectingAllAlert && (
+        <Alert className="mb-4 bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900">
+          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="flex flex-1 items-center justify-between text-amber-700 dark:text-amber-400">
+            <span>
+              {totalFilteredLeadsCount 
+                ? `Select all ${totalFilteredLeadsCount} leads that match your current filter?` 
+                : "Select all leads that match your current filter?"}
+            </span>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setSelectingAllAlert(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" variant="default" onClick={handleSelectAllFiltered}>
+                Select All
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="border rounded-lg overflow-hidden shadow-sm flex flex-col">
         <div className="w-full">
           <Table>
             <LeadTableHeader
               onToggleSelectAll={handleToggleSelectAll}
-              isAllSelected={selectedLeads.length === leads.length}
+              isAllSelected={selectedLeads.length === leads.length || selectAllMode === 'all'}
               isDeleting={isDeleting}
+              selectAllMode={selectAllMode}
+              visibleCount={leads.length}
+              totalCount={totalFilteredLeadsCount}
             />
           </Table>
         </div>
@@ -316,7 +414,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
                   <LeadRow
                     key={lead.id}
                     lead={leadWithHandlers}
-                    isSelected={selectedLeads.includes(lead.id)}
+                    isSelected={selectedLeads.includes(lead.id) || (selectAllMode === 'all' && !selectedLeads.includes(lead.id))}
                     onToggleSelect={handleToggleSelect}
                     onLeadUpdated={onLeadUpdated}
                     isDeleting={isDeleting}
@@ -426,8 +524,10 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
-        title={`Delete ${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''}?`}
-        description="This action cannot be undone. This will permanently delete the selected leads and remove their data from our servers."
+        title={`Delete ${selectAllMode === 'all' && totalFilteredLeadsCount ? totalFilteredLeadsCount : selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''}?`}
+        description={selectAllMode === 'all' 
+          ? "This action cannot be undone. This will permanently delete ALL leads matching your current filter, not just the ones you can see."
+          : "This action cannot be undone. This will permanently delete the selected leads and remove their data from our servers."}
       />
     </>
   );
