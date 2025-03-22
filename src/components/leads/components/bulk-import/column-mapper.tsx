@@ -23,7 +23,6 @@ interface ColumnMapperProps {
   onBack: () => void;
 }
 
-// Field options for mapping
 const FIELD_OPTIONS = [
   { value: "first_name", label: "First Name", required: true },
   { value: "last_name", label: "Last Name", required: true },
@@ -51,15 +50,12 @@ export function ColumnMapper({
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isValid, setIsValid] = useState(false);
 
-  // Parse CSV content when it changes
   useEffect(() => {
     if (!fileContent) return;
 
     try {
-      // Basic CSV parsing (could be enhanced with a library like PapaParse)
       const rows = fileContent.split(/\r?\n/).filter((row) => row.trim());
       const parsedData = rows.map((row) => {
-        // Handle quoted values with commas inside
         const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
         return matches.map((value) =>
           value.startsWith('"') && value.endsWith('"')
@@ -70,7 +66,6 @@ export function ColumnMapper({
 
       if (parsedData.length === 0) throw new Error("No data found in file");
 
-      // Extract headers and data
       const headerRow = hasHeaders
         ? parsedData[0]
         : parsedData[0].map((_, i) => `Column ${i + 1}`);
@@ -78,11 +73,9 @@ export function ColumnMapper({
         ? parsedData.slice(1, 6)
         : parsedData.slice(0, 5);
 
-      // Initialize column mapping if empty
       if (Object.keys(columnMapping).length === 0) {
         const initialMapping: Record<string, string> = {};
         headerRow.forEach((header) => {
-          // Try to intelligently map columns based on header names
           const headerLower = header.toLowerCase().trim();
 
           if (headerLower.includes("first") || headerLower === "firstname") {
@@ -124,14 +117,11 @@ export function ColumnMapper({
     }
   }, [fileContent, hasHeaders]);
 
-  // Validate column mapping when it changes
   useEffect(() => {
     const errors: string[] = [];
 
-    // Check if required fields are mapped
-    const mappedFields = Object.values(columnMapping);
     FIELD_OPTIONS.forEach((field) => {
-      if (field.required && !mappedFields.includes(field.value)) {
+      if (field.required && !Object.values(columnMapping).includes(field.value)) {
         errors.push(
           `"${field.label}" is required but not mapped to any column`
         );
@@ -142,7 +132,6 @@ export function ColumnMapper({
     setIsValid(errors.length === 0);
   }, [columnMapping]);
 
-  // Handle changes to column mapping
   const handleColumnMappingChange = (
     columnHeader: string,
     fieldValue: string
@@ -153,11 +142,9 @@ export function ColumnMapper({
     });
   };
 
-  // Display truncated filename
   const displayFileName =
     fileName.length > 40 ? fileName.substring(0, 37) + "..." : fileName;
 
-  // Get label for a field
   const getFieldLabel = (value: string) => {
     const field = FIELD_OPTIONS.find((f) => f.value === value);
     return field ? field.label : "Custom";
@@ -165,8 +152,7 @@ export function ColumnMapper({
 
   return (
     <div className="h-full flex flex-col p-6 overflow-hidden">
-      {/* Fixed Header Section */}
-      <div className="flex-shrink-0 mb-4">
+      <div className="flex-shrink-0 mb-3">
         <div className="text-center text-sm text-gray-500">
           <span className="text-xs uppercase tracking-wider font-medium">
             File:
@@ -175,12 +161,10 @@ export function ColumnMapper({
         </div>
       </div>
 
-      {/* Scrollable Table Section - ONLY THIS should scroll */}
       <div
         className="flex-shrink-0 border border-gray-100 rounded-xl shadow-sm bg-white relative"
-        style={{ height: "350px" }}
+        style={{ height: "280px" }}
       >
-        {/* Scroll arrows */}
         <div className="absolute left-2 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-200/80 rounded-full z-20 pointer-events-none flex items-center justify-center shadow-sm">
           <div className="text-gray-600 font-bold">❮</div>
         </div>
@@ -188,7 +172,6 @@ export function ColumnMapper({
           <div className="text-gray-600 font-bold">❯</div>
         </div>
 
-        {/* Table container - THIS IS THE ONLY SCROLLABLE PART */}
         <div
           className="absolute inset-0 overflow-x-auto overflow-y-auto scrollbar-thin"
           style={{
@@ -198,9 +181,7 @@ export function ColumnMapper({
           }}
         >
           <div style={{ minWidth: Math.max(headers.length * 140, 500) + "px" }}>
-            {/* Header section that stays fixed vertically */}
             <div className="sticky top-0 z-20">
-              {/* Header row with column names */}
               <div className="flex bg-gray-50">
                 {headers.map((header, index) => (
                   <div
@@ -214,7 +195,6 @@ export function ColumnMapper({
                 ))}
               </div>
 
-              {/* Header row with select dropdowns */}
               <div className="flex bg-gray-50/80 backdrop-blur-sm border-b">
                 {headers.map((header, index) => (
                   <div
@@ -257,7 +237,6 @@ export function ColumnMapper({
               </div>
             </div>
 
-            {/* Data rows */}
             {csvData.slice(0, 4).map((row, rowIndex) => (
               <div
                 key={rowIndex}
@@ -282,7 +261,6 @@ export function ColumnMapper({
           </div>
         </div>
 
-        {/* Pulse animation at bottom to show scrollability */}
         <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden pointer-events-none">
           <div
             className="h-full bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-400 animate-pulse-x"
@@ -291,20 +269,18 @@ export function ColumnMapper({
         </div>
       </div>
 
-      <div className="text-center text-xs text-gray-400 mt-2 mb-4 flex-shrink-0">
+      <div className="text-center text-xs text-gray-400 mt-1 mb-2 flex-shrink-0">
         Showing preview of {csvData.length} rows
       </div>
 
-      {/* Fixed Footer Section */}
-      <div className="flex-grow overflow-y-auto">
-        {/* Options - Modern Toggle Style */}
-        <div className="grid grid-cols-2 gap-8 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">
+      <div className="flex-shrink-0">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
               File Structure
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div
                 className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
                   hasHeaders
@@ -351,12 +327,12 @@ export function ColumnMapper({
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">
+          <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
               Duplicate Handling
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div
                 className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
                   removeDuplicates
@@ -408,9 +384,8 @@ export function ColumnMapper({
           </div>
         </div>
 
-        {/* Validation Errors */}
         {validationErrors.length > 0 && (
-          <div className="rounded-md bg-red-50 px-3 py-2 border border-red-100 shadow-sm mb-4">
+          <div className="rounded-md bg-red-50 px-3 py-2 border border-red-100 shadow-sm mb-3">
             <div className="flex">
               <Info className="h-4 w-4 text-red-400 mt-0.5" />
               <div className="ml-2">
@@ -428,8 +403,7 @@ export function ColumnMapper({
         )}
       </div>
 
-      {/* Sticky Footer with Navigation Buttons */}
-      <div className="flex-shrink-0 pt-4 border-t mt-auto">
+      <div className="flex-shrink-0 pt-2 border-t mt-auto">
         <div className="flex justify-between">
           <button
             onClick={onBack}
