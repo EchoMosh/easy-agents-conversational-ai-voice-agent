@@ -29,41 +29,42 @@ export function ImportsIndicator() {
     return null;
   }
 
+  const totalProcessed = activeImports.reduce((sum, job) => sum + (job.processed || 0), 0);
+  const totalLeads = activeImports.reduce((sum, job) => sum + job.leadCount, 0);
+  const progressPercentage = totalLeads > 0 ? Math.min(100, Math.round((totalProcessed / totalLeads) * 100)) : 0;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+        >
+          <Button
+            size="sm"
+            variant={hasActiveImports ? "default" : hasCompletedOrFailed ? "outline" : "ghost"}
+            className={`rounded-full shadow-lg ${hasActiveImports ? "bg-primary" : ""}`}
           >
-            <Button
-              size="sm"
-              variant={hasActiveImports ? "default" : hasCompletedOrFailed ? "outline" : "ghost"}
-              className={`rounded-full shadow-lg ${hasActiveImports ? "bg-primary" : ""}`}
-            >
-              {hasActiveImports ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>
-                    {activeImports.reduce((sum, job) => sum + (job.processed || 0), 0)}/
-                    {activeImports.reduce((sum, job) => sum + job.leadCount, 0)} Leads
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Info className="h-4 w-4" />
-                  <span>
-                    {completedImports.length} import{completedImports.length !== 1 ? "s" : ""} completed
-                    {failedImports.length > 0 ? `, ${failedImports.length} failed` : ""}
-                  </span>
-                </div>
-              )}
-            </Button>
-          </motion.div>
-        </AnimatePresence>
+            {hasActiveImports ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>
+                  {totalProcessed}/{totalLeads} Leads ({progressPercentage}%)
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                <span>
+                  {completedImports.length} import{completedImports.length !== 1 ? "s" : ""} completed
+                  {failedImports.length > 0 ? `, ${failedImports.length} failed` : ""}
+                </span>
+              </div>
+            )}
+          </Button>
+        </motion.div>
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0 rounded-lg shadow-lg" align="center">
         <div className="p-4 flex items-center justify-between">

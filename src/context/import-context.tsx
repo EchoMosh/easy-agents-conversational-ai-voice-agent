@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 export interface ImportJob {
@@ -37,21 +36,8 @@ export function ImportProvider({ children }: { children: React.ReactNode }) {
           endTime: job.endTime ? new Date(job.endTime) : undefined
         }));
         
-        // Check if there are any processing jobs that might have been interrupted
-        const updatedJobs = parsedJobs.map((job: ImportJob) => {
-          if (job.status === "processing") {
-            // If a job was processing during page refresh, mark it as failed
-            return {
-              ...job,
-              status: "failed",
-              endTime: new Date(),
-              error: "Process interrupted by page refresh"
-            };
-          }
-          return job;
-        });
-        
-        setImportJobs(updatedJobs);
+        // Keep processing jobs as is, they might still be running in another tab
+        setImportJobs(parsedJobs);
       }
     } catch (error) {
       console.error("Error loading import jobs from localStorage:", error);
