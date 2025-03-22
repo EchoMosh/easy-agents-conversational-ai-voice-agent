@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +18,7 @@ import { LoadingLeadsTable } from "./components/loading-leads-table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMore }: LeadsTableProps) {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
@@ -47,7 +47,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     },
   });
 
-  // Track when leads count changes to show an indicator
   useEffect(() => {
     if (leads.length > previousLeadsCount && previousLeadsCount > 0) {
       setShowNewLeadsIndicator(true);
@@ -192,13 +191,8 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     
     setIsLoadingMore(true);
     try {
-      const oldLeadsCount = leads.length;
       await onLoadMore();
       
-      // Show toast notification
-      toast.success(`Loaded ${leads.length - oldLeadsCount} more leads`);
-      
-      // After a short delay, scroll to show the newly loaded items
       setTimeout(() => {
         if (tableEndRef.current) {
           const offset = Math.min(300, window.innerHeight / 3);
@@ -331,7 +325,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
             </TableBody>
           </Table>
           
-          {/* This empty div serves as a marker for scrolling to the newly loaded leads */}
           <div ref={tableEndRef} className="h-2" />
         </ScrollArea>
         
@@ -341,7 +334,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
               variant={isLoadingMore ? "outline" : "default"}
               onClick={handleLoadMore} 
               disabled={isLoadingMore}
-              className="w-full max-w-xs transition-all duration-300"
+              className={`w-full max-w-xs transition-all duration-300 ${isLoadingMore ? 'bg-gray-50 dark:bg-gray-800' : ''}`}
             >
               {isLoadingMore ? (
                 <>
