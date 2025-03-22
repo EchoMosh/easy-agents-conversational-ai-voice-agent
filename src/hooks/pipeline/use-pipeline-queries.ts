@@ -95,11 +95,13 @@ export function usePipelineQueries(selectedPipelineId?: string) {
       const leadTagsMap = new Map();
       
       // Get unique tag IDs from all leads
-      const tagIds = new Set();
+      const tagIds = new Set<string>();
       data.forEach(lead => {
         if (lead.lead_tags && lead.lead_tags.length > 0) {
           lead.lead_tags.forEach((tagRelation: any) => {
-            tagIds.add(tagRelation.tag_id);
+            if (typeof tagRelation.tag_id === 'string') {
+              tagIds.add(tagRelation.tag_id);
+            }
           });
         }
       });
@@ -109,7 +111,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         const { data: tagsData, error: tagsError } = await supabase
           .from("tags")
           .select("*")
-          .in("id", Array.from(tagIds));
+          .in("id", Array.from(tagIds) as string[]);
   
         if (!tagsError && tagsData) {
           // Create a map of tag id -> tag data for easy lookup

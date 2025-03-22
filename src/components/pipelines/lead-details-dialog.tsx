@@ -1,3 +1,4 @@
+
 import {
   Mail,
   Phone,
@@ -19,6 +20,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { Lead } from "@/pages/dashboard/leads";
+import { PipelineColumn } from "@/types/pipeline";
 
 interface LeadDetailsDialogProps {
   lead: Lead | null;
