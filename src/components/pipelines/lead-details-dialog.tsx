@@ -1,8 +1,3 @@
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Lead } from "@/pages/dashboard/leads";
-import { format } from "date-fns";
-import { PipelineColumn } from "@/types/pipeline";
 import {
   Mail,
   Phone,
@@ -13,6 +8,7 @@ import {
   Activity,
   X,
   MessageSquare,
+  Tags,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -64,7 +60,6 @@ export function LeadDetailsDialog({
 
       if (error) throw error;
 
-      // Transform to the format expected by ActivityTab
       const formattedActivities = (data || []).map((activity) => ({
         id: activity.id,
         type: activity.content.toLowerCase().includes("email")
@@ -289,6 +284,33 @@ export function LeadDetailsDialog({
                 </Card>
               )}
             </div>
+
+            {/* Tags Section */}
+            {lead.tags && lead.tags.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Tags className="h-4 w-4 text-primary" />
+                  <h3 className="text-base font-medium">Tags</h3>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {lead.tags.map((tag) => (
+                    <motion.div
+                      key={tag.id}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Badge 
+                        className={`bg-${tag.color}-100 text-${tag.color}-800 border-${tag.color}-200`}
+                      >
+                        {tag.name}
+                      </Badge>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Custom Variables Section */}
             {lead.variables && lead.variables.length > 0 && (

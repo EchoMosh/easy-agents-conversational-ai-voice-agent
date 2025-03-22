@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";
@@ -39,7 +40,8 @@ export default function LeadsPage() {
     string | undefined
   >(undefined);
   const [searchQuery, setSearchQuery] = useState("");
-  const { pipelines, leads, invalidateAndRefetch } =
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const { pipelines, leads, availableTags, invalidateAndRefetch } =
     usePipelineQueries(selectedPipelineId);
 
   // Load all leads on first render
@@ -61,16 +63,25 @@ export default function LeadsPage() {
     };
   }, []);
 
-  // Filter leads based on search query and selected pipeline
+  // Filter leads based on search query, selected pipeline, and selected tags
   const filteredLeads = leads.filter((lead) => {
-    // Filter by pipeline if one is selected
+    // First filter by pipeline if one is selected
     if (selectedPipelineId && selectedPipelineId !== "all") {
       if (lead.pipeline_id !== selectedPipelineId) {
         return false;
       }
     }
 
-    // Then filter by search query
+    // Then filter by selected tags
+    if (selectedTagIds.length > 0) {
+      const leadTagIds = lead.tags?.map(tag => tag.id) || [];
+      const hasSelectedTag = selectedTagIds.some(tagId => leadTagIds.includes(tagId));
+      if (!hasSelectedTag) {
+        return false;
+      }
+    }
+
+    // Finally filter by search query
     const query = searchQuery.toLowerCase();
     return (
       (lead.name || "").toLowerCase().includes(query) ||
@@ -88,6 +99,9 @@ export default function LeadsPage() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         pipelines={pipelines}
+        availableTags={availableTags}
+        selectedTagIds={selectedTagIds}
+        setSelectedTagIds={setSelectedTagIds}
         addLeadDialog={
           <div className="flex items-center space-x-2">
             <AddLeadDialog

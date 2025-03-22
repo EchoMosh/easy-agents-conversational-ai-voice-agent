@@ -36,6 +36,31 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     enabled: !!currentWorkspace?.id,
   });
 
+  // Fetch all available tags for filtering
+  const {
+    data: availableTags = [],
+    isLoading: isTagsLoading,
+  } = useQuery({
+    queryKey: ["tags", currentWorkspace?.id],
+    queryFn: async () => {
+      if (!currentWorkspace?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("tags")
+        .select("*")
+        .eq("workspace_id", currentWorkspace.id)
+        .order("name");
+
+      if (error) {
+        console.error("Failed to load tags", error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    enabled: !!currentWorkspace?.id,
+  });
+
   // Fetch leads for the selected pipeline or all leads if no pipeline is selected
   const {
     data: leads = [],
@@ -51,7 +76,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         .select(`
           *,
           variables:lead_variables(*),
-          tags:lead_tags(tag_id)
+          lead_tags!inner(tag_id)
         `)
         .eq("workspace_id", currentWorkspace.id);
       
@@ -66,39 +91,64 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         throw error;
       }
 
-      // Process the tags to get the actual tag data
-      const leadsWithTags = await Promise.all(
-        (data || []).map(async (lead) => {
-          if (!lead.tags || lead.tags.length === 0) {
-            return { ...lead, tags: [] };
-          }
+      // Now fetch tags for all leads in a single query for better performance
+      const leadTagsMap = new Map();
+      
+      // Get unique tag IDs from all leads
+      const tagIds = new Set();
+      data.forEach(lead => {
+        if (lead.lead_tags && lead.lead_tags.length > 0) {
+          lead.lead_tags.forEach((tagRelation: any) => {
+            tagIds.add(tagRelation.tag_id);
+          });
+        }
+      });
+      
+      if (tagIds.size > 0) {
+        // Fetch all tag data in a single query
+        const { data: tagsData, error: tagsError } = await supabase
+          .from("tags")
+          .select("*")
+          .in("id", Array.from(tagIds));
+  
+        if (!tagsError && tagsData) {
+          // Create a map of tag id -> tag data for easy lookup
+          tagsData.forEach(tag => {
+            leadTagsMap.set(tag.id, tag);
+          });
+        }
+      }
+      
+      // Process the leads data with the tags
+      const processedLeads = data.map(lead => {
+        const tags = [];
+        if (lead.lead_tags && lead.lead_tags.length > 0) {
+          lead.lead_tags.forEach((tagRelation: any) => {
+            const tag = leadTagsMap.get(tagRelation.tag_id);
+            if (tag) {
+              tags.push(tag);
+            }
+          });
+        }
+        
+        return {
+          ...lead,
+          tags,
+          lead_tags: undefined // Remove the original lead_tags array
+        };
+      });
 
-          const tagIds = lead.tags.map((tag: any) => tag.tag_id);
-          
-          const { data: tagsData, error: tagsError } = await supabase
-            .from("tags")
-            .select("*")
-            .in("id", tagIds);
-
-          if (tagsError) {
-            console.error("Failed to load tags", tagsError);
-            return { ...lead, tags: [] };
-          }
-
-          return { ...lead, tags: tagsData || [] };
-        })
-      );
-
-      return leadsWithTags as Lead[];
+      return processedLeads as Lead[];
     },
     enabled: !!currentWorkspace?.id,
   });
 
-  const isLoading = isPipelinesLoading || isLeadsLoading;
+  const isLoading = isPipelinesLoading || isLeadsLoading || isTagsLoading;
 
   const invalidateAndRefetch = async () => {
     await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
     await queryClient.invalidateQueries({ queryKey: ["leads"] });
+    await queryClient.invalidateQueries({ queryKey: ["tags"] });
     await refetchPipelines();
     await refetchLeads();
   };
@@ -106,6 +156,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
   return {
     pipelines,
     leads,
+    availableTags,
     isLoading,
     isPipelinesLoading,
     isLeadsLoading,

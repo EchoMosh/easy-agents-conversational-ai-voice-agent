@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { ReactNode } from "react";
+import { Tag } from "@/types/tag-types";
+import { TagFilter } from "./tag-filter";
 
 interface SearchAndFiltersProps {
   selectedPipelineId: string | undefined;
@@ -11,6 +13,9 @@ interface SearchAndFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   pipelines: Array<{ id: string; name: string }>;
+  availableTags: Tag[];
+  selectedTagIds: string[];
+  setSelectedTagIds: (tagIds: string[]) => void;
   addLeadDialog?: ReactNode;
 }
 
@@ -20,6 +25,9 @@ export function SearchAndFilters({
   searchQuery,
   setSearchQuery,
   pipelines,
+  availableTags,
+  selectedTagIds,
+  setSelectedTagIds,
   addLeadDialog
 }: SearchAndFiltersProps) {
   return (
@@ -42,6 +50,15 @@ export function SearchAndFilters({
             ))}
           </SelectContent>
         </Select>
+      </div>
+      
+      <div className="w-64">
+        <Label htmlFor="tagFilter">Filter by Tags</Label>
+        <TagFilter 
+          tags={availableTags}
+          selectedTagIds={selectedTagIds}
+          onChange={setSelectedTagIds}
+        />
       </div>
       
       {/* Search bar */}

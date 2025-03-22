@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineColumn } from "@/types/pipeline";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { TagBadge } from "./tags/tag-badge";
 
 interface LeadDetailsDialogProps {
   lead: Lead | null;
@@ -72,13 +73,11 @@ export function LeadDetailsDialog({ lead, onClose, columns = [] }: LeadDetailsDi
               <div className="mt-4">
                 <h3 className="text-sm font-medium text-gray-500">Tags</h3>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {lead.tags.map((tag: any) => (
-                    <span 
-                      key={tag.id || tag.tag?.id} 
-                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                    >
-                      {tag.name || tag.tag?.name}
-                    </span>
+                  {lead.tags.map((tag) => (
+                    <TagBadge
+                      key={tag.id}
+                      tag={tag}
+                    />
                   ))}
                 </div>
               </div>
