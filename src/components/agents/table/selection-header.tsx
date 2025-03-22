@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BulkActionsDialog } from "@/components/leads/components/bulk-actions-dialog";
-import { ClipboardCheck, Trash2, InfoCircle } from "lucide-react";
+import { ClipboardCheck, Trash2, Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
