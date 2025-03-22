@@ -9,6 +9,7 @@ interface LeadData {
   phone?: string;
   company?: string;
   job_title?: string;
+  name?: string;
   [key: string]: any; // Allow for custom fields
 }
 
@@ -80,24 +81,37 @@ export async function importLeads(
     
     // Prepare leads for insertion - convert first_name and last_name to name
     const leadsWithMetadata = leadsToImport.map(lead => {
-      // Create name from first_name and last_name if available
-      const name = lead.first_name || lead.last_name ? 
-        `${lead.first_name || ''} ${lead.last_name || ''}`.trim() : 
-        lead.email.split('@')[0]; // Use email username as fallback
+      let name = lead.name;
       
-      return {
+      // If name isn't provided directly, create it from first_name and last_name
+      if (!name && (lead.first_name || lead.last_name)) {
+        name = `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
+      }
+      
+      // If there's still no name, use email username as fallback
+      if (!name) {
+        name = lead.email.split('@')[0];
+      }
+      
+      // Create the database record with the required fields
+      const leadRecord = {
         id: uuidv4(),
         name,
         email: lead.email,
         phone: lead.phone,
         workspace_id: workspaceId,
-        user_id: userId, // This is required by the schema
+        user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         status: 'new',
-        // Include any other fields
-        ...lead
       };
+      
+      // Remove fields that aren't in the leads table to prevent insertion errors
+      const { first_name, last_name, ...remainingFields } = lead;
+      
+      // Only include fields that are actually in the leads table schema
+      // Don't include custom fields that might cause SQL errors
+      return leadRecord;
     });
     
     // Insert leads
