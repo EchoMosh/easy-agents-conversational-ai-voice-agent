@@ -128,12 +128,15 @@ export async function importLeads(
     if (tags && tags.length > 0 && insertedLeads && insertedLeads.length > 0) {
       const leadIds = insertedLeads.map(lead => lead.id);
       
+      // Create an array to hold all lead_tag entries
+      const allLeadTags = [];
+      
       // Make sure all the tags exist
       for (const tagId of tags) {
         // Check if this tag exists
         const { data: existingTag } = await supabase
           .from('tags')
-          .select('id')
+          .select('id, name, color')
           .eq('id', tagId)
           .single();
         
@@ -149,21 +152,24 @@ export async function importLeads(
           created_at: new Date().toISOString(),
         }));
         
-        // Insert in batches of 100 to avoid hitting limits
-        for (let i = 0; i < leadTagsForThisTag.length; i += 100) {
-          const batch = leadTagsForThisTag.slice(i, i + 100);
-          
-          const { error: tagError } = await supabase
-            .from('lead_tags')
-            .insert(batch);
-          
-          if (tagError) {
-            console.error(`Error adding tag ${tagId} to leads: ${tagError.message}`);
-          }
-          
-          // Small delay to avoid overwhelming the database
-          await new Promise(resolve => setTimeout(resolve, 50));
+        // Add to our collection
+        allLeadTags.push(...leadTagsForThisTag);
+      }
+      
+      // Insert in batches of 100 to avoid hitting limits
+      for (let i = 0; i < allLeadTags.length; i += 100) {
+        const batch = allLeadTags.slice(i, i + 100);
+        
+        const { error: tagError } = await supabase
+          .from('lead_tags')
+          .insert(batch);
+        
+        if (tagError) {
+          console.error(`Error adding tags to leads: ${tagError.message}`);
         }
+        
+        // Small delay to avoid overwhelming the database
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
     }
     

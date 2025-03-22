@@ -79,8 +79,8 @@ export function LeadDetailsDialog({ lead, onClose, columns = [] }: LeadDetailsDi
                       tag={{
                         id: tag.id,
                         name: tag.name,
-                        color: tag.color as any,
-                        user_id: '' // Providing a default empty string to satisfy the type
+                        color: tag.color as any || "blue",
+                        user_id: tag.user_id || ''
                       }}
                     />
                   ))}

@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";
 import { LeadsTable } from "@/components/leads/leads-table";
@@ -69,6 +70,7 @@ export default function LeadsPage() {
     }
 
     if (selectedTagIds.length > 0) {
+      // Ensure the lead has a tags property
       const leadTags = lead.tags || [];
       const leadTagIds = leadTags.map(tag => tag.id);
       const hasSelectedTag = selectedTagIds.some(tagId => leadTagIds.includes(tagId));
