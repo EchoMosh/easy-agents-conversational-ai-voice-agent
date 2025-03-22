@@ -1,4 +1,7 @@
+
 import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   children: ReactNode;
@@ -48,21 +51,27 @@ export class ErrorBoundary extends Component<Props, State> {
             page.
           </p>
           {this.state.error && (
-            <div className="p-4 bg-white rounded border border-red-200 overflow-auto max-h-[400px]">
-              <pre className="text-sm font-mono">
-                {this.state.error.toString()}
-                {"\n\n"}
-                {this.state.error.stack}
-              </pre>
-            </div>
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error Details</AlertTitle>
+              <AlertDescription>
+                <div className="p-4 bg-white rounded border border-red-200 overflow-auto max-h-[400px]">
+                  <pre className="text-sm font-mono whitespace-pre-wrap break-words">
+                    {this.state.error.toString()}
+                    {"\n\n"}
+                    {this.state.error.stack}
+                  </pre>
+                </div>
+              </AlertDescription>
+            </Alert>
           )}
           <div className="mt-4">
-            <button
+            <Button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              variant="destructive"
+              className="px-4 py-2"
             >
               Refresh Page
-            </button>
+            </Button>
           </div>
         </div>
       );

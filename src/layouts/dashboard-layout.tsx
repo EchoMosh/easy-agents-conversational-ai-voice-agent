@@ -7,6 +7,7 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import LoadingScreen from "@/components/loading-screen";
 import { useWorkspace } from "@/context/workspace-context";
 import { ImportProvider } from "@/context/import-context";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 function DashboardLayout() {
   const { isLoading } = useWorkspace();
@@ -17,16 +18,18 @@ function DashboardLayout() {
 
   return (
     <ImportProvider>
-      <div className="h-screen w-screen flex overflow-hidden bg-background relative">
-        <AppSidebar />
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <Suspense fallback={<LoadingScreen />}>
-            <Outlet />
-          </Suspense>
-        </main>
-        <Toaster />
-        <SonnerToaster position="bottom-right" />
-      </div>
+      <SidebarProvider>
+        <div className="h-screen w-screen flex overflow-hidden bg-background relative">
+          <AppSidebar />
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <Suspense fallback={<LoadingScreen />}>
+              <Outlet />
+            </Suspense>
+          </main>
+          <Toaster />
+          <SonnerToaster position="bottom-right" />
+        </div>
+      </SidebarProvider>
     </ImportProvider>
   );
 }
