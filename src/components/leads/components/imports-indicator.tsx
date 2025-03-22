@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
 
 export function ImportsIndicator() {
   const { importJobs, clearCompletedJobs } = useImport();
@@ -36,7 +37,7 @@ export function ImportsIndicator() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
           >
             <Button
               size="sm"
@@ -46,7 +47,10 @@ export function ImportsIndicator() {
               {hasActiveImports ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Importing {activeImports.length} file{activeImports.length > 1 ? "s" : ""}</span>
+                  <span>
+                    {activeImports.reduce((sum, job) => sum + (job.processed || 0), 0)}/
+                    {activeImports.reduce((sum, job) => sum + job.leadCount, 0)} Leads
+                  </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
@@ -96,6 +100,10 @@ export function ImportsIndicator() {
 }
 
 function ImportJobItem({ job }: { job: ImportJob }) {
+  const progress = job.processed !== undefined
+    ? Math.min(100, Math.round((job.processed / job.leadCount) * 100))
+    : 0;
+    
   return (
     <div className="border rounded-md p-3 bg-card">
       <div className="flex justify-between items-center">
@@ -126,16 +134,10 @@ function ImportJobItem({ job }: { job: ImportJob }) {
       </div>
       {job.status === "processing" && job.processed !== undefined && (
         <div className="mt-2">
-          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-primary rounded-full"
-              style={{ 
-                width: `${Math.min(100, Math.round((job.processed / job.leadCount) * 100))}%`
-              }}
-            />
-          </div>
-          <div className="text-xs text-muted-foreground mt-1 text-right">
-            {job.processed} / {job.leadCount}
+          <Progress value={progress} className="h-2" />
+          <div className="text-xs text-muted-foreground mt-1 flex justify-between">
+            <span>{job.processed} of {job.leadCount} leads</span>
+            <span>{progress}%</span>
           </div>
         </div>
       )}

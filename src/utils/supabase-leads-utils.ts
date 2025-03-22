@@ -128,26 +128,42 @@ export async function importLeads(
     if (tags && tags.length > 0 && insertedLeads && insertedLeads.length > 0) {
       const leadIds = insertedLeads.map(lead => lead.id);
       
-      // Create lead_tag entries
-      const leadTags = [];
-      for (const leadId of leadIds) {
-        for (const tagId of tags) {
-          leadTags.push({
-            lead_id: leadId,
-            tag_id: tagId,
-            workspace_id: workspaceId,
-            created_at: new Date().toISOString(),
-          });
+      // Make sure all the tags exist
+      for (const tagId of tags) {
+        // Check if this tag exists
+        const { data: existingTag } = await supabase
+          .from('tags')
+          .select('id')
+          .eq('id', tagId)
+          .single();
+        
+        if (!existingTag) {
+          console.warn(`Tag ${tagId} does not exist, skipping`);
+          continue;
         }
-      }
-      
-      const { error: tagError } = await supabase
-        .from('lead_tags')
-        .insert(leadTags);
-      
-      if (tagError) {
-        console.error(`Error adding tags to leads: ${tagError.message}`);
-        // Continue despite tag error - leads were still imported
+        
+        // Create lead_tag entries for each lead with this tag
+        const leadTagsForThisTag = leadIds.map(leadId => ({
+          lead_id: leadId,
+          tag_id: tagId,
+          created_at: new Date().toISOString(),
+        }));
+        
+        // Insert in batches of 100 to avoid hitting limits
+        for (let i = 0; i < leadTagsForThisTag.length; i += 100) {
+          const batch = leadTagsForThisTag.slice(i, i + 100);
+          
+          const { error: tagError } = await supabase
+            .from('lead_tags')
+            .insert(batch);
+          
+          if (tagError) {
+            console.error(`Error adding tag ${tagId} to leads: ${tagError.message}`);
+          }
+          
+          // Small delay to avoid overwhelming the database
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
       }
     }
     

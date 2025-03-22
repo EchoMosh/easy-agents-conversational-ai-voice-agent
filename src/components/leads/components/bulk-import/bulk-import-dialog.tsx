@@ -160,6 +160,9 @@ export function BulkImportDialog({
         updateImportJobStatus(jobId, {
           processed: processedCount,
         });
+        
+        // Small delay to prevent overwhelming the database
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       // Import completed successfully
