@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";

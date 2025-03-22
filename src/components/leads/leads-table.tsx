@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,14 +56,12 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      // First delete related records
       const relatedTables = [
         'lead_activities',
         'lead_tags',
         'lead_variables'
       ];
       
-      // Delete from each related table first
       for (const table of relatedTables) {
         const { error } = await supabase
           .from(table as any)
@@ -73,11 +70,10 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
           
         if (error) {
           console.error(`Error deleting from ${table}:`, error);
-          // Continue with other tables even if one fails
+          continue;
         }
       }
       
-      // Now delete the leads themselves
       const { error } = await supabase
         .from('leads')
         .delete()
@@ -200,7 +196,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     );
   }
 
-  // Create skeleton rows for "load more" state
   const LoadingMoreRows = () => {
     return Array.from({ length: 3 }, (_, index) => (
       <tr key={`loading-more-${index}`} className="border-b">
@@ -247,13 +242,17 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
       />
 
       <div className="border rounded-lg overflow-hidden shadow-sm flex flex-col">
-        <ScrollArea className="h-[60vh]">
+        <div className="w-full">
           <Table>
             <LeadTableHeader
               onToggleSelectAll={handleToggleSelectAll}
               isAllSelected={selectedLeads.length === leads.length}
               isDeleting={isDeleting}
             />
+          </Table>
+        </div>
+        <ScrollArea className="h-[60vh]">
+          <Table>
             <TableBody>
               {leads.map((lead) => {
                 const pipelineName = lead.pipeline_id ? 
@@ -284,7 +283,6 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
                 );
               })}
               
-              {/* Show loading rows only when loading more */}
               {isLoadingMore && <LoadingMoreRows />}
             </TableBody>
           </Table>
