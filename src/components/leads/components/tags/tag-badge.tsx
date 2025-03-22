@@ -3,8 +3,9 @@ import { Edit, X } from "lucide-react";
 import { Tag } from "@/types/tag-types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+// Update the Tag type to make user_id optional
 interface TagBadgeProps {
-  tag: Tag;
+  tag: Omit<Tag, 'user_id'> & { user_id?: string };
   onEdit?: () => void;
   onDelete?: () => void;
 }

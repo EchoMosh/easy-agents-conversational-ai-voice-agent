@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";
@@ -31,7 +30,7 @@ export interface Lead {
   updated_at: string;
   source?: string;
   variables?: LeadVariable[];
-  tags?: { id: string; name: string; color?: string }[];
+  tags?: { id: string; name: string; color?: string; user_id?: string }[];
 }
 
 export default function LeadsPage() {
@@ -46,13 +45,10 @@ export default function LeadsPage() {
   const { pipelines, leads, availableTags, invalidateAndRefetch } =
     usePipelineQueries(selectedPipelineId);
 
-  // Load all leads on first render
   useEffect(() => {
-    // Force a refetch of all leads when the component mounts
     invalidateAndRefetch();
   }, []);
 
-  // Listen for edit lead events
   useEffect(() => {
     const handleEditLead = (event: CustomEvent<Lead>) => {
       setEditingLead(event.detail);
@@ -65,18 +61,14 @@ export default function LeadsPage() {
     };
   }, []);
 
-  // Filter leads based on search query, selected pipeline, and selected tags
   const filteredLeads = leads.filter((lead) => {
-    // First filter by pipeline if one is selected
     if (selectedPipelineId && selectedPipelineId !== "all") {
       if (lead.pipeline_id !== selectedPipelineId) {
         return false;
       }
     }
 
-    // Then filter by selected tags
     if (selectedTagIds.length > 0) {
-      // Check if lead has tags property and it's an array
       const leadTags = lead.tags || [];
       const leadTagIds = leadTags.map(tag => tag.id);
       const hasSelectedTag = selectedTagIds.some(tagId => leadTagIds.includes(tagId));
@@ -85,7 +77,6 @@ export default function LeadsPage() {
       }
     }
 
-    // Finally filter by search query
     const query = searchQuery.toLowerCase();
     return (
       (lead.name || "").toLowerCase().includes(query) ||

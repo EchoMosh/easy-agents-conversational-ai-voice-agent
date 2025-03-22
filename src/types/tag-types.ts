@@ -8,5 +8,5 @@ export interface Tag {
 }
 
 export interface LeadTag {
-  tag: Tag;
+  tag: Omit<Tag, 'user_id'> & { user_id?: string };
 }

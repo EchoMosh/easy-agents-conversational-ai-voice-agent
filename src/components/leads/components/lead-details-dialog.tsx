@@ -76,7 +76,12 @@ export function LeadDetailsDialog({ lead, onClose, columns = [] }: LeadDetailsDi
                   {lead.tags.map((tag) => (
                     <TagBadge
                       key={tag.id}
-                      tag={tag}
+                      tag={{
+                        id: tag.id,
+                        name: tag.name,
+                        color: tag.color as any,
+                        user_id: '' // Providing a default empty string to satisfy the type
+                      }}
                     />
                   ))}
                 </div>
