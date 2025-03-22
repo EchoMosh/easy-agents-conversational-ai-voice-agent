@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { useWorkspace } from "@/context/workspace-context";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export function usePipelineQueries(selectedPipelineId?: string) {
   const queryClient = useQueryClient();
@@ -13,6 +13,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
   const [page, setPage] = useState(1);
   const [hasMoreLeads, setHasMoreLeads] = useState(true);
   const pageSize = 25; // Number of leads to load per page
+  const accumulatedLeadsRef = useRef<Lead[]>([]);
   
   // Fetch pipelines
   const {
@@ -67,7 +68,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
 
   // Fetch leads for the selected pipeline or all leads if no pipeline is selected
   const {
-    data: leads = [],
+    data: currentPageLeads = [],
     isLoading: isLeadsLoading,
     refetch: refetchLeads,
   } = useQuery({
@@ -174,9 +175,32 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     enabled: !!currentWorkspace?.id,
   });
 
+  // Combine previous and current page leads
+  if (currentPageLeads.length > 0) {
+    // If it's the first page, replace accumulated leads
+    if (page === 1) {
+      accumulatedLeadsRef.current = [...currentPageLeads];
+    } else {
+      // For subsequent pages, filter out any duplicates and append
+      const newLeads = currentPageLeads.filter(
+        newLead => !accumulatedLeadsRef.current.some(
+          existingLead => existingLead.id === newLead.id
+        )
+      );
+      accumulatedLeadsRef.current = [...accumulatedLeadsRef.current, ...newLeads];
+    }
+  }
+
+  // Use the accumulated leads as our data source
+  const leads = accumulatedLeadsRef.current;
+
   const isLoading = isPipelinesLoading || isLeadsLoading || isTagsLoading;
 
   const invalidateAndRefetch = async () => {
+    // Reset accumulated leads when explicitly refreshing
+    accumulatedLeadsRef.current = [];
+    setPage(1);
+    
     await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
     await queryClient.invalidateQueries({ queryKey: ["leads"] });
     await queryClient.invalidateQueries({ queryKey: ["tags"] });
