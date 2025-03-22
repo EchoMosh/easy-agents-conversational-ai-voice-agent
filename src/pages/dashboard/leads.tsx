@@ -31,7 +31,7 @@ export interface Lead {
   updated_at: string;
   source?: string;
   variables?: LeadVariable[];
-  tags?: any[];
+  tags?: { id: string; name: string; color?: string }[];
 }
 
 export default function LeadsPage() {
