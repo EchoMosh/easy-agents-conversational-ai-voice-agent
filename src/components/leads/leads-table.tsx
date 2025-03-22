@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,32 +75,44 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     }
   }, [selectingAllAlert]);
 
-  // Setup infinite scrolling with an Intersection Observer
-  const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
-    const [entry] = entries;
-    if (entry.isIntersecting && hasMore && !isLoadingMore && onLoadMore) {
-      console.log("Sentinel is visible, loading more leads...");
-      handleLoadMoreData();
-    }
-  }, [hasMore, isLoadingMore, onLoadMore]);
-
   useEffect(() => {
-    const observer = new IntersectionObserver(handleObserver, { 
-      root: null,
-      rootMargin: '100px',
-      threshold: 0.1
+    const handleScroll = (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
+      if (entry.isIntersecting && hasMore && !isLoadingMore && onLoadMore) {
+        console.log("✅ Sentinel is visible, loading more leads...");
+        setIsLoadingMore(true);
+        onLoadMore()
+          .then(() => {
+            console.log("✅ Successfully loaded more leads");
+          })
+          .catch((error) => {
+            console.error("❌ Error loading more leads:", error);
+            toast.error("Failed to load more leads");
+          })
+          .finally(() => {
+            setIsLoadingMore(false);
+          });
+      }
+    };
+
+    const observer = new IntersectionObserver(handleScroll, {
+      root: scrollAreaRef.current,
+      rootMargin: "200px",
+      threshold: 0.1,
     });
-    
+
     if (sentinelRef.current) {
       observer.observe(sentinelRef.current);
+      console.log("👁️ Observer attached to sentinel element");
     }
-    
+
     return () => {
       if (sentinelRef.current) {
         observer.unobserve(sentinelRef.current);
+        console.log("👁️ Observer detached from sentinel element");
       }
     };
-  }, [handleObserver, leads.length]);
+  }, [hasMore, isLoadingMore, onLoadMore, leads.length]);
 
   const handleToggleSelect = (id: string) => {
     setSelectedLeads(prev =>
@@ -281,13 +292,14 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
   const handleLoadMoreData = async () => {
     if (!onLoadMore || isLoadingMore) return;
     
-    console.log("Loading more leads via infinite scroll...");
+    console.log("⏳ Loading more leads manually...");
     setIsLoadingMore(true);
     try {
       await onLoadMore();
+      console.log("✅ Successfully loaded more leads");
     } catch (error) {
-      console.error('Error loading more leads:', error);
-      toast.error('Failed to load more leads');
+      console.error("❌ Error loading more leads:", error);
+      toast.error("Failed to load more leads");
     } finally {
       setIsLoadingMore(false);
     }
@@ -421,13 +433,16 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
             </TableBody>
           </Table>
           
-          {/* Sentinel element to trigger infinite loading */}
-          <div ref={sentinelRef} className="h-4 w-full" />
+          <div 
+            ref={sentinelRef} 
+            className="h-10 w-full flex items-center justify-center text-muted-foreground text-xs"
+            style={{ visibility: hasMore ? 'visible' : 'hidden' }}
+          >
+            {!isLoadingMore && hasMore && <div className="py-2 text-center">Scroll for more</div>}
+          </div>
           
-          {/* Loading indicator */}
           {isLoadingMore && hasMore && <LoadingMoreIndicator />}
           
-          {/* End of table marker */}
           <div ref={tableEndRef} className="h-2" />
         </ScrollArea>
       </div>

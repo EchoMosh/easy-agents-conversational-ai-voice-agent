@@ -11,11 +11,10 @@ export function usePipelineQueries(selectedPipelineId?: string) {
   const { currentWorkspace } = useWorkspace();
   const [page, setPage] = useState(1);
   const [hasMoreLeads, setHasMoreLeads] = useState(true);
-  const pageSize = 10; // Changed from 25 to 10 leads per page
+  const pageSize = 10;
   const accumulatedLeadsRef = useRef<Lead[]>([]);
   const [totalFilteredCount, setTotalFilteredCount] = useState<number | null>(null);
   
-  // Fetch pipelines
   const {
     data: pipelines = [],
     isLoading: isPipelinesLoading,
@@ -41,7 +40,6 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     enabled: !!currentWorkspace?.id,
   });
 
-  // Fetch all available tags for filtering
   const {
     data: availableTags = [],
     isLoading: isTagsLoading,
@@ -66,20 +64,16 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     enabled: !!currentWorkspace?.id,
   });
 
-  // Fetch the total count of leads that match our filters
-  // This is used to display the total number of leads that match the filter
   useEffect(() => {
     const fetchTotalCount = async () => {
       if (!currentWorkspace?.id) return;
 
       try {
-        // Build the query based on filters
         let query = supabase
           .from("leads")
           .select("id", { count: 'exact' })
           .eq("workspace_id", currentWorkspace.id);
         
-        // Add pipeline filter if a specific pipeline is selected
         if (selectedPipelineId && selectedPipelineId !== "all") {
           query = query.eq("pipeline_id", selectedPipelineId);
         }
@@ -94,7 +88,6 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         if (count !== null) {
           setTotalFilteredCount(count);
           
-          // Dispatch a custom event with the total count
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('totalFilteredLeads', { detail: count }));
           }
@@ -107,7 +100,6 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     fetchTotalCount();
   }, [currentWorkspace?.id, selectedPipelineId]);
 
-  // Fetch leads for the selected pipeline or all leads if no pipeline is selected
   const {
     data: currentPageLeads = [],
     isLoading: isLeadsLoading,
@@ -117,9 +109,8 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     queryFn: async () => {
       if (!currentWorkspace?.id) return [];
       
-      console.log(`Loading page ${page} of leads, ${pageSize} leads per page`);
+      console.log(`🔄 Loading page ${page} of leads, ${pageSize} leads per page`);
       
-      // Start building the query
       let query = supabase
         .from("leads")
         .select(`
@@ -128,17 +119,14 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         `)
         .eq("workspace_id", currentWorkspace.id);
       
-      // Add pipeline filter if a specific pipeline is selected
       if (selectedPipelineId && selectedPipelineId !== "all") {
         query = query.eq("pipeline_id", selectedPipelineId);
       }
 
-      // Add pagination
       query = query
         .order("created_at", { ascending: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
-      // Execute the query
       const { data, error } = await query;
 
       if (error) {
@@ -146,15 +134,14 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         throw error;
       }
 
-      // Check if we have more leads to load
-      setHasMoreLeads(data.length === pageSize);
+      const hasMore = data.length === pageSize;
+      console.log(`📊 Loaded ${data.length} leads, hasMore: ${hasMore}`);
+      setHasMoreLeads(hasMore);
 
-      // If there are no leads, return empty array
       if (data.length === 0) {
         return [];
       }
 
-      // Now fetch tags for all leads in a single query
       const leadIds = data.map(lead => lead.id);
       
       const { data: leadTagsData, error: leadTagsError } = await supabase
@@ -164,11 +151,9 @@ export function usePipelineQueries(selectedPipelineId?: string) {
       
       if (leadTagsError) {
         console.error("Failed to load lead tags", leadTagsError);
-        // Return leads with empty tags arrays if we can't fetch tags
         return data.map(lead => ({ ...lead, tags: [] })) as Lead[];
       }
 
-      // Create a map of lead_id -> tag_ids
       const leadTagsMap = new Map<string, string[]>();
       
       leadTagsData?.forEach(lt => {
@@ -178,15 +163,12 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         leadTagsMap.get(lt.lead_id)?.push(lt.tag_id);
       });
       
-      // Get all unique tag IDs to fetch tag data
       const tagIds = Array.from(new Set(leadTagsData?.map(lt => lt.tag_id) || []));
       
       if (tagIds.length === 0) {
-        // No tags to fetch, return leads without tags
         return data.map(lead => ({ ...lead, tags: [] })) as Lead[];
       }
       
-      // Fetch all tags data in a single query
       const { data: tagsData, error: tagsError } = await supabase
         .from("tags")
         .select("*")
@@ -197,13 +179,11 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         return data.map(lead => ({ ...lead, tags: [] })) as Lead[];
       }
       
-      // Create a map of tag_id -> tag data
       const tagsMap = new Map();
       tagsData?.forEach(tag => {
         tagsMap.set(tag.id, tag);
       });
       
-      // Combine lead data with tags
       const leadsWithTags = data.map(lead => {
         const leadTagIds = leadTagsMap.get(lead.id) || [];
         const tags = leadTagIds.map(tagId => tagsMap.get(tagId)).filter(Boolean);
@@ -219,31 +199,35 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     enabled: !!currentWorkspace?.id,
   });
 
-  // Combine previous and current page leads
-  if (currentPageLeads.length > 0) {
-    // If it's the first page, replace accumulated leads
-    if (page === 1) {
-      accumulatedLeadsRef.current = [...currentPageLeads];
-    } else {
-      // For subsequent pages, filter out any duplicates and append
-      const newLeads = currentPageLeads.filter(
-        newLead => !accumulatedLeadsRef.current.some(
-          existingLead => existingLead.id === newLead.id
-        )
-      );
-      accumulatedLeadsRef.current = [...accumulatedLeadsRef.current, ...newLeads];
+  useEffect(() => {
+    if (currentPageLeads.length > 0) {
+      if (page === 1) {
+        console.log(`📋 Resetting accumulated leads with ${currentPageLeads.length} leads from page 1`);
+        accumulatedLeadsRef.current = [...currentPageLeads];
+      } else {
+        const existingIds = new Set(accumulatedLeadsRef.current.map(lead => lead.id));
+        const newLeads = currentPageLeads.filter(lead => !existingIds.has(lead.id));
+        
+        console.log(`📋 Adding ${newLeads.length} new leads from page ${page} to existing ${accumulatedLeadsRef.current.length} leads`);
+        
+        if (newLeads.length > 0) {
+          accumulatedLeadsRef.current = [...accumulatedLeadsRef.current, ...newLeads];
+        } else {
+          console.log(`⚠️ No new unique leads found on page ${page}`);
+        }
+      }
     }
-  }
+  }, [currentPageLeads, page]);
 
-  // Use the accumulated leads as our data source
   const leads = accumulatedLeadsRef.current;
 
   const isLoading = isPipelinesLoading || isLeadsLoading || isTagsLoading;
 
   const invalidateAndRefetch = async () => {
-    // Reset accumulated leads when explicitly refreshing
+    console.log("🔄 Invalidating queries and resetting state");
     accumulatedLeadsRef.current = [];
     setPage(1);
+    setHasMoreLeads(true);
     
     await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
     await queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -253,8 +237,19 @@ export function usePipelineQueries(selectedPipelineId?: string) {
   };
 
   const loadMoreLeads = async () => {
-    console.log("Loading more leads, incrementing page from", page);
+    if (!hasMoreLeads) {
+      console.log("⚠️ No more leads to load");
+      return;
+    }
+    
+    console.log(`⏩ Loading more leads, incrementing page from ${page} to ${page + 1}`);
     setPage(prev => prev + 1);
+    
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 100);
+    });
   };
 
   return {
