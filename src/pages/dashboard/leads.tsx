@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";
@@ -30,7 +31,7 @@ export interface Lead {
   updated_at: string;
   source?: string;
   variables?: LeadVariable[];
-  tags: { id: string; name: string; color?: string; user_id?: string }[];
+  tags?: { id: string; name: string; color?: string; user_id?: string }[];
 }
 
 export default function LeadsPage() {

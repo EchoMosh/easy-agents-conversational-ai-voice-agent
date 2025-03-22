@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { 
   DndContext, 
@@ -10,7 +9,7 @@ import {
   useSensors 
 } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
-import { KanbanColumn } from "./column"; // Fixed import path
+import { KanbanColumn } from "./column";
 import { Card } from "./card";
 import { Lead } from "@/pages/dashboard/leads";
 import { usePipelineDrag } from "@/hooks/pipeline/use-pipeline-drag";
@@ -20,13 +19,11 @@ interface ActiveItem {
   id: string;
   type: 'column' | 'lead';
   data: any;
-  x: number; // Added x coordinate for drag positioning
-  y: number; // Added y coordinate for drag positioning
+  x: number;
+  y: number;
 }
 
-// Extending the hook with mock data for development
 export function Board() {
-  // Temporary mock data until we properly connect to the pipeline data
   const [columns, setColumns] = useState([
     { id: "1", title: "New", color: "blue" },
     { id: "2", title: "Contacted", color: "yellow" },
@@ -35,14 +32,14 @@ export function Board() {
   
   const [leads, setLeads] = useState<Record<string, Lead[]>>({
     "1": [
-      { id: "l1", name: "John Doe", email: "john@example.com", phone: "123-456-7890", status: "New", pipeline_id: "1", created_at: "", user_id: "", updated_at: "" },
-      { id: "l2", name: "Jane Smith", email: "jane@example.com", phone: "123-456-7890", status: "New", pipeline_id: "1", created_at: "", user_id: "", updated_at: "" }
+      { id: "l1", name: "John Doe", email: "john@example.com", phone: "123-456-7890", status: "New", pipeline_id: "1", created_at: "", user_id: "", updated_at: "", tags: [] },
+      { id: "l2", name: "Jane Smith", email: "jane@example.com", phone: "123-456-7890", status: "New", pipeline_id: "1", created_at: "", user_id: "", updated_at: "", tags: [] }
     ],
     "2": [
-      { id: "l3", name: "Bob Johnson", email: "bob@example.com", phone: "123-456-7890", status: "Contacted", pipeline_id: "1", created_at: "", user_id: "", updated_at: "" }
+      { id: "l3", name: "Bob Johnson", email: "bob@example.com", phone: "123-456-7890", status: "Contacted", pipeline_id: "1", created_at: "", user_id: "", updated_at: "", tags: [] }
     ],
     "3": [
-      { id: "l4", name: "Alice Brown", email: "alice@example.com", phone: "123-456-7890", status: "Qualified", pipeline_id: "1", created_at: "", user_id: "", updated_at: "" }
+      { id: "l4", name: "Alice Brown", email: "alice@example.com", phone: "123-456-7890", status: "Qualified", pipeline_id: "1", created_at: "", user_id: "", updated_at: "", tags: [] }
     ]
   });
   
@@ -50,10 +47,8 @@ export function Board() {
   const [activeColumn, setActiveColumn] = useState<ActiveItem | null>(null);
   const [containers, setContainers] = useState(Object.keys(leads));
   
-  // Get the sensors from our custom hook
   const sensors = useBoardSensors();
   
-  // Connect to the pipeline drag hook for actual drag handling
   const { 
     handleDragEnd: onDragEnd, 
     handleDragOver: onDragOver, 
@@ -75,7 +70,7 @@ export function Board() {
           id: active.id.toString(),
           type: 'column',
           data: column,
-          x: 0, // Initialize with zero position
+          x: 0,
           y: 0
         });
       }
@@ -87,7 +82,7 @@ export function Board() {
           id: active.id.toString(),
           type: 'lead',
           data: lead,
-          x: 0, // Initialize with zero position
+          x: 0,
           y: 0
         });
       }
@@ -115,7 +110,6 @@ export function Board() {
   
   const handleLeadClick = (lead: Lead) => {
     console.log("Lead clicked:", lead);
-    // Implement your lead click handler
   };
 
   if (!columns) {
@@ -151,7 +145,6 @@ export function Board() {
 
         {activeId && activeColumn && (
           <div className="drag-overlay fixed inset-0 pointer-events-none z-50">
-            {/* Overlay representation of the dragging column */}
             {activeColumn.type === "column" && activeColumn.data && (
               <div
                 style={{
@@ -183,7 +176,6 @@ export function Board() {
               </div>
             )}
 
-            {/* Overlay representation of the dragging lead */}
             {activeColumn.type === "lead" && activeColumn.data && (
               <div
                 style={{
