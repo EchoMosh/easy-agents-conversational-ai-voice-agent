@@ -22,12 +22,34 @@ import DashboardPage from "@/pages/dashboard/dashboard";
 import CalendarPage from "@/pages/dashboard/calendar";
 import LeadScraperPage from "@/pages/dashboard/lead-scraper";
 import ProtectedRoute from "@/components/auth/protected-route";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 function App() {
+  console.log("App rendering");
+  
   return (
-    <>
+    <ErrorBoundary
+      fallback={
+        <div className="p-8 rounded border border-red-200 bg-red-50 text-red-800 m-4">
+          <h2 className="text-xl font-bold mb-4">Something went wrong</h2>
+          <p className="mb-4">The application encountered an error. Please check the console for details and try refreshing the page.</p>
+          <div className="mt-4">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      }
+    >
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={
+          <ErrorBoundary>
+            <Index />
+          </ErrorBoundary>
+        } />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/login" element={<AuthPage />} />
 
@@ -73,7 +95,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <SonnerToaster />
-    </>
+    </ErrorBoundary>
   );
 }
 
