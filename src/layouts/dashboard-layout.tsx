@@ -8,6 +8,7 @@ import LoadingScreen from "@/components/loading-screen";
 import { useWorkspace } from "@/context/workspace-context";
 import { ImportProvider } from "@/context/import-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import DashboardHeader from "@/components/dashboard/page";
 
 function DashboardLayout() {
   const { isLoading } = useWorkspace();
@@ -22,9 +23,12 @@ function DashboardLayout() {
         <div className="h-screen w-screen flex overflow-hidden bg-background relative">
           <AppSidebar />
           <main className="flex-1 flex flex-col overflow-hidden">
-            <Suspense fallback={<LoadingScreen />}>
-              <Outlet />
-            </Suspense>
+            <DashboardHeader />
+            <div className="flex-1 overflow-auto">
+              <Suspense fallback={<LoadingScreen />}>
+                <Outlet />
+              </Suspense>
+            </div>
           </main>
           <Toaster />
           <SonnerToaster position="bottom-right" />
