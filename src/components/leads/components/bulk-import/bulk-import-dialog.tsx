@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FileUploader } from "@/components/leads/components/bulk-import/file-uploader";
 import { ColumnMapper } from "@/components/leads/components/bulk-import/column-mapper";
 import { TagSelector } from "@/components/leads/components/bulk-import/tag-selector";
+import { useImport } from "@/context/import-context";
 
 interface BulkImportDialogProps {
   isOpen: boolean;
@@ -73,10 +75,14 @@ export function BulkImportDialog({
 
   const { currentWorkspace } = useWorkspace();
   const { toast } = useToast();
+  const { addImportJob, updateImportJobStatus } = useImport();
 
   const handleClose = () => {
     onOpenChange(false);
-    setTimeout(() => setStep("upload"), 300);
+    // Only reset the step if we're not in the importing state
+    if (step !== "importing") {
+      setTimeout(() => setStep("upload"), 300);
+    }
   };
 
   const handleFileSelect = (selectedFile: File, content: string) => {
@@ -103,6 +109,76 @@ export function BulkImportDialog({
     }
   };
 
+  const startImport = async (jobId: string) => {
+    try {
+      if (!currentWorkspace?.id) {
+        throw new Error("No active workspace found");
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const leadCount = hasHeaders
+        ? fileContent.split(/\r?\n/).length - 1
+        : fileContent.split(/\r?\n/).length;
+
+      // Process rows in batches for progress reporting
+      const rows = fileContent.split(/\r?\n/).filter(row => row.trim());
+      const dataRows = hasHeaders ? rows.slice(1) : rows;
+      const totalLeads = dataRows.length;
+      const batchSize = 25;
+      let processedCount = 0;
+
+      // Create batches
+      let batches = [];
+      for (let i = 0; i < dataRows.length; i += batchSize) {
+        batches.push(dataRows.slice(i, i + batchSize));
+      }
+
+      for (const batch of batches) {
+        const batchContent = hasHeaders ? [rows[0], ...batch].join('\n') : batch.join('\n');
+        
+        const result = await processAndImportLeads(
+          batchContent,
+          columnMapping,
+          hasHeaders,
+          {
+            removeDuplicates,
+            tags: selectedTags,
+            workspaceId: currentWorkspace.id,
+            userId: sessionData.session.user.id,
+          }
+        );
+
+        processedCount += batch.length;
+        
+        // Update job status with progress
+        updateImportJobStatus(jobId, {
+          processed: processedCount,
+        });
+      }
+
+      // Import completed successfully
+      updateImportJobStatus(jobId, {
+        status: "completed",
+        endTime: new Date(),
+      });
+
+      onSuccess();
+    } catch (error) {
+      console.error("Import error:", error);
+      
+      // Update job status with error
+      updateImportJobStatus(jobId, {
+        status: "failed",
+        endTime: new Date(),
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
+  };
+
   const handleNext = async () => {
     if (step === "mapping") {
       const leadCount = hasHeaders
@@ -115,56 +191,22 @@ export function BulkImportDialog({
       setIsLoading(true);
       setImportError(null);
 
-      try {
-        if (!currentWorkspace?.id) {
-          throw new Error("No active workspace found");
-        }
+      const leadCount = hasHeaders
+        ? fileContent.split(/\r?\n/).length - 1
+        : fileContent.split(/\r?\n/).length;
 
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData.session?.user?.id) {
-          throw new Error("User not authenticated");
-        }
+      // Create and start an import job that will continue in the background
+      const jobId = addImportJob({
+        status: "processing",
+        fileName: fileName,
+        leadCount: leadCount,
+      });
 
-        const result = await processAndImportLeads(
-          fileContent,
-          columnMapping,
-          hasHeaders,
-          {
-            removeDuplicates,
-            tags: selectedTags,
-            workspaceId: currentWorkspace.id,
-            userId: sessionData.session.user.id,
-          }
-        );
+      // Start import process
+      handleClose();
 
-        toast({
-          title: "Import successful",
-          description: `Imported ${result.imported} leads${
-            result.duplicates > 0
-              ? ` (${result.duplicates} duplicates skipped)`
-              : ""
-          }`,
-        });
-
-        handleClose();
-        onSuccess();
-      } catch (error) {
-        console.error("Import error:", error);
-        setImportError(
-          error instanceof Error ? error.message : "Unknown error occurred"
-        );
-
-        toast({
-          variant: "destructive",
-          title: "Import failed",
-          description:
-            error instanceof Error ? error.message : "Failed to import leads",
-        });
-
-        setStep("mapping");
-      } finally {
-        setIsLoading(false);
-      }
+      // Continue processing in the background
+      startImport(jobId);
     }
   };
 

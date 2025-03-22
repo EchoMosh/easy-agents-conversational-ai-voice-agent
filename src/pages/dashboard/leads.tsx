@@ -7,6 +7,8 @@ import { AddLeadDialog } from "@/components/leads/components/add-lead-dialog";
 import { BulkImportDialog } from "@/components/leads/components/bulk-import/bulk-import-dialog";
 import { SearchAndFilters } from "@/components/leads/components/search-and-filters";
 import { LeadEditForm } from "@/components/leads/components/lead-edit-form";
+import { ImportProvider } from "@/context/import-context";
+import { ImportsIndicator } from "@/components/leads/components/imports-indicator";
 
 export interface LeadVariable {
   id: string;
@@ -92,45 +94,49 @@ export default function LeadsPage() {
   });
 
   return (
-    <div className="p-6 space-y-6">
-      <SearchAndFilters
-        selectedPipelineId={selectedPipelineId}
-        setSelectedPipelineId={setSelectedPipelineId}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        pipelines={pipelines}
-        availableTags={availableTags}
-        selectedTagIds={selectedTagIds}
-        setSelectedTagIds={setSelectedTagIds}
-        addLeadDialog={
-          <div className="flex items-center space-x-2">
-            <AddLeadDialog
-              isOpen={isNewLeadOpen}
-              onOpenChange={setIsNewLeadOpen}
-              onSuccess={invalidateAndRefetch}
-            />
+    <ImportProvider>
+      <div className="p-6 space-y-6">
+        <SearchAndFilters
+          selectedPipelineId={selectedPipelineId}
+          setSelectedPipelineId={setSelectedPipelineId}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          pipelines={pipelines}
+          availableTags={availableTags}
+          selectedTagIds={selectedTagIds}
+          setSelectedTagIds={setSelectedTagIds}
+          addLeadDialog={
+            <div className="flex items-center space-x-2">
+              <AddLeadDialog
+                isOpen={isNewLeadOpen}
+                onOpenChange={setIsNewLeadOpen}
+                onSuccess={invalidateAndRefetch}
+              />
 
-            <BulkImportDialog
-              isOpen={isBulkImportOpen}
-              onOpenChange={setIsBulkImportOpen}
-              onSuccess={invalidateAndRefetch}
-            />
-          </div>
-        }
-      />
+              <BulkImportDialog
+                isOpen={isBulkImportOpen}
+                onOpenChange={setIsBulkImportOpen}
+                onSuccess={invalidateAndRefetch}
+              />
+            </div>
+          }
+        />
 
-      <LeadsTable
-        leads={filteredLeads}
-        isLoading={false}
-        onLeadUpdated={invalidateAndRefetch}
-      />
+        <LeadsTable
+          leads={filteredLeads}
+          isLoading={false}
+          onLeadUpdated={invalidateAndRefetch}
+        />
 
-      <LeadEditForm
-        editingLead={editingLead}
-        setEditingLead={setEditingLead}
-        pipelines={pipelines}
-        onLeadUpdated={invalidateAndRefetch}
-      />
-    </div>
+        <LeadEditForm
+          editingLead={editingLead}
+          setEditingLead={setEditingLead}
+          pipelines={pipelines}
+          onLeadUpdated={invalidateAndRefetch}
+        />
+        
+        <ImportsIndicator />
+      </div>
+    </ImportProvider>
   );
 }
