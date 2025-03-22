@@ -12,12 +12,13 @@ import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Loader2 } from "lucide-react";
+import { PlusCircle, Loader2, ChevronDown } from "lucide-react";
 import { NewVariableForm } from "./variables/new-variable-form";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
 import { LoadingLeadsTable } from "./components/loading-leads-table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps) {
+export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMore }: LeadsTableProps) {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -25,6 +26,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
   const [newVariables, setNewVariables] = useState<{name: string; value: string}[]>([]);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [isEditVariablesOpen, setIsEditVariablesOpen] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
     queryKey: ["pipelines"],
@@ -171,6 +173,20 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
     setIsEditVariablesOpen(true);
   };
 
+  const handleLoadMore = async () => {
+    if (!onLoadMore) return;
+    
+    setIsLoadingMore(true);
+    try {
+      await onLoadMore();
+    } catch (error) {
+      console.error('Error loading more leads:', error);
+      toast.error('Failed to load more leads');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   if (isLoading) {
     return <LoadingLeadsTable />;
   }
@@ -194,44 +210,69 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
         pipelines={pipelines}
       />
 
-      <div className="border rounded-lg overflow-hidden shadow-sm">
-        <Table>
-          <LeadTableHeader
-            onToggleSelectAll={handleToggleSelectAll}
-            isAllSelected={selectedLeads.length === leads.length}
-            isDeleting={isDeleting}
-          />
-          <TableBody>
-            {leads.map((lead) => {
-              const pipelineName = lead.pipeline_id ? 
-                pipelines.find(p => p.id === lead.pipeline_id)?.name || 'Unknown' : 
-                'No Pipeline';
-              
-              const leadWithHandlers: LeadWithHandlers = {
-                ...lead,
-                onVariableClick: handleOpenVariableEditor,
-                onEditClick: (lead) => {
-                  if (typeof window !== 'undefined') {
-                    const event = new CustomEvent('editLead', { detail: lead });
-                    window.dispatchEvent(event);
-                  }
-                }
-              };
+      <div className="border rounded-lg overflow-hidden shadow-sm flex flex-col">
+        <ScrollArea className="h-[60vh]">
+          <Table>
+            <LeadTableHeader
+              onToggleSelectAll={handleToggleSelectAll}
+              isAllSelected={selectedLeads.length === leads.length}
+              isDeleting={isDeleting}
+            />
+            <TableBody>
+              {leads.map((lead) => {
+                const pipelineName = lead.pipeline_id ? 
+                  pipelines.find(p => p.id === lead.pipeline_id)?.name || 'Unknown' : 
+                  'No Pipeline';
                 
-              return (
-                <LeadRow
-                  key={lead.id}
-                  lead={leadWithHandlers}
-                  isSelected={selectedLeads.includes(lead.id)}
-                  onToggleSelect={handleToggleSelect}
-                  onLeadUpdated={onLeadUpdated}
-                  isDeleting={isDeleting}
-                  pipelineName={pipelineName}
-                />
-              );
-            })}
-          </TableBody>
-        </Table>
+                const leadWithHandlers: LeadWithHandlers = {
+                  ...lead,
+                  onVariableClick: handleOpenVariableEditor,
+                  onEditClick: (lead) => {
+                    if (typeof window !== 'undefined') {
+                      const event = new CustomEvent('editLead', { detail: lead });
+                      window.dispatchEvent(event);
+                    }
+                  }
+                };
+                  
+                return (
+                  <LeadRow
+                    key={lead.id}
+                    lead={leadWithHandlers}
+                    isSelected={selectedLeads.includes(lead.id)}
+                    onToggleSelect={handleToggleSelect}
+                    onLeadUpdated={onLeadUpdated}
+                    isDeleting={isDeleting}
+                    pipelineName={pipelineName}
+                  />
+                );
+              })}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+        
+        {hasMore && (
+          <div className="p-4 border-t flex justify-center">
+            <Button 
+              variant="outline" 
+              onClick={handleLoadMore} 
+              disabled={isLoadingMore}
+              className="w-full max-w-xs"
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Loading more leads...
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-2" />
+                  Load more leads
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       <Dialog open={isBulkVariablesOpen} onOpenChange={setIsBulkVariablesOpen}>

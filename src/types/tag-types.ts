@@ -1,5 +1,4 @@
 
-
 export interface Tag {
   id: string;
   name: string;
@@ -11,4 +10,3 @@ export interface Tag {
 export interface LeadTag {
   tag: Omit<Tag, 'user_id'> & { user_id?: string };
 }
-

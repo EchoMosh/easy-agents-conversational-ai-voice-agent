@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";
@@ -47,7 +48,9 @@ export default function LeadsPage() {
     leads, 
     availableTags, 
     invalidateAndRefetch,
-    isLeadsLoading 
+    isLeadsLoading,
+    hasMoreLeads,
+    loadMoreLeads
   } = usePipelineQueries(selectedPipelineId);
 
   useEffect(() => {
@@ -94,7 +97,7 @@ export default function LeadsPage() {
 
   return (
     <ImportProvider>
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 flex flex-col h-full">
         <SearchAndFilters
           selectedPipelineId={selectedPipelineId}
           setSelectedPipelineId={setSelectedPipelineId}
@@ -121,11 +124,15 @@ export default function LeadsPage() {
           }
         />
 
-        <LeadsTable
-          leads={filteredLeads}
-          isLoading={isLeadsLoading}
-          onLeadUpdated={invalidateAndRefetch}
-        />
+        <div className="flex-grow overflow-hidden">
+          <LeadsTable
+            leads={filteredLeads}
+            isLoading={isLeadsLoading}
+            onLeadUpdated={invalidateAndRefetch}
+            hasMore={hasMoreLeads}
+            onLoadMore={loadMoreLeads}
+          />
+        </div>
 
         <LeadEditForm
           editingLead={editingLead}

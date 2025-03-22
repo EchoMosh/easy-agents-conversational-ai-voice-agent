@@ -5,10 +5,14 @@ import { toast } from "sonner";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { useWorkspace } from "@/context/workspace-context";
+import { useState } from "react";
 
 export function usePipelineQueries(selectedPipelineId?: string) {
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const [page, setPage] = useState(1);
+  const [hasMoreLeads, setHasMoreLeads] = useState(true);
+  const pageSize = 25; // Number of leads to load per page
   
   // Fetch pipelines
   const {
@@ -67,7 +71,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     isLoading: isLeadsLoading,
     refetch: refetchLeads,
   } = useQuery({
-    queryKey: ["leads", selectedPipelineId, currentWorkspace?.id],
+    queryKey: ["leads", selectedPipelineId, currentWorkspace?.id, page],
     queryFn: async () => {
       if (!currentWorkspace?.id) return [];
       
@@ -85,22 +89,30 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         query = query.eq("pipeline_id", selectedPipelineId);
       }
 
+      // Add pagination
+      query = query
+        .order("created_at", { ascending: false })
+        .range((page - 1) * pageSize, page * pageSize - 1);
+
       // Execute the query
-      const { data, error } = await query.order("created_at", { ascending: false });
+      const { data, error } = await query;
 
       if (error) {
         toast.error("Failed to load leads");
         throw error;
       }
 
-      // Now fetch tags for all leads in a single query
-      const leadIds = data.map(lead => lead.id);
-      
+      // Check if we have more leads to load
+      setHasMoreLeads(data.length === pageSize);
+
       // If there are no leads, return empty array
-      if (leadIds.length === 0) {
+      if (data.length === 0) {
         return [];
       }
 
+      // Now fetch tags for all leads in a single query
+      const leadIds = data.map(lead => lead.id);
+      
       const { data: leadTagsData, error: leadTagsError } = await supabase
         .from("lead_tags")
         .select("lead_id, tag_id")
@@ -160,7 +172,6 @@ export function usePipelineQueries(selectedPipelineId?: string) {
       return leadsWithTags as Lead[];
     },
     enabled: !!currentWorkspace?.id,
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   const isLoading = isPipelinesLoading || isLeadsLoading || isTagsLoading;
@@ -173,6 +184,10 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     await refetchLeads();
   };
 
+  const loadMoreLeads = async () => {
+    setPage(prev => prev + 1);
+  };
+
   return {
     pipelines,
     leads,
@@ -183,5 +198,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     refetchPipelines,
     refetchLeads,
     invalidateAndRefetch,
+    hasMoreLeads,
+    loadMoreLeads,
   };
 }
