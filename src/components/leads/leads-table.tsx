@@ -337,15 +337,15 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
               className={`w-full max-w-xs transition-all duration-300 ${isLoadingMore ? 'bg-gray-50 dark:bg-gray-800' : ''}`}
             >
               {isLoadingMore ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Loading more leads...
-                </>
+                <div className="flex items-center justify-center">
+                  <LoadingSpinner className="h-4 w-4 mr-2 text-primary" />
+                  <span>Loading more leads...</span>
+                </div>
               ) : (
-                <>
+                <div className="flex items-center justify-center">
                   <ChevronDown className="h-4 w-4 mr-2" />
-                  Load more leads
-                </>
+                  <span>Load more leads</span>
+                </div>
               )}
             </Button>
           </div>
