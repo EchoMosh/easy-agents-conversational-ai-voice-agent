@@ -11,7 +11,7 @@ import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ChevronDown, Check } from "lucide-react";
+import { PlusCircle, ChevronDown } from "lucide-react";
 import { NewVariableForm } from "./variables/new-variable-form";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
 import { LoadingLeadsTable } from "./components/loading-leads-table";
@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Check } from "lucide-react";
 
 export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMore }: LeadsTableProps) {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
@@ -279,6 +280,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
             />
           </Table>
         </div>
+        
         <ScrollArea className="h-[60vh]" ref={scrollAreaRef}>
           {showNewLeadsIndicator && (
             <div className="sticky top-0 z-10 px-4 py-2">
@@ -290,6 +292,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
               </Alert>
             </div>
           )}
+          
           <Table>
             <TableBody>
               {leads.map((lead) => {
@@ -337,8 +340,8 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
               className={`w-full max-w-xs transition-all duration-300 ${isLoadingMore ? 'bg-gray-50 dark:bg-gray-800' : ''}`}
             >
               {isLoadingMore ? (
-                <div className="flex items-center justify-center">
-                  <LoadingSpinner className="h-5 w-5 mr-2 text-primary animate-spin" />
+                <div className="flex items-center justify-center space-x-2">
+                  <LoadingSpinner className="h-5 w-5 text-primary" />
                   <span>Loading more leads...</span>
                 </div>
               ) : (

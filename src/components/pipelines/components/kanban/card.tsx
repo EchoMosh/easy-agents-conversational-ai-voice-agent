@@ -34,38 +34,38 @@ export function Card({ lead, isOverlay = false, onClick }: CardProps) {
   };
 
   // Ensure lead.tags exists, defaulting to empty array if not
-  const tags = lead.tags || [];
+  const tags = Array.isArray(lead.tags) ? lead.tags : [];
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 mb-2 bg-white border rounded-md shadow-sm hover:shadow cursor-pointer ${
+      className={`p-3 mb-2 bg-white dark:bg-gray-800 border rounded-md shadow-sm hover:shadow cursor-pointer ${
         isOverlay ? "shadow-lg" : ""
       }`}
       onClick={onClick}
       {...attributes}
       {...listeners}
     >
-      <h3 className="font-medium text-gray-900 truncate">{lead.name}</h3>
+      <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{lead.name}</h3>
       {lead.email && (
-        <p className="text-sm text-gray-500 truncate">{lead.email}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{lead.email}</p>
       )}
       {lead.phone && (
-        <p className="text-sm text-gray-500 truncate">{lead.phone}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{lead.phone}</p>
       )}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {tags.slice(0, 2).map(tag => (
             <span 
               key={tag.id} 
-              className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
+              className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
             >
               {tag.name}
             </span>
           ))}
           {tags.length > 2 && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
               +{tags.length - 2}
             </span>
           )}
