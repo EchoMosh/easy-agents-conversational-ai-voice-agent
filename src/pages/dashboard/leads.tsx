@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";
@@ -43,8 +42,13 @@ export default function LeadsPage() {
   >(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const { pipelines, leads, availableTags, invalidateAndRefetch } =
-    usePipelineQueries(selectedPipelineId);
+  const { 
+    pipelines, 
+    leads, 
+    availableTags, 
+    invalidateAndRefetch,
+    isLeadsLoading 
+  } = usePipelineQueries(selectedPipelineId);
 
   useEffect(() => {
     invalidateAndRefetch();
@@ -119,7 +123,7 @@ export default function LeadsPage() {
 
         <LeadsTable
           leads={filteredLeads}
-          isLoading={false}
+          isLoading={isLeadsLoading}
           onLeadUpdated={invalidateAndRefetch}
         />
 

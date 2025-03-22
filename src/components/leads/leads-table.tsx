@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,9 +12,10 @@ import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Loader2 } from "lucide-react";
 import { NewVariableForm } from "./variables/new-variable-form";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
+import { LoadingLeadsTable } from "./components/loading-leads-table";
 
 export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps) {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
@@ -170,7 +172,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
   };
 
   if (isLoading) {
-    return <div className="text-center py-4">Loading leads...</div>;
+    return <LoadingLeadsTable />;
   }
 
   if (leads.length === 0) {
