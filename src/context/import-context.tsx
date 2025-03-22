@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 export interface ImportJob {
   id: string;
@@ -19,10 +19,53 @@ interface ImportContextType {
   clearCompletedJobs: () => void;
 }
 
+const LOCAL_STORAGE_KEY = 'lead_import_jobs';
+
 const ImportContext = createContext<ImportContextType | undefined>(undefined);
 
 export function ImportProvider({ children }: { children: React.ReactNode }) {
   const [importJobs, setImportJobs] = useState<ImportJob[]>([]);
+
+  // Load saved jobs from localStorage on initial mount
+  useEffect(() => {
+    try {
+      const savedJobs = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedJobs) {
+        const parsedJobs = JSON.parse(savedJobs).map((job: any) => ({
+          ...job,
+          startTime: new Date(job.startTime),
+          endTime: job.endTime ? new Date(job.endTime) : undefined
+        }));
+        
+        // Check if there are any processing jobs that might have been interrupted
+        const updatedJobs = parsedJobs.map((job: ImportJob) => {
+          if (job.status === "processing") {
+            // If a job was processing during page refresh, mark it as failed
+            return {
+              ...job,
+              status: "failed",
+              endTime: new Date(),
+              error: "Process interrupted by page refresh"
+            };
+          }
+          return job;
+        });
+        
+        setImportJobs(updatedJobs);
+      }
+    } catch (error) {
+      console.error("Error loading import jobs from localStorage:", error);
+    }
+  }, []);
+
+  // Save jobs to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(importJobs));
+    } catch (error) {
+      console.error("Error saving import jobs to localStorage:", error);
+    }
+  }, [importJobs]);
 
   const addImportJob = (job: Omit<ImportJob, "id" | "startTime">) => {
     const id = `import-${Date.now()}`;

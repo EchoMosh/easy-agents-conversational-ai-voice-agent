@@ -71,19 +71,21 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     queryFn: async () => {
       if (!currentWorkspace?.id) return [];
       
+      // Start building the query
       let query = supabase
         .from("leads")
         .select(`
           *,
-          variables:lead_variables(*),
-          lead_tags!inner(tag_id)
+          variables:lead_variables(*)
         `)
         .eq("workspace_id", currentWorkspace.id);
       
+      // Add pipeline filter if a specific pipeline is selected
       if (selectedPipelineId && selectedPipelineId !== "all") {
         query = query.eq("pipeline_id", selectedPipelineId);
       }
 
+      // Execute the query
       const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) {
@@ -91,58 +93,74 @@ export function usePipelineQueries(selectedPipelineId?: string) {
         throw error;
       }
 
-      // Now fetch tags for all leads in a single query for better performance
-      const leadTagsMap = new Map();
+      // Now fetch tags for all leads in a single query
+      const leadIds = data.map(lead => lead.id);
       
-      // Get unique tag IDs from all leads
-      const tagIds = new Set<string>();
-      data.forEach(lead => {
-        if (lead.lead_tags && lead.lead_tags.length > 0) {
-          lead.lead_tags.forEach((tagRelation: any) => {
-            if (typeof tagRelation.tag_id === 'string') {
-              tagIds.add(tagRelation.tag_id);
-            }
-          });
+      // If there are no leads, return empty array
+      if (leadIds.length === 0) {
+        return [];
+      }
+
+      const { data: leadTagsData, error: leadTagsError } = await supabase
+        .from("lead_tags")
+        .select("lead_id, tag_id")
+        .in("lead_id", leadIds);
+      
+      if (leadTagsError) {
+        console.error("Failed to load lead tags", leadTagsError);
+        return data;
+      }
+
+      // Create a map of lead_id -> tag_ids
+      const leadTagsMap = new Map<string, string[]>();
+      
+      leadTagsData?.forEach(lt => {
+        if (!leadTagsMap.has(lt.lead_id)) {
+          leadTagsMap.set(lt.lead_id, []);
         }
+        leadTagsMap.get(lt.lead_id)?.push(lt.tag_id);
       });
       
-      if (tagIds.size > 0) {
-        // Fetch all tag data in a single query
-        const { data: tagsData, error: tagsError } = await supabase
-          .from("tags")
-          .select("*")
-          .in("id", Array.from(tagIds) as string[]);
-  
-        if (!tagsError && tagsData) {
-          // Create a map of tag id -> tag data for easy lookup
-          tagsData.forEach(tag => {
-            leadTagsMap.set(tag.id, tag);
-          });
-        }
+      // Get all unique tag IDs to fetch tag data
+      const tagIds = Array.from(new Set(leadTagsData?.map(lt => lt.tag_id) || []));
+      
+      if (tagIds.length === 0) {
+        // No tags to fetch, return leads without tags
+        return data.map(lead => ({ ...lead, tags: [] }));
       }
       
-      // Process the leads data with the tags
-      const processedLeads = data.map(lead => {
-        const tags = [];
-        if (lead.lead_tags && lead.lead_tags.length > 0) {
-          lead.lead_tags.forEach((tagRelation: any) => {
-            const tag = leadTagsMap.get(tagRelation.tag_id);
-            if (tag) {
-              tags.push(tag);
-            }
-          });
-        }
+      // Fetch all tags data in a single query
+      const { data: tagsData, error: tagsError } = await supabase
+        .from("tags")
+        .select("*")
+        .in("id", tagIds);
+      
+      if (tagsError) {
+        console.error("Failed to load tags data", tagsError);
+        return data.map(lead => ({ ...lead, tags: [] }));
+      }
+      
+      // Create a map of tag_id -> tag data
+      const tagsMap = new Map();
+      tagsData?.forEach(tag => {
+        tagsMap.set(tag.id, tag);
+      });
+      
+      // Combine lead data with tags
+      const leadsWithTags = data.map(lead => {
+        const leadTagIds = leadTagsMap.get(lead.id) || [];
+        const tags = leadTagIds.map(tagId => tagsMap.get(tagId)).filter(Boolean);
         
         return {
           ...lead,
-          tags,
-          lead_tags: undefined // Remove the original lead_tags array
+          tags
         };
       });
-
-      return processedLeads as Lead[];
+      
+      return leadsWithTags as Lead[];
     },
     enabled: !!currentWorkspace?.id,
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   const isLoading = isPipelinesLoading || isLeadsLoading || isTagsLoading;

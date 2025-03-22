@@ -36,7 +36,7 @@ export function ImportsIndicator() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="fixed bottom-4 right-4 z-50"
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
           >
             <Button
               size="sm"
@@ -61,7 +61,7 @@ export function ImportsIndicator() {
           </motion.div>
         </AnimatePresence>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0 rounded-lg shadow-lg" align="end">
+      <PopoverContent className="w-96 p-0 rounded-lg shadow-lg" align="center">
         <div className="p-4 flex items-center justify-between">
           <h3 className="font-medium">Import Status</h3>
           {hasCompletedOrFailed && (

@@ -78,22 +78,24 @@ export function BulkImportDialog({
   const { addImportJob, updateImportJobStatus } = useImport();
 
   const handleClose = () => {
-    onOpenChange(false);
-    // Only reset the step if we're not in the importing state
+    // Only close if we're not in the importing step
     if (step !== "importing") {
-      setTimeout(() => setStep("upload"), 300);
+      onOpenChange(false);
+      setTimeout(() => {
+        setStep("upload");
+        setFile(null);
+        setFileContent("");
+        setFileName("");
+        setColumnMapping({});
+        setSelectedTags([]);
+      }, 300);
     }
   };
 
   const handleFileSelect = (selectedFile: File, content: string) => {
-    console.log(
-      "handleFileSelect called in BulkImportDialog",
-      selectedFile.name
-    );
     setFile(selectedFile);
     setFileContent(content);
     setFileName(selectedFile.name);
-    console.log("Setting step to mapping");
     setStep("mapping");
   };
 
@@ -166,6 +168,7 @@ export function BulkImportDialog({
         endTime: new Date(),
       });
 
+      // Explicitly trigger a refetch of leads
       onSuccess();
     } catch (error) {
       console.error("Import error:", error);
@@ -181,10 +184,6 @@ export function BulkImportDialog({
 
   const handleNext = async () => {
     if (step === "mapping") {
-      const leadCount = hasHeaders
-        ? fileContent.split(/\r?\n/).length - 1
-        : fileContent.split(/\r?\n/).length;
-
       setStep("tagging");
     } else if (step === "tagging") {
       setStep("importing");
@@ -202,31 +201,23 @@ export function BulkImportDialog({
         leadCount: leadCount,
       });
 
-      // Start import process
+      // Close the dialog but continue processing in the background
       handleClose();
 
-      // Continue processing in the background
+      // Start the import process
       startImport(jobId);
     }
   };
 
-  const getDialogTitle = () => {
-    switch (step) {
-      case "upload":
-        return "Import Leads";
-      case "mapping":
-        return "Match the columns in your file";
-      case "tagging":
-        return "Add Tags to Leads";
-      case "importing":
-        return "Importing Leads";
-      default:
-        return "Import Leads";
-    }
-  };
-
+  // Only render the dialog content if isOpen is true
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Only allow closing if we're not in the importing state
+      if (!open && step === "importing") {
+        return;
+      }
+      onOpenChange(open);
+    }}>
       <motion.div
         key="dialog-trigger"
         initial={{ opacity: 0 }}
@@ -256,9 +247,7 @@ export function BulkImportDialog({
           overflow: "hidden",
         }}
         onPointerDownOutside={(e) => {
-          console.log("Pointer down outside dialog content");
-          if (step === "upload") {
-            console.log("Preventing dialog close in upload step");
+          if (step === "importing") {
             e.preventDefault();
           }
         }}
@@ -273,7 +262,10 @@ export function BulkImportDialog({
         >
           <DialogHeader className="p-6 pb-3 border-b border-gray-100 flex-shrink-0">
             <DialogTitle className="text-xl font-medium text-gray-800">
-              {getDialogTitle()}
+              {step === "upload" && "Import Leads"}
+              {step === "mapping" && "Match the columns in your file"}
+              {step === "tagging" && "Add Tags to Leads"}
+              {step === "importing" && "Importing Leads"}
             </DialogTitle>
           </DialogHeader>
 
@@ -333,8 +325,7 @@ export function BulkImportDialog({
                     Processing your file
                   </h3>
                   <p className="text-gray-500 max-w-md">
-                    We're analyzing and importing your leads. This will only
-                    take a moment.
+                    We're analyzing and importing your leads. This will continue even if you close this dialog.
                   </p>
                 </div>
               )}
