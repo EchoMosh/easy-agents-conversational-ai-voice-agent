@@ -76,7 +76,8 @@ export default function LeadsPage() {
 
     // Then filter by selected tags
     if (selectedTagIds.length > 0) {
-      const leadTagIds = lead.tags?.map(tag => tag.id) || [];
+      // Ensure lead.tags exists and is an array
+      const leadTagIds = Array.isArray(lead.tags) ? lead.tags.map(tag => tag.id) : [];
       const hasSelectedTag = selectedTagIds.some(tagId => leadTagIds.includes(tagId));
       if (!hasSelectedTag) {
         return false;

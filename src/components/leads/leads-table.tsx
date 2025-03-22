@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +53,27 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated }: LeadsTableProps)
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
+      // First delete related records
+      const tables = [
+        'lead_activities',
+        'lead_tags',
+        'lead_variables'
+      ];
+      
+      // Delete from each related table first
+      for (const table of tables) {
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .in('lead_id', selectedLeads);
+          
+        if (error) {
+          console.error(`Error deleting from ${table}:`, error);
+          // Continue with other tables even if one fails
+        }
+      }
+      
+      // Now delete the leads themselves
       const { error } = await supabase
         .from('leads')
         .delete()
