@@ -23,13 +23,12 @@ interface BulkImportDialogProps {
   onSuccess: () => void;
 }
 
-// Animation variants
 const dialogVariants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] }, // Apple-style cubic-bezier
+    transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] },
   },
   exit: {
     opacity: 0,
@@ -72,13 +71,11 @@ export function BulkImportDialog({
     {}
   );
 
-  // Get workspace context and toast
   const { currentWorkspace } = useWorkspace();
   const { toast } = useToast();
 
   const handleClose = () => {
     onOpenChange(false);
-    // Reset to first step when dialog closes
     setTimeout(() => setStep("upload"), 300);
   };
 
@@ -97,45 +94,37 @@ export function BulkImportDialog({
   const handleBack = () => {
     if (step === "mapping") {
       setStep("upload");
-      // Reset the file and content to allow selecting a new file
       setFile(null);
       setFileContent("");
       setFileName("");
       setColumnMapping({});
     } else if (step === "tagging") {
-      // Go back to mapping step
       setStep("mapping");
     }
   };
 
   const handleNext = async () => {
     if (step === "mapping") {
-      // Estimate number of leads for tagging screen
       const leadCount = hasHeaders
         ? fileContent.split(/\r?\n/).length - 1
         : fileContent.split(/\r?\n/).length;
 
-      // Move to tagging step
       setStep("tagging");
     } else if (step === "tagging") {
-      // Now move to importing
       setStep("importing");
       setIsLoading(true);
       setImportError(null);
 
       try {
-        // Make sure we have a workspace
         if (!currentWorkspace?.id) {
           throw new Error("No active workspace found");
         }
 
-        // Get user ID from Supabase
         const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData.session?.user?.id) {
           throw new Error("User not authenticated");
         }
 
-        // Process and import the leads
         const result = await processAndImportLeads(
           fileContent,
           columnMapping,
@@ -148,7 +137,6 @@ export function BulkImportDialog({
           }
         );
 
-        // Show success message
         toast({
           title: "Import successful",
           description: `Imported ${result.imported} leads${
@@ -158,7 +146,6 @@ export function BulkImportDialog({
           }`,
         });
 
-        // Close dialog and refresh leads list
         handleClose();
         onSuccess();
       } catch (error) {
@@ -174,7 +161,6 @@ export function BulkImportDialog({
             error instanceof Error ? error.message : "Failed to import leads",
         });
 
-        // Go back to mapping step
         setStep("mapping");
       } finally {
         setIsLoading(false);
@@ -220,14 +206,15 @@ export function BulkImportDialog({
         className="p-0 border-none rounded-xl will-change-transform bg-white 
         shadow-[0_20px_70px_-10px_rgba(0,0,0,0.15)] mx-auto w-[95vw] max-w-[1200px]"
         style={{
-          zIndex: 9999, // Ensure it's above everything
-          overflow: "hidden", // Prevent any scrolling on the dialog itself
-          height: "85vh", // Fixed height for the dialog
-          maxHeight: "900px", // Maximum height to prevent too large dialogs
+          zIndex: 9999,
+          height: "75vh",
+          maxHeight: "800px",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
         }}
         onPointerDownOutside={(e) => {
           console.log("Pointer down outside dialog content");
-          // Always prevent closing when in upload step to avoid interference with file dialog
           if (step === "upload") {
             console.log("Preventing dialog close in upload step");
             e.preventDefault();
@@ -240,7 +227,7 @@ export function BulkImportDialog({
           animate="visible"
           exit="exit"
           variants={dialogVariants}
-          className="rounded-xl h-full flex flex-col" // Add flex layout, use full height
+          className="rounded-xl h-full flex flex-col"
         >
           <DialogHeader className="p-6 pb-3 border-b border-gray-100 flex-shrink-0">
             <DialogTitle className="text-xl font-medium text-gray-800">
@@ -255,8 +242,8 @@ export function BulkImportDialog({
               animate="visible"
               exit="exit"
               variants={contentVariants}
-              className="flex-grow relative" // Relative positioning for content area
-              style={{ minHeight: 0 }} // Critical for flex child to respect parent height
+              className="flex-grow overflow-hidden"
+              style={{ minHeight: 0 }}
             >
               {step === "upload" && (
                 <FileUploader

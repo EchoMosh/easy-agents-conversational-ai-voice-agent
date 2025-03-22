@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -151,129 +153,129 @@ export function ColumnMapper({
   };
 
   return (
-    <div className="h-full flex flex-col p-6 overflow-hidden">
-      <div className="flex-shrink-0 mb-3">
-        <div className="text-center text-sm text-gray-500">
-          <span className="text-xs uppercase tracking-wider font-medium">
-            File:
-          </span>{" "}
-          {displayFileName}
-        </div>
-      </div>
-
-      <div
-        className="flex-shrink-0 border border-gray-100 rounded-xl shadow-sm bg-white relative"
-        style={{ height: "280px" }}
-      >
-        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-200/80 rounded-full z-20 pointer-events-none flex items-center justify-center shadow-sm">
-          <div className="text-gray-600 font-bold">❮</div>
-        </div>
-        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-200/80 rounded-full z-20 pointer-events-none flex items-center justify-center shadow-sm">
-          <div className="text-gray-600 font-bold">❯</div>
-        </div>
-
-        <div
-          className="absolute inset-0 overflow-x-auto overflow-y-auto scrollbar-thin"
-          style={{
-            WebkitOverflowScrolling: "touch",
-            msOverflowStyle: "auto",
-            scrollbarWidth: "thin",
-          }}
-        >
-          <div style={{ minWidth: Math.max(headers.length * 140, 500) + "px" }}>
-            <div className="sticky top-0 z-20">
-              <div className="flex bg-gray-50">
-                {headers.map((header, index) => (
-                  <div
-                    key={index}
-                    className="py-2 px-3 text-left font-medium text-gray-600 whitespace-nowrap flex-shrink-0 border-b"
-                    style={{ width: "140px", minWidth: "140px" }}
-                    title={header}
-                  >
-                    <div className="truncate">{header}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex bg-gray-50/80 backdrop-blur-sm border-b">
-                {headers.map((header, index) => (
-                  <div
-                    key={index}
-                    className="py-2 px-3 flex-shrink-0"
-                    style={{ width: "140px", minWidth: "140px" }}
-                  >
-                    <Select
-                      value={columnMapping[header] || "custom"}
-                      onValueChange={(value) =>
-                        handleColumnMappingChange(header, value)
-                      }
-                    >
-                      <SelectTrigger className="w-full h-7 text-xs bg-white border-gray-200 shadow-sm hover:bg-gray-50 focus:ring-1 focus:ring-gray-50 px-2">
-                        <SelectValue
-                          placeholder="Select field"
-                          className="truncate"
-                        />
-                      </SelectTrigger>
-                      <SelectContent
-                        position="item-aligned"
-                        className="z-[9999]"
-                      >
-                        {FIELD_OPTIONS.map((option) => (
-                          <SelectItem
-                            key={option.value}
-                            value={option.value}
-                            className="text-xs"
-                          >
-                            {option.label}{" "}
-                            {option.required && (
-                              <span className="text-red-500 ml-1">*</span>
-                            )}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {csvData.slice(0, 4).map((row, rowIndex) => (
-              <div
-                key={rowIndex}
-                className={`flex ${
-                  rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
-                }`}
-              >
-                {row.map((cell, cellIndex) => (
-                  <div
-                    key={cellIndex}
-                    className="py-2 px-3 text-gray-700 text-xs leading-5 flex-shrink-0"
-                    style={{ width: "140px", minWidth: "140px" }}
-                    title={cell}
-                  >
-                    <div className="truncate">
-                      {cell || <span className="text-gray-400 italic">—</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
+    <ScrollArea className="h-full">
+      <div className="flex flex-col p-6">
+        <div className="flex-shrink-0 mb-3">
+          <div className="text-center text-sm text-gray-500">
+            <span className="text-xs uppercase tracking-wider font-medium">
+              File:
+            </span>{" "}
+            {displayFileName}
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden pointer-events-none">
+        <div
+          className="flex-shrink-0 border border-gray-100 rounded-xl shadow-sm bg-white relative"
+          style={{ height: "240px" }}
+        >
+          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-200/80 rounded-full z-20 pointer-events-none flex items-center justify-center shadow-sm">
+            <div className="text-gray-600 font-bold">❮</div>
+          </div>
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-200/80 rounded-full z-20 pointer-events-none flex items-center justify-center shadow-sm">
+            <div className="text-gray-600 font-bold">❯</div>
+          </div>
+
           <div
-            className="h-full bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-400 animate-pulse-x"
-            style={{ width: "200%", left: "-50%" }}
-          ></div>
+            className="absolute inset-0 overflow-x-auto overflow-y-auto scrollbar-thin"
+            style={{
+              WebkitOverflowScrolling: "touch",
+              msOverflowStyle: "auto",
+              scrollbarWidth: "thin",
+            }}
+          >
+            <div style={{ minWidth: Math.max(headers.length * 140, 500) + "px" }}>
+              <div className="sticky top-0 z-20">
+                <div className="flex bg-gray-50">
+                  {headers.map((header, index) => (
+                    <div
+                      key={index}
+                      className="py-2 px-3 text-left font-medium text-gray-600 whitespace-nowrap flex-shrink-0 border-b"
+                      style={{ width: "140px", minWidth: "140px" }}
+                      title={header}
+                    >
+                      <div className="truncate">{header}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex bg-gray-50/80 backdrop-blur-sm border-b">
+                  {headers.map((header, index) => (
+                    <div
+                      key={index}
+                      className="py-2 px-3 flex-shrink-0"
+                      style={{ width: "140px", minWidth: "140px" }}
+                    >
+                      <Select
+                        value={columnMapping[header] || "custom"}
+                        onValueChange={(value) =>
+                          handleColumnMappingChange(header, value)
+                        }
+                      >
+                        <SelectTrigger className="w-full h-7 text-xs bg-white border-gray-200 shadow-sm hover:bg-gray-50 focus:ring-1 focus:ring-gray-50 px-2">
+                          <SelectValue
+                            placeholder="Select field"
+                            className="truncate"
+                          />
+                        </SelectTrigger>
+                        <SelectContent
+                          position="item-aligned"
+                          className="z-[9999]"
+                        >
+                          {FIELD_OPTIONS.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={option.value}
+                              className="text-xs"
+                            >
+                              {option.label}{" "}
+                              {option.required && (
+                                <span className="text-red-500 ml-1">*</span>
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {csvData.slice(0, 4).map((row, rowIndex) => (
+                <div
+                  key={rowIndex}
+                  className={`flex ${
+                    rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                  }`}
+                >
+                  {row.map((cell, cellIndex) => (
+                    <div
+                      key={cellIndex}
+                      className="py-2 px-3 text-gray-700 text-xs leading-5 flex-shrink-0"
+                      style={{ width: "140px", minWidth: "140px" }}
+                      title={cell}
+                    >
+                      <div className="truncate">
+                        {cell || <span className="text-gray-400 italic">—</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden pointer-events-none">
+            <div
+              className="h-full bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-400 animate-pulse-x"
+              style={{ width: "200%", left: "-50%" }}
+            ></div>
+          </div>
         </div>
-      </div>
 
-      <div className="text-center text-xs text-gray-400 mt-1 mb-2 flex-shrink-0">
-        Showing preview of {csvData.length} rows
-      </div>
+        <div className="text-center text-xs text-gray-400 mt-1 mb-2">
+          Showing preview of {csvData.length} rows
+        </div>
 
-      <div className="flex-shrink-0">
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
             <h3 className="text-sm font-medium text-gray-700 mb-2">
@@ -401,30 +403,30 @@ export function ColumnMapper({
             </div>
           </div>
         )}
-      </div>
 
-      <div className="flex-shrink-0 pt-2 border-t mt-auto">
-        <div className="flex justify-between">
-          <button
-            onClick={onBack}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            Back to Upload
-          </button>
+        <div className="pt-2 border-t mt-4">
+          <div className="flex justify-between">
+            <button
+              onClick={onBack}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Back to Upload
+            </button>
 
-          <button
-            onClick={onNext}
-            disabled={!isValid}
-            className={`px-6 py-2 text-sm font-medium text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-              isValid
-                ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:ring-indigo-500"
-                : "bg-gray-300 cursor-not-allowed"
-            }`}
-          >
-            Next Step
-          </button>
+            <button
+              onClick={onNext}
+              disabled={!isValid}
+              className={`px-6 py-2 text-sm font-medium text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                isValid
+                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:ring-indigo-500"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+            >
+              Next Step
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 }
