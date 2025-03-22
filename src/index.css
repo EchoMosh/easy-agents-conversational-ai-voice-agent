@@ -3,6 +3,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom animation for horizontal scroll indicator */
+@keyframes pulse-x {
+  0% {
+    transform: translateX(-30%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-30%);
+  }
+}
+
+.animate-pulse-x {
+  animation: pulse-x 2s infinite;
+}
+
 /* Base theme variables are now handled in theme-styles.css */
 
 @layer base {

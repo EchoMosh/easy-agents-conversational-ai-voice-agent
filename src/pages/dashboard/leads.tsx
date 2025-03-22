@@ -1,9 +1,9 @@
-
 import { useState, useEffect, useRef } from "react";
 import { usePipelineQueries } from "@/hooks/pipeline/use-pipeline-queries";
 import { Separator } from "@/components/ui/separator";
 import { LeadsTable } from "@/components/leads/leads-table";
 import { AddLeadDialog } from "@/components/leads/components/add-lead-dialog";
+import { BulkImportDialog } from "@/components/leads/components/bulk-import/bulk-import-dialog";
 import { SearchAndFilters } from "@/components/leads/components/search-and-filters";
 import { LeadEditForm } from "@/components/leads/components/lead-edit-form";
 
@@ -33,6 +33,7 @@ export interface Lead {
 
 export default function LeadsPage() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [selectedPipelineId, setSelectedPipelineId] = useState<
     string | undefined
@@ -88,11 +89,19 @@ export default function LeadsPage() {
         setSearchQuery={setSearchQuery}
         pipelines={pipelines}
         addLeadDialog={
-          <AddLeadDialog
-            isOpen={isNewLeadOpen}
-            onOpenChange={setIsNewLeadOpen}
-            onSuccess={invalidateAndRefetch}
-          />
+          <div className="flex items-center space-x-2">
+            <AddLeadDialog
+              isOpen={isNewLeadOpen}
+              onOpenChange={setIsNewLeadOpen}
+              onSuccess={invalidateAndRefetch}
+            />
+
+            <BulkImportDialog
+              isOpen={isBulkImportOpen}
+              onOpenChange={setIsBulkImportOpen}
+              onSuccess={invalidateAndRefetch}
+            />
+          </div>
         }
       />
 
