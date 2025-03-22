@@ -39,6 +39,13 @@ export interface BulkActionsDialogProps {
   onOpenChange: (open: boolean) => void;
   selectedLeadIds: string[];
   onLeadsUpdated: () => void;
+  selectedLeads?: string[];
+  onAssignTags?: () => Promise<void>;
+  onRemoveTags?: () => Promise<void>;
+  onChangePipeline?: (leadIds: any, pipelineId: any) => Promise<void>;
+  onChangeStatus?: () => Promise<void>;
+  onDeleteLeads?: () => Promise<void>;
+  pipelines?: { id: string; name: string }[];
 }
 
 // Status color mapping for lead status badges

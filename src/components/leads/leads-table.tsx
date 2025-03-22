@@ -8,7 +8,7 @@ import { SelectionHeader } from "@/components/agents/table/selection-header";
 import { useQuery } from "@tanstack/react-query";
 import { LeadTableHeader } from "./components/lead-table-header";
 import { LeadRow } from "./components/lead-row";
-import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
+import { LeadsTableProps, LeadWithHandlers, statusColors } from "./types/lead-types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { NewVariableForm } from "./variables/new-variable-form";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
 import { LoadingLeadsTable } from "./components/loading-leads-table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMore }: LeadsTableProps) {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
@@ -187,7 +188,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     }
   };
 
-  if (isLoading) {
+  if (isLoading && leads.length === 0) {
     return <LoadingLeadsTable />;
   }
 
@@ -198,6 +199,41 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
       </div>
     );
   }
+
+  // Create skeleton rows for "load more" state
+  const LoadingMoreRows = () => {
+    return Array.from({ length: 3 }, (_, index) => (
+      <tr key={`loading-more-${index}`} className="border-b">
+        <td className="p-4">
+          <Skeleton className="h-4 w-4" />
+        </td>
+        <td className="p-4">
+          <div className="flex flex-col gap-1">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </td>
+        <td className="p-4 hidden md:table-cell">
+          <Skeleton className="h-6 w-20" />
+        </td>
+        <td className="p-4 hidden md:table-cell">
+          <Skeleton className="h-5 w-24" />
+        </td>
+        <td className="p-4 hidden lg:table-cell">
+          <Skeleton className="h-5 w-32" />
+        </td>
+        <td className="p-4 hidden lg:table-cell">
+          <Skeleton className="h-5 w-24" />
+        </td>
+        <td className="p-4 text-right">
+          <div className="flex justify-end gap-2">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+        </td>
+      </tr>
+    ));
+  };
 
   return (
     <>
@@ -247,6 +283,9 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
                   />
                 );
               })}
+              
+              {/* Show loading rows only when loading more */}
+              {isLoadingMore && <LoadingMoreRows />}
             </TableBody>
           </Table>
         </ScrollArea>
