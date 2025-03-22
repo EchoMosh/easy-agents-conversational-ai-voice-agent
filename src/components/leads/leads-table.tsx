@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useRef, useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,16 +8,17 @@ import { SelectionHeader } from "@/components/agents/table/selection-header";
 import { useQuery } from "@tanstack/react-query";
 import { LeadTableHeader } from "./components/lead-table-header";
 import { LeadRow } from "./components/lead-row";
-import { LeadsTableProps, LeadWithHandlers, statusColors } from "./types/lead-types";
+import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Loader2, ChevronDown } from "lucide-react";
+import { PlusCircle, Loader2, ChevronDown, Check } from "lucide-react";
 import { NewVariableForm } from "./variables/new-variable-form";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
 import { LoadingLeadsTable } from "./components/loading-leads-table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMore }: LeadsTableProps) {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
@@ -27,6 +29,10 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
   const [editingLead, setEditingLead] = useState<any>(null);
   const [isEditVariablesOpen, setIsEditVariablesOpen] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [previousLeadsCount, setPreviousLeadsCount] = useState(0);
+  const [showNewLeadsIndicator, setShowNewLeadsIndicator] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const tableEndRef = useRef<HTMLDivElement>(null);
 
   const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
     queryKey: ["pipelines"],
@@ -40,6 +46,17 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
       return data;
     },
   });
+
+  // Track when leads count changes to show an indicator
+  useEffect(() => {
+    if (leads.length > previousLeadsCount && previousLeadsCount > 0) {
+      setShowNewLeadsIndicator(true);
+      setTimeout(() => {
+        setShowNewLeadsIndicator(false);
+      }, 5000);
+    }
+    setPreviousLeadsCount(leads.length);
+  }, [leads.length, previousLeadsCount]);
 
   const handleToggleSelect = (id: string) => {
     setSelectedLeads(prev =>
@@ -175,7 +192,24 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     
     setIsLoadingMore(true);
     try {
+      const oldLeadsCount = leads.length;
       await onLoadMore();
+      
+      // Show toast notification
+      toast.success(`Loaded ${leads.length - oldLeadsCount} more leads`);
+      
+      // After a short delay, scroll to show the newly loaded items
+      setTimeout(() => {
+        if (tableEndRef.current) {
+          const offset = Math.min(300, window.innerHeight / 3);
+          const scrollPosition = tableEndRef.current.offsetTop - offset;
+          
+          scrollAreaRef.current?.scrollTo({
+            top: scrollPosition,
+            behavior: 'smooth'
+          });
+        }
+      }, 300);
     } catch (error) {
       console.error('Error loading more leads:', error);
       toast.error('Failed to load more leads');
@@ -251,7 +285,17 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
             />
           </Table>
         </div>
-        <ScrollArea className="h-[60vh]">
+        <ScrollArea className="h-[60vh]" ref={scrollAreaRef}>
+          {showNewLeadsIndicator && (
+            <div className="sticky top-0 z-10 px-4 py-2">
+              <Alert className="bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900">
+                <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <AlertDescription className="text-green-700 dark:text-green-400">
+                  New leads loaded successfully
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
           <Table>
             <TableBody>
               {leads.map((lead) => {
@@ -286,15 +330,18 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
               {isLoadingMore && <LoadingMoreRows />}
             </TableBody>
           </Table>
+          
+          {/* This empty div serves as a marker for scrolling to the newly loaded leads */}
+          <div ref={tableEndRef} className="h-2" />
         </ScrollArea>
         
         {hasMore && (
           <div className="p-4 border-t flex justify-center">
             <Button 
-              variant="outline" 
+              variant={isLoadingMore ? "outline" : "default"}
               onClick={handleLoadMore} 
               disabled={isLoadingMore}
-              className="w-full max-w-xs"
+              className="w-full max-w-xs transition-all duration-300"
             >
               {isLoadingMore ? (
                 <>
