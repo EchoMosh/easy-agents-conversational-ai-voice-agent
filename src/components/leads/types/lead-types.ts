@@ -7,6 +7,7 @@ export interface LeadsTableProps {
   onLeadUpdated: () => void;
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
+  pageSize?: number;
 }
 
 export interface LeadWithHandlers extends Lead {

@@ -130,6 +130,7 @@ export default function LeadsPage() {
             onLeadUpdated={invalidateAndRefetch}
             hasMore={hasMoreLeads}
             onLoadMore={loadMoreLeads}
+            pageSize={10}
           />
         </div>
 

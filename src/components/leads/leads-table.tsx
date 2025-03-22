@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,7 +12,7 @@ import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ChevronDown, AlertCircle } from "lucide-react";
+import { PlusCircle, AlertCircle, Check } from "lucide-react";
 import { NewVariableForm } from "./variables/new-variable-form";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
 import { LoadingLeadsTable } from "./components/loading-leads-table";
@@ -19,9 +20,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Check } from "lucide-react";
 
-export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMore }: LeadsTableProps) {
+export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMore, pageSize = 10 }: LeadsTableProps) {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -38,6 +38,8 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const tableEndRef = useRef<HTMLDivElement>(null);
   const alertRef = useRef<HTMLDivElement>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
     queryKey: ["pipelines"],
@@ -73,6 +75,33 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
       alertRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [selectingAllAlert]);
+
+  // Setup infinite scrolling with an Intersection Observer
+  const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
+    const [entry] = entries;
+    if (entry.isIntersecting && hasMore && !isLoadingMore && onLoadMore) {
+      console.log("Sentinel is visible, loading more leads...");
+      handleLoadMoreData();
+    }
+  }, [hasMore, isLoadingMore, onLoadMore]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleObserver, { 
+      root: null,
+      rootMargin: '100px',
+      threshold: 0.1
+    });
+    
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+    
+    return () => {
+      if (sentinelRef.current) {
+        observer.unobserve(sentinelRef.current);
+      }
+    };
+  }, [handleObserver, leads.length]);
 
   const handleToggleSelect = (id: string) => {
     setSelectedLeads(prev =>
@@ -249,25 +278,13 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     setIsEditVariablesOpen(true);
   };
 
-  const handleLoadMore = async () => {
-    if (!onLoadMore) return;
+  const handleLoadMoreData = async () => {
+    if (!onLoadMore || isLoadingMore) return;
     
-    console.log("Loading more leads...");
+    console.log("Loading more leads via infinite scroll...");
     setIsLoadingMore(true);
     try {
       await onLoadMore();
-      
-      setTimeout(() => {
-        if (tableEndRef.current) {
-          const offset = Math.min(300, window.innerHeight / 3);
-          const scrollPosition = tableEndRef.current.offsetTop - offset;
-          
-          scrollAreaRef.current?.scrollTo({
-            top: scrollPosition,
-            behavior: 'smooth'
-          });
-        }
-      }, 300);
     } catch (error) {
       console.error('Error loading more leads:', error);
       toast.error('Failed to load more leads');
@@ -301,38 +318,13 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     );
   }
 
-  const LoadingMoreRows = () => {
-    return Array.from({ length: 3 }, (_, index) => (
-      <tr key={`loading-more-${index}`} className="border-b">
-        <td className="p-4">
-          <Skeleton className="h-4 w-4" />
-        </td>
-        <td className="p-4">
-          <div className="flex flex-col gap-1">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-4 w-32" />
-          </div>
-        </td>
-        <td className="p-4 hidden md:table-cell">
-          <Skeleton className="h-6 w-20" />
-        </td>
-        <td className="p-4 hidden md:table-cell">
-          <Skeleton className="h-5 w-24" />
-        </td>
-        <td className="p-4 hidden lg:table-cell">
-          <Skeleton className="h-5 w-32" />
-        </td>
-        <td className="p-4 hidden lg:table-cell">
-          <Skeleton className="h-5 w-24" />
-        </td>
-        <td className="p-4 text-right">
-          <div className="flex justify-end gap-2">
-            <Skeleton className="h-8 w-8 rounded-full" />
-            <Skeleton className="h-8 w-8 rounded-full" />
-          </div>
-        </td>
-      </tr>
-    ));
+  const LoadingMoreIndicator = () => {
+    return (
+      <div ref={loadingRef} className="py-4 flex justify-center items-center space-x-2">
+        <LoadingSpinner className="h-5 w-5" />
+        <span className="text-sm text-muted-foreground">Loading more leads...</span>
+      </div>
+    );
   };
 
   return (
@@ -426,36 +418,18 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
                   />
                 );
               })}
-              
-              {isLoadingMore && <LoadingMoreRows />}
             </TableBody>
           </Table>
           
+          {/* Sentinel element to trigger infinite loading */}
+          <div ref={sentinelRef} className="h-4 w-full" />
+          
+          {/* Loading indicator */}
+          {isLoadingMore && hasMore && <LoadingMoreIndicator />}
+          
+          {/* End of table marker */}
           <div ref={tableEndRef} className="h-2" />
         </ScrollArea>
-        
-        {hasMore && (
-          <div className="p-4 border-t flex justify-center sticky bottom-0 bg-white dark:bg-gray-800 z-10">
-            <Button 
-              variant="default"
-              onClick={handleLoadMore} 
-              disabled={isLoadingMore}
-              className="w-full max-w-xs"
-            >
-              {isLoadingMore ? (
-                <div className="flex items-center justify-center gap-2">
-                  <LoadingSpinner className="h-5 w-5" />
-                  <span>Loading...</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center">
-                  <ChevronDown className="h-4 w-4 mr-2" />
-                  <span>Load more leads</span>
-                </div>
-              )}
-            </Button>
-          </div>
-        )}
       </div>
 
       <Dialog open={isBulkVariablesOpen} onOpenChange={setIsBulkVariablesOpen}>

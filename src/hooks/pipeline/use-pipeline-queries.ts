@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase, withWorkspace } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,7 +11,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
   const { currentWorkspace } = useWorkspace();
   const [page, setPage] = useState(1);
   const [hasMoreLeads, setHasMoreLeads] = useState(true);
-  const pageSize = 25; // Number of leads to load per page
+  const pageSize = 10; // Changed from 25 to 10 leads per page
   const accumulatedLeadsRef = useRef<Lead[]>([]);
   const [totalFilteredCount, setTotalFilteredCount] = useState<number | null>(null);
   
@@ -117,6 +116,8 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     queryKey: ["leads", selectedPipelineId, currentWorkspace?.id, page],
     queryFn: async () => {
       if (!currentWorkspace?.id) return [];
+      
+      console.log(`Loading page ${page} of leads, ${pageSize} leads per page`);
       
       // Start building the query
       let query = supabase
@@ -252,6 +253,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
   };
 
   const loadMoreLeads = async () => {
+    console.log("Loading more leads, incrementing page from", page);
     setPage(prev => prev + 1);
   };
 
