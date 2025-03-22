@@ -121,7 +121,8 @@ export function usePipelineQueries(selectedPipelineId?: string) {
       
       if (leadTagsError) {
         console.error("Failed to load lead tags", leadTagsError);
-        return data;
+        // Return leads with empty tags arrays if we can't fetch tags
+        return data.map(lead => ({ ...lead, tags: [] })) as Lead[];
       }
 
       // Create a map of lead_id -> tag_ids
@@ -139,7 +140,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
       
       if (tagIds.length === 0) {
         // No tags to fetch, return leads without tags
-        return data.map(lead => ({ ...lead, tags: [] }));
+        return data.map(lead => ({ ...lead, tags: [] })) as Lead[];
       }
       
       // Fetch all tags data in a single query
@@ -150,7 +151,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
       
       if (tagsError) {
         console.error("Failed to load tags data", tagsError);
-        return data.map(lead => ({ ...lead, tags: [] }));
+        return data.map(lead => ({ ...lead, tags: [] })) as Lead[];
       }
       
       // Create a map of tag_id -> tag data

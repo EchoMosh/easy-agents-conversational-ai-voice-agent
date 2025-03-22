@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Sheet,
@@ -21,13 +22,15 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 export function BulkActionsDialog({
   isOpen,
   onOpenChange,
-  selectedLeads,
+  selectedLeadIds,
+  onLeadsUpdated,
   onAssignTags,
   onRemoveTags,
   onChangePipeline,
   onChangeStatus,
   onDeleteLeads,
   pipelines,
+  selectedLeads,
 }: BulkActionsDialogProps) {
   const [activeTab, setActiveTab] = useState("tags");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -65,11 +68,8 @@ export function BulkActionsDialog({
     try {
       if (activeTab === "tags") {
         if (selectedTags.length > 0) {
-          await onAssignTags(
-            selectedLeads.map((lead) => lead.id),
-            selectedTags
-          );
-          toast.success(`${selectedLeads.length} lead(s) updated`);
+          await onAssignTags();
+          toast.success(`${selectedLeadIds.length} lead(s) updated`);
         } else {
           toast.error("Please select at least one tag to assign.");
           setIsLoading(false);
@@ -78,27 +78,22 @@ export function BulkActionsDialog({
       }
 
       if (activeTab === "pipeline") {
-        await onChangePipeline(
-          selectedLeads.map((lead) => lead.id),
-          selectedPipeline
-        );
-        toast.success(`${selectedLeads.length} lead(s) updated`);
+        await onChangePipeline(selectedLeadIds, selectedPipeline);
+        toast.success(`${selectedLeadIds.length} lead(s) updated`);
       }
 
       if (activeTab === "status") {
-        await onChangeStatus(
-          selectedLeads.map((lead) => lead.id),
-          selectedStatus
-        );
-        toast.success(`${selectedLeads.length} lead(s) updated`);
+        await onChangeStatus();
+        toast.success(`${selectedLeadIds.length} lead(s) updated`);
       }
 
       if (activeTab === "delete") {
-        await onDeleteLeads(selectedLeads.map((lead) => lead.id));
-        toast.success(`${selectedLeads.length} lead(s) deleted`);
+        await onDeleteLeads();
+        toast.success(`${selectedLeadIds.length} lead(s) deleted`);
       }
 
       onOpenChange(false);
+      onLeadsUpdated();
     } catch (error) {
       console.error("Error in bulk action:", error);
       toast.error("Failed to perform bulk action");
@@ -113,7 +108,7 @@ export function BulkActionsDialog({
         <SheetHeader>
           <SheetTitle>Bulk Actions</SheetTitle>
           <SheetDescription>
-            Apply actions to {selectedLeads.length} selected leads.
+            Apply actions to {selectedLeadIds.length} selected leads.
           </SheetDescription>
         </SheetHeader>
 
@@ -152,7 +147,7 @@ export function BulkActionsDialog({
                   <SelectValue placeholder="Select pipeline" />
                 </SelectTrigger>
                 <SelectContent>
-                  {pipelines.map((pipeline) => (
+                  {pipelines?.map((pipeline) => (
                     <SelectItem key={pipeline.id} value={pipeline.id}>
                       {pipeline.name}
                     </SelectItem>

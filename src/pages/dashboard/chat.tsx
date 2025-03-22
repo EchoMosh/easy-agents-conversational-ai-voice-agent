@@ -30,7 +30,8 @@ export function ChatPage({ leadId }: ChatPageProps) {
         .single();
       
       if (error) throw error;
-      return data as Lead;
+      // Add empty tags array to satisfy the Lead type
+      return { ...data, tags: [] } as Lead;
     },
     enabled: !!id
   });

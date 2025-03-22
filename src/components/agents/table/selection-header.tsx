@@ -72,7 +72,8 @@ export function SelectionHeader({
       <BulkActionsDialog
         isOpen={isBulkActionsOpen}
         onOpenChange={setIsBulkActionsOpen}
-        selectedLeads={Array(selectedCount).fill({ id: "" })}
+        selectedLeadIds={Array(selectedCount).fill("")}
+        onLeadsUpdated={() => {}}
         onAssignTags={async () => {}}
         onRemoveTags={async () => {}}
         onChangeStatus={async () => {}}

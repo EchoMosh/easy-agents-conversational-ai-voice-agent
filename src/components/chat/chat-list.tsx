@@ -24,7 +24,11 @@ export function ChatList() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Lead[];
+      // Add empty tags array to satisfy the Lead type
+      return (data || []).map(lead => ({
+        ...lead,
+        tags: [] // Add empty tags array
+      })) as Lead[];
     }
   });
 

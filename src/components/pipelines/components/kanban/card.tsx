@@ -51,6 +51,23 @@ export function Card({ lead, isOverlay = false, onClick }: CardProps) {
       {lead.phone && (
         <p className="text-sm text-gray-500 truncate">{lead.phone}</p>
       )}
+      {lead.tags && lead.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {lead.tags.slice(0, 2).map(tag => (
+            <span 
+              key={tag.id} 
+              className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
+            >
+              {tag.name}
+            </span>
+          ))}
+          {lead.tags.length > 2 && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+              +{lead.tags.length - 2}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -39,7 +39,7 @@ export interface BulkActionsDialogProps {
   onOpenChange: (open: boolean) => void;
   selectedLeadIds: string[];
   onLeadsUpdated: () => void;
-  selectedLeads?: string[];
+  selectedLeads?: any[];
   onAssignTags?: () => Promise<void>;
   onRemoveTags?: () => Promise<void>;
   onChangePipeline?: (leadIds: string[], pipelineId: string) => Promise<void>;
