@@ -11,7 +11,7 @@ import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Loader2, ChevronDown, Check } from "lucide-react";
+import { PlusCircle, ChevronDown, Check } from "lucide-react";
 import { NewVariableForm } from "./variables/new-variable-form";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
 import { LoadingLeadsTable } from "./components/loading-leads-table";
@@ -338,7 +338,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
             >
               {isLoadingMore ? (
                 <div className="flex items-center justify-center">
-                  <LoadingSpinner className="h-4 w-4 mr-2 text-primary" />
+                  <LoadingSpinner className="h-5 w-5 mr-2 text-primary animate-spin" />
                   <span>Loading more leads...</span>
                 </div>
               ) : (
