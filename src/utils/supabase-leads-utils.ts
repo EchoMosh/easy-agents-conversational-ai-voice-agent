@@ -78,16 +78,27 @@ export async function importLeads(
       }
     }
     
-    // Prepare leads for insertion
-    const leadsWithMetadata = leadsToImport.map(lead => ({
-      id: uuidv4(),
-      ...lead,
-      workspace_id: workspaceId,
-      created_by: userId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      status: 'new',
-    }));
+    // Prepare leads for insertion - convert first_name and last_name to name
+    const leadsWithMetadata = leadsToImport.map(lead => {
+      // Create name from first_name and last_name if available
+      const name = lead.first_name || lead.last_name ? 
+        `${lead.first_name || ''} ${lead.last_name || ''}`.trim() : 
+        lead.email.split('@')[0]; // Use email username as fallback
+      
+      return {
+        id: uuidv4(),
+        name,
+        email: lead.email,
+        phone: lead.phone,
+        workspace_id: workspaceId,
+        user_id: userId, // This is required by the schema
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'new',
+        // Include any other fields
+        ...lead
+      };
+    });
     
     // Insert leads
     const { data: insertedLeads, error: insertError } = await supabase

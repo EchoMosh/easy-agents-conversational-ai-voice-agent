@@ -15,21 +15,43 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check the mode param from URL
     const mode = searchParams.get('mode');
     setIsSignUp(mode === 'signup');
-  }, [searchParams]);
+    
+    // Clear previous error when switching modes
+    setAuthError(null);
+
+    // Check if there's an existing session
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          // If already logged in, redirect to dashboard
+          navigate("/dashboard/agents");
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+      }
+    };
+    
+    checkSession();
+  }, [searchParams, navigate]);
 
   const handleToggleMode = () => {
+    setAuthError(null); // Clear errors on mode switch
     navigate(`/auth?mode=${isSignUp ? 'login' : 'signup'}`, { replace: true });
   };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setAuthError(null);
 
     try {
       if (isSignUp) {
@@ -63,12 +85,15 @@ const AuthPage = () => {
         if (error) throw error;
 
         if (data.user) {
+          console.log("Login successful, checking profile");
           const { data: profile } = await supabase
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', data.user.id)
             .maybeSingle();
 
+          console.log("Profile check:", profile);
+          
           if (profile?.onboarding_completed) {
             navigate("/dashboard/agents");
           } else {
@@ -78,6 +103,7 @@ const AuthPage = () => {
       }
     } catch (error: any) {
       console.error('Auth error:', error);
+      setAuthError(error.message || "An error occurred during authentication");
       toast({
         variant: "destructive",
         title: "Error",
@@ -106,6 +132,11 @@ const AuthPage = () => {
           </CardHeader>
           <form onSubmit={handleAuth}>
             <CardContent className="space-y-4">
+              {authError && (
+                <div className="p-3 text-sm bg-red-50 border border-red-200 text-red-800 rounded">
+                  {authError}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

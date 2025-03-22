@@ -14,6 +14,20 @@ const Index = () => {
         console.log("Index: Checking user authentication...");
         setIsLoading(true);
         
+        // First set up auth listener to catch auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, session) => {
+            console.log("Auth state change event:", event);
+            
+            // If we get a SIGNED_OUT event, redirect to auth
+            if (event === 'SIGNED_OUT') {
+              console.log("User signed out, redirecting to auth page");
+              navigate("/auth");
+            }
+          }
+        );
+
+        // Then check the current session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -50,6 +64,10 @@ const Index = () => {
           console.log("Index: No session, navigating to auth");
           navigate("/auth");
         }
+        
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (err) {
         console.error("Auth check error:", err);
         setError(err instanceof Error ? err : new Error(String(err)));
