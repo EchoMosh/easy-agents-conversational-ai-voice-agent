@@ -4,10 +4,13 @@ import { Lead } from "@/pages/dashboard/leads";
 export interface LeadsTableProps {
   leads: Lead[];
   isLoading: boolean;
+  isFetching?: boolean;
   onLeadUpdated: () => void;
   hasMore?: boolean;
   onLoadMore?: () => Promise<void>;
   pageSize?: number;
+  totalCount?: number;
+  pipelines?: Array<{ id: string; name: string }>;
 }
 
 export interface LeadWithHandlers extends Lead {
@@ -31,6 +34,7 @@ export interface LeadTableHeaderProps {
   selectAllMode?: 'visible' | 'all';
   visibleCount?: number;
   totalCount?: number | null;
+  onSelectAllMatching?: () => void;
 }
 
 export interface LeadActionsProps {

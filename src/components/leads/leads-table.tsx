@@ -1,244 +1,204 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Table, TableBody } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import {
+  bulkDeleteLeads,
+  bulkUpdateLeads,
+  bulkAddVariables,
+} from "@/utils/supabase-bulk-operations";
+import { useWorkspace } from "@/context/workspace-context";
 import { DeleteDialog } from "@/components/agents/table/delete-dialog";
 import { SelectionHeader } from "@/components/agents/table/selection-header";
-import { useQuery } from "@tanstack/react-query";
-import { LeadTableHeader } from "./components/lead-table-header";
-import { LeadRow } from "./components/lead-row";
-import { LeadsTableProps, LeadWithHandlers } from "./types/lead-types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { LeadsTableProps } from "./types/lead-types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, AlertCircle, Check } from "lucide-react";
+import { PlusCircle, ChevronDown, AlertCircle, Check } from "lucide-react";
 import { NewVariableForm } from "./variables/new-variable-form";
 import { EditVariablesDialog } from "./components/edit-variables-dialog";
 import { LoadingLeadsTable } from "./components/loading-leads-table";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { LeadRow } from "./components/lead-row";
+import { LeadTableHeader } from "./components/lead-table-header";
 
-export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMore, pageSize = 10 }: LeadsTableProps) {
+export function LeadsTable({
+  leads,
+  isLoading,
+  isFetching,
+  onLeadUpdated,
+  hasMore,
+  onLoadMore,
+  pageSize,
+  totalCount,
+  pipelines = [],
+}: LeadsTableProps) {
+  // ===== ALL HOOKS MUST BE DECLARED FIRST =====
+  // State hooks
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBulkVariablesOpen, setIsBulkVariablesOpen] = useState(false);
-  const [newVariables, setNewVariables] = useState<{name: string; value: string}[]>([]);
+  const [newVariables, setNewVariables] = useState<
+    { name: string; value: string }[]
+  >([]);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [isEditVariablesOpen, setIsEditVariablesOpen] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [previousLeadsCount, setPreviousLeadsCount] = useState(0);
-  const [showNewLeadsIndicator, setShowNewLeadsIndicator] = useState(false);
-  const [selectAllMode, setSelectAllMode] = useState<'visible' | 'all'>('visible');
-  const [totalFilteredLeadsCount, setTotalFilteredLeadsCount] = useState<number | null>(null);
-  const [selectingAllAlert, setSelectingAllAlert] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const tableEndRef = useRef<HTMLDivElement>(null);
-  const alertRef = useRef<HTMLDivElement>(null);
-  const loadingRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [selectAllMode, setSelectAllMode] = useState<"visible" | "all">(
+    "visible"
+  );
+  const [selectAllPromptOpen, setSelectAllPromptOpen] = useState(false);
 
-  const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
-    queryKey: ["pipelines"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("id, name")
-        .order("created_at", { ascending: false });
+  // Refs must be declared before conditions
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-      if (error) throw error;
-      return data;
-    },
-  });
+  // Contexts
+  const { currentWorkspace } = useWorkspace();
 
-  useEffect(() => {
-    if (leads.length > previousLeadsCount && previousLeadsCount > 0) {
-      setShowNewLeadsIndicator(true);
-      setTimeout(() => {
-        setShowNewLeadsIndicator(false);
-      }, 5000);
-    }
-    setPreviousLeadsCount(leads.length);
-  }, [leads.length, previousLeadsCount]);
-
-  useEffect(() => {
-    setSelectAllMode('visible');
-    setTotalFilteredLeadsCount(null);
-    setSelectedLeads([]);
-  }, [leads.length]);
-
-  useEffect(() => {
-    if (selectingAllAlert && alertRef.current) {
-      alertRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }, [selectingAllAlert]);
-
-  useEffect(() => {
-    const handleScroll = (entries: IntersectionObserverEntry[]) => {
-      const [entry] = entries;
-      if (entry.isIntersecting && hasMore && !isLoadingMore && onLoadMore) {
-        console.log("✅ Sentinel is visible, loading more leads...");
-        setIsLoadingMore(true);
-        onLoadMore()
-          .then(() => {
-            console.log("✅ Successfully loaded more leads");
-          })
-          .catch((error) => {
-            console.error("❌ Error loading more leads:", error);
-            toast.error("Failed to load more leads");
-          })
-          .finally(() => {
-            setIsLoadingMore(false);
-          });
-      }
-    };
-
-    const observer = new IntersectionObserver(handleScroll, {
-      root: scrollAreaRef.current,
-      rootMargin: "200px",
-      threshold: 0.1,
-    });
-
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-      console.log("👁️ Observer attached to sentinel element");
-    }
-
-    return () => {
-      if (sentinelRef.current) {
-        observer.unobserve(sentinelRef.current);
-        console.log("👁️ Observer detached from sentinel element");
-      }
-    };
-  }, [hasMore, isLoadingMore, onLoadMore, leads.length]);
-
+  // ===== HANDLERS =====
+  // Handle selection
   const handleToggleSelect = (id: string) => {
-    setSelectedLeads(prev =>
-      prev.includes(id) ? prev.filter(leadId => leadId !== id) : [...prev, id]
+    if (selectAllMode === "all") {
+      // In "select all" mode, we need to switch back to "visible" mode
+      setSelectAllMode("visible");
+    }
+
+    setSelectedLeads((prev) =>
+      prev.includes(id) ? prev.filter((leadId) => leadId !== id) : [...prev, id]
     );
   };
 
-  const handleToggleSelectAll = async () => {
-    if (selectedLeads.length === leads.length && selectAllMode === 'visible') {
+  const handleToggleSelectAll = () => {
+    // Simple toggle behavior for the checkbox - just select/deselect visible leads
+    if (selectedLeads.length === leads.length && leads.length > 0) {
+      // If everything visible is selected, deselect all
       setSelectedLeads([]);
-      return;
+      setSelectAllMode("visible");
+    } else {
+      // Otherwise select all visible
+      setSelectedLeads(leads.map((lead) => lead.id));
+      setSelectAllMode("visible");
     }
-    
-    if (selectedLeads.length < leads.length) {
-      setSelectAllMode('visible');
-      setSelectedLeads(leads.map(lead => lead.id));
-      return;
-    }
-    
-    if (selectedLeads.length === leads.length && selectAllMode === 'visible' && hasMore) {
-      setSelectingAllAlert(true);
-      
+  };
+
+  // Handle selecting all matching leads, not just visible ones
+  const handleSelectAllMatchingLeads = () => {
+    setSelectAllMode("all");
+    // We keep the selectedLeads array as is - it will hold the IDs of visible leads
+    // But operations will know to apply to all matching leads, not just these
+    setSelectAllPromptOpen(false);
+    toast.success(`Selected all ${totalCount || "matching"} leads`);
+  };
+
+  // Pipeline helpers
+  const getPipelineName = (pipelineId: string) => {
+    const pipeline = pipelines.find((p) => p.id === pipelineId);
+    return pipeline?.name || "Unknown";
+  };
+
+  // Function to scroll to the bottom of the leads table after loading more
+  const handleLoadMore = async () => {
+    if (onLoadMore) {
+      await onLoadMore();
+
+      // After new content is loaded, scroll to show new content
       setTimeout(() => {
-        if (alertRef.current) {
-          alertRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (scrollContainerRef.current) {
+          // Scroll down by 200px to show the newly loaded content
+          scrollContainerRef.current.scrollTop += 200;
         }
       }, 100);
     }
   };
 
-  const handleSelectAllFiltered = async () => {
-    const totalFiltered = totalFilteredLeadsCount || leads.length;
-    
-    const loadingToast = toast.loading(`Selecting all ${totalFiltered} leads...`);
-    
-    try {
-      setSelectAllMode('all');
-      setSelectedLeads(leads.map(lead => lead.id));
-      toast.success(`Selected all ${totalFiltered} leads`);
-    } catch (error) {
-      console.error('Error selecting all leads:', error);
-      toast.error('Failed to select all leads');
-      setSelectAllMode('visible');
-    } finally {
-      toast.dismiss(loadingToast);
-      setSelectingAllAlert(false);
-    }
+  // Get filter object for "all" operations
+  const getAllLeadsFilter = () => {
+    return {
+      workspaceId: currentWorkspace?.id,
+      // Include any filters the user has applied
+      // For a real implementation, these would come from URL params or state
+    };
   };
 
+  // Handle deletion
   const handleDelete = async () => {
     setIsDeleting(true);
-    
-    if (selectAllMode === 'all' && hasMore) {
-      const confirmed = window.confirm(`You are about to delete ALL leads matching your current filter (not just the ${selectedLeads.length} visible ones). This action cannot be undone. Are you sure?`);
-      if (!confirmed) {
-        setIsDeleting(false);
-        setIsDeleteDialogOpen(false);
-        return;
-      }
-    }
-    
     try {
-      const relatedTables = [
-        'lead_activities',
-        'lead_tags',
-        'lead_variables'
-      ];
-      
-      for (const table of relatedTables) {
-        const { error } = await supabase
-          .from(table as any)
-          .delete()
-          .in('lead_id', selectedLeads);
-          
-        if (error) {
-          console.error(`Error deleting from ${table}:`, error);
-          continue;
-        }
+      let result;
+
+      if (selectAllMode === "all") {
+        // Delete all matching leads using filter
+        result = await bulkDeleteLeads(null, getAllLeadsFilter());
+      } else {
+        // Delete selected leads using IDs
+        result = await bulkDeleteLeads(selectedLeads);
       }
-      
-      const { error } = await supabase
-        .from('leads')
-        .delete()
-        .in('id', selectedLeads);
 
-      if (error) throw error;
-
-      toast.success(`Successfully deleted ${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''}`);
+      toast.success(
+        `Successfully deleted ${result.count} lead${
+          result.count !== 1 ? "s" : ""
+        }`
+      );
       setSelectedLeads([]);
+      setSelectAllMode("visible");
       onLeadUpdated();
     } catch (error) {
-      console.error('Error deleting leads:', error);
-      toast.error('Failed to delete leads');
+      console.error("Error deleting leads:", error);
+      toast.error("Failed to delete leads");
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
     }
   };
 
+  // Handle move to pipeline
   const handleMoveToPipeline = async (pipelineId: string) => {
     try {
-      const updateData = pipelineId === "none" 
-        ? { pipeline_id: null, updated_at: new Date().toISOString() }
-        : { pipeline_id: pipelineId, updated_at: new Date().toISOString() };
-        
-      const { error } = await supabase
-        .from('leads')
-        .update(updateData)
-        .in('id', selectedLeads);
+      const updateData = {
+        pipeline_id: pipelineId === "none" ? null : pipelineId,
+      };
 
-      if (error) throw error;
+      let result;
 
-      const message = pipelineId === "none" 
-        ? `Removed ${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''} from pipeline` 
-        : `Moved ${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''} to pipeline`;
-        
+      if (selectAllMode === "all") {
+        // Update all matching leads using filter
+        result = await bulkUpdateLeads(updateData, null, getAllLeadsFilter());
+      } else {
+        // Update selected leads using IDs
+        result = await bulkUpdateLeads(updateData, selectedLeads);
+      }
+
+      const message =
+        pipelineId === "none"
+          ? `Removed ${result.count} lead${
+              result.count !== 1 ? "s" : ""
+            } from pipeline`
+          : `Moved ${result.count} lead${
+              result.count !== 1 ? "s" : ""
+            } to pipeline`;
+
       toast.success(message);
       onLeadUpdated();
     } catch (error) {
-      console.error('Error moving leads:', error);
-      toast.error('Failed to move leads');
+      console.error("Error moving leads:", error);
+      toast.error("Failed to move leads");
     }
   };
 
+  // Variables management
   const handleAddVariable = () => {
-    setNewVariables([...newVariables, { name: '', value: '' }]);
+    setNewVariables([...newVariables, { name: "", value: "" }]);
   };
 
   const handleRemoveVariable = (index: number) => {
@@ -247,40 +207,54 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     setNewVariables(updated);
   };
 
-  const handleVariableChange = (index: number, field: "name" | "value", value: string) => {
+  const handleVariableChange = (
+    index: number,
+    field: "name" | "value",
+    value: string
+  ) => {
     const updated = [...newVariables];
     updated[index][field] = value;
     setNewVariables(updated);
   };
 
   const handleBulkAddVariables = async () => {
-    if (newVariables.some(v => !v.name.trim())) {
+    if (newVariables.some((v) => !v.name.trim())) {
       toast.error("Variable names cannot be empty");
       return;
     }
 
     try {
-      const variablesToAdd = selectedLeads.flatMap(leadId => 
-        newVariables.map(v => ({
-          lead_id: leadId,
-          name: v.name.trim(),
-          value: v.value.trim() || null
-        }))
+      const variables = newVariables.map((v) => ({
+        name: v.name.trim(),
+        value: v.value.trim() || null,
+      }));
+
+      let result;
+
+      if (selectAllMode === "all") {
+        // Add variables to all matching leads using filter
+        result = await bulkAddVariables(variables, null, getAllLeadsFilter());
+      } else {
+        // Add variables to selected leads using IDs
+        result = await bulkAddVariables(variables, selectedLeads);
+      }
+
+      const leadCount =
+        selectAllMode === "all"
+          ? totalCount || "all matching"
+          : selectedLeads.length;
+
+      toast.success(
+        `Added ${variables.length} variable${
+          variables.length > 1 ? "s" : ""
+        } to ${leadCount} lead${leadCount !== 1 ? "s" : ""}`
       );
-
-      const { error } = await supabase
-        .from('lead_variables')
-        .insert(variablesToAdd);
-
-      if (error) throw error;
-
-      toast.success(`Added ${newVariables.length} variable${newVariables.length > 1 ? 's' : ''} to ${selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''}`);
       setNewVariables([]);
       setIsBulkVariablesOpen(false);
       onLeadUpdated();
     } catch (error) {
-      console.error('Error adding variables:', error);
-      toast.error('Failed to add variables');
+      console.error("Error adding variables:", error);
+      toast.error("Failed to add variables");
     }
   };
 
@@ -289,189 +263,176 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
     setIsEditVariablesOpen(true);
   };
 
-  const handleLoadMoreData = async () => {
-    if (!onLoadMore || isLoadingMore) return;
-    
-    console.log("⏳ Loading more leads manually...");
-    setIsLoadingMore(true);
-    try {
-      await onLoadMore();
-      console.log("✅ Successfully loaded more leads");
-    } catch (error) {
-      console.error("❌ Error loading more leads:", error);
-      toast.error("Failed to load more leads");
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
-
-  useEffect(() => {
-    const handleTotalCount = (event: CustomEvent<number>) => {
-      console.log("Total filtered leads count received:", event.detail);
-      setTotalFilteredLeadsCount(event.detail);
-    };
-
-    window.addEventListener("totalFilteredLeads" as any, handleTotalCount as EventListener);
-
-    return () => {
-      window.removeEventListener("totalFilteredLeads" as any, handleTotalCount as EventListener);
-    };
-  }, []);
-
+  // ===== CONDITIONAL RENDERING =====
+  // Loading state
   if (isLoading && leads.length === 0) {
     return <LoadingLeadsTable />;
   }
 
-  if (leads.length === 0) {
+  // Empty state
+  if (leads.length === 0 && !isLoading) {
     return (
-      <div className="text-center py-4 text-muted-foreground">
+      <div className="text-center py-16 text-muted-foreground">
         No leads found. Add your first lead to get started.
       </div>
     );
   }
 
-  const LoadingMoreIndicator = () => {
-    return (
-      <div ref={loadingRef} className="py-4 flex justify-center items-center space-x-2">
-        <LoadingSpinner className="h-5 w-5" />
-        <span className="text-sm text-muted-foreground">Loading more leads...</span>
-      </div>
-    );
-  };
-
   return (
-    <div className="flex flex-col space-y-4">
-      <SelectionHeader
-        selectedCount={selectAllMode === 'all' && totalFilteredLeadsCount ? totalFilteredLeadsCount : selectedLeads.length}
-        onDelete={() => setIsDeleteDialogOpen(true)}
-        isDeleting={isDeleting}
-        onMoveToPipeline={handleMoveToPipeline}
-        onAddVariables={() => setIsBulkVariablesOpen(true)}
-        pipelines={pipelines}
-        selectAllMode={selectAllMode}
-      />
-
-      {selectingAllAlert && (
-        <div ref={alertRef}>
-          <Alert className="mb-4 bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900">
-            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            <AlertDescription className="flex flex-1 items-center justify-between text-amber-700 dark:text-amber-400">
-              <span>
-                {totalFilteredLeadsCount 
-                  ? `Select all ${totalFilteredLeadsCount} leads that match your current filter?` 
-                  : "Select all leads that match your current filter?"}
-              </span>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => setSelectingAllAlert(false)}>
-                  Cancel
-                </Button>
-                <Button size="sm" variant="default" onClick={handleSelectAllFiltered}>
-                  Select All
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
+    <div className="border rounded-lg w-full flex flex-col h-full relative">
+      {selectedLeads.length > 0 && (
+        <div className="sticky top-0 z-20 bg-background pb-2 px-4 pt-2 border-b shadow-sm">
+          <SelectionHeader
+            selectedCount={
+              selectAllMode === "all"
+                ? totalCount || leads.length
+                : selectedLeads.length
+            }
+            onDelete={() => setIsDeleteDialogOpen(true)}
+            isDeleting={isDeleting}
+            onMoveToPipeline={handleMoveToPipeline}
+            onAddVariables={() => setIsBulkVariablesOpen(true)}
+            pipelines={pipelines}
+            selectAllMode={selectAllMode}
+          />
         </div>
       )}
 
-      <div className="border rounded-lg overflow-hidden shadow-sm flex flex-col">
-        <div className="w-full">
-          <Table>
-            <LeadTableHeader
-              onToggleSelectAll={handleToggleSelectAll}
-              isAllSelected={selectedLeads.length === leads.length || selectAllMode === 'all'}
-              isDeleting={isDeleting}
-              selectAllMode={selectAllMode}
-              visibleCount={leads.length}
-              totalCount={totalFilteredLeadsCount}
-            />
-          </Table>
-        </div>
-        
-        <ScrollArea className="h-[calc(100vh-300px)]" ref={scrollAreaRef}>
-          {showNewLeadsIndicator && (
-            <div className="sticky top-0 z-10 px-4 py-2">
-              <Alert className="bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900">
-                <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <AlertDescription className="text-green-700 dark:text-green-400">
-                  New leads loaded successfully
-                </AlertDescription>
-              </Alert>
+      {/* Select All Prompt */}
+      {selectAllPromptOpen && (
+        <div className="absolute top-0 left-0 right-0 z-30 px-4 py-3 bg-amber-50 border border-amber-300 shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+              <span className="text-amber-900 font-medium">
+                Select all {totalCount} matching leads?
+              </span>
             </div>
-          )}
-          
-          <Table>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectAllPromptOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSelectAllMatchingLeads}
+              >
+                Select All {totalCount} Leads
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Table with scrollable body */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div
+          ref={scrollContainerRef}
+          className="overflow-auto flex-1 min-h-0"
+          style={{ maxHeight: "calc(100vh - 250px)" }}
+        >
+          <Table className="relative">
+            {/* Sticky header */}
+            <TableHeader className="sticky top-0 z-10 bg-background">
+              <LeadTableHeader
+                onToggleSelectAll={handleToggleSelectAll}
+                isAllSelected={
+                  selectedLeads.length === leads.length && leads.length > 0
+                }
+                isDeleting={isDeleting}
+                selectAllMode={selectAllMode}
+                visibleCount={leads.length}
+                totalCount={totalCount}
+                onSelectAllMatching={
+                  hasMore ? handleSelectAllMatchingLeads : undefined
+                }
+              />
+            </TableHeader>
+
             <TableBody>
-              {leads.map((lead) => {
-                const pipelineName = lead.pipeline_id ? 
-                  pipelines.find(p => p.id === lead.pipeline_id)?.name || 'Unknown' : 
-                  'No Pipeline';
-                
-                const leadWithHandlers: LeadWithHandlers = {
-                  ...lead,
-                  onVariableClick: handleOpenVariableEditor,
-                  onEditClick: (lead) => {
-                    if (typeof window !== 'undefined') {
-                      const event = new CustomEvent('editLead', { detail: lead });
-                      window.dispatchEvent(event);
-                    }
-                  }
-                };
-                  
-                return (
-                  <LeadRow
-                    key={lead.id}
-                    lead={leadWithHandlers}
-                    isSelected={selectedLeads.includes(lead.id) || (selectAllMode === 'all' && !selectedLeads.includes(lead.id))}
-                    onToggleSelect={handleToggleSelect}
-                    onLeadUpdated={onLeadUpdated}
-                    isDeleting={isDeleting}
-                    pipelineName={pipelineName}
-                  />
-                );
-              })}
+              {leads.map((lead) => (
+                <LeadRow
+                  key={lead.id}
+                  lead={lead}
+                  isSelected={selectedLeads.includes(lead.id)}
+                  onToggleSelect={handleToggleSelect}
+                  onLeadUpdated={onLeadUpdated}
+                  isDeleting={isDeleting}
+                  pipelineName={getPipelineName(lead.pipeline_id)}
+                />
+              ))}
             </TableBody>
           </Table>
-          
-          <div 
-            ref={sentinelRef} 
-            className="h-10 w-full flex items-center justify-center text-muted-foreground text-xs"
-            style={{ visibility: hasMore ? 'visible' : 'hidden' }}
-          >
-            {!isLoadingMore && hasMore && <div className="py-2 text-center">Scroll for more</div>}
+        </div>
+
+        {/* Fixed footer */}
+        <div className="border-t bg-background py-2 px-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {leads.length} {totalCount ? `of ${totalCount}` : ""}{" "}
+              leads
+            </div>
+
+            {hasMore && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLoadMore}
+                disabled={isFetching}
+              >
+                {isFetching ? (
+                  <>
+                    <LoadingSpinner className="h-4 w-4 mr-2" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                    Load More
+                  </>
+                )}
+              </Button>
+            )}
           </div>
-          
-          {isLoadingMore && hasMore && <LoadingMoreIndicator />}
-          
-          <div ref={tableEndRef} className="h-2" />
-        </ScrollArea>
+        </div>
       </div>
 
+      {/* Bulk Variables Dialog */}
       <Dialog open={isBulkVariablesOpen} onOpenChange={setIsBulkVariablesOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Add Variables to {selectedLeads.length} Lead{selectedLeads.length > 1 ? 's' : ''}</DialogTitle>
+            <DialogTitle>
+              Add Variables to {selectedLeads.length} Lead
+              {selectedLeads.length > 1 ? "s" : ""}
+            </DialogTitle>
           </DialogHeader>
-          
+
           <div className="pt-4 space-y-6">
             <div className="space-y-4">
               {newVariables.length === 0 && (
                 <div className="text-center py-4 text-muted-foreground">
-                  No variables added yet. Click the button below to add a variable.
+                  No variables added yet. Click the button below to add a
+                  variable.
                 </div>
               )}
-              
+
               {newVariables.map((variable, index) => (
                 <NewVariableForm
                   key={index}
                   name={variable.name}
                   value={variable.value}
-                  onChange={(field, value) => handleVariableChange(index, field, value)}
+                  onChange={(field, value) =>
+                    handleVariableChange(index, field, value)
+                  }
                   onRemove={() => handleRemoveVariable(index)}
                 />
               ))}
             </div>
-            
+
             <Button
               type="button"
               variant="outline"
@@ -481,7 +442,7 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
               <PlusCircle className="h-4 w-4 mr-2" />
               Add Variable
             </Button>
-            
+
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 variant="outline"
@@ -496,13 +457,15 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
                 onClick={handleBulkAddVariables}
                 disabled={newVariables.length === 0}
               >
-                Save {newVariables.length} Variable{newVariables.length !== 1 ? 's' : ''}
+                Save {newVariables.length} Variable
+                {newVariables.length !== 1 ? "s" : ""}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Edit Variables Dialog */}
       {editingLead && (
         <EditVariablesDialog
           lead={editingLead}
@@ -512,15 +475,26 @@ export function LeadsTable({ leads, isLoading, onLeadUpdated, hasMore, onLoadMor
         />
       )}
 
+      {/* Delete Confirmation Dialog */}
       <DeleteDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
-        title={`Delete ${selectAllMode === 'all' && totalFilteredLeadsCount ? totalFilteredLeadsCount : selectedLeads.length} lead${selectedLeads.length > 1 ? 's' : ''}?`}
-        description={selectAllMode === 'all' 
-          ? "This action cannot be undone. This will permanently delete ALL leads matching your current filter, not just the ones you can see."
-          : "This action cannot be undone. This will permanently delete the selected leads and remove their data from our servers."}
+        title={`Delete ${
+          selectAllMode === "all"
+            ? totalCount || "all matching"
+            : selectedLeads.length
+        } lead${
+          (selectAllMode === "all" ? totalCount : selectedLeads.length) !== 1
+            ? "s"
+            : ""
+        }?`}
+        description={
+          selectAllMode === "all"
+            ? "This action cannot be undone. This will permanently delete ALL leads matching your current filters."
+            : "This action cannot be undone. This will permanently delete the selected leads and remove their data from our servers."
+        }
       />
     </div>
   );

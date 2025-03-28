@@ -178,3 +178,73 @@
   z-index: 100;
   pointer-events: none;
 }
+
+/* Fix for table layout issues in virtualized tables */
+.table-fixed-layout {
+  table-layout: fixed;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure table cells in virtualized rows respect their defined widths */
+.table-fixed-layout > div {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+}
+
+/* Container for lead rows to ensure proper alignment with headers */
+.lead-row-container {
+  width: fit-content;
+  overflow: hidden;
+}
+
+/* Ensure table cells properly respect the widths defined in LeadTableHeader */
+.lead-row-container td:nth-child(1) {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+}
+
+.lead-row-container td:nth-child(2) {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+.lead-row-container td:nth-child(3) {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+.lead-row-container td:nth-child(4) {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.lead-row-container td:nth-child(5) {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
+
+.lead-row-container td:nth-child(6) {
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+}
+
+.lead-row-container td:nth-child(7) {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  text-align: right;
+}
+
+/* Ensure the table uses exact widths */
+.table-fixed-layout {
+  width: fit-content !important;
+  max-width: fit-content !important;
+}

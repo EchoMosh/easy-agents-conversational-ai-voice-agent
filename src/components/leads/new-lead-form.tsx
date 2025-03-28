@@ -36,7 +36,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
     queryKey: ["pipelines", currentWorkspace?.id],
     queryFn: async () => {
       if (!currentWorkspace?.id) return [];
-      
+
       const { data, error } = await supabase
         .from("pipelines")
         .select("*")
@@ -61,9 +61,9 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         id: uuidv4(),
         name,
         color: "gray",
-        user_id: userData.user.id
+        user_id: userData.user.id,
       };
-      
+
       setTags([...tags, tempTag]);
       toast.success("Tag added");
     } catch (error: any) {
@@ -73,12 +73,12 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   };
 
   const handleRemoveTag = (id: string) => {
-    setTags(tags.filter(tag => tag.id !== id));
+    setTags(tags.filter((tag) => tag.id !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (!currentWorkspace?.id) {
       toast.error("No workspace selected");
       return;
@@ -94,32 +94,37 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
     const email = formData.get("email") as string;
-    
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("No authenticated user found");
       }
 
-      const selectedPipeline = selectedPipelineId ? 
-        pipelines.find(p => p.id === selectedPipelineId) : null;
-      
-      let initialStatus = 'new';
+      const selectedPipeline = selectedPipelineId
+        ? pipelines.find((p) => p.id === selectedPipelineId)
+        : null;
+
+      let initialStatus = "new";
       if (selectedPipeline && selectedPipeline.columns.length > 0) {
         initialStatus = selectedPipeline.columns[0].title;
       }
 
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
-        .insert([{
-          name: `${firstName} ${lastName}`.trim(),
-          email: email || null,
-          phone: phone || null,
-          user_id: user.id,
-          pipeline_id: selectedPipelineId || null,
-          status: initialStatus,
-          workspace_id: currentWorkspace.id
-        }])
+        .insert([
+          {
+            name: `${firstName} ${lastName}`.trim(),
+            email: email || null,
+            phone: phone || null,
+            user_id: user.id,
+            pipeline_id: selectedPipelineId || null,
+            status: initialStatus,
+            workspace_id: currentWorkspace.id,
+          },
+        ])
         .select()
         .single();
 
@@ -128,36 +133,39 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       if (variables.length > 0) {
         const { error: variablesError } = await supabase
           .from("lead_variables")
-          .insert(variables.map(v => ({
-            lead_id: leadData.id,
-            name: v.name,
-            value: v.value
-          })));
+          .insert(
+            variables.map((v) => ({
+              lead_id: leadData.id,
+              name: v.name,
+              value: v.value,
+            }))
+          );
         if (variablesError) throw variablesError;
       }
 
       if (tags.length > 0) {
         for (const tag of tags) {
-          if (tag.id.includes('-')) {
+          if (tag.id.includes("-")) {
             const { data: newTag, error: newTagError } = await supabase
-              .from('tags')
+              .from("tags")
               .insert({
                 name: tag.name,
                 color: tag.color,
-                user_id: user.id
+                user_id: user.id,
+                workspace_id: currentWorkspace.id,
               })
               .select()
               .single();
-              
+
             if (newTagError) throw newTagError;
-            
+
             const { error: linkError } = await supabase
-              .from('lead_tags')
+              .from("lead_tags")
               .insert({
                 lead_id: leadData.id,
-                tag_id: newTag.id
+                tag_id: newTag.id,
               });
-              
+
             if (linkError) throw linkError;
           }
         }
@@ -175,25 +183,40 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <Tabs 
-        defaultValue="contact" 
-        value={activeTab} 
-        onValueChange={setActiveTab} 
+      <Tabs
+        defaultValue="contact"
+        value={activeTab}
+        onValueChange={setActiveTab}
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-3 mb-2 bg-gray-100/70">
-          <TabsTrigger value="contact" className="text-gray-800 data-[state=active]:bg-white">Contact Info</TabsTrigger>
-          <TabsTrigger value="variables" className="text-gray-800 data-[state=active]:bg-white">Variables</TabsTrigger>
-          <TabsTrigger value="tags" className="text-gray-800 data-[state=active]:bg-white">Tags</TabsTrigger>
+          <TabsTrigger
+            value="contact"
+            className="text-gray-800 data-[state=active]:bg-white"
+          >
+            Contact Info
+          </TabsTrigger>
+          <TabsTrigger
+            value="variables"
+            className="text-gray-800 data-[state=active]:bg-white"
+          >
+            Variables
+          </TabsTrigger>
+          <TabsTrigger
+            value="tags"
+            className="text-gray-800 data-[state=active]:bg-white"
+          >
+            Tags
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="contact" className="space-y-4 pt-1 mt-0">
-          <ContactInfoForm 
+          <ContactInfoForm
             phone={phone}
             onPhoneChange={setPhone}
             required={true}
           />
-          
+
           <div className="pt-1">
             <PipelineSelect
               pipelines={pipelines}
@@ -215,23 +238,27 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                 <div className="p-3 pt-0">
                   <CustomVariables
                     variables={variables}
-                    onAddVariable={(variable) => setVariables([...variables, variable])}
-                    onRemoveVariable={(index) => setVariables(variables.filter((_, i) => i !== index))}
+                    onAddVariable={(variable) =>
+                      setVariables([...variables, variable])
+                    }
+                    onRemoveVariable={(index) =>
+                      setVariables(variables.filter((_, i) => i !== index))
+                    }
                   />
                 </div>
               </ScrollArea>
             </div>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="tags" className="pt-1 mt-0">
           <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
             <div className="relative">
               <ScrollArea className="h-[280px]">
                 <div className="p-3 pt-0">
                   <div className="pt-4">
-                    <TagsManager 
-                      leadId={''} // temporary ID for new leads
+                    <TagsManager
+                      leadId={""} // temporary ID for new leads
                       tags={tags}
                       isNewLead={true}
                       onAddTagForNewLead={handleAddTag}
@@ -245,16 +272,20 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         </TabsContent>
       </Tabs>
 
-      <Button 
-        type="submit" 
-        disabled={isLoading || !currentWorkspace} 
+      <Button
+        type="submit"
+        disabled={isLoading || !currentWorkspace}
         className="w-full h-11 text-base bg-primary/90 hover:bg-primary transition-all duration-200 text-white"
       >
-        {isLoading ? "Adding..." : `Save Lead${
-          (variables.length > 0 || tags.length > 0) 
-            ? ` with ${variables.length + tags.length} Field${variables.length + tags.length === 1 ? '' : 's'}` 
-            : ''
-        }`}
+        {isLoading
+          ? "Adding..."
+          : `Save Lead${
+              variables.length > 0 || tags.length > 0
+                ? ` with ${variables.length + tags.length} Field${
+                    variables.length + tags.length === 1 ? "" : "s"
+                  }`
+                : ""
+            }`}
       </Button>
     </form>
   );
