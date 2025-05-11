@@ -29,6 +29,7 @@ import { ButtonEdge } from "./edges/button-edge";
 import { WidgetPanel } from "./widgets/widget-panel";
 import { ShortcutsBar } from "./shortcuts-bar";
 import { FlowContextMenu } from "./context-menu/flow-context-menu";
+import { CustomContextMenu } from "./custom-context-menu";
 import { useNodeManagement } from "./hooks/use-node-management";
 import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts";
 import { useEdgeManagement } from "./hooks/use-edge-management";
@@ -52,7 +53,7 @@ interface FlowProps {
   onNodeDeletion?: (
     deletedNodes: Node[],
     remainingNodes: Node[],
-    remainingEdges: Edge[]
+    remainingEdges: Edge[],
   ) => void;
 }
 
@@ -85,6 +86,7 @@ export function Flow({
     handleNodeContextMenu: handleNodeContextMenuBase,
     handlePaneContextMenu: handlePaneContextMenuBase,
     handleDeleteSelectedNode: handleDeleteSelectedNodeBase,
+    setRightClickedNodeId,
   } = useNodeManagement();
 
   const { handleFlowKeyDown: handleFlowKeyDownBase } = useKeyboardShortcuts();
@@ -101,12 +103,13 @@ export function Flow({
   // Hook implementations with dependencies
   const handleContextMenuAddNode = useCallback(
     (nodeType: string) => {
+      setRightClickedNodeId(undefined);
       handleContextMenuAddNodeBase(
         nodeType,
         nodes,
         setNodes,
         onNodesChange,
-        reactFlowWrapper
+        reactFlowWrapper,
       );
     },
     [
@@ -115,37 +118,43 @@ export function Flow({
       setNodes,
       onNodesChange,
       reactFlowWrapper,
-    ]
+    ],
   );
 
   const handleNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: Node) => {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log("[Flow] Node context menu triggered for node:", node.id);
       handleNodeContextMenuBase(event, node, reactFlowWrapper);
     },
-    [handleNodeContextMenuBase, reactFlowWrapper]
+    [handleNodeContextMenuBase, reactFlowWrapper],
   );
 
   const handlePaneContextMenu = useCallback(
     (event: React.MouseEvent) => {
+      console.log("[Flow] Pane context menu handler called");
+      // Then open a new one with add node options
       handlePaneContextMenuBase(event, reactFlowWrapper);
     },
-    [handlePaneContextMenuBase, reactFlowWrapper]
+    [handlePaneContextMenuBase, reactFlowWrapper],
   );
 
   const handleDeleteSelectedNode = useCallback(() => {
     handleDeleteSelectedNodeBase(
-      selectedNodeId,
+      selectedNodeId || rightClickedNodeId,
       nodes,
       edges,
       setNodes,
       setEdges,
       onNodesChange,
       onEdgesChange,
-      onNodeDeletion
+      onNodeDeletion,
     );
   }, [
     handleDeleteSelectedNodeBase,
     selectedNodeId,
+    rightClickedNodeId,
     nodes,
     edges,
     setNodes,
@@ -169,7 +178,7 @@ export function Flow({
         !processingDeletion
       ) {
         console.log(
-          "[Flow] Delete/Backspace key pressed, checking for selected nodes"
+          "[Flow] Delete/Backspace key pressed, checking for selected nodes",
         );
 
         const selectedNodes = nodes.filter((node) => node.selected);
@@ -184,11 +193,11 @@ export function Flow({
             (edge) =>
               !nodeIdsToDelete.has(edge.source) &&
               !nodeIdsToDelete.has(edge.target) &&
-              !edge.selected
+              !edge.selected,
           );
 
           const newNodes = nodes.filter(
-            (node) => !nodeIdsToDelete.has(node.id)
+            (node) => !nodeIdsToDelete.has(node.id),
           );
 
           setNodes(newNodes);
@@ -214,14 +223,14 @@ export function Flow({
       onEdgesChange,
       onNodeDeletion,
       processingDeletion,
-    ]
+    ],
   );
 
   const handleFlowKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       const createNodeInCenter = (
         nodeType: string,
-        position: { x: number; y: number }
+        position: { x: number; y: number },
       ) => {
         if (reactFlowWrapper.current) {
           const { screenToFlowPosition } = useReactFlow();
@@ -231,7 +240,7 @@ export function Flow({
             flowPosition,
             nodes,
             setNodes,
-            onNodesChange
+            onNodesChange,
           );
         }
       };
@@ -240,7 +249,7 @@ export function Flow({
         event,
         createNodeInCenter,
         reactFlowWrapper,
-        handleKeyDown
+        handleKeyDown,
       );
     },
     [
@@ -251,21 +260,21 @@ export function Flow({
       setNodes,
       onNodesChange,
       reactFlowWrapper,
-    ]
+    ],
   );
 
   const onConnect = useCallback(
     (params: Connection) => {
       onConnectBase(params, edges, setEdges, onEdgesChange, nodes);
     },
-    [onConnectBase, edges, setEdges, onEdgesChange, nodes]
+    [onConnectBase, edges, setEdges, onEdgesChange, nodes],
   );
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       const createNodeAtPosition = (
         nodeType: string,
-        position: { x: number; y: number }
+        position: { x: number; y: number },
       ) => {
         createNodeFromType(nodeType, position, nodes, setNodes, onNodesChange);
       };
@@ -279,7 +288,7 @@ export function Flow({
       nodes,
       setNodes,
       onNodesChange,
-    ]
+    ],
   );
 
   const normalizeNodes = useCallback((inputNodes: Node[]) => {
@@ -295,7 +304,7 @@ export function Flow({
     (nodeId: string, newData: any) => {
       console.log(
         `[Flow] updateNodeData called for node ${nodeId} with data:`,
-        newData
+        newData,
       );
 
       setNodes((nds) => {
@@ -309,7 +318,7 @@ export function Flow({
               `[Flow] Updated node ${nodeId} from:`,
               node.data,
               "to:",
-              updatedNode.data
+              updatedNode.data,
             );
             return updatedNode;
           }
@@ -320,16 +329,16 @@ export function Flow({
 
       setTimeout(() => {
         console.log(
-          `[Flow] Notifying parent component about node ${nodeId} update`
+          `[Flow] Notifying parent component about node ${nodeId} update`,
         );
         const updatedNodes = nodes.map((node) =>
-          node.id === nodeId ? { ...node, data: { ...newData } } : node
+          node.id === nodeId ? { ...node, data: { ...newData } } : node,
         );
 
         onNodesChange(updatedNodes);
       }, 0);
     },
-    [nodes, setNodes, onNodesChange]
+    [nodes, setNodes, onNodesChange],
   );
 
   const handleNodesChange = useCallback(
@@ -337,13 +346,13 @@ export function Flow({
       console.log("[Flow] handleNodesChange called with changes:", changes);
 
       const removeChanges = changes.filter(
-        (change) => change.type === "remove"
+        (change) => change.type === "remove",
       );
       if (removeChanges.length > 0) {
         console.log("[Flow] Remove changes detected:", removeChanges);
         if (processingDeletion) {
           console.log(
-            "[Flow] Skipping additional remove processing as deletion already in progress"
+            "[Flow] Skipping additional remove processing as deletion already in progress",
           );
           onNodesChangeInternal(changes);
           return;
@@ -356,14 +365,14 @@ export function Flow({
         setTimeout(() => {
           console.log(
             "[Flow] Notifying parent after node changes, current nodes:",
-            getNodes()
+            getNodes(),
           );
           const currentNodes = getNodes();
           onNodesChange(currentNodes);
         }, 0);
       }
     },
-    [onNodesChange, onNodesChangeInternal, getNodes, processingDeletion]
+    [onNodesChange, onNodesChangeInternal, getNodes, processingDeletion],
   );
 
   const handleEdgesChange = useCallback(
@@ -374,13 +383,13 @@ export function Flow({
       setTimeout(() => {
         console.log(
           "[Flow] Notifying parent after edge changes, current edges:",
-          edges
+          edges,
         );
         const updatedEdges = edges.map((edge) => ({ ...edge }));
         onEdgesChange(updatedEdges);
       }, 0);
     },
-    [edges, onEdgesChange, onEdgesChangeInternal]
+    [edges, onEdgesChange, onEdgesChangeInternal],
   );
 
   // Initialize nodes and edges
@@ -388,7 +397,7 @@ export function Flow({
     if (safeInitialNodes.length > 0 && !initialized) {
       console.log(
         "[Flow] Setting initial nodes with normalization:",
-        safeInitialNodes
+        safeInitialNodes,
       );
       const normalizedNodes = normalizeNodes(safeInitialNodes);
       setNodes(normalizedNodes);
@@ -462,6 +471,18 @@ export function Flow({
           onKeyDown={handleFlowKeyDown}
           style={{ outline: "none" }}
         >
+          {/* Custom context menu that appears at the cursor position */}
+          {rightClickedNodeId !== undefined ? (
+            <CustomContextMenu
+              rightClickedNodeId={rightClickedNodeId}
+              position={contextMenuPosition}
+              onAddNode={handleContextMenuAddNode}
+              onDeleteNode={handleDeleteSelectedNode}
+              onClose={() => setRightClickedNodeId(undefined)}
+            />
+          ) : null}
+
+          {/* Original context menu wrapper */}
           <FlowContextMenu
             rightClickedNodeId={rightClickedNodeId}
             onAddNode={handleContextMenuAddNode}
@@ -490,6 +511,10 @@ export function Flow({
               deleteKeyCode={["Delete", "Backspace"]}
               onNodeContextMenu={handleNodeContextMenu}
               onPaneContextMenu={handlePaneContextMenu}
+              onNodeClick={(event, node) => {
+                console.log("Node clicked:", node.id);
+                setSelectedNodeId(node.id);
+              }}
               onInit={(reactFlowInstance) => {
                 console.log("[Flow] ReactFlow initialized");
                 setTimeout(() => {
@@ -503,7 +528,7 @@ export function Flow({
                     safeInitialNodes.length > 0
                   ) {
                     console.log(
-                      "[Flow] Forcing node initialization after init"
+                      "[Flow] Forcing node initialization after init",
                     );
                     setNodes(normalizeNodes(safeInitialNodes));
                   }

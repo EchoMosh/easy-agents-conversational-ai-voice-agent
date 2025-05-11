@@ -9,6 +9,7 @@ import { useAgentData } from "./hooks/use-agent-data";
 import { useMermaidChart } from "./hooks/use-mermaid-chart";
 import { useFlowManagement } from "./hooks/use-flow-management";
 import { MermaidChartPreview } from "./components/mermaid-chart-preview";
+import { Header } from "@/components/flow/agent-flow/header";
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +21,13 @@ export default function AgentFlowPage() {
   // Custom hooks for managing agent data and flow
   const { agent, refetch, isError, isLoading, handleUpdateSettings } =
     useAgentData(id, navigate, toast);
+
+  // Log agent data to debug
+  useEffect(() => {
+    if (agent) {
+      console.log("Agent data loaded:", agent);
+    }
+  }, [agent]);
 
   const { mermaidChart, setMermaidChart } = useMermaidChart();
 
@@ -85,7 +93,13 @@ export default function AgentFlowPage() {
         className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-hidden"
         style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
       >
-        {/* Top bar removed */}
+        {agent && (
+          <Header
+            agent={agent}
+            onBack={() => navigate("/dashboard/agents")}
+            onUpdateSettings={handleUpdateSettings}
+          />
+        )}
 
         <div className="flex flex-col flex-1 overflow-hidden">
           <ReactFlowProvider>

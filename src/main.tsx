@@ -1,6 +1,6 @@
-
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { TempoDevtools } from "tempo-devtools";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
@@ -20,11 +20,18 @@ const queryClient = new QueryClient({
   },
 });
 
+// Initialize Tempo Devtools
+TempoDevtools.init();
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
+        <NextThemesProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+        >
           <ThemeProvider>
             <WorkspaceProvider>
               <App />
@@ -34,5 +41,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         </NextThemesProvider>
       </QueryClientProvider>
     </BrowserRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

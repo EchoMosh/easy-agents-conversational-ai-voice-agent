@@ -152,7 +152,7 @@ export function DashboardSettings() {
     window.dispatchEvent(
       new CustomEvent("dashboard-settings-changed", {
         detail: { settings },
-      })
+      }),
     );
 
     toast({
@@ -672,35 +672,23 @@ export function DashboardSettings() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Data Visualization</h3>
 
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="minimal"
-                        id="chart-minimal"
-                        checked={settings.chartStyle === "minimal"}
-                        onClick={() =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            chartStyle: "minimal",
-                          }))
-                        }
-                      />
-                      <Label htmlFor="chart-minimal">Minimal Charts</Label>
-                    </div>
+                    <RadioGroup
+                      value={settings.chartStyle}
+                      onValueChange={(value: "minimal" | "detailed") =>
+                        setSettings((prev) => ({ ...prev, chartStyle: value }))
+                      }
+                      className="space-y-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="minimal" id="chart-minimal" />
+                        <Label htmlFor="chart-minimal">Minimal Charts</Label>
+                      </div>
 
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="detailed"
-                        id="chart-detailed"
-                        checked={settings.chartStyle === "detailed"}
-                        onClick={() =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            chartStyle: "detailed",
-                          }))
-                        }
-                      />
-                      <Label htmlFor="chart-detailed">Detailed Charts</Label>
-                    </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="detailed" id="chart-detailed" />
+                        <Label htmlFor="chart-detailed">Detailed Charts</Label>
+                      </div>
+                    </RadioGroup>
                   </div>
                 </div>
 

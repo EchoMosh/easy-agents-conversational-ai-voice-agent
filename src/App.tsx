@@ -1,5 +1,5 @@
-
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useRoutes } from "react-router-dom";
+import routes from "tempo-routes";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import Index from "@/pages/Index";
@@ -26,13 +26,16 @@ import { ErrorBoundary } from "@/components/error-boundary";
 
 function App() {
   console.log("App rendering");
-  
+
   return (
     <ErrorBoundary
       fallback={
         <div className="p-8 rounded border border-red-200 bg-red-50 text-red-800 m-4">
           <h2 className="text-xl font-bold mb-4">Something went wrong</h2>
-          <p className="mb-4">The application encountered an error. Please check the console for details and try refreshing the page.</p>
+          <p className="mb-4">
+            The application encountered an error. Please check the console for
+            details and try refreshing the page.
+          </p>
           <div className="mt-4">
             <button
               onClick={() => window.location.reload()}
@@ -44,12 +47,17 @@ function App() {
         </div>
       }
     >
+      {/* Tempo routes */}
+      {import.meta.env.VITE_TEMPO && useRoutes(routes)}
       <Routes>
-        <Route path="/" element={
-          <ErrorBoundary>
-            <Index />
-          </ErrorBoundary>
-        } />
+        <Route
+          path="/"
+          element={
+            <ErrorBoundary>
+              <Index />
+            </ErrorBoundary>
+          }
+        />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/login" element={<AuthPage />} />
 
@@ -69,29 +77,22 @@ function App() {
               path="/dashboard/lead-scraper"
               element={<LeadScraperPage />}
             />
-            <Route
-              path="/dashboard/pipelines"
-              element={<PipelinesPage />}
-            />
+            <Route path="/dashboard/pipelines" element={<PipelinesPage />} />
             <Route path="/dashboard/settings" element={<SettingsPage />} />
             <Route path="/dashboard/profile" element={<ProfilePage />} />
             <Route path="/dashboard/chats" element={<ChatsPage />} />
             <Route path="/dashboard/chats/:id" element={<ChatPage />} />
-            <Route
-              path="/dashboard/knowledge"
-              element={<KnowledgePage />}
-            />
+            <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
             <Route
               path="/dashboard/automations"
               element={<AutomationsPage />}
             />
-            <Route
-              path="/dashboard/activities"
-              element={<ActivitiesPage />}
-            />
+            <Route path="/dashboard/activities" element={<ActivitiesPage />} />
           </Route>
         </Route>
 
+        {/* Add this before the catchall route */}
+        {import.meta.env.VITE_TEMPO && <Route path="/tempobook/*" />}
         <Route path="*" element={<NotFound />} />
       </Routes>
       <SonnerToaster />
