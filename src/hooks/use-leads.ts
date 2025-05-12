@@ -4,13 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Lead } from '@/pages/dashboard/leads';
 import { useWorkspace } from '@/context/workspace-context';
 import { Tag } from '@/types/tag-types';
+import { LoadingPriority } from '@/context/app-loading-context';
+import { useApiLoading } from '@/hooks/use-api-loading';
 
 export function useLeads(initialPipelineId?: string) {
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | undefined>(initialPipelineId);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 15;
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   
@@ -222,6 +224,37 @@ export function useLeads(initialPipelineId?: string) {
     enabled: !!currentWorkspace?.id,
   });
   
+  // Register the loading state with the AppLoadingContext using our enhanced hook with better debouncing
+  const { isLoading: leadsApiLoading } = useApiLoading('leads', {
+    initialState: isLeadsLoading || isPipelinesLoading || isTagsLoading,
+    priority: LoadingPriority.MEDIUM,
+    debounce: {
+      start: 50,  // Start showing loading quickly for better UX
+      end: 500    // But hold the loading state longer to prevent flickering
+    }
+  });
+  
+  // Track stable loading state for components
+  const [stableLoading, setStableLoading] = useState(isLeadsLoading || isPipelinesLoading || isTagsLoading);
+  
+  // Use an effect to smooth out loading state transitions 
+  useEffect(() => {
+    const isCurrentlyLoading = isLeadsLoading || isPipelinesLoading || isTagsLoading;
+    
+    // If we're going from not loading to loading, update immediately
+    if (isCurrentlyLoading && !stableLoading) {
+      setStableLoading(true);
+    }
+    // If we're going from loading to not loading, debounce it
+    else if (!isCurrentlyLoading && stableLoading) {
+      const timer = setTimeout(() => {
+        setStableLoading(false);
+      }, 500); // Additional delay before considering content "stable"
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isLeadsLoading, isPipelinesLoading, isTagsLoading, stableLoading]);
+  
   // Manage accumulated state for infinite scrolling/pagination
   const [accumulatedLeads, setAccumulatedLeads] = useState<Lead[]>([]);
   
@@ -254,11 +287,67 @@ export function useLeads(initialPipelineId?: string) {
   const loadMoreLeads = () => {
     if (accumulatedLeads.length < leadsData.totalCount) {
       setPage(prev => prev + 1);
+      return true;
     }
+    return false;
   };
-  
+
+  // First calculate if there are more leads to load
   const hasMoreLeads = accumulatedLeads.length < leadsData.totalCount;
+  
+  // Pre-calculate allLeads to use in the effect
   const allLeads = page === 1 ? leadsData.leads : accumulatedLeads;
+  
+  // Set up infinite scroll with much earlier detection
+  useEffect(() => {
+    const handleScroll = () => {
+      // Get the current scroll position
+      const scrollPosition = window.innerHeight + window.scrollY;
+      // Get the total height of the document
+      const documentHeight = document.documentElement.scrollHeight;
+      // Set a MUCH larger threshold - trigger when user is 1000px from bottom
+      // This ensures we start loading well before the user reaches the bottom
+      const threshold = 1000;
+      
+      // Log the scroll position for debugging
+      console.log(
+        `📜 Scroll position: ${scrollPosition}, Document height: ${documentHeight}, Difference: ${documentHeight - scrollPosition}`
+      );
+      
+      // Check if we're approaching the bottom and not already fetching
+      if (scrollPosition + threshold >= documentHeight && !isLeadsFetching && hasMoreLeads) {
+        console.log("📜 Approaching bottom, loading more leads...");
+        loadMoreLeads();
+      }
+    };
+    
+    // Use passive: true for better scroll performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Set up a periodic check to handle cases where the scroll event might not fire
+    const intervalCheck = setInterval(handleScroll, 1000);
+    
+    // Initial checks and forced loading if needed
+    
+    // First immediate check
+    handleScroll();
+    
+    // Second check after a short delay (for layout to stabilize)
+    setTimeout(() => {
+      handleScroll();
+      
+      // Force load more data if we have very few leads and there are more to load
+      if (allLeads.length < 20 && hasMoreLeads) {
+        console.log("📜 Few initial leads, proactively loading more...");
+        loadMoreLeads();
+      }
+    }, 300);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearInterval(intervalCheck);
+    };
+  }, [isLeadsFetching, hasMoreLeads, loadMoreLeads, allLeads]);
   
   return {
     leads: allLeads,

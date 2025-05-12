@@ -2,7 +2,6 @@ import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { PipelineName } from "./components/pipeline-name";
 import { useState, useEffect, useRef } from "react";
-import { resetStuckDragAttributes } from "./components/kanban/reset-stuck-state";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -58,7 +57,7 @@ export function PipelineStages({
     }
 
     // Use our comprehensive reset utility to clean up any stuck state
-    resetStuckDragAttributes();
+    // resetStuckDragAttributes(); // Functionality removed
     console.log("Reset drag state due to pipeline change");
   }, [selectedPipeline]);
 
@@ -245,7 +244,7 @@ export function PipelineStages({
           onError={(error) => {
             console.error("KanbanBoard error:", error);
             // Reset all drag state on error
-            resetStuckDragAttributes();
+            // resetStuckDragAttributes(); // Functionality removed
           }}
           fallback={
             <div className="flex items-center justify-center h-full w-full">
@@ -257,7 +256,7 @@ export function PipelineStages({
                 </p>
                 <button
                   onClick={() => {
-                    resetStuckDragAttributes();
+                    // resetStuckDragAttributes(); // Functionality removed
                     window.location.reload();
                   }}
                   className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"

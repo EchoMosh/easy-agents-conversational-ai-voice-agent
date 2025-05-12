@@ -20,8 +20,8 @@ export function LeadTableHeader({
   onSelectAllMatching,
 }: LeadTableHeaderProps) {
   return (
-    <TableRow className="border-b">
-      <TableHead className="w-[180px] p-0 pl-2 bg-muted/30">
+    <TableRow className="border-b border-t">
+      <TableHead className="w-[120px] p-0 pl-2 bg-muted/30">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
             <Checkbox
@@ -74,22 +74,22 @@ export function LeadTableHeader({
           )}
         </div>
       </TableHead>
-      <TableHead className="font-medium bg-muted/30 py-3 w-[250px]">
+      <TableHead className="font-medium bg-muted/30 py-3 w-[180px]">
         Name
       </TableHead>
-      <TableHead className="font-medium bg-muted/30 py-3 w-[250px]">
+      <TableHead className="font-medium bg-muted/30 py-3 w-[180px]">
         Email
       </TableHead>
-      <TableHead className="font-medium bg-muted/30 py-3 w-[150px]">
+      <TableHead className="font-medium bg-muted/30 py-3 w-[120px]">
         Phone
       </TableHead>
-      <TableHead className="font-medium bg-muted/30 py-3 w-[150px]">
+      <TableHead className="font-medium bg-muted/30 py-3 w-[120px]">
         Source
       </TableHead>
-      <TableHead className="font-medium text-center bg-muted/30 py-3 w-[100px]">
+      <TableHead className="font-medium text-center bg-muted/30 py-3 w-[90px]">
         Variables
       </TableHead>
-      <TableHead className="font-medium text-center bg-muted/30 py-3 w-[60px]">
+      <TableHead className="font-medium text-center bg-muted/30 py-3 w-[50px]">
         Edit
       </TableHead>
     </TableRow>

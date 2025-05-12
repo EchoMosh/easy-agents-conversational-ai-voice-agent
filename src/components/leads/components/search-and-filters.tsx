@@ -100,7 +100,10 @@ export function SearchAndFilters({
                 <SelectTrigger id="pipelineFilter" className="w-full">
                   <SelectValue placeholder="All Pipelines" />
                 </SelectTrigger>
-                <SelectContent position="popper" className="bg-background z-50">
+                <SelectContent
+                  position="popper"
+                  className="bg-background z-100"
+                >
                   <SelectItem value="all">All Pipelines</SelectItem>
                   {pipelines.map((pipeline) => (
                     <SelectItem key={pipeline.id} value={pipeline.id}>

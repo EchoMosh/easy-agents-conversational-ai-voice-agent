@@ -82,22 +82,45 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   ];
 
   // Format existing menu items to match the NavMain component's expected format
-  const navMainItems = mainMenuItems.map((item) => ({
-    title: item.title,
-    url: item.url,
-    icon: item.icon,
-    isActive: location.pathname === item.url,
-    items: [], // No subitems for now
-  }));
+  const navMainItems = mainMenuItems.map((item) => {
+    // Check if the current path matches this menu item's URL exactly
+    const isPathExactMatch = location.pathname === item.url;
+
+    // For sub-path matching, we need to be more specific:
+    // 1. The current path should start with the menu item's URL
+    // 2. The menu item's URL shouldn't be the dashboard home URL to prevent it from being active for all dashboard routes
+    // 3. The menu item's URL length should be greater than "/dashboard/" to avoid unwanted matches
+    const isSubPathMatch =
+      location.pathname.startsWith(item.url) &&
+      item.url !== "/dashboard/home" &&
+      // Ensure we're not matching "/dashboard/" as a parent of all dashboard routes
+      (item.url === "/dashboard/" ? location.pathname === "/dashboard/" : true);
+
+    return {
+      title: item.title,
+      url: item.url,
+      icon: item.icon,
+      isActive: isPathExactMatch || isSubPathMatch,
+      items: [], // No subitems for now
+    };
+  });
 
   // Add history items to the navMainItems
-  const navHistoryItems = historyMenuItems.map((item) => ({
-    title: item.title,
-    url: item.url,
-    icon: item.icon,
-    isActive: location.pathname === item.url,
-    items: [], // No subitems for now
-  }));
+  const navHistoryItems = historyMenuItems.map((item) => {
+    const isPathExactMatch = location.pathname === item.url;
+    // Apply the same specific sub-path matching logic for consistency
+    const isSubPathMatch =
+      location.pathname.startsWith(item.url) &&
+      !item.url.endsWith("/dashboard/");
+
+    return {
+      title: item.title,
+      url: item.url,
+      icon: item.icon,
+      isActive: isPathExactMatch || isSubPathMatch,
+      items: [], // No subitems for now
+    };
+  });
 
   const generateRandomAvatar = () => {
     const seed = Math.random().toString(36).substring(7);
@@ -156,7 +179,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <NavUser user={userData} />
       </SidebarFooter>
-      <SidebarRail />
+      {/* <SidebarRail /> Removed to prevent hover-to-expand */}
     </Sidebar>
   );
 }

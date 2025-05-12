@@ -1,9 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useRegisterLoadingState } from "@/context/app-loading-context";
 import { KnowledgeDocument } from "@/types/supabase-extended";
-import { fetchDocuments, downloadDocument, deleteDocument } from "@/utils/knowledge-api";
+import {
+  fetchDocuments,
+  downloadDocument,
+  deleteDocument,
+} from "@/utils/knowledge-api";
 import { SearchBar } from "./search-bar";
 import { EmptyState } from "./empty-state";
 import { DocumentItem } from "./document-item";
@@ -19,9 +23,15 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [documentToDelete, setDocumentToDelete] = useState<KnowledgeDocument | null>(null);
+  const [documentToDelete, setDocumentToDelete] =
+    useState<KnowledgeDocument | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [filteredDocuments, setFilteredDocuments] = useState<KnowledgeDocument[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<
+    KnowledgeDocument[]
+  >([]);
+
+  // Register loading state with the central AppLoadingContext
+  useRegisterLoadingState("knowledge-documents", isLoading);
 
   useEffect(() => {
     const getDocuments = async () => {
@@ -47,9 +57,10 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
   useEffect(() => {
     if (searchQuery) {
       const filtered = documents.filter(
-        doc =>
+        (doc) =>
           doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (doc.description && doc.description.toLowerCase().includes(searchQuery.toLowerCase()))
+          (doc.description &&
+            doc.description.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setFilteredDocuments(filtered);
     } else {
@@ -60,7 +71,7 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
   const handleDownload = async (document: KnowledgeDocument) => {
     try {
       const blob = await downloadDocument(document.file_path);
-      
+
       // Create a download link and trigger it
       const url = URL.createObjectURL(blob);
       const a = window.document.createElement("a");
@@ -85,8 +96,8 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
 
     try {
       await deleteDocument(documentToDelete.id, documentToDelete.file_path);
-      setDocuments(documents.filter(doc => doc.id !== documentToDelete.id));
-      
+      setDocuments(documents.filter((doc) => doc.id !== documentToDelete.id));
+
       toast({
         title: "Document deleted",
         description: "The document has been deleted successfully",
@@ -109,9 +120,8 @@ export function DocumentList({ refreshTrigger }: DocumentListProps) {
     setIsDeleteDialogOpen(true);
   };
 
-  if (isLoading) {
-    return <LoadingState />;
-  }
+  // We don't need to return a loading state here anymore as the global LoadingScreen will handle it
+  // through our registered loading state with AppLoadingContext
 
   return (
     <div className="space-y-4">

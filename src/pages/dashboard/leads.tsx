@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLeads } from "@/hooks/use-leads";
 import { Separator } from "@/components/ui/separator";
 import { LeadsTable } from "@/components/leads/leads-table";
@@ -37,11 +37,19 @@ export interface Lead {
 }
 
 export default function LeadsPage() {
+  // To solve the "Invalid hook call" error, we need to ensure all hooks are called unconditionally
+  // at the top level of the component
+
+  // State hooks
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
 
-  // Use our new hook to manage all leads state and data fetching
+  // Prevent potential hook violations by ensuring useLeads is always called
+  // with the same parameters in the same order
+  const leadsData = useLeads();
+
+  // Extract values from the leadsData to make the code more readable
   const {
     leads,
     totalCount,
@@ -58,26 +66,36 @@ export default function LeadsPage() {
     setSearchQuery,
     selectedTagIds,
     setSelectedTagIds,
-  } = useLeads();
+  } = leadsData;
 
-  // Debug leads data
-  useEffect(() => {
-    console.log("🔍 Leads data in LeadsPage:", leads.length);
-    console.log("🔍 First few leads:", leads.slice(0, 3));
-  }, [leads]);
+  // Use a ref for logging instead of multiple useEffect calls with dependencies
+  const prevLeadsLengthRef = useRef<number | null>(null);
 
-  // Setup event listener for editing leads
+  // Combine effects to reduce hook calls and potential timing issues
   useEffect(() => {
-    const handleEditLead = (event: CustomEvent<Lead>) => {
+    // Effect 1: Debug leads data only when leads length changes
+    if (prevLeadsLengthRef.current !== leads.length) {
+      console.log("🔍 Leads data in LeadsPage:", leads.length);
+      if (leads.length > 0) {
+        console.log("🔍 First few leads:", leads.slice(0, 3));
+      }
+      prevLeadsLengthRef.current = leads.length;
+    }
+
+    // Effect 2: Setup event listener for editing leads
+    const handleEditLeadEvent = (event: CustomEvent<Lead>) => {
       setEditingLead(event.detail);
     };
 
-    window.addEventListener("editLead", handleEditLead as EventListener);
+    window.addEventListener("editLead", handleEditLeadEvent as EventListener);
 
     return () => {
-      window.removeEventListener("editLead", handleEditLead as EventListener);
+      window.removeEventListener(
+        "editLead",
+        handleEditLeadEvent as EventListener
+      );
     };
-  }, []);
+  }, [leads]); // Combined dependency array to avoid excessive re-renders
 
   // Handle edit lead directly
   const handleEditLead = (lead: Lead) => {
@@ -86,9 +104,8 @@ export default function LeadsPage() {
 
   return (
     <ImportProvider>
-      <div className="flex flex-col h-screen">
-        {/* Fixed header section - does not scroll */}
-        <div className="flex-shrink-0 sticky top-0 z-40 bg-background pb-4">
+      <div className="flex flex-col h-full max-w-full">
+        <div className="flex-shrink-0 py-4 px-4 border-b">
           <SearchAndFilters
             selectedPipelineId={selectedPipelineId}
             setSelectedPipelineId={setSelectedPipelineId}
@@ -116,29 +133,29 @@ export default function LeadsPage() {
           />
         </div>
 
-        {/* Scrollable content area - only this part scrolls */}
-        <div className="flex-grow overflow-hidden">
-          <div className="h-full">
-            <LeadsTable
-              leads={leads.map((lead) => ({
-                ...lead,
-                onVariableClick: handleEditLead,
-                onEditClick: handleEditLead,
-              }))}
-              isLoading={isLoading}
-              onLeadUpdated={refreshLeads}
-              hasMore={hasMoreLeads}
-              onLoadMore={async () => await loadMoreLeads()}
-              pageSize={10}
-              isFetching={isFetching}
-              totalCount={totalCount}
-              pipelines={pipelines}
-            />
-          </div>
+        <div className="flex-grow overflow-auto px-4 py-2">
+          <LeadsTable
+            leads={leads.map((lead) => ({
+              ...lead,
+              onVariableClick: handleEditLead,
+              onEditClick: handleEditLead,
+            }))}
+            isLoading={isLoading}
+            onLeadUpdated={refreshLeads}
+            hasMore={hasMoreLeads}
+            onLoadMore={async () => {
+              loadMoreLeads();
+              return Promise.resolve();
+            }}
+            pageSize={15} /* Match the hook's page size */
+            isFetching={isFetching}
+            totalCount={totalCount}
+            pipelines={pipelines}
+          />
         </div>
 
         {/* Fixed footer elements - do not scroll */}
-        <div className="flex-shrink-0">
+        <div>
           <EditLeadDialog
             isOpen={!!editingLead}
             onOpenChange={(open) => !open && setEditingLead(null)}

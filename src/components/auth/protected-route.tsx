@@ -1,22 +1,35 @@
-
 import { useEffect, useState } from "react";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LoadingSpinner } from "../ui/loading-spinner";
+import {
+  useRegisterLoadingState,
+  LoadingPriority,
+} from "@/context/app-loading-context";
+import LoadingScreen from "@/components/loading-screen";
 
 const ProtectedRoute = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const navigate = useNavigate();
 
+  // Register auth loading as HIGH priority - we can't do anything until auth is checked
+  useRegisterLoadingState(
+    "authentication",
+    isCheckingAuth,
+    LoadingPriority.HIGH
+  );
+
   useEffect(() => {
     let mounted = true;
-    
+
     const checkAuth = async () => {
       try {
         // Get the current session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
         if (error) {
           console.error("Auth session error:", error);
           if (mounted) {
@@ -25,7 +38,7 @@ const ProtectedRoute = () => {
           }
           return;
         }
-        
+
         if (mounted) {
           setIsAuthenticated(!!session);
           setIsCheckingAuth(false);
@@ -40,19 +53,19 @@ const ProtectedRoute = () => {
     };
 
     // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state change in protected route:", event);
-        
-        if (mounted) {
-          setIsAuthenticated(!!session);
-          
-          if (event === 'SIGNED_OUT') {
-            navigate('/auth');
-          }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state change in protected route:", event);
+
+      if (mounted) {
+        setIsAuthenticated(!!session);
+
+        if (event === "SIGNED_OUT") {
+          navigate("/auth");
         }
       }
-    );
+    });
 
     // Initial auth check
     checkAuth();
@@ -64,15 +77,11 @@ const ProtectedRoute = () => {
     };
   }, [navigate]);
 
+  // We don't need to manually render a loading screen anymore since the app-level
+  // loading screen will show automatically while isCheckingAuth is true
   if (isCheckingAuth) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="text-center">
-          <LoadingSpinner />
-          <p className="ml-2 text-muted-foreground mt-2">Checking authentication...</p>
-        </div>
-      </div>
-    );
+    // Return empty fragment - the global loading state will handle rendering a loading screen
+    return <></>;
   }
 
   return isAuthenticated ? <Outlet /> : <Navigate to="/auth" />;

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { withErrorBoundary } from "@/components/error-boundary";
-import {
-  resetStuckDragAttributes,
-  createResetButton,
-} from "@/components/pipelines/components/kanban/reset-stuck-state";
+// import {
+//   resetStuckDragAttributes,
+//   createResetButton,
+// } from "@/components/pipelines/components/kanban/reset-stuck-state"; // Functionality removed
 import { useLocation, useNavigate } from "react-router-dom";
 import { Lead } from "@/pages/dashboard/leads";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
@@ -206,13 +206,13 @@ function PipelinesPage() {
     if (typeof document !== "undefined") {
       // Safely add reset button using plain DOM methods
       // Runs after component mounts
-      setTimeout(() => {
-        try {
-          createResetButton();
-        } catch (e) {
-          console.error("Error creating reset button:", e);
-        }
-      }, 0);
+      // setTimeout(() => {
+      //   try {
+      //     // createResetButton(); // Functionality removed
+      //   } catch (e) {
+      //     console.error("Error creating reset button:", e);
+      //   }
+      // }, 0);
     }
   }, []);
 
@@ -267,7 +267,7 @@ function PipelinesPage() {
   // Event handlers (defined outside of render to prevent recreation)
   const handleResetDragState = useCallback(() => {
     resetDragState();
-    resetStuckDragAttributes();
+    // resetStuckDragAttributes(); // Functionality removed
     invalidateAndRefetch();
     setIsDragStuck(false);
     toast.success("Drag state has been reset");

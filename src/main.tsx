@@ -10,6 +10,7 @@ import "./styles/theme-styles.css";
 import { Toaster } from "./components/ui/toaster";
 import { WorkspaceProvider } from "./context/workspace-context";
 import { ThemeProvider } from "./context/theme-context";
+import { AppLoadingProvider } from "./context/app-loading-context";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,13 +34,15 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           enableSystem
         >
           <ThemeProvider>
-            <WorkspaceProvider>
-              <App />
-              <Toaster />
-            </WorkspaceProvider>
+            <AppLoadingProvider>
+              <WorkspaceProvider>
+                <App />
+                <Toaster />
+              </WorkspaceProvider>
+            </AppLoadingProvider>
           </ThemeProvider>
         </NextThemesProvider>
       </QueryClientProvider>
     </BrowserRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

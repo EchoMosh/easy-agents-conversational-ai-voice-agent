@@ -22,6 +22,7 @@ import { EditVariablesDialog } from "./components/edit-variables-dialog";
 import { LoadingLeadsTable } from "./components/loading-leads-table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LeadSkeletonRows } from "./components/lead-skeleton-row";
 import {
   Table,
   TableBody,
@@ -264,13 +265,36 @@ export function LeadsTable({
   };
 
   // ===== CONDITIONAL RENDERING =====
-  // Loading state
-  if (isLoading && leads.length === 0) {
+  // Enhanced loading state with smoother transitions
+  const [showLoading, setShowLoading] = useState(isLoading);
+
+  // Use an effect to debounce loading state changes
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+
+    // If loading is starting, show loading immediately
+    if (isLoading) {
+      setShowLoading(true);
+    }
+    // If loading is ending, delay removing the loading state to prevent flicker
+    else if (!isLoading && showLoading) {
+      timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 500); // Keep loading state for a bit to prevent flicker
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isLoading, showLoading]);
+
+  // Loading state with improved transitions
+  if (showLoading && leads.length === 0) {
     return <LoadingLeadsTable />;
   }
 
-  // Empty state
-  if (leads.length === 0 && !isLoading) {
+  // Empty state with better handling
+  if (leads.length === 0 && !showLoading) {
     return (
       <div className="text-center py-16 text-muted-foreground">
         No leads found. Add your first lead to get started.
@@ -281,7 +305,7 @@ export function LeadsTable({
   return (
     <div className="border rounded-lg w-full flex flex-col h-full relative">
       {selectedLeads.length > 0 && (
-        <div className="sticky top-0 z-20 bg-background pb-2 px-4 pt-2 border-b shadow-sm">
+        <div className="sticky top-0 z-[25] bg-background pb-2 px-4 pt-2 border-b shadow-sm">
           <SelectionHeader
             selectedCount={
               selectAllMode === "all"
@@ -300,7 +324,7 @@ export function LeadsTable({
 
       {/* Select All Prompt */}
       {selectAllPromptOpen && (
-        <div className="absolute top-0 left-0 right-0 z-30 px-4 py-3 bg-amber-50 border border-amber-300 shadow-md">
+        <div className="absolute top-0 left-0 right-0 z-50 px-4 py-3 bg-amber-50 border border-amber-300 shadow-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <AlertCircle className="h-5 w-5 text-amber-600" />
@@ -328,16 +352,12 @@ export function LeadsTable({
         </div>
       )}
 
-      {/* Table with scrollable body */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div
-          ref={scrollContainerRef}
-          className="overflow-auto flex-1 min-h-0"
-          style={{ maxHeight: "calc(100vh - 250px)" }}
-        >
-          <Table className="relative">
+      {/* Table with proper header stickiness */}
+      <div className="w-full">
+        <div ref={scrollContainerRef}>
+          <Table className="w-full border">
             {/* Sticky header */}
-            <TableHeader className="sticky top-0 z-10 bg-background">
+            <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
               <LeadTableHeader
                 onToggleSelectAll={handleToggleSelectAll}
                 isAllSelected={
@@ -365,11 +385,27 @@ export function LeadsTable({
                   pipelineName={getPipelineName(lead.pipeline_id)}
                 />
               ))}
+
+              {/* Show skeleton loading rows when fetching more data */}
+              {isFetching && <LeadSkeletonRows count={4} />}
             </TableBody>
           </Table>
         </div>
 
-        {/* Fixed footer */}
+        {/* Loading trigger - appears when user approaches bottom */}
+        {hasMore && !isFetching && (
+          <div
+            className="text-center py-6 border-t bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
+            onClick={handleLoadMore}
+          >
+            <span className="text-sm flex items-center justify-center gap-2 text-primary">
+              <ChevronDown className="h-4 w-4" />
+              Load more leads
+            </span>
+          </div>
+        )}
+
+        {/* Footer with count info and loading indicator */}
         <div className="border-t bg-background py-2 px-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
@@ -377,25 +413,19 @@ export function LeadsTable({
               leads
             </div>
 
-            {hasMore && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLoadMore}
-                disabled={isFetching}
-              >
-                {isFetching ? (
-                  <>
-                    <LoadingSpinner className="h-4 w-4 mr-2" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4 mr-2" />
-                    Load More
-                  </>
-                )}
-              </Button>
+            {isFetching ? (
+              <div className="flex items-center text-primary animate-pulse">
+                <LoadingSpinner className="h-4 w-4 mr-2" />
+                <span className="text-sm font-medium">
+                  Loading more leads...
+                </span>
+              </div>
+            ) : (
+              <div className="text-xs text-muted-foreground">
+                {hasMore
+                  ? "Scroll down or click 'Load more' to see more leads"
+                  : `All ${leads.length} leads loaded`}
+              </div>
             )}
           </div>
         </div>

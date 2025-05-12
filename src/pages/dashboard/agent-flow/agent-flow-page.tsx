@@ -3,6 +3,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { DragProvider } from "@/components/flow/drag-context";
 import { Flow } from "@/components/flow/agent-flow/flow";
 import { useCallback, useState, useEffect } from "react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useToast } from "@/hooks/use-toast";
 import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
 import { useAgentData } from "./hooks/use-agent-data";
@@ -22,12 +23,23 @@ export default function AgentFlowPage() {
   const { agent, refetch, isError, isLoading, handleUpdateSettings } =
     useAgentData(id, navigate, toast);
 
-  // Log agent data to debug
+  // Log agent data to debug and set the document title
   useEffect(() => {
     if (agent) {
       console.log("Agent data loaded:", agent);
+
+      // Store agent name in sessionStorage for use in the dashboard header
+      if (agent.name && agent.id) {
+        sessionStorage.setItem(`agent_name_${agent.id}`, agent.name);
+      }
     }
   }, [agent]);
+
+  // Set the document title to show the agent's name instead of ID
+  useDocumentTitle(
+    agent ? `${agent.name || "Agent"} | Flow Editor` : "Agent Flow Editor",
+    [agent?.name]
+  );
 
   const { mermaidChart, setMermaidChart } = useMermaidChart();
 

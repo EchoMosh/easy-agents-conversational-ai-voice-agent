@@ -1,4 +1,3 @@
-
 import {
   LayoutDashboard,
   MessagesSquare,
@@ -7,6 +6,7 @@ import {
   GitBranch,
   BookOpen,
   Settings,
+  Bot,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
@@ -43,19 +43,21 @@ const appMenuItems = [
   },
   {
     title: "Agents",
-    icon: UserSquare,
+    icon: Bot,
     url: "/dashboard/agents",
   },
-  {
-    title: "Pipelines",
-    icon: GitBranch,
-    url: "/dashboard/pipelines",
-  },
-  {
-    title: "Chats",
-    icon: MessagesSquare,
-    url: "/dashboard/chats",
-  },
+  // Pipelines feature hidden
+  // {
+  //   title: "Pipelines",
+  //   icon: GitBranch,
+  //   url: "/dashboard/pipelines",
+  // },
+  // Chat feature hidden
+  // {
+  //   title: "Chats",
+  //   icon: MessagesSquare,
+  //   url: "/dashboard/chats",
+  // },
   {
     title: "Knowledge Base",
     icon: BookOpen,
@@ -72,65 +74,20 @@ export function AppSidebar() {
   const location = useLocation();
   const { setOpen } = useSidebar();
   const sidebarRef = useRef<HTMLDivElement>(null);
-  
-  // Initialize and set up hover behavior
+
+  // Initialize sidebar in collapsed state with no hover behavior
   useEffect(() => {
-    // Start with sidebar collapsed
+    // Start with sidebar collapsed and keep it that way
     setOpen(false);
-    console.log("Sidebar initialized as collapsed");
-    
-    // Direct DOM manipulation as a fallback approach
-    const handleHoverIn = () => {
-      console.log("Hover in detected");
-      setOpen(true);
-    };
-    
-    const handleHoverOut = () => {
-      console.log("Hover out detected");
-      setOpen(false);
-    };
-    
-    // Add event listeners directly to the Sidebar component
-    if (sidebarRef.current) {
-      console.log("Adding hover listeners to sidebar ref");
-      sidebarRef.current.addEventListener('mouseenter', handleHoverIn);
-      sidebarRef.current.addEventListener('mouseleave', handleHoverOut);
-      
-      return () => {
-        if (sidebarRef.current) {
-          sidebarRef.current.removeEventListener('mouseenter', handleHoverIn);
-          sidebarRef.current.removeEventListener('mouseleave', handleHoverOut);
-        }
-      };
-    } else {
-      // Fallback to document.querySelector approach
-      console.log("Sidebar ref not available, using querySelector fallback");
-      
-      // Try different approaches to find the sidebar element
-      setTimeout(() => {
-        const sidebarElement = document.querySelector("[data-sidebar='sidebar']") || 
-                              document.querySelector(".group\\/sidebar-wrapper") ||
-                              document.querySelector("[class*='sidebar']");
-        
-        console.log("Fallback sidebar element found:", !!sidebarElement);
-        
-        if (sidebarElement) {
-          sidebarElement.addEventListener('mouseenter', handleHoverIn);
-          sidebarElement.addEventListener('mouseleave', handleHoverOut);
-          
-          return () => {
-            sidebarElement.removeEventListener('mouseenter', handleHoverIn);
-            sidebarElement.removeEventListener('mouseleave', handleHoverOut);
-          };
-        }
-      }, 500); // Short delay to ensure the DOM is ready
-    }
+    console.log("Sidebar initialized as collapsed with no hover expansion");
+
+    // No hover behavior - sidebar will only change state via explicit user action
   }, [setOpen]);
 
   return (
     <Sidebar
       ref={sidebarRef}
-      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white transition-all duration-300 ease-in-out hover:w-[var(--sidebar-width)]"
+      className="border-r bg-white text-black dark:bg-[#1e2235] dark:text-white transition-all duration-300 ease-in-out"
       collapsible="icon"
     >
       <SidebarHeader className="p-0">
@@ -150,9 +107,14 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={location.pathname.startsWith(item.url)}
+                    isActive={
+                      item.url === "/dashboard"
+                        ? location.pathname === "/dashboard" ||
+                          location.pathname === "/dashboard/"
+                        : location.pathname.startsWith(item.url)
+                    }
                     tooltip={item.title}
-                    className="group-data-[collapsible=icon]:justify-center" 
+                    className="group-data-[collapsible=icon]:justify-center"
                   >
                     <NavLink
                       to={item.url}

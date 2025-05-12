@@ -4,10 +4,13 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { LoadingPriority, useAppLoading } from "./app-loading-context";
+import { useApiLoading } from "@/hooks/use-api-loading";
 
 interface Workspace {
   id: string;
@@ -19,6 +22,7 @@ interface WorkspaceContextType {
   currentWorkspace: Workspace | null;
   workspaces: Workspace[];
   isLoading: boolean;
+  isWorkspaceReady: boolean; // Add a flag that other components can check
   switchWorkspace: (workspace: Workspace) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
   createDefaultWorkspace: (
@@ -42,15 +46,45 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const fetchWorkspaces = async () => {
+  // Use register loading state directly from app-loading-context
+  // This is safe because it properly handles hooks at the component level
+  const { registerLoadingState, unregisterLoadingState } = useAppLoading();
+
+  // Register the workspace loading state
+  useEffect(() => {
+    // Register the loading state with HIGH priority
+    registerLoadingState("workspace", isLoading, LoadingPriority.HIGH);
+
+    // Log the current loading state for debugging
+    console.log(`Workspace loading state: ${isLoading ? "loading" : "loaded"}`);
+
+    // Clean up on unmount
+    return () => {
+      unregisterLoadingState("workspace");
+    };
+  }, [isLoading, registerLoadingState, unregisterLoadingState]);
+
+  const fetchWorkspaces = async (retryCount = 0, maxRetries = 3) => {
     try {
       setIsLoading(true);
-      console.log("Fetching workspaces...");
+      console.log(
+        `Fetching workspaces... (attempt ${retryCount + 1}/${maxRetries + 1})`
+      );
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
       if (!session) {
+        console.log("No session found, waiting for auth...");
+
+        // If no session but we haven't reached max retries, retry after delay
+        if (retryCount < maxRetries) {
+          setTimeout(() => {
+            fetchWorkspaces(retryCount + 1, maxRetries);
+          }, 1000 * (retryCount + 1)); // Exponential backoff
+          return;
+        }
+
         setIsLoading(false);
         return;
       }
@@ -70,7 +104,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       if (!memberData || memberData.length === 0) {
         console.log("No workspaces found, redirecting to onboarding");
         setIsLoading(false);
-        navigate("/onboarding");
+
+        // Ensure we're not in a loop - use local storage to prevent infinite redirects
+        const redirectAttempt = localStorage.getItem(
+          "workspaceRedirectAttempt"
+        );
+        const now = Date.now();
+
+        if (!redirectAttempt || now - parseInt(redirectAttempt) > 30000) {
+          // 30 seconds threshold
+          localStorage.setItem("workspaceRedirectAttempt", now.toString());
+          navigate("/onboarding");
+        }
         return;
       }
 
@@ -84,6 +129,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       if (workspacesError) {
         console.error("Error fetching workspaces:", workspacesError);
+
+        // Retry if we haven't reached max retries
+        if (retryCount < maxRetries) {
+          setTimeout(() => {
+            fetchWorkspaces(retryCount + 1, maxRetries);
+          }, 1000 * (retryCount + 1)); // Exponential backoff
+          return;
+        }
+
         throw workspacesError;
       }
 
@@ -132,6 +186,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Error fetching workspaces:", error);
+
+      // Retry if we haven't reached max retries
+      if (retryCount < maxRetries) {
+        const retryDelay = 1000 * (retryCount + 1); // Exponential backoff
+        console.log(`Retrying workspace fetch in ${retryDelay}ms...`);
+
+        setTimeout(() => {
+          fetchWorkspaces(retryCount + 1, maxRetries);
+        }, retryDelay);
+        return;
+      }
     } finally {
       setIsLoading(false);
     }
@@ -280,16 +345,40 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Custom hook to check if workspace is ready
+  const isWorkspaceReady = Boolean(currentWorkspace?.id);
+
+  // Initialize workspace loading when the app starts
   useEffect(() => {
+    // Clear any previous redirect attempts when mounting
+    localStorage.removeItem("workspaceRedirectAttempt");
+
     fetchWorkspaces();
+
+    // Set up a listener for authentication changes to reload workspace if needed
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
+        console.log("User signed in, fetching workspaces...");
+        fetchWorkspaces();
+      } else if (event === "SIGNED_OUT") {
+        console.log("User signed out, clearing workspace state");
+        setCurrentWorkspace(null);
+        setWorkspaces([]);
+      }
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, []);
 
   const value = {
     currentWorkspace,
     workspaces,
     isLoading,
+    isWorkspaceReady,
     switchWorkspace,
-    refreshWorkspaces: fetchWorkspaces,
+    refreshWorkspaces: useCallback(() => fetchWorkspaces(0, 3), []),
     createDefaultWorkspace,
     creationError,
   };

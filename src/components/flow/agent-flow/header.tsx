@@ -49,7 +49,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
     const greetingNodes = flowData.nodes.filter(
       (node: FlowNode) =>
-        node.type === "greetingNode" || node.type === "speakNode",
+        node.type === "greetingNode" || node.type === "speakNode"
     );
 
     if (greetingNodes.length === 0) {
@@ -139,7 +139,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
       if (agentError) {
         throw new Error(
-          `Failed to fetch complete agent data: ${agentError.message}`,
+          `Failed to fetch complete agent data: ${agentError.message}`
         );
       }
 
@@ -207,7 +207,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(payload),
-        },
+        }
       );
 
       if (!response.ok) {
@@ -227,13 +227,13 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         console.error("Error parsing webhook response:", parseError);
         console.error("Raw response text:", responseText);
         throw new Error(
-          "Failed to get a valid response from the webhook. The agent might not have been updated correctly.",
+          "Failed to get a valid response from the webhook. The agent might not have been updated correctly."
         );
       }
 
       if (!data) {
         throw new Error(
-          "No data returned from webhook. The agent might not have been updated correctly.",
+          "No data returned from webhook. The agent might not have been updated correctly."
         );
       }
 
@@ -280,9 +280,28 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             <ArrowLeft className="h-4 w-4 text-gray-700 dark:text-gray-300" />
           </Button>
           <div className="flex flex-col">
-            <h1 className="font-medium text-gray-900 dark:text-white">
-              {agent.name || "Unnamed Agent"}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-medium text-gray-900 dark:text-white">
+                {agent.name || "Unnamed Agent"}
+              </h1>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 flex items-center gap-1 cursor-help">
+                      <span className="text-gray-500 dark:text-gray-400">
+                        ID:
+                      </span>
+                      <span className="font-mono text-xs">
+                        {agent.id.substring(0, 8)}...
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p className="font-mono text-xs">{agent.id}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
               {agent.role ? agent.role.replace("_", " ") : "No Role"}
             </p>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, BookOpen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/context/workspace-context";
+import { useRegisterLoadingState } from "@/context/app-loading-context";
 import {
   Dialog,
   DialogContent,
@@ -19,12 +21,13 @@ import { Agent } from "@/types/agent";
 
 const AgentsPage = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
 
-  const { data: agents = [], isLoading } = useQuery({
+  const { data: agents = [], isLoading: agentsLoading } = useQuery({
     queryKey: ["agents", currentWorkspace?.id],
     queryFn: async () => {
       try {
@@ -177,10 +180,14 @@ const AgentsPage = () => {
     };
   }, []);
 
-  const filteredAgents = agents.filter(agent => 
-    agent.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    agent.role.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAgents = agents.filter(
+    (agent) =>
+      agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      agent.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Register the agents loading state with the central loading context
+  useRegisterLoadingState("agents", agentsLoading);
 
   return (
     <div className="w-full p-8 bg-background text-foreground relative">
@@ -200,20 +207,14 @@ const AgentsPage = () => {
           Create Agent
         </Button>
       </div>
-      
-      {isLoading && (
+      {agentsLoading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       )}
-
-      {!isLoading && agents && (
-        <AgentsTable 
-          agents={filteredAgents} 
-          onDelete={handleDeleteAgent} 
-        />
+      {!agentsLoading && agents && (
+        <AgentsTable agents={filteredAgents} onDelete={handleDeleteAgent} />
       )}
-
       <Dialog
         open={isCreating}
         onOpenChange={(open) => {

@@ -1,9 +1,21 @@
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { DocumentList } from "@/components/knowledge/document-list";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KnowledgeFileUploader } from "@/components/knowledge/knowledge-file-uploader";
 import { KnowledgeUrlImporter } from "@/components/knowledge/knowledge-url-importer";
@@ -12,7 +24,7 @@ export default function KnowledgePage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const handleUploadSuccess = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
     setIsDialogOpen(false);
   };
 
@@ -26,20 +38,21 @@ export default function KnowledgePage() {
       window.removeEventListener("create-knowledge", handleCreateKnowledge);
     };
   }, []);
-  return <div className="flex flex-col w-full items-center mt-10">
-      <div className="flex flex-col space-y-6 w-[90%]">
-        <div className="flex justify-end">
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Knowledge
-          </Button>
-        </div>
+  return (
+    <div className="flex flex-col w-full items-center p-8">
+      <div className="flex flex-col w-full max-w-[1200px]">
         <Card className="w-full">
-          <CardHeader>
-            <CardTitle className="text-xl">Your Knowledge Base</CardTitle>
-            <CardDescription>
-              Manage your uploaded documents, URLs and text entries
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl">Your Knowledge Base</CardTitle>
+              <CardDescription>
+                Manage your uploaded documents, URLs and text entries
+              </CardDescription>
+            </div>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Knowledge
+            </Button>
           </CardHeader>
           <CardContent>
             <DocumentList refreshTrigger={refreshTrigger} />
@@ -86,5 +99,6 @@ export default function KnowledgePage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 }
