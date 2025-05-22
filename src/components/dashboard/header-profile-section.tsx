@@ -16,9 +16,10 @@ import { Button } from "@/components/ui/button";
 
 export function HeaderProfileSection() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState<string>("Meng To");
-  const [email, setEmail] = useState<string>("m@example.com");
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const generateRandomAvatar = () => {
     const seed = Math.random().toString(36).substring(7);
@@ -26,26 +27,35 @@ export function HeaderProfileSection() {
   };
 
   const fetchProfile = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.user) {
-      const userEmail = session.user.email || "";
-      setEmail(userEmail);
-      const name = userEmail.split("@")[0];
+    setIsLoading(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        const userEmail = session.user.email || "";
+        setEmail(userEmail);
+        const name = userEmail.split("@")[0];
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("avatar_url, first_name, last_name")
-        .eq("id", session.user.id)
-        .single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("avatar_url, first_name, last_name")
+          .eq("id", session.user.id)
+          .single();
 
-      if (profile) {
-        setUsername(profile.first_name || name);
-        setAvatarUrl(profile.avatar_url || generateRandomAvatar());
-      } else {
-        setAvatarUrl(generateRandomAvatar());
+        if (profile) {
+          setUsername(profile.first_name || name);
+          setAvatarUrl(profile.avatar_url || generateRandomAvatar());
+        } else {
+          setUsername(name);
+          setAvatarUrl(generateRandomAvatar());
+        }
       }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -66,7 +76,12 @@ export function HeaderProfileSection() {
               </AvatarFallback>
             </Avatar>
             <div className="hidden md:block">
-              <span className="font-medium">{username}</span>
+              <span className="font-medium">
+                {isLoading ? 
+                  <span className="inline-block w-16 h-4 bg-muted animate-pulse rounded"></span> : 
+                  username
+                }
+              </span>
             </div>
             <ChevronDown className="h-4 w-4 opacity-70" />
           </button>

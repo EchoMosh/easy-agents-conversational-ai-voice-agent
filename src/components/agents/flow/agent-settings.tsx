@@ -3,6 +3,7 @@ import * as React from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription, // Added DialogDescription here
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -20,7 +21,10 @@ import {
   Settings as SettingsIcon, 
   Mic, 
   Brain, 
-  VolumeX
+  VolumeX,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown
 } from "lucide-react";
 import {
   Select,
@@ -29,6 +33,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -58,11 +76,22 @@ import {
 import { Agent } from "@/types/agent";
 import { Switch } from "@/components/ui/switch";
 
+// Helper function to convert country code to flag emoji
+const getFlagEmoji = (countryCode: string): string => {
+  if (!countryCode || countryCode.length !== 2) return '';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+};
+
 // Available voices data
 const voices = [
-  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", gender: "female" },
-  { id: "UgBBYS2sOqTuMpoF3BR0", name: "Thomas", gender: "male" },
-  { id: "pwMBn0SsmN1220Aorv15", name: "Michael", gender: "male" }
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", gender: "female", image: "/voice-characters/laura.png", countryCode: "US" }, // Ensured Laura's image path
+  { id: "UgBBYS2sOqTuMpoF3BR0", name: "Thomas", gender: "male", image: "/voice-characters/thomas.png", countryCode: "US" },
+  { id: "pwMBn0SsmN1220Aorv15", name: "Michael", gender: "male", image: "/voice-characters/michael.png", countryCode: "US" },
+  { id: "tempGabrielID12345", name: "Gabriel", gender: "male", image: "/voice-characters/gabriel.png", countryCode: "MX" }
 ];
 
 // Updated languages data with correct language codes
@@ -164,6 +193,7 @@ export function AgentSettings({
   const [audioElement, setAudioElement] = React.useState<HTMLAudioElement | null>(null);
   const [showVoiceInfo, setShowVoiceInfo] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState("voice");
+  const [voiceDropdownOpen, setVoiceDropdownOpen] = React.useState(false);
   
   // Advanced settings
   const [firstMessage, setFirstMessage] = React.useState("");
@@ -616,164 +646,107 @@ export function AgentSettings({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="p-0 max-w-5xl rounded-xl overflow-hidden border-0 shadow-xl">
-          <div className="bg-gradient-to-r from-violet-500 to-indigo-600 p-4">
+        <DialogContent className="p-0 max-w-4xl rounded-lg overflow-hidden border dark:border-gray-800 shadow-xl bg-background"> {/* Reduced max-width, adjusted rounding/shadow */}
+          {/* Updated Dialog Header for monotone theme */}
+          <div className="p-3 border-b border-border"> {/* Reduced padding */}
             <DialogHeader className="pb-0">
-              <DialogTitle className="text-xl font-semibold text-white">Agent Voice & Behavior</DialogTitle>
+              <DialogTitle className="text-lg font-semibold text-foreground">Agent Voice & Behavior</DialogTitle> {/* Reduced font size */}
+              <DialogDescription className="sr-only">Configure voice, messaging, and call behavior settings for the agent.</DialogDescription>
             </DialogHeader>
           </div>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="border-b border-gray-200 dark:border-gray-800">
-              <TabsList className="bg-transparent h-14 px-6 flex gap-2">
-                <TabsTrigger
-                  value="voice"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 data-[state=active]:shadow-none rounded-none py-3 flex items-center gap-2"
-                >
-                  <Volume2 className="h-4 w-4" /> Voice & Language
-                </TabsTrigger>
-                <TabsTrigger
-                  value="model"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 data-[state=active]:shadow-none rounded-none py-3 flex items-center gap-2"
-                >
-                  <Brain className="h-4 w-4" /> AI Model
-                </TabsTrigger>
-                <TabsTrigger
-                  value="message"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 data-[state=active]:shadow-none rounded-none py-3 flex items-center gap-2"
-                >
-                  <MessageSquare className="h-4 w-4" /> Messaging
-                </TabsTrigger>
-                <TabsTrigger
-                  value="behavior"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 data-[state=active]:shadow-none rounded-none py-3 flex items-center gap-2"
-                >
-                  <Clock className="h-4 w-4" /> Call Behavior
-                </TabsTrigger>
-                <TabsTrigger
-                  value="advanced"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-indigo-500 data-[state=active]:shadow-none rounded-none py-3 flex items-center gap-2"
-                >
-                  <SettingsIcon className="h-4 w-4" /> Advanced
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            
-            <div className="p-6 max-h-[70vh] overflow-y-auto">
-              <TabsContent value="voice" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 rounded-lg p-5 border border-indigo-100 dark:border-indigo-900">
-                      <h3 className="text-base font-medium mb-3 flex items-center gap-2">
-                        <Volume2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> 
-                        Voice
-                      </h3>
-                      
-                      <div className="grid grid-cols-[1fr_auto] gap-2 mb-4">
-                        <Select onValueChange={setSelectedVoice} value={selectedVoice}>
-                          <SelectTrigger className="rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                            <SelectValue placeholder="Select voice" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {voices.map((voice) => (
-                              <SelectItem key={voice.id} value={voice.id}>
-                                {voice.name} ({voice.gender})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          onClick={previewVoice}
-                          className="h-10 w-10 rounded-lg border-indigo-200 dark:border-indigo-800"
-                        >
-                          {isPreviewingVoice ? 
-                            <Pause className="h-4 w-4" /> : 
-                            <Play className="h-4 w-4" />
-                          }
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm">Voice Speed</Label>
-                          <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">{voiceSpeed.toFixed(1)}x</span>
-                        </div>
-                        <Slider
-                          min={0.5}
-                          max={2.0}
-                          step={0.1}
-                          value={[voiceSpeed]}
-                          onValueChange={(values) => setVoiceSpeed(values[0])}
-                          className="mt-2"
-                        />
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>Slower</span>
-                          <span>Normal</span>
-                          <span>Faster</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-5">
-                        <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Voice Provider</h4>
-                        <Select onValueChange={setVoiceProvider} value={voiceProvider}>
-                          <SelectTrigger className="rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                            <SelectValue placeholder="Select voice provider" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {voiceProviders.map((provider) => (
-                              <SelectItem key={provider.id} value={provider.id}>
-                                {provider.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-lg p-5 border border-blue-100 dark:border-blue-900">
-                      <h3 className="text-base font-medium mb-3 flex items-center gap-2">
-                        <VolumeX className="h-4 w-4 text-blue-600 dark:text-blue-400" /> 
-                        Background Sound
-                      </h3>
-                      
-                      <Select onValueChange={(value: "off" | "office" | "cafe" | "nature") => setBackgroundSound(value)} value={backgroundSound}>
-                        <SelectTrigger className="rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 mb-3">
-                          <SelectValue placeholder="Select background sound" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {backgroundSoundOptions.map((option) => (
-                            <SelectItem key={option.id} value={option.id}>
-                              {option.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Switch 
-                          id="background-denoising" 
-                          checked={backgroundDenoising} 
-                          onCheckedChange={setBackgroundDenoising}
-                        />
-                        <Label htmlFor="background-denoising">Enable background denoising</Label>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg p-5 border border-green-100 dark:border-green-900">
-                      <h3 className="text-base font-medium mb-3 flex items-center gap-2">
-                        <Info className="h-4 w-4 text-green-600 dark:text-green-400" /> 
-                        Language & Knowledge
-                      </h3>
-                      
-                      <div className="space-y-4">
+          {/* Tabs removed, content will be displayed directly */}
+          <div className="p-4 md:p-6 max-h-[calc(100vh-180px)] overflow-y-auto space-y-6"> {/* Added space-y-6 for spacing between sections */}
+            {/* Voice Section */}
+            {/* <TabsContent value="voice" className="mt-0"> */} {/* This line is commented out/removed */}
+                <div className="space-y-4 md:space-y-6"> {/* Reduced spacing */}
+                  {/* Section 1: Voice Character and Selection */}
+                  <div className="bg-card text-card-foreground rounded-lg p-4 border border-border shadow-sm"> {/* Reduced padding */}
+                    <h3 className="text-base font-semibold mb-4 flex items-center gap-2 text-foreground"> {/* Reduced font size and margin */}
+                      <Mic className="h-4 w-4 text-primary" />
+                      Configure Voice
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4 md:gap-6">
+                      {/* Voice Configuration Options Column */}
+                      <div className="space-y-4 pt-0"> {/* Reduced spacing */}
                         <div>
-                          <Label className="mb-2 block text-sm">Language</Label>
+                          <Label className="mb-2 block text-sm font-medium text-muted-foreground">Select a voice</Label>
+                          <div className="flex flex-col gap-4">
+                            <div className="flex flex-row items-center gap-3">
+                              <div className="flex-1">
+                                <Select 
+                                  value={selectedVoice} 
+                                  onValueChange={setSelectedVoice}
+                                >
+                                  <SelectTrigger className="w-full h-14 rounded-xl px-4 text-lg font-medium bg-white border border-gray-200 shadow-none hover:border-gray-300 focus:ring-2 focus:ring-primary/20 transition">
+                                    <SelectValue
+                                      placeholder="Select a voice"
+                                      className="flex items-center gap-3"
+                                    >
+                                      {(() => {
+                                        const v = voices.find(voice => voice.id === selectedVoice);
+                                        if (!v) return null;
+                                        return (
+                                          <span className="flex items-center gap-3">
+                                            <Avatar className="h-8 w-8">
+                                              <AvatarImage src={v.image} alt={v.name} className="object-cover object-top" />
+                                              <AvatarFallback>{v.name.substring(0, 1)}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="text-xl">{getFlagEmoji(v.countryCode)}</span>
+                                            <span className="text-lg font-medium">{v.name}</span>
+                                          </span>
+                                        );
+                                      })()}
+                                    </SelectValue>
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {voices.map((voice) => (
+                                      <SelectItem key={voice.id} value={voice.id} className="py-3 px-2 text-lg">
+                                        <div className="flex items-center gap-3">
+                                          <Avatar className="h-8 w-8">
+                                            <AvatarImage src={voice.image} alt={voice.name} className="object-cover object-top" />
+                                            <AvatarFallback>{voice.name.substring(0,1)}</AvatarFallback>
+                                          </Avatar>
+                                          <span className="text-xl">{getFlagEmoji(voice.countryCode)}</span>
+                                          <span className="text-lg font-medium">{voice.name}</span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="lg"
+                                onClick={previewVoice}
+                                className="ml-2 px-5 h-14 rounded-xl border border-gray-200 bg-white shadow-none hover:bg-gray-50 text-base font-medium flex items-center gap-2 transition"
+                              >
+                                {isPreviewingVoice ? (
+                                  <>
+                                    <Pause className="h-5 w-5" />
+                                    <span>Stop</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="h-5 w-5" />
+                                    <span>Preview</span>
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Voice Speed Removed as it's not in the new design image */}
+
+                        {/* Divider within the right column - can be kept or removed based on overall layout */}
+                        {/* <hr className="my-4 border-border" /> */}
+
+                        {/* Language Selection - can be kept if still needed, or removed if voice implies language */}
+                        <div>
+                          <Label className="mb-1.5 block text-sm text-muted-foreground">Language</Label> {/* Reduced margin */}
                           <Select onValueChange={setLanguage} value={language}>
-                            <SelectTrigger className="rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                            <SelectTrigger className="rounded-md bg-background border-border h-9"> {/* Reduced height */}
                               <SelectValue placeholder="Select language" />
                             </SelectTrigger>
                             <SelectContent>
@@ -786,10 +759,11 @@ export function AgentSettings({
                           </Select>
                         </div>
                         
+                        {/* Knowledge Base Selection */}
                         <div>
-                          <Label className="mb-2 block text-sm">Knowledge Base</Label>
+                          <Label className="mb-1.5 block text-sm text-muted-foreground">Knowledge Base</Label> {/* Reduced margin */}
                           <Select onValueChange={setKnowledgeBase} value={knowledgeBase}>
-                            <SelectTrigger className="rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                            <SelectTrigger className="rounded-md bg-background border-border h-9"> {/* Reduced height */}
                               <SelectValue placeholder={isLoadingDocuments ? "Loading..." : "Select knowledge base"} />
                             </SelectTrigger>
                             <SelectContent>
@@ -800,275 +774,89 @@ export function AgentSettings({
                               ))}
                             </SelectContent>
                           </Select>
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p className="text-xs text-muted-foreground mt-1.5"> {/* Reduced margin */}
                             Connect a knowledge base to provide your agent with specific information
                           </p>
                         </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20 rounded-lg p-5 border border-rose-100 dark:border-rose-900">
-                      <h3 className="text-base font-medium mb-3 flex items-center gap-2">
-                        <Mic className="h-4 w-4 text-rose-600 dark:text-rose-400" /> 
-                        Transcription Settings
-                      </h3>
-                      
-                      <div className="space-y-4">
+
+                        {/* Background Sound Selection */}
                         <div>
-                          <Label className="mb-2 block text-sm">Transcription Provider</Label>
-                          <Select onValueChange={setTranscriptionProvider} value={transcriptionProvider}>
-                            <SelectTrigger className="rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                              <SelectValue placeholder="Select transcription provider" />
+                          <Label className="mb-1.5 block text-sm text-muted-foreground">Background Sound</Label> {/* Reduced margin */}
+                          <Select onValueChange={(value: "off" | "office" | "cafe" | "nature") => setBackgroundSound(value)} value={backgroundSound}>
+                            <SelectTrigger className="rounded-md bg-background border-border h-9"> {/* Reduced height */}
+                              <SelectValue placeholder="Select background sound" />
                             </SelectTrigger>
                             <SelectContent>
-                              {transcriptionProviders.map((provider) => (
-                                <SelectItem key={provider.id} value={provider.id}>
-                                  {provider.name}
+                              {backgroundSoundOptions.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>
+                                  {option.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
                         
-                        <div className="flex items-center space-x-2">
-                          <Switch 
-                            id="disable-partial-transcripts" 
-                            checked={disablePartialTranscripts} 
-                            onCheckedChange={setDisablePartialTranscripts}
-                          />
-                          <Label htmlFor="disable-partial-transcripts">Disable partial transcripts</Label>
-                        </div>
+                        {/* Background Denoising Switch Removed */}
                       </div>
                     </div>
                   </div>
                 </div>
-              </TabsContent>
+              {/* </TabsContent> */} {/* This line is commented out/removed */}
               
-              <TabsContent value="model" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 rounded-lg p-5 border border-indigo-100 dark:border-indigo-900">
-                    <h3 className="text-base font-medium mb-4 flex items-center gap-2">
-                      <Brain className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> 
-                      Model Configuration
-                    </h3>
-                    
-                    <div className="space-y-5">
-                      <div>
-                        <Label className="mb-2 block text-sm">Model Provider</Label>
-                        <Select onValueChange={setModelProvider} value={modelProvider}>
-                          <SelectTrigger className="rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                            <SelectValue placeholder="Select model provider" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {modelProviders.map((provider) => (
-                              <SelectItem key={provider.id} value={provider.id}>
-                                {provider.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div>
-                        <Label className="mb-2 block text-sm">Model Name</Label>
-                        <Input 
-                          placeholder="e.g., gpt-4o, claude-3-opus"
-                          value={model}
-                          onChange={(e) => setModel(e.target.value)}
-                          className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                        />
-                      </div>
-                      
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <Label className="text-sm">Temperature</Label>
-                          <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">{temperature.toFixed(1)}</span>
-                        </div>
-                        <Slider
-                          min={0}
-                          max={1}
-                          step={0.1}
-                          value={[temperature]}
-                          onValueChange={(values) => setTemperature(values[0])}
-                        />
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>More deterministic</span>
-                          <span>More creative</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Switch 
-                          id="emotion-recognition" 
-                          checked={emotionRecognitionEnabled} 
-                          onCheckedChange={setEmotionRecognitionEnabled}
-                        />
-                        <Label htmlFor="emotion-recognition">Enable emotion recognition</Label>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
-                      <h3 className="text-base font-medium mb-4">Model Capabilities</h3>
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-md">
-                          <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="text-sm text-gray-700 dark:text-gray-300">
-                            <p className="font-medium">Knowledge Augmentation</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              This agent can access knowledge bases to provide accurate and up-to-date information.
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-950/30 rounded-md">
-                          <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-full">
-                            <Info className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                          </div>
-                          <div className="text-sm text-gray-700 dark:text-gray-300">
-                            <p className="font-medium">Natural Conversations</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Our AI models are designed to handle natural, flowing conversations with context awareness.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
+              {/* AI Model Tab Content Removed (If it was here, ensure it's handled or noted if removed previously) */}
 
-              <TabsContent value="message" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 rounded-lg p-5 border border-indigo-100 dark:border-indigo-900">
-                    <h3 className="text-base font-medium mb-4 flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> 
-                      First Message
-                    </h3>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="mb-2 block text-sm">Agent's First Message</Label>
-                        <Textarea 
-                          placeholder="Hello! How can I help you today?"
-                          value={firstMessage}
-                          onChange={(e) => setFirstMessage(e.target.value)}
-                          className="min-h-24 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label className="mb-2 block text-sm">Who speaks first?</Label>
-                        <Select 
-                          value={firstMessageMode} 
-                          onValueChange={(value: "assistant-speaks-first" | "user-speaks-first") => setFirstMessageMode(value)}
-                        >
-                          <SelectTrigger className="rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                            <SelectValue placeholder="Select who speaks first" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="assistant-speaks-first">Assistant speaks first</SelectItem>
-                            <SelectItem value="user-speaks-first">User speaks first</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg p-5 border border-amber-100 dark:border-amber-900">
-                    <h3 className="text-base font-medium mb-4 flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-amber-600 dark:text-amber-400" /> 
-                      End Call Messages
-                    </h3>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="mb-2 block text-sm">End Call Message</Label>
-                        <Input 
-                          placeholder="Thank you for your time, goodbye!"
-                          value={endCallMessage}
-                          onChange={(e) => setEndCallMessage(e.target.value)}
-                          className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label className="mb-2 block text-sm">Silence Timeout Message</Label>
-                        <Input 
-                          placeholder="I haven't heard from you in a while..."
-                          value={silenceTimeoutMessage}
-                          onChange={(e) => setSilenceTimeoutMessage(e.target.value)}
-                          className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label className="mb-2 block text-sm">End Call Trigger Phrases</Label>
-                        <Textarea 
-                          placeholder="goodbye, end call, hang up"
-                          value={endCallPhrasesText}
-                          onChange={(e) => setEndCallPhrasesText(e.target.value)}
-                          className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                        />
-                        <p className="text-xs text-gray-500 mt-2">
-                          Enter phrases separated by commas. When the user says any of these phrases, the call will end automatically.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
+              {/* Messaging Tab Content Removed */}
               
-              <TabsContent value="behavior" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-lg p-5 border border-blue-100 dark:border-blue-900">
-                    <h3 className="text-base font-medium mb-4 flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" /> 
+              {/* Call Behavior Section */}
+              {/* <TabsContent value="behavior" className="mt-0"> */} {/* This line is commented out/removed */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"> {/* Reduced gap */}
+                  {/* Card 6: Call Timing */}
+                  <div className="bg-card text-card-foreground rounded-lg p-4 border border-border shadow-sm"> {/* Reduced padding */}
+                    <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-foreground"> {/* Reduced margin */}
+                      <Clock className="h-4 w-4 text-muted-foreground" /> 
                       Call Timing
                     </h3>
                     
-                    <div className="space-y-5">
+                    <div className="space-y-4"> {/* Reduced spacing */}
                       <div>
-                        <Label className="mb-2 block text-sm">Maximum Call Duration (seconds)</Label>
+                        <Label className="mb-1.5 block text-sm text-muted-foreground">Maximum Call Duration (seconds)</Label> {/* Reduced margin */}
                         <Input 
                           type="number" 
                           min={60} 
                           max={3600} 
                           value={maxDurationSeconds} 
                           onChange={(e) => setMaxDurationSeconds(parseInt(e.target.value))} 
-                          className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                          className="rounded-md border-border bg-background h-9" /* Reduced height */
                         />
                       </div>
                       
                       <div>
-                        <Label className="mb-2 block text-sm">Silence Timeout (seconds)</Label>
+                        <Label className="mb-1.5 block text-sm text-muted-foreground">Silence Timeout (seconds)</Label> {/* Reduced margin */}
                         <Input 
                           type="number" 
                           min={5} 
                           max={60} 
                           value={silenceTimeoutSeconds} 
                           onChange={(e) => setSilenceTimeoutSeconds(parseInt(e.target.value))} 
-                          className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                          className="rounded-md border-border bg-background h-9" /* Reduced height */
                         />
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-muted-foreground mt-1.5"> {/* Reduced margin */}
                           How long to wait in silence before ending the call
                         </p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-lg p-5 border border-emerald-100 dark:border-emerald-900">
-                    <h3 className="text-base font-medium mb-4 flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> 
+                  {/* Card 7: Speaking Behavior */}
+                  <div className="bg-card text-card-foreground rounded-lg p-4 border border-border shadow-sm"> {/* Reduced padding */}
+                    <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-foreground"> {/* Reduced margin */}
+                      <MessageSquare className="h-4 w-4 text-muted-foreground" /> 
                       Speaking Behavior
                     </h3>
                     
-                    <div className="space-y-5">
+                    <div className="space-y-4"> {/* Reduced spacing */}
                       <div>
-                        <Label className="mb-2 block text-sm">Start Speaking Delay (seconds)</Label>
+                        <Label className="mb-1.5 block text-sm text-muted-foreground">Start Speaking Delay (seconds)</Label> {/* Reduced margin */}
                         <Input 
                           type="number" 
                           min={0} 
@@ -1076,108 +864,64 @@ export function AgentSettings({
                           step={0.1}
                           value={startSpeakingDelay} 
                           onChange={(e) => setStartSpeakingDelay(parseFloat(e.target.value))} 
-                          className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                          className="rounded-md border-border bg-background h-9" /* Reduced height */
                         />
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-muted-foreground mt-1.5"> {/* Reduced margin */}
                           How long to pause before the agent starts speaking
                         </p>
                       </div>
                       
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2"> {/* Reduced spacing */}
                         <Switch 
                           id="smart-endpointing" 
                           checked={smartEndpointing} 
                           onCheckedChange={setSmartEndpointing}
+                          className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-input" /* Adjusted switch style */
                         />
-                        <Label htmlFor="smart-endpointing">Enable smart endpointing</Label>
+                        <Label htmlFor="smart-endpointing" className="text-sm text-muted-foreground">Enable smart endpointing</Label> 
                       </div>
                       
                       <div>
-                        <Label className="mb-2 block text-sm">Acknowledgement Phrases</Label>
+                        <Label className="mb-1.5 block text-sm text-muted-foreground">Acknowledgement Phrases</Label> {/* Reduced margin */}
                         <Textarea 
                           placeholder="I understand, I see, got it"
                           value={acknowledgementPhrasesText}
                           onChange={(e) => setAcknowledgementPhrasesText(e.target.value)}
-                          className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                          className="rounded-md border-border bg-background min-h-[60px]" /* Reduced min-height */
                         />
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-muted-foreground mt-1.5"> {/* Reduced margin */}
                           Enter phrases separated by commas. These phrases are used to acknowledge user input.
                         </p>
                       </div>
                       
                       <div>
-                        <Label className="mb-2 block text-sm">Interruption Phrases</Label>
+                        <Label className="mb-1.5 block text-sm text-muted-foreground">Interruption Phrases</Label> {/* Reduced margin */}
                         <Textarea 
                           placeholder="stop, wait, hold on"
                           value={interruptionPhrasesText}
                           onChange={(e) => setInterruptionPhrasesText(e.target.value)}
-                          className="rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                          className="rounded-md border-border bg-background min-h-[60px]" /* Reduced min-height */
                         />
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-muted-foreground mt-1.5"> {/* Reduced margin */}
                           Enter phrases separated by commas. When the user says any of these phrases, the agent will stop speaking.
                         </p>
                       </div>
                     </div>
                   </div>
                 </div>
-              </TabsContent>
+              {/* </TabsContent> */} {/* This line is commented out/removed */}
               
-              <TabsContent value="advanced" className="mt-0">
-                <div className="space-y-6">
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="transcription-advanced" className="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
-                      <AccordionTrigger className="text-base font-medium px-4">Transcription Advanced Settings</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4 px-4 pb-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="utterance-silence-threshold" className="text-sm">End Utterance Silence Threshold (seconds)</Label>
-                          <Input 
-                            id="utterance-silence-threshold"
-                            type="number" 
-                            min={0.1} 
-                            max={2} 
-                            step={0.1}
-                            value={endUtteranceSilenceThreshold} 
-                            onChange={(e) => setEndUtteranceSilenceThreshold(parseFloat(e.target.value))} 
-                            className="rounded-lg border-gray-200 dark:border-gray-700"
-                          />
-                          <p className="text-xs text-gray-500">
-                            How much silence is needed before considering an utterance complete
-                          </p>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                    
-                    <AccordionItem value="voice-output-advanced" className="border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
-                      <AccordionTrigger className="text-base font-medium px-4">Voice Output Advanced Settings</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4 px-4 pb-4">
-                        <p className="text-sm text-gray-500">
-                          Advanced voice configuration options will be available in a future update
-                        </p>
-                      </AccordionContent>
-                    </AccordionItem>
-                    
-                    <AccordionItem value="model-advanced" className="border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <AccordionTrigger className="text-base font-medium px-4">Model Advanced Settings</AccordionTrigger>
-                      <AccordionContent className="space-y-4 pt-4 px-4 pb-4">
-                        <p className="text-sm text-gray-500">
-                          Advanced model configuration options will be available in a future update
-                        </p>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </div>
-              </TabsContent>
-            </div>
-          </Tabs>
+              {/* Advanced Tab Content Removed */}
+          </div>
           
-          <DialogFooter className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex flex-row justify-end gap-2">
+          <DialogFooter className="p-3 border-t border-border bg-muted/40 flex flex-row justify-end gap-2"> {/* Reduced padding */}
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button 
               onClick={handleSave} 
               disabled={isLoading}
-              className="bg-gradient-to-r from-violet-500 to-indigo-600 text-white hover:from-violet-600 hover:to-indigo-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/90" /* Standard primary button */
             >
               {isLoading ? "Saving..." : "Save Settings"}
             </Button>

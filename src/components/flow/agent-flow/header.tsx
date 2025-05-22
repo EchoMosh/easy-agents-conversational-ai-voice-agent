@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, PhoneCall, Settings, Loader } from "lucide-react";
+import { ArrowLeft, Settings, Loader, PanelLeft, MoreVertical, Rocket, History, Copy } from "lucide-react"; 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useSidebar } from "@/components/ui/sidebar";
 import { AgentSettings } from "@/components/agents/flow/agent-settings";
 import { Agent } from "@/types/agent";
 import { useEffect, useState } from "react";
@@ -13,6 +20,9 @@ import {
 import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
 import { VoiceCallDialog } from "@/components/agents/voice-call/voice-call-dialog";
 import { CallOptionDialog } from "@/components/agents/voice-call/components/call-option-dialog";
+import { TestAgentDialog } from "@/components/agents/test-agent-dialog";
+import { LaunchAgentDialog } from "@/components/agents/launch-agent-dialog";
+import { TestAgentButton } from "@/components/agents/test-agent-button";
 import { useToast } from "@/hooks/use-toast";
 import { FlowData, FlowNode } from "@/types/agent-types";
 import { AIVoiceLoader } from "@/components/agents/ai-voice-loader";
@@ -29,13 +39,16 @@ interface HeaderProps {
 }
 
 export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(true); // Default to true for visual consistency during dev if needed
   const [showTrainingPopup, setShowTrainingPopup] = useState(false);
   const [showVoiceCallDialog, setShowVoiceCallDialog] = useState(false);
   const [showCallOptions, setShowCallOptions] = useState(false);
+  const [showTestAgentDialog, setShowTestAgentDialog] = useState<boolean>(false);
+  const [showLaunchAgentDialog, setShowLaunchAgentDialog] = useState(false);
   const [isUpdatingAgent, setIsUpdatingAgent] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
+  const { setOpen } = useSidebar();
 
   const findFirstMessage = (flowData: FlowData): string => {
     if (
@@ -267,108 +280,136 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
     <>
       {isUpdatingAgent && <AIVoiceLoader />}
 
-      <div className="relative h-16 w-full bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl flex items-center px-8 z-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
-        <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/30 to-white/60 dark:from-gray-900/60 dark:via-gray-800/30 dark:to-gray-900/60 pointer-events-none" />
-
-        <div className="flex items-center gap-6 relative">
+      {/* Modern elevated header with soft shadow */}
+      <div className="relative h-auto min-h-16 w-full bg-white dark:bg-slate-900 flex items-center px-6 py-3 z-50 border-b border-gray-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+        <div className="flex-1 flex items-center gap-3.5"> 
           <Button
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="hover:bg-gray-900/5 dark:hover:bg-white/5 transition-all duration-300 rounded-full"
+            className="h-9 w-9 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <ArrowLeft className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+            <ArrowLeft className="h-[18px] w-[18px] text-gray-700 dark:text-gray-300" />
           </Button>
           <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <h1 className="font-medium text-gray-900 dark:text-white">
+            <div className="flex items-center gap-2.5">
+              <h1 className="font-semibold text-lg text-slate-800 dark:text-slate-100">
                 {agent.name || "Unnamed Agent"}
               </h1>
-              <TooltipProvider>
+              <TooltipProvider delayDuration={300}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 flex items-center gap-1 cursor-help">
-                      <span className="text-gray-500 dark:text-gray-400">
-                        ID:
-                      </span>
-                      <span className="font-mono text-xs">
-                        {agent.id.substring(0, 8)}...
-                      </span>
+                    <div className="relative flex items-center">
+                      <div
+                        className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                          isConnected ? "bg-emerald-500" : "bg-red-500"
+                        } ring-2 ring-white dark:ring-slate-900`} 
+                      />
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p className="font-mono text-xs">{agent.id}</p>
+                  <TooltipContent side="bottom" className="text-xs">
+                    <p>Status: {isConnected ? "Active" : "Disconnected"}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-              {agent.role ? agent.role.replace("_", " ") : "No Role"}
-            </p>
+            {/* Agent ID Chip - Moved here, replacing role */}
+            {agent.id && (
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(agent.id);
+                  toast({
+                    title: "Copied to clipboard!",
+                    description: `Agent ID: ${agent.id}`,
+                  });
+                }}
+                className="mt-0.5 flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95 group"
+                aria-label="Copy Agent ID"
+              >
+                <span className="font-mono truncate max-w-[120px] group-hover:max-w-[250px] transition-all duration-300">
+                  {agent.id}
+                </span>
+                <Copy className="h-2.5 w-2.5 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 relative ml-auto">
-          <AgentSettings
-            agentId={agent.id}
-            currentVoice={agent.voice_id || undefined}
-            currentLanguage={agent.language}
-            onUpdateSettings={onUpdateSettings}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full hover:bg-gray-900/5 dark:hover:bg-white/5"
-            >
-              <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-            </Button>
-          </AgentSettings>
-
+        {/* Right-aligned action buttons with visual hierarchy */}
+        <div className="flex items-center gap-3 ml-auto">
+          <TestAgentButton 
+            onClick={() => {
+              console.log("Test Agent button clicked");
+              setShowTestAgentDialog(true);
+            }} 
+          />
+          
           <Button
-            variant="secondary"
-            className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300 font-medium"
-            onClick={handleUpdateAgent}
-            disabled={isUpdatingAgent}
+            variant="default"
+            className="rounded-full px-4 py-2 h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow transition-all" 
+            onClick={() => setShowLaunchAgentDialog(true)}
           >
-            {isUpdatingAgent ? (
-              <>
-                <Loader className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <PhoneCall className="h-4 w-4 mr-2" />
-                Call Me
-              </>
-            )}
+            <Rocket className="h-3.5 w-3.5 mr-1.5" />
+            <span className="text-sm font-medium">Launch</span>
           </Button>
 
-          <Button
-            className="bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300"
-            onClick={() => setShowTrainingPopup(true)}
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Train Agent
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <MoreVertical className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                <span className="sr-only">More options</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[180px] p-1.5 rounded-lg border-slate-200 dark:border-slate-700 shadow-lg">
+              <AgentSettings
+                agentId={agent.id}
+                currentVoice={agent.voice_id || undefined}
+                currentLanguage={agent.language}
+                onUpdateSettings={onUpdateSettings}
+              >
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  <Settings className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <span className="text-slate-700 dark:text-slate-300">Settings</span>
+                </DropdownMenuItem>
+              </AgentSettings>
+              
+              <DropdownMenuItem 
+                className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                onSelect={() => {
+                  console.log("View analytics requested");
+                }}
+              >
+                <svg className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 3v18h18"></path>
+                  <path d="M18 17V9"></path>
+                  <path d="M13 17V5"></path>
+                  <path d="M8 17v-3"></path>
+                </svg>
+                <span className="text-slate-700 dark:text-slate-300">View Analytics</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                onSelect={() => {
+                  console.log("View conversation history requested");
+                }}
+              >
+                <History className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" />
+                <span className="text-slate-700 dark:text-slate-300">Conversation Logs</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="absolute top-16 right-8 z-50 p-3">
-              <div
-                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 shadow-lg ${
-                  isConnected ? "bg-green-500" : "bg-red-500"
-                }`}
-              />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{isConnected ? "Connected" : "Disconnected"}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {/* TooltipProvider for connection status is now integrated with the agent title */}
 
       <AgentTrainingPopup
         agent={agent}
@@ -385,6 +426,18 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
       <CallOptionDialog
         open={showCallOptions}
         onOpenChange={setShowCallOptions}
+        agent={agent}
+      />
+      
+      <TestAgentDialog
+        open={showTestAgentDialog}
+        onOpenChange={setShowTestAgentDialog}
+        agent={agent}
+      />
+      
+      <LaunchAgentDialog
+        open={showLaunchAgentDialog}
+        onOpenChange={setShowLaunchAgentDialog}
         agent={agent}
       />
     </>

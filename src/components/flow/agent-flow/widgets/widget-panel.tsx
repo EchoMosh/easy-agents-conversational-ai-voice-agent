@@ -3,15 +3,18 @@ import { useRef } from 'react';
 import { Panel } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { widgets, WidgetDefinition } from './widget-definitions';
+// Remove direct import of widgets, WidgetDefinition type can still be imported if it's identical
+// or use a more generic one if they diverge significantly. For now, assuming structure is same.
+import { WidgetDefinition } from './widget-definitions'; 
 
 interface WidgetPanelProps {
   showWidgets: boolean;
   setShowWidgets: (show: boolean) => void;
   onDragStart: (event: React.DragEvent, nodeType: string) => void;
+  availableWidgets: WidgetDefinition[]; // Add availableWidgets prop
 }
 
-export function WidgetPanel({ showWidgets, setShowWidgets, onDragStart }: WidgetPanelProps) {
+export function WidgetPanel({ showWidgets, setShowWidgets, onDragStart, availableWidgets }: WidgetPanelProps) {
   const widgetButtonRef = useRef<HTMLButtonElement>(null);
 
   const toggleWidgetPanel = () => {
@@ -33,7 +36,7 @@ export function WidgetPanel({ showWidgets, setShowWidgets, onDragStart }: Widget
             className="widget-panel absolute bottom-14 left-0 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 p-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] space-y-3 min-w-[180px] border border-white/20"
           >
             <TooltipProvider>
-              {widgets.map((widget) => (
+              {availableWidgets.map((widget) => ( // Use availableWidgets prop
                 <Tooltip key={widget.type}>
                   <TooltipTrigger asChild>
                     <div

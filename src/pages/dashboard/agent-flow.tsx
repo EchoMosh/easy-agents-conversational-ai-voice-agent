@@ -396,7 +396,8 @@ export default function AgentFlowPage() {
 
   return (
     <DragProvider>
-      <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+      {/* Temporarily remove background from this container to test backdrop-blur on Header */}
+      <div className="h-screen flex flex-col"> 
         <div className="flex justify-between items-center">
           <Header 
             agent={agent}
@@ -405,7 +406,8 @@ export default function AgentFlowPage() {
           />
         </div>
         
-        <div className="flex flex-col flex-1">
+        {/* Ensure this container is also transparent for backdrop-blur to work on nodes */}
+        <div className="flex flex-col flex-1 bg-transparent"> 
           <ReactFlowProvider>
             <Flow
               initialNodes={flowData.nodes || []}

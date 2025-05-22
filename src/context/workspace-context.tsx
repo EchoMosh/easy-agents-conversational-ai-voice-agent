@@ -23,6 +23,7 @@ interface WorkspaceContextType {
   workspaces: Workspace[];
   isLoading: boolean;
   isWorkspaceReady: boolean; // Add a flag that other components can check
+  hasLoadedWorkspaceOnce: boolean; // To track initial full load
   switchWorkspace: (workspace: Workspace) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
   createDefaultWorkspace: (
@@ -37,11 +38,14 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
 );
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
-    null
+  const cachedWorkspace = localStorage.getItem('cachedWorkspace');
+  const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
+    cachedWorkspace ? JSON.parse(cachedWorkspace) : null
   );
+  const [previousWorkspace, setPreviousWorkspace] = useState<Workspace | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadedWorkspaceOnce, setHasLoadedWorkspaceOnce] = useState(false); // New state
   const [creationError, setCreationError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -52,17 +56,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   // Register the workspace loading state
   useEffect(() => {
-    // Register the loading state with HIGH priority
-    registerLoadingState("workspace", isLoading, LoadingPriority.HIGH);
+    // Register the loading state with dynamic priority
+    const priority = hasLoadedWorkspaceOnce ? LoadingPriority.MEDIUM : LoadingPriority.HIGH;
+    registerLoadingState("workspace", isLoading, priority);
 
     // Log the current loading state for debugging
-    console.log(`Workspace loading state: ${isLoading ? "loading" : "loaded"}`);
+    console.log(`Workspace loading state: ${isLoading ? "loading" : "loaded"} with priority: ${priority}`);
 
     // Clean up on unmount
     return () => {
       unregisterLoadingState("workspace");
     };
-  }, [isLoading, registerLoadingState, unregisterLoadingState]);
+  }, [isLoading, registerLoadingState, unregisterLoadingState, hasLoadedWorkspaceOnce]);
 
   const fetchWorkspaces = async (retryCount = 0, maxRetries = 3) => {
     try {
@@ -167,9 +172,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           (w) => w.id === profile.current_workspace_id
         );
         if (current) {
-          setCurrentWorkspace(current);
+          setPreviousWorkspace(activeWorkspace);
+          setActiveWorkspace(current);
+          if (current) {
+            setHasLoadedWorkspaceOnce(true); // Set flag
+            localStorage.setItem('cachedWorkspace', JSON.stringify(current)); // Cache workspace
+          }
         } else if (mappedWorkspaces.length > 0) {
-          setCurrentWorkspace(mappedWorkspaces[0]);
+          setPreviousWorkspace(activeWorkspace);
+          setActiveWorkspace(mappedWorkspaces[0]);
+          if (mappedWorkspaces[0]) {
+            setHasLoadedWorkspaceOnce(true); // Set flag
+            localStorage.setItem('cachedWorkspace', JSON.stringify(mappedWorkspaces[0])); // Cache workspace
+          }
           // Update the current workspace if it's not set
           await supabase
             .from("profiles")
@@ -177,7 +192,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             .eq("id", session.user.id);
         }
       } else if (mappedWorkspaces.length > 0) {
-        setCurrentWorkspace(mappedWorkspaces[0]);
+        setPreviousWorkspace(activeWorkspace);
+        setActiveWorkspace(mappedWorkspaces[0]);
+        if (mappedWorkspaces[0]) {
+          setHasLoadedWorkspaceOnce(true); // Set flag
+          localStorage.setItem('cachedWorkspace', JSON.stringify(mappedWorkspaces[0])); // Cache workspace
+        }
         // Set the first workspace as current if none is set
         await supabase
           .from("profiles")
@@ -298,7 +318,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       // Update local state
       setWorkspaces((prev) => [...prev, newWorkspace]);
-      setCurrentWorkspace(newWorkspace);
+      setPreviousWorkspace(activeWorkspace);
+      setActiveWorkspace(newWorkspace);
+      if (newWorkspace) {
+        localStorage.setItem('cachedWorkspace', JSON.stringify(newWorkspace)); // Cache new workspace
+      }
 
       toast({
         title: "Workspace created",
@@ -329,7 +353,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      setCurrentWorkspace(workspace);
+      setPreviousWorkspace(activeWorkspace);
+      setActiveWorkspace(workspace);
+      if (workspace) {
+        localStorage.setItem('cachedWorkspace', JSON.stringify(workspace)); // Cache switched workspace
+      }
 
       toast({
         title: "Workspace switched",
@@ -346,37 +374,84 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   };
 
   // Custom hook to check if workspace is ready
-  const isWorkspaceReady = Boolean(currentWorkspace?.id);
+  const isWorkspaceReady = Boolean(activeWorkspace?.id || previousWorkspace?.id);
 
   // Initialize workspace loading when the app starts
   useEffect(() => {
     // Clear any previous redirect attempts when mounting
     localStorage.removeItem("workspaceRedirectAttempt");
 
-    fetchWorkspaces();
+    // Keep track of last auth event time to prevent duplicates
+    let lastAuthEventTime = 0;
+    const MIN_EVENT_INTERVAL = 2000; // 2 seconds minimum between events
+    let isAuthenticated = !!activeWorkspace; // Initialize based on cached workspace
 
-    // Set up a listener for authentication changes to reload workspace if needed
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      const now = Date.now();
+      console.log(`[Auth Debug] Auth event: ${event}, session: ${!!session}, time since last: ${now - lastAuthEventTime}ms, isAuthenticated: ${isAuthenticated}`);
+
       if (event === "SIGNED_IN") {
-        console.log("User signed in, fetching workspaces...");
-        fetchWorkspaces();
+        if (session && (now - lastAuthEventTime > MIN_EVENT_INTERVAL || !isAuthenticated)) {
+          console.log("User signed in (genuine sign-in event or initial load), fetching workspaces...");
+          isAuthenticated = true;
+          fetchWorkspaces();
+        } else if (session && isAuthenticated) {
+          console.log("Ignoring likely token refresh or duplicate SIGNED_IN event (already authenticated).");
+        } else if (!session) {
+          console.log("SIGNED_IN event but no session, likely an error or race condition.");
+        }
+      } else if (event === "TOKEN_REFRESHED") {
+        console.log("Token refreshed - maintaining current workspace state. Session:", !!session);
+        // Ensure isAuthenticated is true if we have a session
+        if (session) isAuthenticated = true;
+        // Do NOT fetch workspaces again
       } else if (event === "SIGNED_OUT") {
         console.log("User signed out, clearing workspace state");
-        setCurrentWorkspace(null);
+        isAuthenticated = false;
+        localStorage.removeItem('cachedWorkspace');
+        setPreviousWorkspace(null);
+        setActiveWorkspace(null);
         setWorkspaces([]);
+        setHasLoadedWorkspaceOnce(false); // Reset this on sign out
       }
+      lastAuthEventTime = now;
     });
+
+    // Initial fetch - only if not already loading and no active workspace from cache
+    // The `isLoading` check here might be tricky due to initial state `true`.
+    // `fetchWorkspaces` itself sets `isLoading = true` at the start.
+    // The primary trigger for initial fetch should be the SIGNED_IN event.
+    // However, we also need to handle the case where a session might already exist when the provider mounts.
+    // Let's check session on mount and fetch if a session exists and no workspace is cached,
+    // or if the auth listener fires SIGNED_IN.
+    const checkSessionAndFetch = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && !activeWorkspace) { // If session exists and no workspace from cache
+        console.log("Session exists on mount, no cached workspace, fetching workspaces...");
+        isAuthenticated = true; // Assume authenticated if session exists
+        fetchWorkspaces();
+      } else if (activeWorkspace) { // If workspace from cache
+        console.log("Using cached workspace initially.");
+        setHasLoadedWorkspaceOnce(true);
+        setIsLoading(false);
+      } else { // No session, no cache
+        setIsLoading(false); // Not loading if no session and no cache
+      }
+    };
+    checkSessionAndFetch();
+
 
     return () => {
       authListener?.subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Keep empty dependency array for single setup/cleanup
 
   const value = {
-    currentWorkspace,
+    currentWorkspace: activeWorkspace || previousWorkspace, // Use fallback
     workspaces,
     isLoading,
     isWorkspaceReady,
+    hasLoadedWorkspaceOnce, // Expose new flag
     switchWorkspace,
     refreshWorkspaces: useCallback(() => fetchWorkspaces(0, 3), []),
     createDefaultWorkspace,

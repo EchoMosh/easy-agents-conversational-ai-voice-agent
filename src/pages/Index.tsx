@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import HomePage from "./HomePage"; // Import the new HomePage component
 
 const Index = () => {
   const navigate = useNavigate();
@@ -61,8 +62,10 @@ const Index = () => {
             navigate("/onboarding");
           }
         } else {
-          console.log("Index: No session, navigating to auth");
-          navigate("/auth");
+          console.log("Index: No session, showing HomePage");
+          // Instead of navigating to /auth, we will allow rendering HomePage
+          // We set isLoading to false here so the HomePage can be rendered.
+          setIsLoading(false); 
         }
         
         return () => {
@@ -71,46 +74,46 @@ const Index = () => {
       } catch (err) {
         console.error("Auth check error:", err);
         setError(err instanceof Error ? err : new Error(String(err)));
-        // Still navigate to auth on error to prevent getting stuck
-        navigate("/auth");
-      } finally {
+        // If there's an error, we might still want to show HomePage or a generic error on HomePage itself.
+        // For now, let's keep the error display logic, but ensure isLoading is false.
         setIsLoading(false);
       }
+      // Removed finally block as setIsLoading(false) is handled in try/catch/else
     };
     
     checkUser();
   }, [navigate]);
 
-  // If there's an error, display it
+  // If there's an error, display it (this could be enhanced to be part of HomePage or a global error boundary)
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="p-8 rounded-lg border border-red-200 bg-red-50 text-red-800 max-w-md">
           <h2 className="text-xl font-bold mb-4">Authentication Error</h2>
           <p className="mb-4">{error.message}</p>
-          <div className="mt-4">
-            <button
-              onClick={() => navigate("/auth")}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Go to Login
-            </button>
-          </div>
+          <p className="mb-4">You can still view the <a href="/" className="underline">Homepage</a> or try to <a href="/auth" className="underline">Login</a> again.</p>
+          {/* Optionally, render HomePage even on some errors, or a specific error view within HomePage layout */}
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-white">
-      {isLoading && (
+  // If still loading, show spinner
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Checking authentication...</p>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+
+  // If not loading and no error, and no session (implicitly, due to logic above), render HomePage
+  // The logic for navigating to dashboard/onboarding if a session exists remains,
+  // so this return is effectively for the "no session" case.
+  return <HomePage />;
 };
 
 export default Index;

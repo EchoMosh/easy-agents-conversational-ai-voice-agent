@@ -121,4 +121,7 @@ export interface Agent {
   last_trained_at?: string;
   training_webhook_url?: string;
   training_examples?: TrainingExample[];
+
+  // Mode agent was created in
+  creation_mode?: 'stable' | 'beta';
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Trash2 } from "lucide-react";
 import { widgets } from "./widgets/widget-definitions";
+import { Node as FlowNode } from "@xyflow/react"; // Rename Node to FlowNode to avoid naming conflict with DOM Node
 
 interface CustomContextMenuProps {
   rightClickedNodeId: string | null;
@@ -8,6 +9,7 @@ interface CustomContextMenuProps {
   onAddNode: (nodeType: string) => void;
   onDeleteNode: () => void;
   onClose: () => void;
+  nodes: FlowNode[]; // Use renamed FlowNode type
 }
 
 export function CustomContextMenu({
@@ -16,9 +18,20 @@ export function CustomContextMenu({
   onAddNode,
   onDeleteNode,
   onClose,
+  nodes, // Destructure nodes
 }: CustomContextMenuProps) {
   const [isVisible, setIsVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  
+  // Check if a Start Node already exists
+  const startNodeExists = nodes.some(node => node.type === 'startNode');
+  
+  // Filter widgets if needed - for pane context menu only
+  const filteredWidgets = rightClickedNodeId 
+    ? widgets // If right-clicking on a node, show all node actions
+    : startNodeExists 
+      ? widgets.filter(widget => widget.type !== 'startNode') // If a Start Node exists and right-clicking on pane, don't show Start Node option
+      : widgets; // If no Start Node and right-clicking on pane, show all nodes
 
   // Prevent event propagation to avoid immediate closing
   const stopPropagation = (e: React.MouseEvent) => {
@@ -56,7 +69,7 @@ export function CustomContextMenu({
 
     // Add click outside listener - capture phase to ensure it runs before other handlers
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) {
         console.log("[ContextMenu] Click outside detected");
         e.preventDefault(); // Prevent other handlers from firing
         e.stopPropagation(); // Stop event bubbling
@@ -66,7 +79,7 @@ export function CustomContextMenu({
 
     // Add right-click listener to close the menu
     const handleRightClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) {
         console.log("[ContextMenu] Right-click outside detected");
         onClose();
       }
@@ -118,7 +131,7 @@ export function CustomContextMenu({
           <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">
             Add Node
           </div>
-          {widgets.map((widget) => (
+          {filteredWidgets.map((widget) => (
             <div
               key={widget.type}
               onClick={(e) => handleAddNode(widget.type, e)}

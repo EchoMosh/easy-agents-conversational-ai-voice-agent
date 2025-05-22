@@ -7,6 +7,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import App from "./App";
 import "./index.css";
 import "./styles/theme-styles.css";
+import "./styles/lightning-effects.css";
 import { Toaster } from "./components/ui/toaster";
 import { WorkspaceProvider } from "./context/workspace-context";
 import { ThemeProvider } from "./context/theme-context";
@@ -17,6 +18,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 10, // 10 minutes
+      refetchOnWindowFocus: false, // Prevent refetching on window focus
     },
   },
 });
@@ -30,8 +32,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <QueryClientProvider client={queryClient}>
         <NextThemesProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false} // Explicitly disable system preference if we want a hard default
         >
           <ThemeProvider>
             <AppLoadingProvider>

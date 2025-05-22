@@ -197,7 +197,7 @@ const AgentsPage = () => {
           <Input
             type="text"
             placeholder="Search agents..."
-            className="pl-9 w-[250px]"
+            className="pl-9 w-[250px] dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-400"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -207,14 +207,12 @@ const AgentsPage = () => {
           Create Agent
         </Button>
       </div>
-      {agentsLoading && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      )}
-      {!agentsLoading && agents && (
-        <AgentsTable agents={filteredAgents} onDelete={handleDeleteAgent} />
-      )}
+      {/* Pass agentsLoading to AgentsTable and let it handle its skeleton */}
+      <AgentsTable
+        agents={filteredAgents}
+        onDelete={handleDeleteAgent}
+        isLoading={agentsLoading}
+      />
       <Dialog
         open={isCreating}
         onOpenChange={(open) => {

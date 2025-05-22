@@ -2,7 +2,7 @@
 import { EditorContent } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { VariableSelector } from '../ai-agent-speaks/variable-selector';
-import { EditorTip } from './editor-tip';
+// import { EditorTip } from './editor-tip'; // Removed
 import { useTiptapEditor } from './use-tiptap-editor';
 import { editorStyles } from './editor-styles';
 import { Portal } from '@radix-ui/react-portal';
@@ -23,11 +23,11 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
     setShowVariableSelector(true);
     
     if (position) {
-      setSelectorPosition(position);
-    }
+    setSelectorPosition(position);
+  }
   }, []);
 
-  const { editor, showTip, insertVariable } = useTiptapEditor({
+  const { editor, insertVariable } = useTiptapEditor({ // showTip removed from destructuring
     value,
     onChange: (newValue) => {
       onChange(newValue);
@@ -98,7 +98,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         className="border rounded-md p-2 bg-white dark:bg-gray-800/50 min-h-[100px] text-sm cursor-text relative nodrag w-full"
         onClick={handleClick}
       >
-        <EditorTip show={showTip} />
+        {/* <EditorTip show={showTip} /> Removed */}
         
         <EditorContent 
           editor={editor} 

@@ -10,6 +10,10 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     allowedHosts: process.env.TEMPO === "true" ? true : undefined,
+    hmr: {
+      // Disable overlay for HMR errors to avoid showing CSS errors
+      overlay: false
+    }
   },
   plugins: [
     react(),

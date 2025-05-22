@@ -1,6 +1,13 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import { Check, Volume2, Send, X, AlertCircle } from "lucide-react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+
+// Utility function to strip HTML tags - moved outside the component
+const stripHtmlTags = (html: string): string => {
+  if (!html) return '';
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || "";
+};
+import { Check, Volume2, Send, X, AlertCircle, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +36,7 @@ interface Message {
 export function AgentTrainingPopup({
   agent,
   open,
-  onOpenChange
+  onOpenChange,
 }: AgentTrainingPopupProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState("");
@@ -44,88 +51,134 @@ export function AgentTrainingPopup({
   const { toast } = useToast();
   const initialized = useRef(false);
 
-  const findFirstMessage = (flowData: FlowData): string => {
+  const findFirstMessage = useCallback((flowData: FlowData, agentData: Agent): string => {
+    const fallbackMessage = `Hi there! I'm ${agentData.name}, your ${agentData.role.replace('_', ' ')}. How can I help you today?`;
+
     if (!flowData || !flowData.nodes || !Array.isArray(flowData.nodes) || flowData.nodes.length === 0) {
-      return `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. How can I help you today?`;
+      return fallbackMessage;
     }
 
-    const greetingNodes = flowData.nodes.filter(
+    // Prioritize StartNode for the first message in test chat
+    const startNode = flowData.nodes.find((node: FlowNode) => node.type === 'startNode');
+
+    if (startNode && startNode.data && typeof startNode.data.firstMessage === 'string') {
+      const trimmedMessage = stripHtmlTags(startNode.data.firstMessage).trim();
+      if (trimmedMessage !== '') {
+        return trimmedMessage;
+      }
+    }
+
+    // Fallback to old logic if StartNode doesn't have a message (or doesn't exist)
+    const greetingOrSpeakNodes = flowData.nodes.filter(
       (node: FlowNode) => node.type === 'greetingNode' || node.type === 'speakNode'
     );
 
-    if (greetingNodes.length === 0) {
-      return `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. How can I help you today?`;
-    }
-
-    const firstNode = greetingNodes[0];
-    if (firstNode.data) {
-      if (firstNode.type === 'greetingNode' && firstNode.data.greeting) {
-        return String(firstNode.data.greeting);
-      } else if (firstNode.type === 'speakNode' && firstNode.data.message) {
-        return String(firstNode.data.message);
-      }
-    }
-
-    return `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. How can I help you today?`;
-  };
-
-  useEffect(() => {
-    if (open && !initialized.current) {
-      setIsInitializing(true);
-      
-      try {
-        let flowData: FlowData;
-        if (typeof agent.flow === 'string') {
-          try {
-            flowData = JSON.parse(agent.flow);
-          } catch (e) {
-            console.error('Failed to parse flow data:', e);
-            flowData = { nodes: [], edges: [] };
+    if (greetingOrSpeakNodes.length > 0) {
+      const firstRelevantNode = greetingOrSpeakNodes[0];
+      if (firstRelevantNode.data) {
+        if (firstRelevantNode.type === 'greetingNode' && typeof firstRelevantNode.data.greeting === 'string') {
+          const trimmedGreeting = stripHtmlTags(firstRelevantNode.data.greeting).trim();
+          if (trimmedGreeting !== '') {
+            return trimmedGreeting;
           }
-        } else if (agent.flow) {
-          flowData = agent.flow as FlowData;
-        } else {
-          flowData = { nodes: [], edges: [] };
+        } else if (firstRelevantNode.type === 'speakNode' && typeof firstRelevantNode.data.message === 'string') {
+          const trimmedMessage = stripHtmlTags(firstRelevantNode.data.message).trim();
+          if (trimmedMessage !== '') {
+            return trimmedMessage;
+          }
         }
-        
-        const firstMessage = findFirstMessage(flowData);
-        console.log('[AgentTrainingPopup] First message from flow:', firstMessage);
-        
-        setMessages([{
-          id: "1",
-          role: "agent",
-          content: firstMessage,
-          timestamp: new Date()
-        }]);
-        
-        initialized.current = true;
-      } catch (error) {
-        console.error('[AgentTrainingPopup] Error initializing training:', error);
-        toast({
-          title: "Error",
-          description: "Failed to initialize training session",
-          variant: "destructive",
-        });
-        
-        setMessages([{
-          id: "1",
-          role: "agent",
-          content: `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. I'm here to help you with anything you need. How can I assist you today?`,
-          timestamp: new Date()
-        }]);
-      } finally {
-        setIsInitializing(false);
       }
     }
     
+    return fallbackMessage;
+  }, []);
+
+  const initializeChat = useCallback(() => {
+    setIsInitializing(true);
+    try {
+      let flowData: FlowData;
+      if (typeof agent.flow === 'string') {
+        try {
+          flowData = JSON.parse(agent.flow);
+        } catch (e) {
+          console.error('Failed to parse flow data:', e);
+          flowData = { nodes: [], edges: [] };
+        }
+      } else if (agent.flow) {
+        flowData = agent.flow as FlowData;
+      } else {
+        flowData = { nodes: [], edges: [] };
+      }
+      
+      const firstMessageContent = findFirstMessage(flowData, agent);
+      const strippedFirstMessage = stripHtmlTags(firstMessageContent).trim(); // stripHtmlTags is now defined outside
+      console.log('[AgentTrainingPopup] Determined first message:', strippedFirstMessage);
+      
+      const initialMessageId = Date.now().toString();
+
+      if (strippedFirstMessage) {
+        setMessages([{
+          id: initialMessageId,
+          role: "agent",
+          content: strippedFirstMessage,
+          timestamp: new Date()
+        }]);
+      } else {
+        setMessages([]);
+        console.log('[AgentTrainingPopup] No valid first message found, starting with empty chat for user input.');
+      }
+      initialized.current = true;
+    } catch (error) {
+      console.error('[AgentTrainingPopup] Error initializing training:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize training session",
+        variant: "destructive",
+      });
+      
+      setMessages([{
+        id: Date.now().toString(),
+        role: "agent",
+        content: `Hi there! I'm ${agent.name}, your ${agent.role.replace('_', ' ')}. I'm here to help you with anything you need. How can I assist you today?`,
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsInitializing(false);
+    }
+  }, [agent, toast, findFirstMessage]); // Removed stripHtmlTags from dependencies
+
+  useEffect(() => {
+    if (open && !initialized.current) {
+      initializeChat();
+    }
+    
     if (!open) {
+      // Reset all relevant states when dialog closes
       setShowCorrectionSlider(false);
       setCorrectionTargetId(null);
       setCorrectionInput("");
       initialized.current = false;
       setMessages([]);
+      setUserInput("");
+      setIsTyping(false);
+      setSpeakingMessageId(null);
+      setEditingMessageId(null);
     }
-  }, [open, agent]);
+  }, [open, initializeChat]);
+
+  const handleResetConversation = () => {
+    setMessages([]);
+    setUserInput("");
+    setIsTyping(false);
+    setSpeakingMessageId(null);
+    setEditingMessageId(null);
+    setCorrectionInput("");
+    setShowCorrectionSlider(false);
+    setCorrectionTargetId(null);
+    
+    initialized.current = false; // Mark as not initialized
+    initializeChat(); // Re-initialize the chat
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -347,51 +400,106 @@ export function AgentTrainingPopup({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px] md:max-w-[700px] p-0 flex flex-col h-[750px] max-h-[85vh] overflow-hidden bg-background">
-        <DialogHeader className="p-4 border-b sticky top-0 bg-background z-10">
+      {/* Further Adjusted DialogContent: narrower, more rounded (rounded-3xl) */}
+      <DialogContent className="sm:max-w-[480px] md:max-w-[520px] p-0 flex flex-col h-[700px] max-h-[80vh] overflow-hidden bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-700/60 shadow-2xl">
+        {/* Header inherits rounding */}
+        <DialogHeader className="p-4 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-inherit z-10 rounded-t-3xl">
           <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-left">{agent.name}</DialogTitle>
-              <DialogDescription className="text-left capitalize">
-                {agent.role.replace('_', ' ')}
-              </DialogDescription>
+            <div className="flex items-center">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => {
+                  onOpenChange(false);
+                  // Re-open the test agent dialog with a longer delay to prevent flickering
+                  setTimeout(() => {
+                    const testDialogEvent = new CustomEvent('reopen-test-dialog', { detail: { agentId: agent.id } });
+                    document.dispatchEvent(testDialogEvent);
+                  }, 300);
+                }} 
+                className="mr-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                title="Back to options"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left">
+                  <path d="m12 19-7-7 7-7"/>
+                  <path d="M19 12H5"/>
+                </svg>
+              </Button>
+              <div>
+                <DialogTitle className="text-left text-lg font-semibold">{agent.name}</DialogTitle>
+                <DialogDescription className="text-left capitalize text-sm text-gray-500 dark:text-gray-400">
+                  {agent.role.replace('_', ' ')}
+                </DialogDescription>
+              </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center space-x-1"> {/* Adjusted space-x for closer buttons */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleResetConversation} 
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                title="Reset Conversation"
+              >
+                <RefreshCw className="h-5 w-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => onOpenChange(false)} 
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                title="Close"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-gray-900/90">
+        {/* Message area: ensure background matches overall theme if needed, padding adjusted */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white dark:bg-gray-900">
           {isInitializing ? (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           ) : (
             <>
-              {messages.map(message => (
-                <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[60%] rounded-2xl px-4 py-2 shadow-sm relative group ${message.role === "user" ? "bg-blue-500 text-white rounded-br-none" : message.feedback === "negative" ? "bg-red-100 dark:bg-red-900 rounded-bl-none" : message.feedback === "positive" ? "bg-green-100 dark:bg-green-900 rounded-bl-none" : "bg-white dark:bg-gray-800/30 rounded-bl-none"}`}>
+              {messages.map(message => {
+                const isUser = message.role === "user";
+                // More circular bubbles: increased base rounding, adjusted tail corner rounding
+                const bubbleBaseStyle = "max-w-[75%] px-4 py-3 relative group shadow-md"; 
+                const userBubbleStyle = `bg-blue-500 text-white rounded-3xl rounded-br-lg`; 
+                const agentBaseBubbleStyle = `bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-3xl rounded-bl-lg`;
+                
+                let agentBubbleStyle = agentBaseBubbleStyle;
+                if (message.feedback === "negative") {
+                  agentBubbleStyle = `bg-red-100 dark:bg-red-800/50 text-red-700 dark:text-red-200 rounded-3xl rounded-bl-lg`;
+                } else if (message.feedback === "positive") {
+                  agentBubbleStyle = `bg-green-100 dark:bg-green-800/50 text-green-700 dark:text-green-200 rounded-3xl rounded-bl-lg`;
+                }
+
+                return (
+                <div key={message.id} className={`flex flex-col mb-2 ${isUser ? "items-end" : "items-start"}`}>
+                  <div className={`${bubbleBaseStyle} ${isUser ? userBubbleStyle : agentBubbleStyle}`}>
                     {message.role === "agent" && (
-                      <div className="absolute top-1/2 -translate-y-1/2 -right-28 flex space-x-2">
+                      <div className="absolute top-1/2 -translate-y-1/2 -right-11 flex flex-col space-y-1.5"> {/* Slightly adjusted position */}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className={`h-9 w-9 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${speakingMessageId === message.id ? "text-blue-500 dark:text-blue-400 opacity-100" : "text-gray-500 dark:text-gray-400"}`}
+                          className={`h-6 w-6 p-0 bg-white dark:bg-gray-600/80 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity ${speakingMessageId === message.id ? "text-blue-500 dark:text-blue-400 opacity-100" : "text-gray-500 dark:text-gray-400 hover:text-blue-500"}`}
                           onClick={() => playTextToSpeech(message.id, message.content)}
                           title="Listen to AI response"
                         >
-                          <Volume2 className="h-5 w-5" />
+                          <Volume2 className="h-3.5 w-3.5" /> {/* Slightly smaller icon */}
                         </Button>
                         
                         <Button
                           variant="ghost"
                           size="icon"
-                          className={`h-9 w-9 p-0 bg-white dark:bg-gray-700 rounded-full shadow-sm opacity-40 group-hover:opacity-100 transition-opacity ${message.feedback === "negative" ? "text-red-500 dark:text-red-400 opacity-100" : "text-gray-500 dark:text-gray-400"}`}
+                          className={`h-6 w-6 p-0 bg-white dark:bg-gray-600/80 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity ${message.feedback === "negative" ? "text-red-500 dark:text-red-400 opacity-100" : "text-gray-500 dark:text-gray-400 hover:text-red-500"}`}
                           onClick={() => handleOpenCorrection(message.id)}
                           title="Correct this response"
                         >
-                          <AlertCircle className="h-5 w-5" />
+                          <AlertCircle className="h-3.5 w-3.5" /> {/* Slightly smaller icon */}
                         </Button>
                       </div>
                     )}
@@ -406,14 +514,14 @@ export function AgentTrainingPopup({
                             value={correctionInput}
                             onChange={e => setCorrectionInput(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            className="min-h-[80px] text-sm border border-gray-300 dark:border-gray-700"
+                            className="min-h-[70px] text-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/80 text-gray-800 dark:text-gray-100 rounded-xl" // More rounded textarea
                             placeholder="Enter the correct response..."
                           />
                           <div className="flex justify-end space-x-2">
-                            <Button variant="ghost" size="sm" onClick={handleCancelEditing}>
+                            <Button variant="ghost" size="sm" onClick={handleCancelEditing} className="text-gray-600 dark:text-gray-300 rounded-lg">
                               Cancel
                             </Button>
-                            <Button variant="default" size="sm" onClick={handleSubmitCorrection}>
+                            <Button variant="default" size="sm" onClick={handleSubmitCorrection} className="bg-blue-500 hover:bg-blue-600 rounded-lg">
                               Submit Correction
                             </Button>
                           </div>
@@ -421,44 +529,45 @@ export function AgentTrainingPopup({
                       </div>
                     ) : (
                       <>
-                        <p className="text-lg leading-relaxed">{message.content}</p>
+                        <p className="text-sm leading-relaxed">{stripHtmlTags(message.content)}</p>
                         
                         {message.correction && (
-                          <div className="mt-2 p-2 bg-white dark:bg-gray-950 rounded border border-green-300 dark:border-green-700">
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Corrected to:</p>
-                            <p className="text-sm leading-relaxed text-green-700 dark:text-green-400">{message.correction}</p>
+                          <div className="mt-2 p-2 bg-white dark:bg-gray-700/50 rounded-xl border border-green-300 dark:border-green-600/70"> {/* More rounded */}
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Corrected to:</p>
+                            <p className="text-sm leading-relaxed text-green-700 dark:text-green-300">{message.correction}</p>
                           </div>
                         )}
-                        
-                        <div className="flex justify-end mt-1">
-                          <div className={`text-[10px] ${message.role === "user" ? "text-blue-100" : "text-gray-500 dark:text-gray-400"}`}>
-                            {new Date(message.timestamp).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit"
-                            })}
-                          </div>
-                        </div>
                       </>
                     )}
                   </div>
+                  
+                  {/* Add timestamp outside and below the bubble */}
+                  <div className={`mt-1 ${isUser ? 'mr-1' : 'ml-1'}`}>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500/80">
+                      {new Date(message.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
                 </div>
-              ))}
+              );})}
               
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="max-w-[50%] rounded-2xl px-4 py-2 bg-white dark:bg-gray-800/30 rounded-bl-none">
-                    <div className="flex space-x-1 h-5 items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
+                  <div className="max-w-[50%] rounded-3xl px-3 py-2 bg-gray-100 dark:bg-gray-700/80 rounded-bl-lg"> {/* Matched agent bubble style - more circular */}
+                    <div className="flex space-x-1.5 h-5 items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"></div>
                       <div
-                        className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"
+                        className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"
                         style={{
-                          animationDelay: "150ms"
+                          animationDelay: "200ms",
                         }}
                       ></div>
                       <div
-                        className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"
+                        className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"
                         style={{
-                          animationDelay: "300ms"
+                          animationDelay: "400ms",
                         }}
                       ></div>
                     </div>
@@ -472,10 +581,10 @@ export function AgentTrainingPopup({
         </div>
 
         {showCorrectionSlider && (
-          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-4 transition-transform duration-300 transform translate-y-0 z-20">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-medium">How should the AI have responded?</h3>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCancelCorrectionSlider}>
+          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700/80 p-4 transition-transform duration-300 transform translate-y-0 z-20 shadow-lg rounded-t-2xl"> {/* More rounded */}
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200">How should the AI have responded?</h3>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-gray-600" onClick={handleCancelCorrectionSlider}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -483,12 +592,12 @@ export function AgentTrainingPopup({
               value={correctionInput}
               onChange={e => setCorrectionInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="min-h-[100px] text-sm border border-gray-300 dark:border-gray-700 mb-3"
+              className="min-h-[80px] text-sm border border-gray-300 dark:border-gray-600 mb-3 rounded-xl bg-gray-50 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-500" // More rounded
               placeholder="Enter the correct response the AI should have given..."
               autoFocus
             />
             <div className="flex justify-end space-x-2">
-              <Button variant="ghost" size="sm" onClick={handleCancelCorrectionSlider}>
+              <Button variant="ghost" size="sm" onClick={handleCancelCorrectionSlider} className="rounded-lg text-gray-600 dark:text-gray-300"> {/* More rounded */}
                 Cancel
               </Button>
               <Button
@@ -496,6 +605,7 @@ export function AgentTrainingPopup({
                 size="sm"
                 onClick={handleSubmitCorrectionFromSlider}
                 disabled={!correctionInput.trim()}
+                className="bg-blue-500 hover:bg-blue-600 rounded-lg" // More rounded
               >
                 Submit Correction
               </Button>
@@ -503,39 +613,26 @@ export function AgentTrainingPopup({
           </div>
         )}
 
-        <div className={`p-4 border-t bg-white dark:bg-gray-950 ${showCorrectionSlider ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-200`}>
+        {/* Input area styling - more circular */}
+        <div className={`p-3 border-t border-gray-100 dark:border-gray-800 bg-inherit ${showCorrectionSlider ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-200 rounded-b-3xl`}>
           {!editingMessageId && (
-            <div className="relative flex items-center">
+            <div className="relative flex items-center gap-2">
               <Textarea
-                placeholder="Type your message..."
+                placeholder="Type a message..."
                 value={userInput}
                 onChange={e => setUserInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="min-h-[40px] h-10 max-h-[100px] resize-none pr-3 rounded-md border-gray-300 dark:border-gray-700 focus-visible:outline-none focus-visible:ring-0 text-sm py-2 shadow-sm flex-1"
+                className="min-h-[44px] h-11 max-h-[120px] resize-none pr-2 rounded-2xl border-gray-300 dark:border-gray-600/80 text-base py-2.5 shadow-sm flex-1 bg-gray-50 dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-500 placeholder:text-base focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-gray-300 dark:focus-visible:border-gray-600/80" // Input text enlarged, focus ring removed
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={!userInput.trim() || isTyping}
-                className="ml-2 h-10 py-2.5 rounded-md bg-blue-500 hover:bg-blue-600 transition-colors"
-                size="sm"
+                className="h-11 px-4 rounded-2xl bg-blue-500 hover:bg-blue-600 transition-colors flex-shrink-0 text-white font-semibold" // Changed to text button
               >
-                <Send className="h-4 w-4 mr-1" />
                 Send
               </Button>
             </div>
           )}
-          <div className="flex justify-between items-center mt-4">
-            <p className="text-xs text-gray-500">Training helps improve agent responses</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs h-8 rounded-md"
-              onClick={() => onOpenChange(false)}
-            >
-              <Check className="h-3 w-3 mr-1" />
-              Done Training
-            </Button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>

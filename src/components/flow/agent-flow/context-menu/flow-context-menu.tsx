@@ -7,12 +7,14 @@ import {
   ContextMenuSeparator,
 } from "@/components/ui/context-menu";
 import { widgets, WidgetDefinition } from "../widgets/widget-definitions";
+import { Node } from "@xyflow/react"; // Import Node type
 
 interface FlowContextMenuProps {
   children: React.ReactNode;
   rightClickedNodeId: string | null;
   onAddNode: (nodeType: string) => void;
   onDeleteNode: () => void;
+  nodes: Node[]; // Add nodes prop
 }
 
 export function FlowContextMenu({
@@ -20,11 +22,21 @@ export function FlowContextMenu({
   rightClickedNodeId,
   onAddNode,
   onDeleteNode,
+  nodes, // Destructure nodes
 }: FlowContextMenuProps) {
   console.log(
     "FlowContextMenu rendering with rightClickedNodeId:",
     rightClickedNodeId,
   );
+
+  const startNodeExists = nodes.some(node => node.type === 'startNode');
+
+  let availableWidgets = widgets;
+  // Only filter for pane context menu (no rightClickedNodeId)
+  if (!rightClickedNodeId && startNodeExists) {
+    availableWidgets = widgets.filter(widget => widget.type !== 'startNode');
+  }
+
   return (
     <ContextMenu>
       <ContextMenuTrigger
@@ -58,7 +70,7 @@ export function FlowContextMenu({
         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">
           Add Node
         </div>
-        {widgets.map((widget) => (
+        {availableWidgets.map((widget) => (
           <ContextMenuItem
             key={widget.type}
             onClick={() => onAddNode(widget.type)}

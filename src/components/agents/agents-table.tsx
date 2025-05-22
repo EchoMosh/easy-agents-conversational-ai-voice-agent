@@ -29,13 +29,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 
 interface AgentsTableProps {
   agents: Agent[];
   onDelete: (id: string) => Promise<void>;
+  isLoading?: boolean; // Add isLoading prop
 }
 
-export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
+export function AgentsTable({ agents = [], onDelete, isLoading }: AgentsTableProps) {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
   };
 
   const handleEditFlow = (agentId: string) => {
+    // Always navigate to the main flow page; AgentFlowPage will handle beta/stable rendering
     navigate(`/dashboard/agents/flow/${agentId}`);
   };
 
@@ -164,9 +167,54 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
   // Check if some but not all agents are selected
   const isSomeSelected = selectedAgents.length > 0 && selectedAgents.length < sortedAgents.length;
 
-  if (agents.length === 0) {
+  if (isLoading) {
     return (
-      <div className="text-center p-8 border rounded-lg bg-muted/20">
+      <div className="w-full relative space-y-4">
+        <div className="flex justify-between items-center mb-4">
+          {/* Placeholder for bulk actions if needed */}
+        </div>
+        <div className="rounded-md border dark:border-zinc-800 shadow-sm bg-card overflow-hidden">
+          <ScrollArea className="h-[calc(100vh-220px)]">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead className="w-[40px] pl-4">
+                    <Skeleton className="h-4 w-4" />
+                  </TableHead>
+                  <TableHead><Skeleton className="h-4 w-[80px]" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-[100px]" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-[70px]" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-[90px]" /></TableHead>
+                  <TableHead className="text-right"><Skeleton className="h-4 w-[60px] ml-auto" /></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index} className="hover:bg-muted/20 transition-colors">
+                    <TableCell className="pl-4"><Skeleton className="h-4 w-4" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-1">
+                        <Skeleton className="h-8 w-8" />
+                        <Skeleton className="h-8 w-8" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </div>
+      </div>
+    );
+  }
+
+  if (agents.length === 0 && !isLoading) { // Ensure isLoading is false for empty state
+    return (
+      <div className="text-center p-8 border dark:border-zinc-800 rounded-lg bg-muted/20">
         <h3 className="text-xl font-medium mb-2">No agents found</h3>
         <p className="text-muted-foreground mb-4">
           Create your first agent to get started
@@ -191,7 +239,7 @@ export function AgentsTable({ agents = [], onDelete }: AgentsTableProps) {
         )}
       </div>
 
-      <div className="rounded-md border shadow-sm bg-card overflow-hidden">
+      <div className="rounded-md border dark:border-zinc-800 shadow-sm bg-card overflow-hidden">
         <ScrollArea className="h-[calc(100vh-220px)]">
           <Table>
             <TableHeader>

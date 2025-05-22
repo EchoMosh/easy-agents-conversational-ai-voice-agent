@@ -1,11 +1,11 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Wand2 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowRight, Wand2, Car, Store, Construction } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { Agent } from "@/types/agent";
+import { Badge } from "@/components/ui/badge";
 
 interface TemplateStepProps {
   selectedTemplate: string;
@@ -36,7 +36,7 @@ export function TemplateStep({
   };
 
   const handleTemplateClick = () => {
-    if (selectedTemplate === '') {
+    if (selectedTemplate !== 'not_selected') {
       onTemplateSelect('not_selected', 'virtual_assistant');
     } else {
       onTemplateSelect('', 'virtual_assistant');
@@ -122,57 +122,78 @@ export function TemplateStep({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
+      className="flex flex-col h-full"
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Choose Template</h2>
-        <p className="text-muted-foreground">Start from scratch and build your own flow</p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4">
-        <Card 
-          className={`cursor-pointer transition-all duration-200 h-[140px] flex flex-col justify-center ${
-            selectedTemplate === '' ? 
-              'hover:border-blue-400 hover:shadow-md' : 
-              'ring-4 ring-blue-500 bg-blue-50 dark:bg-blue-950/30 transform scale-[1.02] shadow-lg'
+      <div className="space-y-4 p-6">
+        {/* Template Options */}
+        <div 
+          className={`border rounded-lg p-4 cursor-pointer transition-all ${
+            selectedTemplate === 'not_selected' ? 'border-2 border-[#4f85e7]' : 'border-gray-700 hover:border-gray-600'
           }`}
           onClick={handleTemplateClick}
         >
-          <CardHeader className="p-4">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Wand2 className="h-5 w-5" />
-              Start from Scratch
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Create a custom agent with your own flow
-            </CardDescription>
-          </CardHeader>
-        </Card>
+          <div className="flex items-center">
+            <div className="flex-shrink-0 mr-4 text-[#4f85e7]">
+              <Wand2 className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Start from Scratch</h3>
+              <p className="text-gray-400 mt-1">Create a custom agent with your own flow</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Car Dealership - Coming Soon */}
+        <div className="border border-gray-700 rounded-lg p-4 opacity-70">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 mr-4 text-gray-500">
+              <Car className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="flex items-center">
+                <h3 className="text-lg font-semibold text-gray-400">Car Dealership</h3>
+                <Badge className="ml-2 bg-amber-600/90 text-white border-none px-2 py-1">
+                  Coming Soon
+                </Badge>
+              </div>
+              <p className="text-gray-500 mt-1">Handles inquiries about vehicles and schedules test drives</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Retail Assistant - Coming Soon */}
+        <div className="border border-gray-700 rounded-lg p-4 opacity-70">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 mr-4 text-gray-500">
+              <Store className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="flex items-center">
+                <h3 className="text-lg font-semibold text-gray-400">Retail Assistant</h3>
+                <Badge className="ml-2 bg-amber-600/90 text-white border-none px-2 py-1">
+                  Coming Soon
+                </Badge>
+              </div>
+              <p className="text-gray-500 mt-1">Helps customers with product information and processes orders</p>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <div className="flex gap-3">
+      
+      <div className="mt-auto p-6 flex justify-end">
         <Button 
-          variant="outline" 
-          className="w-full" 
-          size="lg"
-          onClick={onBack}
-        >
-          Back
-        </Button>
-        <Button 
-          className="w-full relative"
-          size="lg"
+          className="bg-[#4f85e7] hover:bg-[#3a6dc7] text-white px-8 py-2 rounded-lg flex items-center"
           onClick={handleContinueClick}
-          disabled={!selectedTemplate || isLoading}
+          disabled={selectedTemplate !== 'not_selected' || isLoading}
         >
           {isLoading ? (
             <>Creating<span className="loading ml-2">...</span></>
           ) : (
             <>
               Continue
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-5 w-5" />
             </>
           )}
         </Button>

@@ -1,5 +1,5 @@
 
-import { Smile, XCircle, Zap } from 'lucide-react';
+import { Smile, XCircle, Zap, PlayCircle } from 'lucide-react';
 
 export interface WidgetDefinition {
   type: string;
@@ -11,6 +11,14 @@ export interface WidgetDefinition {
 }
 
 export const widgets: WidgetDefinition[] = [
+  { 
+    type: 'startNode', 
+    label: 'Start', 
+    icon: PlayCircle, 
+    color: '#a78bfa',
+    description: 'Entry point for your agent flow',
+    shortcut: 'A'
+  },
   { 
     type: 'greetingNode', 
     label: 'Speak', 
@@ -26,13 +34,5 @@ export const widgets: WidgetDefinition[] = [
     color: '#f87171',
     description: 'End the conversation flow',
     shortcut: 'E'
-  },
-  { 
-    type: 'triggerNode', 
-    label: 'Trigger', 
-    icon: Zap, 
-    color: '#fbbf24',
-    description: 'Define when this flow should start',
-    shortcut: 'T'
   }
 ];

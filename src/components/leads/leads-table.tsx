@@ -303,9 +303,9 @@ export function LeadsTable({
   }
 
   return (
-    <div className="border rounded-lg w-full flex flex-col h-full relative">
+    <div className="border rounded-lg w-full flex flex-col h-full relative dark:border-zinc-800 overflow-hidden">
       {selectedLeads.length > 0 && (
-        <div className="sticky top-0 z-[25] bg-background pb-2 px-4 pt-2 border-b shadow-sm">
+        <div className="sticky top-0 z-[25] bg-background pb-2 px-4 pt-2 border-b dark:border-zinc-800 shadow-sm">
           <SelectionHeader
             selectedCount={
               selectAllMode === "all"
@@ -355,7 +355,7 @@ export function LeadsTable({
       {/* Table with proper header stickiness */}
       <div className="w-full">
         <div ref={scrollContainerRef}>
-          <Table className="w-full border">
+          <Table className="w-full">
             {/* Sticky header */}
             <TableHeader className="sticky top-0 z-20 bg-background shadow-sm">
               <LeadTableHeader
@@ -395,7 +395,7 @@ export function LeadsTable({
         {/* Loading trigger - appears when user approaches bottom */}
         {hasMore && !isFetching && (
           <div
-            className="text-center py-6 border-t bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
+            className="text-center py-6 border-t dark:border-zinc-800 bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
             onClick={handleLoadMore}
           >
             <span className="text-sm flex items-center justify-center gap-2 text-primary">
@@ -406,7 +406,7 @@ export function LeadsTable({
         )}
 
         {/* Footer with count info and loading indicator */}
-        <div className="border-t bg-background py-2 px-4">
+        <div className="border-t dark:border-zinc-800 bg-background py-2 px-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               Showing {leads.length} {totalCount ? `of ${totalCount}` : ""}{" "}

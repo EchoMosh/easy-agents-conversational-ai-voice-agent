@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
@@ -115,13 +116,27 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="container relative min-h-screen flex items-center justify-center">
-      <div className="absolute right-4 top-4 md:right-8 md:top-8">
+    <div className="relative flex min-h-screen w-full items-center justify-center bg-white dark:bg-black">
+      <div
+        className={cn(
+          "absolute inset-0",
+          "[background-size:40px_40px]",
+          "[background-image:linear-gradient(to_right,#e4e4e7_1px,transparent_1px),linear-gradient(to_bottom,#e4e4e7_1px,transparent_1px)]",
+          "dark:[background-image:linear-gradient(to_right,#262626_1px,transparent_1px),linear-gradient(to_bottom,#262626_1px,transparent_1px)]",
+        )}
+      />
+      {/* Radial gradient for the container to give a faded look */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-black"></div>
+      
+      {/* Theme Toggle remains in its original position, adjusted for new parent */}
+      <div className="absolute right-4 top-4 md:right-8 md:top-8 z-30">
         <ThemeToggle />
       </div>
 
-      <div className="mx-auto w-full max-w-[350px] space-y-6">
-        <Card className="border-0 shadow-none bg-background">
+      {/* Auth Card - Placed as the content within the background */}
+      <div className="relative z-20 mx-auto w-full max-w-[350px] space-y-6 flex flex-col items-center">
+        <div className="text-3xl font-bold tracking-tight mb-8 text-center text-white">EasyAgents.ai</div>
+        <Card className="w-full border shadow-none bg-background/80 backdrop-blur-sm dark:bg-neutral-800 dark:border dark:border-neutral-700">
           <CardHeader>
             <CardTitle>{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
             <CardDescription>
@@ -133,7 +148,7 @@ const AuthPage = () => {
           <form onSubmit={handleAuth}>
             <CardContent className="space-y-4">
               {authError && (
-                <div className="p-3 text-sm bg-red-50 border border-red-200 text-red-800 rounded">
+                <div className="p-3 text-sm bg-red-50/90 dark:bg-red-900/50 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200 rounded">
                   {authError}
                 </div>
               )}
@@ -146,6 +161,7 @@ const AuthPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="bg-white/80 dark:bg-neutral-700 dark:border dark:border-neutral-600" 
                 />
               </div>
               <div className="space-y-2">
@@ -156,6 +172,7 @@ const AuthPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="bg-white/80 dark:bg-neutral-700 dark:border dark:border-neutral-600"
                 />
               </div>
             </CardContent>

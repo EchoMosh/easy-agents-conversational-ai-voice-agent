@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query"; // Added
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { VariableBadge } from "./variables/variable-badge";
@@ -30,6 +31,7 @@ export function LeadVariables({
   const [editName, setEditName] = useState("");
   const [editValue, setEditValue] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const queryClient = useQueryClient(); // Added
 
   const handleEditClick = (variable: LeadVariable) => {
     setEditingVariable(variable);
@@ -59,6 +61,7 @@ export function LeadVariables({
 
       toast.success("Variable updated");
       setEditingVariable(null);
+      queryClient.invalidateQueries({ queryKey: ['leadVariables'] }); // Added
       onVariablesUpdated();
     } catch (error) {
       console.error("Error updating variable:", error);

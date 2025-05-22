@@ -3,23 +3,26 @@ import { Handle, Position } from '@xyflow/react';
 import { X } from 'lucide-react';
 import { useState, useContext, useEffect } from 'react';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/node-update-context';
-import { Textarea } from '@/components/ui/textarea';
+import { TipTapGreetingEditor } from './greeting/tiptap-greeting-editor'; // Import the editor
 
 export function EndNode({ id, data }: { id: string; data: { message?: string } }) {
-  const [message, setMessage] = useState(data?.message || '');
+  // Ensure initial value is a string, defaulting to an empty paragraph for TipTap
+  const initialMessageValue = typeof data?.message === 'string' ? data.message : '<p></p>';
+  const [message, setMessage] = useState(initialMessageValue);
   const { updateNodeData } = useContext(NodeUpdateContext);
 
   // Sync with incoming data changes
   useEffect(() => {
-    if (data?.message !== undefined && data.message !== message) {
-      setMessage(data.message);
+    const newInitialMessage = typeof data?.message === 'string' ? data.message : '<p></p>';
+    if (data?.message !== undefined && newInitialMessage !== message) {
+      setMessage(newInitialMessage);
     }
-  }, [data, message]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.message]); // Only depend on data.message
 
-  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newMessage = e.target.value;
-    setMessage(newMessage);
-    updateNodeData(id, { message: newMessage });
+  const handleMessageChange = (value: string) => {
+    setMessage(value);
+    updateNodeData(id, { message: value });
   };
 
   return (
@@ -27,7 +30,7 @@ export function EndNode({ id, data }: { id: string; data: { message?: string } }
       {/* Glowing background effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-rose-500/20 via-orange-500/20 to-amber-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       
-      <div className="relative backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 rounded-2xl border border-rose-200/50 dark:border-rose-800/50 shadow-[0_8px_16px_-6px_rgba(225,29,72,0.2)] dark:shadow-[0_8px_16px_-6px_rgba(225,29,72,0.3)] p-5 min-w-[250px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(225,29,72,0.4)] dark:hover:shadow-[0_20px_40px_-12px_rgba(225,29,72,0.5)]">
+      <div className="relative backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 rounded-2xl border border-rose-200/50 dark:border-rose-800/50 shadow-[0_8px_16px_-6px_rgba(225,29,72,0.2)] dark:shadow-[0_8px_16px_-6px_rgba(225,29,72,0.3)] p-5 min-w-[320px] max-w-[320px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(225,29,72,0.4)] dark:hover:shadow-[0_20px_40px_-12px_rgba(225,29,72,0.5)]">
         <div className="flex items-center gap-3 mb-3">
           <span className="relative flex h-8 w-8 items-center justify-center">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-rose-400 opacity-20" />
@@ -44,14 +47,12 @@ export function EndNode({ id, data }: { id: string; data: { message?: string } }
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
             End Call Message
           </label>
-          <Textarea
+          <TipTapGreetingEditor
             value={message}
             onChange={handleMessageChange}
-            placeholder="Enter message to say before ending the call..."
-            className="w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50 focus:ring-1 focus:ring-rose-400 dark:focus:ring-rose-600 focus:border-rose-400 dark:focus:border-rose-600 resize-none h-20 cursor-text"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Assistant will say this message before ending the call
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2"> {/* Increased margin-top for spacing */}
+            Assistant will say this message before ending the call.
           </p>
         </div>
       </div>

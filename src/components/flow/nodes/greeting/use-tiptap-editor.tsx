@@ -1,7 +1,7 @@
 
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useEffect } from 'react'; // Removed useState
 import VariableMark from './variable-mark';
 import Placeholder from '@tiptap/extension-placeholder';
 
@@ -12,7 +12,7 @@ interface UseTiptapEditorProps {
 }
 
 export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTiptapEditorProps) {
-  const [showTip, setShowTip] = useState(false);
+  // const [showTip, setShowTip] = useState(false); // Removed
   
   // Initialize editor
   const editor = useEditor({
@@ -33,7 +33,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
         keydown: (view, event) => {
           // Show tip when typing # or @
           if (event.key === '#' || event.key === '@') {
-            setShowTip(false);
+            // setShowTip(false); // Removed
             
             // Get precise cursor position for variable selector
             if (onVariableTrigger) {
@@ -112,20 +112,20 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
     },
   });
   
-  // Reset tip
-  useEffect(() => {
-    let timeout: number;
-    if (showTip) {
-      timeout = window.setTimeout(() => {
-        setShowTip(false);
-      }, 3000);
-    }
-    return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
-    };
-  }, [showTip]);
+  // Reset tip - Removed
+  // useEffect(() => {
+  //   let timeout: number;
+  //   if (showTip) {
+  //     timeout = window.setTimeout(() => {
+  //       setShowTip(false);
+  //     }, 3000);
+  //   }
+  //   return () => {
+  //     if (timeout) {
+  //       clearTimeout(timeout);
+  //     }
+  //   };
+  // }, [showTip]);
   
   // Update content when value changes
   useEffect(() => {
@@ -147,7 +147,7 @@ export function useTiptapEditor({ value, onChange, onVariableTrigger }: UseTipta
   
   return {
     editor,
-    showTip,
+    // showTip, // Removed
     insertVariable
   };
 }

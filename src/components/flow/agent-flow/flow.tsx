@@ -7,14 +7,19 @@ import {
   useNodesState,
   useEdgesState,
   Connection,
-  Node,
+  Node as FlowNode, // Rename to avoid conflict with DOM Node
   Edge,
   NodeTypes,
   useReactFlow,
   Panel,
+  ViewportPortal,
   ConnectionMode,
   EdgeMouseHandler,
+  getNodesBounds,
+  // getViewport, // Removed, will use reactFlowInstance.getViewport()
 } from "@xyflow/react";
+// ReactDOM import seems unused in the provided snippet, can be removed if not used elsewhere in the full file.
+// import ReactDOM from 'react-dom'; 
 import "@xyflow/react/dist/style.css";
 import "./flow-styles.css";
 
@@ -22,11 +27,14 @@ import { NodeData } from "@/types/agent";
 import { GreetingNode } from "@/components/flow/nodes/greeting-node";
 import { EndNode } from "@/components/flow/nodes/end-node";
 import { TriggerNode } from "@/components/flow/nodes/trigger-node";
+import { StartNode } from "@/components/flow/nodes/start-node";
 import { toast } from "sonner";
 
 import { NodeUpdateContext } from "./node-update-context";
 import { ButtonEdge } from "./edges/button-edge";
 import { WidgetPanel } from "./widgets/widget-panel";
+import { widgets as stableWidgets, WidgetDefinition as StableWidgetDefinition } from "./widgets/widget-definitions";
+import { widgets as betaWidgets, WidgetDefinition as BetaWidgetDefinition } from "./widgets/beta-widget-definitions"; // Import beta widgets
 import { ShortcutsBar } from "./shortcuts-bar";
 import { FlowContextMenu } from "./context-menu/flow-context-menu";
 import { CustomContextMenu } from "./custom-context-menu";
@@ -34,11 +42,14 @@ import { useNodeManagement } from "./hooks/use-node-management";
 import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts";
 import { useEdgeManagement } from "./hooks/use-edge-management";
 import { useDragAndDrop } from "./hooks/use-drag-and-drop";
+import { AlertCircle, X as CloseIcon } from 'lucide-react'; // For the tip banner
+import { CommandDeckInput } from "@/pages/dashboard/agent-flow/components/command-deck-input"; // Import CommandDeckInput
 
 const nodeTypes: NodeTypes = {
   greetingNode: GreetingNode,
   endNode: EndNode,
   triggerNode: TriggerNode,
+  startNode: StartNode,
 };
 
 const edgeTypes = {
@@ -46,35 +57,50 @@ const edgeTypes = {
 };
 
 interface FlowProps {
-  initialNodes: Node[];
-  initialEdges: Edge[];
-  onNodesChange: (nodes: Node[]) => void;
+  nodes: FlowNode[]; // Changed from initialNodes
+  edges: Edge[];   // Changed from initialEdges
+  onNodesChange: (nodes: FlowNode[]) => void;
   onEdgesChange: (edges: Edge[]) => void;
+  creationMode?: "stable" | "beta";
   onNodeDeletion?: (
-    deletedNodes: Node[],
-    remainingNodes: Node[],
+    deletedNodes: FlowNode[],
+    remainingNodes: FlowNode[],
     remainingEdges: Edge[],
   ) => void;
+  focusNodeId?: string | null; // Added to focus on a specific node
 }
 
 export function Flow({
-  initialNodes,
-  initialEdges,
+  nodes: propsNodes, // Changed from initialNodes and renamed to avoid conflict
+  edges: propsEdges, // Changed from initialEdges and renamed
   onNodesChange,
   onEdgesChange,
+  creationMode: originalCreationMode = "stable",
   onNodeDeletion,
+  focusNodeId,
 }: FlowProps) {
-  const safeInitialNodes = Array.isArray(initialNodes) ? initialNodes : [];
-  const safeInitialEdges = Array.isArray(initialEdges) ? initialEdges : [];
+  const creationMode = "stable"; // Force stable mode
+  console.log("[Flow] Using stable mode only");
 
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState([]);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState([]);
+  const [currentWidgets, setCurrentWidgets] = useState<StableWidgetDefinition[] | BetaWidgetDefinition[]>(stableWidgets);
   const [showWidgets, setShowWidgets] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { getNodes } = useReactFlow();
   const flowContainerRef = useRef<HTMLDivElement>(null);
-  const [initialized, setInitialized] = useState(false);
+  // const [initialized, setInitialized] = useState(false); // Removed initialized state
+  const [showVariableTip, setShowVariableTip] = useState(false);
+  const [variableTipDismissed, setVariableTipDismissed] = useState(false);
+  const reactFlowInstance = useReactFlow();
+
+
+  useEffect(() => {
+    // Always use stable widgets
+    console.log("[Flow] Loading STABLE widget definitions.");
+    setCurrentWidgets(stableWidgets);
+  }, []);
 
   // Import custom hooks
   const {
@@ -122,7 +148,7 @@ export function Flow({
   );
 
   const handleNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: Node) => {
+    (event: React.MouseEvent, node: FlowNode) => {
       event.preventDefault();
       event.stopPropagation();
       console.log("[Flow] Node context menu triggered for node:", node.id);
@@ -291,7 +317,7 @@ export function Flow({
     ],
   );
 
-  const normalizeNodes = useCallback((inputNodes: Node[]) => {
+  const normalizeNodes = useCallback((inputNodes: FlowNode[]) => {
     return inputNodes.map((node) => ({
       ...node,
       draggable: node.draggable !== false,
@@ -392,29 +418,32 @@ export function Flow({
     [edges, onEdgesChange, onEdgesChangeInternal],
   );
 
-  // Initialize nodes and edges
+  // Effect to synchronize internal state with propsNodes and propsEdges
   useEffect(() => {
-    if (safeInitialNodes.length > 0 && !initialized) {
-      console.log(
-        "[Flow] Setting initial nodes with normalization:",
-        safeInitialNodes,
-      );
-      const normalizedNodes = normalizeNodes(safeInitialNodes);
-      setNodes(normalizedNodes);
-      setInitialized(true);
-
-      if (safeInitialEdges.length > 0) {
-        setEdges(safeInitialEdges);
+    console.log("[Flow] Props updated. Syncing internal state. New propsNodes:", propsNodes, "New propsEdges:", propsEdges);
+    const normalizedNodes = normalizeNodes(Array.isArray(propsNodes) ? propsNodes : []);
+    setNodes(normalizedNodes);
+    setEdges(Array.isArray(propsEdges) ? propsEdges : []);
+  }, [propsNodes, propsEdges, setNodes, setEdges, normalizeNodes]);
+  
+  // Effect to focus on a specific node when focusNodeId changes
+  useEffect(() => {
+    if (focusNodeId && reactFlowInstance) {
+      console.log(`[Flow] Focusing on node: ${focusNodeId}`);
+      
+      // Find the node we want to focus on
+      const nodeToFocus = nodes.find(node => node.id === focusNodeId);
+      
+      if (nodeToFocus) {
+        // Center view on this node with animation
+        reactFlowInstance.setCenter(
+          nodeToFocus.position.x, 
+          nodeToFocus.position.y,
+          { duration: 800, zoom: 0.8 }
+        );
       }
     }
-  }, [
-    safeInitialNodes,
-    safeInitialEdges,
-    setNodes,
-    setEdges,
-    normalizeNodes,
-    initialized,
-  ]);
+  }, [focusNodeId, nodes, reactFlowInstance]);
 
   // Focus the flow container on mount
   useEffect(() => {
@@ -423,40 +452,54 @@ export function Flow({
     }
   }, []);
 
-  // Track selected node
+  // Track selected node & check for variable usage
   useEffect(() => {
     const selectedNode = nodes.find((node) => node.selected);
     setSelectedNodeId(selectedNode ? selectedNode.id : null);
-  }, [nodes]);
 
-  // Add a style to hide scrollbars
-  useEffect(() => {
-    // Create a style element
-    const styleElement = document.createElement("style");
-    styleElement.textContent = `
-      .flow-editor-container::-webkit-scrollbar {
-        display: none !important;
-      }
-      .flow-editor-container {
-        -ms-overflow-style: none !important;
-        scrollbar-width: none !important;
-      }
-      .react-flow__pane {
-        overflow: hidden !important;
-      }
-      .react-flow {
-        overflow: hidden !important;
-      }
-    `;
+    // Check for custom variable usage
+    if (!variableTipDismissed) {
+      let hasVariables = false;
+      let hasAnyContent = false;
 
-    // Append the style element to the document head
-    document.head.appendChild(styleElement);
+      nodes.forEach(node => {
+        if (node.data) {
+          const messageFields = ['firstMessage', 'greeting', 'message'];
+          for (const field of messageFields) {
+            const content = node.data[field];
+            if (typeof content === 'string') {
+              // Check if content is more than just an empty Tiptap paragraph
+              if (content.replace(/<p><\/p>/g, '').trim() !== '') {
+                hasAnyContent = true;
+              }
+              // Check for variable patterns
+              if (content.includes('data-type="variable-mention"') || /\{\{.*?\}\}/.test(content)) {
+                hasVariables = true;
+                break; // Found a variable, no need to check further for this node
+              }
+            }
+          }
+        }
+        if (hasVariables) return; // Exit early if a variable is found in any node
+      });
 
-    // Clean up the style element when the component unmounts
-    return () => {
-      document.head.removeChild(styleElement);
-    };
-  }, []);
+      if (hasVariables) {
+        setShowVariableTip(false); // Hide tip if variables are used
+      } else if (nodes.length > 0 && hasAnyContent) { // Only show tip if there are nodes with some content
+        // TODO: Ideally, use a unique key per agent flow, e.g., `variableTipDismissed_flow_${agentId}`
+        const dismissed = localStorage.getItem('variableTipDismissed_generic_flow');
+        if (!dismissed) {
+          setShowVariableTip(true);
+        } else {
+          setShowVariableTip(false); // Ensure it's hidden if dismissed
+        }
+      } else {
+        setShowVariableTip(false); // Hide if no nodes or no content
+      }
+    } else {
+      setShowVariableTip(false); // Ensure it's hidden if globally dismissed state is true
+    }
+  }, [nodes, variableTipDismissed]);
 
   return (
     <NodeUpdateContext.Provider value={{ updateNodeData }}>
@@ -469,8 +512,16 @@ export function Flow({
           className="w-full h-full"
           tabIndex={0}
           onKeyDown={handleFlowKeyDown}
-          style={{ outline: "none" }}
+          style={{ outline: "none", position: "relative" }} // Combined styles
         >
+          {/* Log when we're in beta mode */}
+          {(() => {
+            console.log("🔍 Flow.tsx - creationMode:", creationMode);
+            return null;
+          })()}
+          
+          {/* Remove beta mode command deck input - now removed */}
+          
           {/* Custom context menu that appears at the cursor position */}
           {rightClickedNodeId !== undefined ? (
             <CustomContextMenu
@@ -479,6 +530,7 @@ export function Flow({
               onAddNode={handleContextMenuAddNode}
               onDeleteNode={handleDeleteSelectedNode}
               onClose={() => setRightClickedNodeId(undefined)}
+              nodes={nodes} // Pass current nodes to check for existing Start Node
             />
           ) : null}
 
@@ -487,9 +539,10 @@ export function Flow({
             rightClickedNodeId={rightClickedNodeId}
             onAddNode={handleContextMenuAddNode}
             onDeleteNode={handleDeleteSelectedNode}
+            nodes={nodes} // Pass current nodes
           >
             <ReactFlow
-              nodes={nodes}
+              nodes={nodes.filter(node => node.type !== "triggerNode")}
               edges={edges}
               onNodesChange={handleNodesChange}
               onEdgesChange={handleEdgesChange}
@@ -500,11 +553,12 @@ export function Flow({
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               fitView
+              fitViewOptions={{ padding: 0.5, maxZoom: 0.8 }} // Increased padding and limited max zoom
               defaultEdgeOptions={defaultEdgeOptions}
               connectionMode={ConnectionMode.Loose}
-              className="bg-white dark:bg-gray-950 overflow-hidden"
-              panOnScroll={false}
-              zoomOnScroll={false}
+              className="bg-transparent overflow-hidden" // Changed background to transparent
+              panOnScroll={true}
+              zoomOnScroll={true}
               preventScrolling={true}
               snapToGrid={true}
               snapGrid={[15, 15]}
@@ -517,22 +571,29 @@ export function Flow({
               }}
               onInit={(reactFlowInstance) => {
                 console.log("[Flow] ReactFlow initialized");
+                
+                // Log viewport dimensions for debug
+                const viewport = reactFlowInstance.getViewport();
+                console.log("[Flow] Initial viewport:", viewport);
+                
                 setTimeout(() => {
-                  reactFlowInstance.fitView({ padding: 0.2 });
-
-                  const currentNodes = reactFlowInstance.getNodes();
-                  console.log("[Flow] Current nodes after init:", currentNodes);
-
-                  if (
-                    currentNodes.length === 0 &&
-                    safeInitialNodes.length > 0
-                  ) {
-                    console.log(
-                      "[Flow] Forcing node initialization after init",
-                    );
-                    setNodes(normalizeNodes(safeInitialNodes));
-                  }
+                  // Use a more zoomed-out view with more padding and limited zoom
+                  reactFlowInstance.fitView({ 
+                    padding: 0.5,
+                    maxZoom: 0.8,
+                    duration: 800 // Smoother animation
+                  });
+                  
+                  // Log viewport after fitView
+                  const afterFitViewport = reactFlowInstance.getViewport();
+                  console.log("[Flow] Viewport after fitView:", afterFitViewport);
                 }, 100);
+
+                const currentNodes = reactFlowInstance.getNodes();
+                console.log("[Flow] Current nodes after init:", currentNodes);
+
+                // Removed the logic that referenced safeInitialNodes,
+                // as initialization is now handled by the useEffect hook syncing props.
               }}
             >
               <Background className="opacity-40" />
@@ -546,6 +607,8 @@ export function Flow({
                       return "#fbbf24";
                     case "endNode":
                       return "#f87171";
+                    case "startNode":
+                      return "#a78bfa"; // purple-400
                     default:
                       return "#60a5fa";
                   }
@@ -559,7 +622,29 @@ export function Flow({
                 showWidgets={showWidgets}
                 setShowWidgets={setShowWidgets}
                 onDragStart={onDragStart}
+                availableWidgets={currentWidgets} // Pass currentWidgets to WidgetPanel
               />
+
+              {showVariableTip && (
+                <Panel position="top-center">
+                  <div className="mt-2 flex items-center gap-2 p-2.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg shadow-md text-xs text-blue-700 dark:text-blue-300 animate-fade-in">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>Tip: Personalize messages with variables! Type <strong>@</strong> for lead or <strong>#</strong> for agent variables.</span>
+                    <button
+                      onClick={() => {
+                        setShowVariableTip(false);
+                        setVariableTipDismissed(true);
+                        // TODO: Ideally, use a unique key per agent flow
+                        localStorage.setItem('variableTipDismissed_generic_flow', 'true');
+                      }}
+                      className="ml-2 p-0.5 rounded-full hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors"
+                      aria-label="Dismiss tip"
+                    >
+                      <CloseIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </Panel>
+              )}
             </ReactFlow>
           </FlowContextMenu>
         </div>

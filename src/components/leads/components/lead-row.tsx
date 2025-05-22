@@ -49,7 +49,7 @@ export function LeadRow({
   return (
     <TableRow
       className={cn(
-        "transition-colors border-b hover:bg-muted/20 w-full",
+        "transition-colors hover:bg-muted/20 w-full border-border dark:border-zinc-900",
         isSelected ? "bg-muted/30" : ""
       )}
     >

@@ -20,7 +20,7 @@ export function LeadTableHeader({
   onSelectAllMatching,
 }: LeadTableHeaderProps) {
   return (
-    <TableRow className="border-b border-t">
+    <TableRow className="border-border dark:border-zinc-900">
       <TableHead className="w-[120px] p-0 pl-2 bg-muted/30">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">

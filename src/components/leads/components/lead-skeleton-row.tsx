@@ -3,7 +3,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 
 export function LeadSkeletonRow() {
   return (
-    <TableRow className="animate-in fade-in-0">
+    <TableRow className="animate-in fade-in-0 border-border dark:border-zinc-900">
       <TableCell className="p-0 pl-2">
         <div className="py-3">
           <Skeleton className="h-4 w-4 rounded-sm" />
