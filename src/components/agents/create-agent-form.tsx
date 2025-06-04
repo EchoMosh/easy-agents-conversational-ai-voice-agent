@@ -5,10 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/context/workspace-context";
 import { Agent } from "@/types/agent";
 import { CreateAgentProgress } from "./create-agent-progress";
-import { ModeStep } from "./form-steps/mode-step"; // Added
 import { NameStep } from "./form-steps/name-step";
 import { TemplateStep } from "./form-steps/template-step";
-import { getDefaultFlow, getBetaDefaultFlow } from "./utils/default-flow"; // Import getBetaDefaultFlow
+import { getDefaultFlow } from "./utils/default-flow";
 import { AIVoiceLoader } from "./ai-voice-loader";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -22,7 +21,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
-  const [step, setStep] = useState(2); // Start at step 2 (Name), skip mode selection
+  const [step, setStep] = useState(1); // Start at step 1 (Name)
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creationStatus, setCreationStatus] = useState<string | null>(null);
@@ -31,30 +30,11 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     name: string;
     role: Agent["role"];
     template: string;
-    creationMode: "stable" | "beta"; // Added creationMode
   }>({
     name: "",
     role: "virtual_assistant",
     template: "",
-    creationMode: "stable", // Default to stable
   });
-
-  const handleModeSelected = (mode: "stable" | "beta") => {
-    console.log("🔍 CreateAgentForm.handleModeSelected - mode selected:", mode);
-    
-    setNewAgent((prev) => {
-      // Update both creationMode (for client-side) and creation_mode (for database storage)
-      const updated = { 
-        ...prev, 
-        creationMode: mode,
-        creation_mode: mode // Ensure database field is populated
-      };
-      console.log("🔍 CreateAgentForm - newAgent updated with mode:", updated);
-      return updated;
-    });
-    
-    setStep(2); // Proceed to NameStep
-  };
 
   const handleNextFromTemplate = async (vAgentIdFromWebhook?: string) => {
     console.log("Received vAgentIdFromWebhook:", vAgentIdFromWebhook);
@@ -131,16 +111,10 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         "role:",
         newAgent.role,
         "v_agent_id:",
-        finalVAgentId,
-        "creation_mode:", // Log creation mode
-        newAgent.creationMode
+        finalVAgentId
       );
 
-      const flow = newAgent.creationMode === 'beta' 
-        ? getBetaDefaultFlow() 
-        : getDefaultFlow();
-
-      console.log(`Using ${newAgent.creationMode} mode for agent creation. Flow will be initialized accordingly.`);
+      const flow = getDefaultFlow();
 
       const { data: agentData, error: agentError } = await supabase
         .from("agents")
@@ -155,7 +129,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           interaction_type: ["inbound"],
           language: "en",
           v_agent_id: finalVAgentId,
-          creation_mode: newAgent.creationMode, // Save creation_mode to the database
         })
         .select()
         .single();
@@ -167,16 +140,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         );
       }
 
-      // Store the creation mode in localStorage for retrieval during flow editing
-      if (agentData?.id) {
-        try {
-          localStorage.setItem(`agent_${agentData.id}_mode`, newAgent.creationMode);
-          console.log(`Saved agent mode (${newAgent.creationMode}) to localStorage for agent ${agentData.id}`);
-        } catch (e) {
-          console.warn("Could not save agent mode to localStorage:", e);
-        }
-      }
-
       setCreationStatus("Agent created successfully, redirecting...");
 
       toast({
@@ -186,7 +149,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       });
 
       await onSuccess(agentData.id);
-      // Always navigate to the main flow page; AgentFlowPage will handle beta/stable rendering
       navigate(`/dashboard/agents/flow/${agentData.id}`, { replace: true });
     } catch (error) {
       console.error("Error creating agent:", error);
@@ -233,7 +195,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
   return (
     <div className="space-y-6 py-6">
-      <CreateAgentProgress currentStep={step-1} totalSteps={2} /> {/* Adjusted for skipping mode step */}
+      <CreateAgentProgress currentStep={step} totalSteps={2} />
 
       {error && (
         <Alert variant="destructive">
@@ -246,28 +208,22 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
       <div className="space-y-6">
         {step === 1 && (
-          <ModeStep
-            onModeSelect={handleModeSelected}
-          />
-        )}
-        
-        {step === 2 && (
           <NameStep
             name={newAgent.name}
             onNameChange={(name) => setNewAgent((prev) => ({ ...prev, name }))}
-            onNext={() => setStep(3)} // Proceed to TemplateStep
-            onBack={() => onCancel()} // Cancel instead of going back to mode step
+            onNext={() => setStep(2)} // Proceed to TemplateStep
+            onBack={() => onCancel()}
           />
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <TemplateStep
             selectedTemplate={newAgent.template}
             onTemplateSelect={(templateId, role) => {
               setNewAgent((prev) => ({ ...prev, template: templateId, role }));
             }}
             onNext={handleNextFromTemplate}
-            onBack={() => setStep(2)} // Go back to NameStep
+            onBack={() => setStep(1)} // Go back to NameStep
             showOnlyScratch={true}
             agentName={newAgent.name}
           />

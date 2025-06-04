@@ -86,21 +86,21 @@ export function AudioPlayer({ src }: AudioPlayerProps) {
   }
 
   return (
-    <div className="w-full rounded-full bg-white dark:bg-slate-900 flex flex-col gap-1.5 shadow-sm p-1.5">
-      <audio ref={audioRef} src={src} preload="metadata" />
+    // Changed to rounded-lg, adjusted background and padding for better integration
+    <div className="w-full rounded-lg bg-slate-50 dark:bg-slate-800/50 flex flex-col gap-1.5 p-3 border border-slate-200 dark:border-slate-700">
+      <audio ref={audioRef} src={src} preload="metadata" className="hidden" /> {/* Kept audio tag hidden as it's controlled */}
       
-      {/* Player controls in a single row for a more minimal look */}
-      <div className="flex items-center gap-4 px-5 py-2">
-        {/* Play/Pause Button - Centered, larger, and prominent */}
+      <div className="flex items-center gap-3 px-2"> {/* Adjusted gap and padding */}
+        {/* Play/Pause Button */}
         <Button 
           onClick={togglePlay} 
-          variant="ghost" 
+          variant="ghost" // More subtle variant
           size="icon" 
-          className="h-10 w-10 rounded-full bg-blue-500 hover:bg-blue-600 shadow-sm flex-shrink-0"
+          className="h-9 w-9 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex-shrink-0"
         >
           {isPlaying ? 
-            <Pause className="h-5 w-5 text-white" /> : 
-            <Play className="h-5 w-5 text-white ml-0.5" />
+            <Pause className="h-4 w-4" /> : 
+            <Play className="h-4 w-4" />
           }
         </Button>
         
@@ -113,32 +113,32 @@ export function AudioPlayer({ src }: AudioPlayerProps) {
             step={0.1}
             onValueChange={seek}
             className="w-full [&>.SliderTrack]:h-1.5 [&>.SliderTrack]:bg-slate-200 dark:[&>.SliderTrack]:bg-slate-700
-            [&>.SliderTrack>.SliderRange]:bg-blue-500 dark:[&>.SliderTrack>.SliderRange]:bg-blue-500
-            [&>.SliderThumb]:h-3 [&>.SliderThumb]:w-3 [&>.SliderThumb]:border-0 [&>.SliderThumb]:bg-blue-500"
+            [&>.SliderTrack>.SliderRange]:bg-slate-600 dark:[&>.SliderTrack>.SliderRange]:bg-slate-400 /* Adjusted slider color */
+            [&>.SliderThumb]:h-3 [&>.SliderThumb]:w-3 [&>.SliderThumb]:border-0 [&>.SliderThumb]:bg-slate-700 dark:[&>.SliderThumb]:bg-slate-300" /* Adjusted thumb color */
           />
           
           {/* Time display */}
-          <div className="flex justify-between items-center">
-            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 font-mono">
+          <div className="flex justify-between items-center mt-1"> {/* Added mt-1 for spacing */}
+            <div className="text-xs font-medium text-slate-600 dark:text-slate-400 font-sans"> {/* Changed to font-sans */}
               {formatTime(currentTime)}
             </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={() => skip(-10)} variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
-                <Rewind className="h-3.5 w-3.5 text-slate-700 dark:text-slate-300" />
+            <div className="flex items-center gap-1.5"> {/* Reduced gap */}
+              <Button onClick={() => skip(-10)} variant="ghost" size="icon" className="h-6 w-6 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+                <Rewind className="h-3 w-3" />
               </Button>
-              <Button onClick={() => skip(10)} variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
-                <Forward className="h-3.5 w-3.5 text-slate-700 dark:text-slate-300" />
+              <Button onClick={() => skip(10)} variant="ghost" size="icon" className="h-6 w-6 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+                <Forward className="h-3 w-3" />
               </Button>
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 font-mono ml-1">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400 font-sans ml-1"> {/* Changed to font-sans */}
                 {formatTime(duration)}
               </span>
             </div>
           </div>
         </div>
         
-        {/* Volume control */}
-        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex-shrink-0">
-          <Volume2 className="h-4 w-4 text-slate-700 dark:text-slate-300" />
+        {/* Volume control - can be made more subtle or integrated differently if needed */}
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 flex-shrink-0">
+          <Volume2 className="h-4 w-4" />
         </Button>
       </div>
     </div>

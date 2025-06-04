@@ -14,7 +14,6 @@ import NotFound from "@/pages/NotFound";
 import DashboardLayout from "@/layouts/dashboard-layout";
 import AgentsPage from "@/pages/dashboard/agents";
 import AgentFlowPage from "./pages/dashboard/agent-flow";
-// import { BetaAgentFlowPage } from "./pages/dashboard/agent-flow/beta-agent-flow-page"; // Removed
 import LeadsPage from "@/pages/dashboard/leads";
 import PipelinesPage from "@/pages/dashboard/pipelines";
 import SettingsPage from "@/pages/dashboard/settings";
@@ -22,7 +21,7 @@ import ProfilePage from "@/pages/dashboard/profile";
 import ChatsPage from "@/pages/dashboard/chats";
 import { ChatPage } from "@/pages/dashboard/chat";
 import KnowledgePage from "@/pages/dashboard/knowledge";
-import TranscriptionsPage from "@/pages/dashboard/transcriptions-page"; // Added for Transcriptions
+import TranscriptionsPage from "@/pages/dashboard/transcriptions-page";
 import AutomationsPage from "@/pages/dashboard/automations";
 import ActivitiesPage from "@/pages/dashboard/activities";
 import DashboardPage from "@/pages/dashboard/dashboard";
@@ -30,7 +29,7 @@ import CalendarPage from "@/pages/dashboard/calendar";
 import LeadScraperPage from "@/pages/dashboard/lead-scraper";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { SidebarProvider } from "@/components/ui/sidebar"; // Added
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Content component to handle loading states
 function AppContent() {
@@ -73,7 +72,6 @@ function AppContent() {
               path="/dashboard/agents/flow/:id"
               element={<AgentFlowPage />}
             />
-            {/* BetaAgentFlowPage route moved outside DashboardLayout */}
             <Route path="/dashboard/leads" element={<LeadsPage />} />
             <Route
               path="/dashboard/lead-scraper"
@@ -85,7 +83,7 @@ function AppContent() {
             <Route path="/dashboard/chats" element={<ChatsPage />} />
             <Route path="/dashboard/chats/:id" element={<ChatPage />} />
             <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
-            <Route path="/dashboard/transcriptions" element={<TranscriptionsPage />} /> {/* Added Transcriptions route */}
+            <Route path="/dashboard/transcriptions" element={<TranscriptionsPage />} />
             <Route
               path="/dashboard/automations"
               element={<AutomationsPage />}
@@ -93,19 +91,6 @@ function AppContent() {
             <Route path="/dashboard/activities" element={<ActivitiesPage />} />
           </Route>
         </Route>
-
-        {/* Protected routes */}
-        {/* Removed BetaAgentFlowPage route here. AgentFlowPage will handle both modes. */}
-        {/* The SidebarProvider was for BetaAgentFlowPage when it was standalone. 
-            AgentFlowPage is already within DashboardLayout which should provide necessary contexts,
-            or AgentFlowPage itself handles its context providers if it's meant to be standalone.
-            Given AgentFlowPage is typically part of DashboardLayout, this should be fine.
-            If AgentFlowPage was also moved out of DashboardLayout, it would need its own SidebarProvider.
-            But since it's the main flow page, it's likely intended to be within DashboardLayout.
-            The previous change to move BetaAgentFlowPage out of DashboardLayout was to remove the main nav.
-            If AgentFlowPage now handles beta mode and needs to sometimes NOT show main nav, that's a new complexity
-            for AgentFlowPage itself. For now, assuming AgentFlowPage is always within DashboardLayout.
-        */}
 
         {/* Add this before the catchall route */}
         {import.meta.env.VITE_TEMPO && <Route path="/tempobook/*" />}

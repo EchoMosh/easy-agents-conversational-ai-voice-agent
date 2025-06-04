@@ -1,4 +1,3 @@
-
 import { FlowData } from "@/types/agent";
 
 export const getDefaultFlow = (): FlowData => {
@@ -59,10 +58,4 @@ export const getDefaultFlow = (): FlowData => {
     nodes: [startNode, speakNode, endNode],
     edges: [edge1, edge2]
   };
-};
-
-// Beta Default Flow - Use the same flow as stable mode
-export const getBetaDefaultFlow = (): FlowData => {
-  // Just call the stable mode's flow function
-  return getDefaultFlow();
 };

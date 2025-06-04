@@ -254,7 +254,7 @@ export function GreetingNode({
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 mb-5 animate-[fade-in_0.4s_ease-out_0.2s] opacity-0 fill-mode-forwards">
+            <div className="grid grid-cols-2 gap-4 mb-5">
               <div className="rounded-xl border border-red-100 dark:border-red-900/30 bg-gradient-to-r from-red-50/70 to-red-50/30 dark:from-red-900/10 dark:to-red-900/5 p-4">
                 <p className="font-medium text-red-600 dark:text-red-400 text-sm mb-2">Not recommended:</p>
                 <ul className="space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
@@ -291,7 +291,7 @@ export function GreetingNode({
               </div>
             </div>
             
-            <div className="animate-[fade-in_0.4s_ease-out_0.3s] opacity-0 fill-mode-forwards">
+            <div>
               <Label htmlFor="outcome-input" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                 Outcome
               </Label>
@@ -307,7 +307,7 @@ export function GreetingNode({
             </div>
           </div>
           
-          <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20 animate-[fade-in_0.3s_ease-out_0.4s] opacity-0 fill-mode-forwards">
+          <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20">
             <Button 
               variant="outline" 
               onClick={cancelEdit} 

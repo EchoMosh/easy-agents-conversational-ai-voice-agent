@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
-import { AgentSettings } from "@/components/agents/flow/agent-settings";
+import { AgentSettingsRedesigned } from "@/components/agents/flow/agent-settings-redesigned";
 import { Agent } from "@/types/agent";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,7 @@ import { TestAgentButton } from "@/components/agents/test-agent-button";
 import { useToast } from "@/hooks/use-toast";
 import { FlowData, FlowNode } from "@/types/agent-types";
 import { AIVoiceLoader } from "@/components/agents/ai-voice-loader";
+import AgentCallLogsModal from "@/components/agents/flow/AgentCallLogsModal"; // Corrected import path
 
 interface HeaderProps {
   agent: Agent;
@@ -45,6 +46,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [showCallOptions, setShowCallOptions] = useState(false);
   const [showTestAgentDialog, setShowTestAgentDialog] = useState<boolean>(false);
   const [showLaunchAgentDialog, setShowLaunchAgentDialog] = useState(false);
+  const [showCallLogsModal, setShowCallLogsModal] = useState(false); // Added state for call logs modal
   const [isUpdatingAgent, setIsUpdatingAgent] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
@@ -365,7 +367,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[180px] p-1.5 rounded-lg border-slate-200 dark:border-slate-700 shadow-lg">
-              <AgentSettings
+              <AgentSettingsRedesigned
                 agentId={agent.id}
                 currentVoice={agent.voice_id || undefined}
                 currentLanguage={agent.language}
@@ -378,7 +380,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
                   <Settings className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" />
                   <span className="text-slate-700 dark:text-slate-300">Settings</span>
                 </DropdownMenuItem>
-              </AgentSettings>
+              </AgentSettingsRedesigned>
               
               <DropdownMenuItem 
                 className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -398,11 +400,12 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
               <DropdownMenuItem 
                 className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 onSelect={() => {
-                  console.log("View conversation history requested");
+                  console.log("View conversation history (call logs) requested");
+                  setShowCallLogsModal(true); // Open the call logs modal
                 }}
               >
                 <History className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" />
-                <span className="text-slate-700 dark:text-slate-300">Conversation Logs</span>
+                <span className="text-slate-700 dark:text-slate-300">Call Logs</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -439,6 +442,12 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         open={showLaunchAgentDialog}
         onOpenChange={setShowLaunchAgentDialog}
         agent={agent}
+      />
+
+      <AgentCallLogsModal
+        agent={agent}
+        isOpen={showCallLogsModal}
+        onClose={() => setShowCallLogsModal(false)}
       />
     </>
   );

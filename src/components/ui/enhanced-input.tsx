@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Globe, PhoneIncoming, PhoneOutgoing, Send, Target, UploadCloud, XCircle, FileText } from "lucide-react";
+import { ChevronDown, Globe, PhoneIncoming, PhoneOutgoing, Send, Target, UploadCloud, XCircle, FileText, Settings } from "lucide-react";
 
 type CallType = 'inbound' | 'outbound'; 
 type CallObjective = 'survey' | 'qualify' | 'support' | 'appointment' | 'custom'; 
@@ -26,6 +26,7 @@ export function EnhancedPlaceholdersAndVanishInput({
   const [objectiveDropdownOpen, setObjectiveDropdownOpen] = useState(false);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [callTypeDropdownOpen, setCallTypeDropdownOpen] = useState(false);
+  const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [fileContentForPreview, setFileContentForPreview] = useState<string | null>(null); 
@@ -163,12 +164,15 @@ export function EnhancedPlaceholdersAndVanishInput({
     const file = event.target.files?.[0];
     if (file) {
       setUploadedFile(file);
-      setValue(""); 
+      // Don't clear the typed text - keep setValue("") removed
       stopPlaceholderAnimation();
       if (file.type === "text/plain" || file.type === "text/markdown" || file.type.includes("text")) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          setFileContentForPreview(e.target?.result as string);
+          const content = e.target?.result as string;
+          // Clean up the content by removing excessive line breaks and trimming
+          const cleanedContent = content.replace(/\n+/g, ' ').trim();
+          setFileContentForPreview(cleanedContent);
         };
         reader.readAsText(file);
       } else {
@@ -211,10 +215,11 @@ export function EnhancedPlaceholdersAndVanishInput({
       if (objectiveDropdownOpen && !targetElement.closest('#call-objective-selector-wrapper')) setObjectiveDropdownOpen(false);
       if (languageDropdownOpen && !targetElement.closest('#language-selector-wrapper')) setLanguageDropdownOpen(false);
       if (callTypeDropdownOpen && !targetElement.closest('#call-type-selector-wrapper')) setCallTypeDropdownOpen(false);
+      if (settingsDropdownOpen && !targetElement.closest('#settings-selector-wrapper')) setSettingsDropdownOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [objectiveDropdownOpen, languageDropdownOpen, callTypeDropdownOpen]);
+  }, [objectiveDropdownOpen, languageDropdownOpen, callTypeDropdownOpen, settingsDropdownOpen]);
 
   const getCallTypeDisplay = (type: CallType) => {
     if (type === 'inbound') return { text: 'Inbound', icon: <PhoneIncoming className="h-4 w-4 mr-2 flex-shrink-0" /> };
@@ -254,89 +259,126 @@ export function EnhancedPlaceholdersAndVanishInput({
       >
         <div className="relative flex-grow p-4 pb-2">
           <canvas className={cn("absolute pointer-events-none text-base transform scale-50 top-4 left-4 origin-top-left", !animating ? "opacity-0" : "opacity-100")} ref={canvasRef} />
-          {!uploadedFile ? (
-            <>
-              <textarea
-                rows={3}
-                onChange={(e) => {
-                  if (!animating) { setValue(e.target.value); onChange && onChange(e); }
-                  if (e.target.value) stopPlaceholderAnimation(); else startPlaceholderAnimation();
-                }}
-                onKeyDown={handleKeyDown}
-                ref={textareaRef}
-                value={value}
-                className={cn("w-full h-full relative text-lg sm:text-xl z-10 border-none text-neutral-100 bg-transparent focus:outline-none focus:ring-0 resize-none placeholder-neutral-500", animating && "text-transparent")}
-                placeholder="" 
-              />
-              <AnimatePresence mode="wait">
-                {!value && !animating && !uploadedFile && (
-                  <motion.p initial={{ y: 5, opacity: 0 }} key={`current-placeholder-${currentPlaceholder}`} animate={{ y: 0, opacity: 1 }} exit={{ y: -15, opacity: 0 }} transition={{ duration: 0.6, ease: "easeInOut" }}
-                    className="absolute top-4 left-4 text-gray-400 text-lg sm:text-xl font-normal pointer-events-none w-[calc(100%-2rem)] overflow-hidden text-left" 
-                    style={{ maxHeight: 'calc(100% - 2rem)', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflowWrap: 'break-word' }}
-                  > {placeholders[currentPlaceholder]} </motion.p>
-                )}
-              </AnimatePresence>
-            </>
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-neutral-300 p-4 min-h-[80px]">
-              <FileText size={28} className="text-blue-400 mb-2" />
-              <p className="text-sm font-medium mb-1 truncate max-w-full">{uploadedFile.name}</p>
-              <p className="text-xs text-neutral-400">({(uploadedFile.size / 1024).toFixed(2)} KB)</p>
+          
+          {uploadedFile && (
+            <div className="mb-3 p-3 bg-neutral-800/40 rounded-lg border border-neutral-700/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText size={16} className="text-blue-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-neutral-300 truncate">{uploadedFile.name}</p>
+                    <p className="text-xs text-neutral-400">({(uploadedFile.size / 1024).toFixed(2)} KB)</p>
+                  </div>
+                </div>
+                <button type="button" onClick={clearFile} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 flex-shrink-0">
+                  <XCircle size={14} /> Remove
+                </button>
+              </div>
               {fileContentForPreview && uploadedFile.type.startsWith('text') && (
-                <p className="text-xs text-neutral-500 mt-1 italic w-full truncate">Preview: {fileContentForPreview.substring(0,70)}...</p>
+                <p className="text-xs text-neutral-500 mt-2 italic truncate">Preview: {fileContentForPreview.substring(0,70)}...</p>
               )}
-               <button type="button" onClick={clearFile} className="mt-3 text-xs text-red-400 hover:text-red-300 flex items-center gap-1">
-                <XCircle size={14} /> Remove file
-              </button>
             </div>
           )}
+          
+          <textarea
+            rows={uploadedFile ? 2 : 3}
+            onChange={(e) => {
+              if (!animating) { setValue(e.target.value); onChange && onChange(e); }
+              if (e.target.value) stopPlaceholderAnimation(); else if (!uploadedFile) startPlaceholderAnimation();
+            }}
+            onKeyDown={handleKeyDown}
+            ref={textareaRef}
+            value={value}
+            className={cn("w-full h-full relative text-lg sm:text-xl z-10 border-none text-neutral-100 bg-transparent focus:outline-none focus:ring-0 resize-none placeholder-neutral-500", animating && "text-transparent")}
+            placeholder={uploadedFile ? "Add additional instructions or context..." : ""} 
+          />
+          
+          <AnimatePresence mode="wait">
+            {!value && !animating && !uploadedFile && (
+              <motion.p initial={{ y: 5, opacity: 0 }} key={`current-placeholder-${currentPlaceholder}`} animate={{ y: 0, opacity: 1 }} exit={{ y: -15, opacity: 0 }} transition={{ duration: 0.6, ease: "easeInOut" }}
+                className="absolute top-4 left-4 text-gray-400 text-lg sm:text-xl font-normal pointer-events-none w-[calc(100%-2rem)] overflow-hidden text-left"
+                style={{ maxHeight: 'calc(100% - 2rem)', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflowWrap: 'break-word' }}
+              > {placeholders[currentPlaceholder]} </motion.p>
+            )}
+          </AnimatePresence>
         </div>
         
-        <div className="px-4 pb-2 flex justify-center">
-            <button type="button" onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-neutral-700/50 hover:bg-neutral-700 text-neutral-300 rounded-md transition-colors">
-                <UploadCloud size={16} /> {uploadedFile ? "Change File" : "Upload Script/Audio"}
-            </button>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".txt,.md,.mp3,.wav,.m4a,.ogg,.flac" />
-        </div>
+        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".txt,.md,.mp3,.wav,.m4a,.ogg,.flac" />
 
         <div className="px-4 pt-1 pb-2 text-xs text-neutral-400 text-center md:text-left"> {summaryText} </div>
 
-        <div className="p-3 border-t border-neutral-700/80 min-h-[70px] relative">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-            <div id="call-objective-selector-wrapper" className="relative group w-full md:flex-1">
-              <label htmlFor="call-objective-selector" className={dropdownLabelClass}>Objective</label>
-              <div id="call-objective-selector" className={dropdownButtonClass} onClick={() => setObjectiveDropdownOpen(!objectiveDropdownOpen)}>
-                <div className={dropdownTextClass}><Target className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{objectiveTextMap[callObjective]}</span></div> <ChevronDown className={dropdownChevronClass} />
+        <div className="px-6 py-5 border-t border-neutral-700/50">
+          <div className="flex items-end gap-4">
+            {/* Core Configuration Controls */}
+            <div id="call-objective-selector-wrapper" className="relative flex-1">
+              <label htmlFor="call-objective-selector" className="block text-xs font-medium text-neutral-400 mb-2">Objective</label>
+              <div id="call-objective-selector" className="flex bg-neutral-800/40 rounded-xl p-3 h-[44px] cursor-pointer hover:bg-neutral-700/40 transition-all duration-200 items-center justify-between w-full border border-neutral-700/30" onClick={() => setObjectiveDropdownOpen(!objectiveDropdownOpen)}>
+                <div className="flex items-center gap-3 text-sm font-medium text-neutral-200 truncate">
+                  <Target className="h-4 w-4 flex-shrink-0 text-neutral-400" />
+                  <span className="truncate">{objectiveTextMap[callObjective]}</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-neutral-400 flex-shrink-0" />
               </div>
-              {objectiveDropdownOpen && <div id="objective-dropdown" className={dropdownMenuClass}>
-                {(Object.keys(objectiveTextMap) as CallObjective[]).map(item => <button key={item} type="button" className={cn(dropdownItemClass, callObjective === item ? "bg-blue-600/20 text-white" : "text-neutral-300")} onClick={() => { setCallObjective(item); setObjectiveDropdownOpen(false); }}>{objectiveTextMap[item]}</button>)}
+              {objectiveDropdownOpen && <div className="absolute z-20 mt-2 w-full rounded-xl bg-neutral-800 shadow-xl border border-neutral-700/50 py-2">
+                {(Object.keys(objectiveTextMap) as CallObjective[]).map(item => <button key={item} type="button" className={cn("flex w-full items-center px-4 py-3 text-sm text-left hover:bg-neutral-700/50 transition-colors", callObjective === item ? "bg-blue-600/20 text-white" : "text-neutral-300")} onClick={() => { setCallObjective(item); setObjectiveDropdownOpen(false); }}>{objectiveTextMap[item]}</button>)}
               </div>}
             </div>
-            <div id="language-selector-wrapper" className="relative group w-full md:flex-1">
-              <label htmlFor="language-selector" className={dropdownLabelClass}>Language</label>
-              <div id="language-selector" className={dropdownButtonClass} onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}>
-                <div className={dropdownTextClass}><Globe className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{languageTextMap[language]} {language === 'english-us' ? '🇺🇸' : language === 'english-uk' ? '🇬🇧' : language === 'spanish' ? '🇪🇸' : language === 'french' ? '🇫🇷' : '🇩🇪'}</span></div> <ChevronDown className={dropdownChevronClass} />
+
+            <div id="language-selector-wrapper" className="relative flex-1">
+              <label htmlFor="language-selector" className="block text-xs font-medium text-neutral-400 mb-2">Language</label>
+              <div id="language-selector" className="flex bg-neutral-800/40 rounded-xl p-3 h-[44px] cursor-pointer hover:bg-neutral-700/40 transition-all duration-200 items-center justify-between w-full border border-neutral-700/30" onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}>
+                <div className="flex items-center gap-3 text-sm font-medium text-neutral-200 truncate">
+                  <Globe className="h-4 w-4 flex-shrink-0 text-neutral-400" />
+                  <span className="truncate">{languageTextMap[language]} {language === 'english-us' ? '🇺🇸' : language === 'english-uk' ? '🇬🇧' : language === 'spanish' ? '🇪🇸' : language === 'french' ? '🇫🇷' : '🇩🇪'}</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-neutral-400 flex-shrink-0" />
               </div>
-              {languageDropdownOpen && <div id="language-dropdown" className={dropdownMenuClass}>
-                {(Object.keys(languageTextMap) as Language[]).map(item => <button key={item} type="button" className={cn(dropdownItemClass, language === item ? "bg-blue-600/20 text-white" : "text-neutral-300")} onClick={() => { setLanguage(item); setLanguageDropdownOpen(false); }}>{languageTextMap[item]} {item === 'english-us' ? '🇺🇸' : item === 'english-uk' ? '🇬🇧' : item === 'spanish' ? '🇪🇸' : item === 'french' ? '🇫🇷' : '🇩🇪'}</button>)}
+              {languageDropdownOpen && <div className="absolute z-20 mt-2 w-full rounded-xl bg-neutral-800 shadow-xl border border-neutral-700/50 py-2">
+                {(Object.keys(languageTextMap) as Language[]).map(item => <button key={item} type="button" className={cn("flex w-full items-center px-4 py-3 text-sm text-left hover:bg-neutral-700/50 transition-colors", language === item ? "bg-blue-600/20 text-white" : "text-neutral-300")} onClick={() => { setLanguage(item); setLanguageDropdownOpen(false); }}>{languageTextMap[item]} {item === 'english-us' ? '🇺🇸' : item === 'english-uk' ? '🇬🇧' : item === 'spanish' ? '🇪🇸' : item === 'french' ? '🇫🇷' : '🇩🇪'}</button>)}
               </div>}
             </div>
-            <div id="call-type-selector-wrapper" className="relative group w-full md:flex-1">
-              <label htmlFor="call-type-selector" className={dropdownLabelClass}>Call Type</label>
-              <div id="call-type-selector" className={dropdownButtonClass} onClick={() => setCallTypeDropdownOpen(!callTypeDropdownOpen)}>
-                <div className={dropdownTextClass}>{getCallTypeDisplay(callType).icon} <span className="truncate">{getCallTypeDisplay(callType).text}</span></div> <ChevronDown className={dropdownChevronClass} />
+
+            <div id="call-type-selector-wrapper" className="relative flex-1">
+              <label htmlFor="call-type-selector" className="block text-xs font-medium text-neutral-400 mb-2">Call Type</label>
+              <div id="call-type-selector" className="flex bg-neutral-800/40 rounded-xl p-3 h-[44px] cursor-pointer hover:bg-neutral-700/40 transition-all duration-200 items-center justify-between w-full border border-neutral-700/30" onClick={() => setCallTypeDropdownOpen(!callTypeDropdownOpen)}>
+                <div className="flex items-center gap-3 text-sm font-medium text-neutral-200 truncate">
+                  {getCallTypeDisplay(callType).icon}
+                  <span className="truncate">{getCallTypeDisplay(callType).text}</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-neutral-400 flex-shrink-0" />
               </div>
-              {callTypeDropdownOpen && <div id="call-type-dropdown" className={dropdownMenuClass}>
-                {(['outbound', 'inbound'] as CallType[]).map(item => <button key={item} type="button" className={cn(dropdownItemClass, callType === item ? "bg-blue-600/20 text-white" : "text-neutral-300")} onClick={() => { setCallType(item); setCallTypeDropdownOpen(false); }}>{getCallTypeDisplay(item).icon} {getCallTypeDisplay(item).text}</button>)}
+              {callTypeDropdownOpen && <div className="absolute z-20 mt-2 w-full rounded-xl bg-neutral-800 shadow-xl border border-neutral-700/50 py-2">
+                {(['outbound', 'inbound'] as CallType[]).map(item => <button key={item} type="button" className={cn("flex w-full items-center px-4 py-3 text-sm text-left hover:bg-neutral-700/50 transition-colors", callType === item ? "bg-blue-600/20 text-white" : "text-neutral-300")} onClick={() => { setCallType(item); setCallTypeDropdownOpen(false); }}>{getCallTypeDisplay(item).icon} {getCallTypeDisplay(item).text}</button>)}
               </div>}
             </div>
-            <div className="w-full md:w-auto flex flex-col justify-end md:h-[calc(36px+0.25rem+0.875rem)] pt-2 md:pt-0"> 
-                 <button type="submit" disabled={(!value.trim() && !uploadedFile) || animating || !callType || !callObjective}
-                    className={cn("p-2.5 h-[36px] w-full md:w-[36px] rounded-lg transition-all duration-300 ease-in-out focus:outline-none flex items-center justify-center",
-                        (value.trim() || uploadedFile) && !animating && callType && callObjective ? "bg-lime-400 hover:bg-lime-500 text-black" : "bg-neutral-800 text-neutral-500 cursor-not-allowed")}
-                    title="Generate AI Agent"> <Send className="h-4 w-4" /> </button>
+
+            {/* Action Controls */}
+            <div id="settings-selector-wrapper" className="relative">
+              <button type="button" onClick={() => setSettingsDropdownOpen(!settingsDropdownOpen)}
+                className="p-3 h-[44px] w-[44px] rounded-xl bg-neutral-800/40 hover:bg-neutral-700/40 transition-all duration-200 flex items-center justify-center text-neutral-300 border border-neutral-700/30"
+                title="Settings">
+                <Settings className="h-4 w-4" />
+              </button>
+              {settingsDropdownOpen && (
+                <div className="absolute bottom-full mb-2 right-0 w-56 rounded-xl bg-neutral-800 shadow-xl border border-neutral-700/50 py-2 z-20">
+                  <button type="button" onClick={() => { fileInputRef.current?.click(); setSettingsDropdownOpen(false); }}
+                    className="flex w-full items-center px-4 py-3 text-sm text-left hover:bg-neutral-700/50 text-neutral-300 transition-colors">
+                    <UploadCloud className="h-4 w-4 mr-3" />
+                    {uploadedFile ? "Change File" : "Upload Script/Audio"}
+                  </button>
+                </div>
+              )}
             </div>
+
+            <button type="submit" disabled={(!value.trim() && !uploadedFile) || animating || !callType || !callObjective}
+              className={cn("px-6 py-3 h-[44px] rounded-xl transition-all duration-300 ease-in-out focus:outline-none flex items-center justify-center gap-2 font-medium text-sm shadow-lg",
+                  (value.trim() || uploadedFile) && !animating && callType && callObjective 
+                    ? "bg-lime-400 hover:bg-lime-500 text-black shadow-lime-400/20 hover:shadow-lime-400/30 transform hover:scale-[1.02]" 
+                    : "bg-neutral-800/60 text-neutral-500 cursor-not-allowed border border-neutral-700/30")}
+              title="Generate AI Agent">
+              <Send className="h-4 w-4" />
+              <span>Generate Agent</span>
+            </button>
           </div>
         </div>
       </form>

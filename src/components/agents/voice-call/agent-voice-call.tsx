@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PhoneCall, PhoneOff, X, Mic, Volume2, RefreshCw } from "lucide-react"; // Removed Settings
+import { PhoneCall, PhoneOff, X, Mic, MicOff, Volume2, RefreshCw } from "lucide-react"; // Removed Settings, Added MicOff
 import { Agent } from "@/types/agent";
 import Vapi from "@vapi-ai/web";
 // import axios from "axios"; // No longer needed here
@@ -57,6 +57,7 @@ export function AgentVoiceCall({
   const [isCallActive, setIsCallActive] = useState(false);
   const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
   const [callStatus, setCallStatus] = useState<"ready" | "connecting" | "active" | "ended" | "error" | "retrying">("ready"); // Removed "updating"
+  const [isMuted, setIsMuted] = useState(false); // Added for mute functionality
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
@@ -118,7 +119,7 @@ export function AgentVoiceCall({
     
     if (!vapiKey) {
       console.error("Vapi public key not found in environment variables");
-      setErrorDetails("API key missing. Please check your environment configuration.");
+      setErrorDetails("Voice service configuration missing. Please check your environment setup.");
       setCallStatus("error");
       return;
     }
@@ -171,6 +172,7 @@ export function AgentVoiceCall({
       setCallStatus("ended");
       setIsCallActive(false);
       setIsAgentSpeaking(false);
+      // setIsMuted(false); // Optionally reset mute state on call end, or persist it
       if (currentAgentMessageIdRef.current) { // Finalize any open agent message
         setMessages(prev => prev.map(m => 
           m.id === currentAgentMessageIdRef.current ? { ...m, isFinal: true, timestamp: new Date() } : m
@@ -503,6 +505,7 @@ export function AgentVoiceCall({
     setIsCallActive(false); // Ensure this is false after reset
     setIsAgentSpeaking(false);
     setCallStatus("ready");
+    setIsMuted(false); // Reset mute state
     setMessages([]);
     currentAgentMessageIdRef.current = null;
     // No preSpeech refs to clear as they've been removed from this simplified logic
@@ -515,6 +518,7 @@ export function AgentVoiceCall({
     setMessages([]);
     setCallStatus("ready");
     setIsAgentSpeaking(false);
+    setIsMuted(false); // Reset mute state
     currentAgentMessageIdRef.current = null;
     // No preSpeech refs to clear
 
@@ -585,6 +589,15 @@ export function AgentVoiceCall({
   };
 
   const callButton = getCallButtonState();
+
+  const handleToggleMute = () => {
+    if (vapiRef.current && callStatus === "active") {
+      const newMutedState = !isMuted;
+      vapiRef.current.setMuted(newMutedState);
+      setIsMuted(newMutedState);
+      console.log(`Microphone ${newMutedState ? "muted" : "unmuted"}`);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleInternalDialogStateChange}>
@@ -686,20 +699,42 @@ export function AgentVoiceCall({
         </div>
 
         <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-inherit">
-          <Button
-            className={`w-full py-5 text-white font-medium rounded-xl ${callButton.color}`}
-            disabled={callButton.disabled}
-            onClick={callButton.onClick}
-          >
-            {callButton.icon}
-            {callButton.text}
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              className={`flex-grow py-5 text-white font-medium rounded-xl ${callButton.color}`}
+              disabled={callButton.disabled}
+              onClick={callButton.onClick}
+            >
+              {callButton.icon}
+              {callButton.text}
+            </Button>
+            {callStatus === "active" && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleToggleMute}
+                className="p-5 rounded-xl border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
+              >
+                {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              </Button>
+            )}
+          </div>
           
-          {callStatus === "active" && (
+          {callStatus === "active" && !isMuted && (
             <div className="flex justify-center mt-2">
               <div className="flex items-center text-xs text-green-500 font-medium animate-pulse">
                 <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
                 Call Active
+              </div>
+            </div>
+          )}
+
+          {callStatus === "active" && isMuted && (
+            <div className="flex justify-center mt-2">
+              <div className="flex items-center text-xs text-yellow-500 font-medium">
+                <MicOff className="h-3 w-3 mr-1" />
+                Microphone Muted
               </div>
             </div>
           )}
@@ -726,7 +761,7 @@ export function AgentVoiceCall({
                   <span className="font-medium">For developers:</span> Check the browser console (F12) for detailed error logs.
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-500">
-                  Make sure you've created an assistant in the <a href="https://dashboard.vapi.ai" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Vapi dashboard</a> and are using its ID.
+                  Make sure you've created an assistant in the voice service dashboard and are using its ID.
                 </p>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
-import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import LoadingScreen from "@/components/loading-screen";
@@ -77,7 +77,7 @@ function DashboardLayout() {
 
   return (
     <ImportProvider>
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider defaultOpen={true}>
         <div className="h-screen w-screen flex overflow-hidden bg-background relative">
           {/* Hide sidebar on agent flow edit page */}
           {!location.pathname.includes('/dashboard/agents/flow/') && <AppSidebar />}

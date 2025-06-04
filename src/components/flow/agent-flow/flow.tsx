@@ -16,10 +16,9 @@ import {
   ConnectionMode,
   EdgeMouseHandler,
   getNodesBounds,
-  // getViewport, // Removed, will use reactFlowInstance.getViewport()
+  applyNodeChanges, // Import applyNodeChanges
+  applyEdgeChanges, // Import applyEdgeChanges
 } from "@xyflow/react";
-// ReactDOM import seems unused in the provided snippet, can be removed if not used elsewhere in the full file.
-// import ReactDOM from 'react-dom'; 
 import "@xyflow/react/dist/style.css";
 import "./flow-styles.css";
 
@@ -34,7 +33,6 @@ import { NodeUpdateContext } from "./node-update-context";
 import { ButtonEdge } from "./edges/button-edge";
 import { WidgetPanel } from "./widgets/widget-panel";
 import { widgets as stableWidgets, WidgetDefinition as StableWidgetDefinition } from "./widgets/widget-definitions";
-import { widgets as betaWidgets, WidgetDefinition as BetaWidgetDefinition } from "./widgets/beta-widget-definitions"; // Import beta widgets
 import { ShortcutsBar } from "./shortcuts-bar";
 import { FlowContextMenu } from "./context-menu/flow-context-menu";
 import { CustomContextMenu } from "./custom-context-menu";
@@ -42,8 +40,7 @@ import { useNodeManagement } from "./hooks/use-node-management";
 import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts";
 import { useEdgeManagement } from "./hooks/use-edge-management";
 import { useDragAndDrop } from "./hooks/use-drag-and-drop";
-import { AlertCircle, X as CloseIcon } from 'lucide-react'; // For the tip banner
-import { CommandDeckInput } from "@/pages/dashboard/agent-flow/components/command-deck-input"; // Import CommandDeckInput
+import { AlertCircle, X as CloseIcon } from 'lucide-react';
 
 const nodeTypes: NodeTypes = {
   greetingNode: GreetingNode,
@@ -57,48 +54,41 @@ const edgeTypes = {
 };
 
 interface FlowProps {
-  nodes: FlowNode[]; // Changed from initialNodes
-  edges: Edge[];   // Changed from initialEdges
+  nodes: FlowNode[];
+  edges: Edge[];
   onNodesChange: (nodes: FlowNode[]) => void;
   onEdgesChange: (edges: Edge[]) => void;
-  creationMode?: "stable" | "beta";
   onNodeDeletion?: (
     deletedNodes: FlowNode[],
     remainingNodes: FlowNode[],
     remainingEdges: Edge[],
   ) => void;
-  focusNodeId?: string | null; // Added to focus on a specific node
+  focusNodeId?: string | null;
 }
 
 export function Flow({
-  nodes: propsNodes, // Changed from initialNodes and renamed to avoid conflict
-  edges: propsEdges, // Changed from initialEdges and renamed
+  nodes: propsNodes,
+  edges: propsEdges,
   onNodesChange,
   onEdgesChange,
-  creationMode: originalCreationMode = "stable",
   onNodeDeletion,
   focusNodeId,
 }: FlowProps) {
-  const creationMode = "stable"; // Force stable mode
-  console.log("[Flow] Using stable mode only");
 
-  const [nodes, setNodes, onNodesChangeInternal] = useNodesState([]);
-  const [edges, setEdges, onEdgesChangeInternal] = useEdgesState([]);
-  const [currentWidgets, setCurrentWidgets] = useState<StableWidgetDefinition[] | BetaWidgetDefinition[]>(stableWidgets);
+  const [nodes, setNodes, onNodesChangeInternalOriginal] = useNodesState([]);
+  const [edges, setEdges, onEdgesChangeInternalOriginal] = useEdgesState([]);
+  const [currentWidgets, setCurrentWidgets] = useState<StableWidgetDefinition[]>(stableWidgets);
   const [showWidgets, setShowWidgets] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { getNodes } = useReactFlow();
+  const { getNodes } = useReactFlow(); // Keep this for direct access if needed
   const flowContainerRef = useRef<HTMLDivElement>(null);
-  // const [initialized, setInitialized] = useState(false); // Removed initialized state
   const [showVariableTip, setShowVariableTip] = useState(false);
   const [variableTipDismissed, setVariableTipDismissed] = useState(false);
   const reactFlowInstance = useReactFlow();
 
-
   useEffect(() => {
-    // Always use stable widgets
-    console.log("[Flow] Loading STABLE widget definitions.");
+    console.log("[Flow] Loading stable widget definitions.");
     setCurrentWidgets(stableWidgets);
   }, []);
 
@@ -134,7 +124,7 @@ export function Flow({
         nodeType,
         nodes,
         setNodes,
-        onNodesChange,
+        onNodesChange, // This onNodesChange is the prop
         reactFlowWrapper,
       );
     },
@@ -160,7 +150,6 @@ export function Flow({
   const handlePaneContextMenu = useCallback(
     (event: React.MouseEvent) => {
       console.log("[Flow] Pane context menu handler called");
-      // Then open a new one with add node options
       handlePaneContextMenuBase(event, reactFlowWrapper);
     },
     [handlePaneContextMenuBase, reactFlowWrapper],
@@ -173,8 +162,8 @@ export function Flow({
       edges,
       setNodes,
       setEdges,
-      onNodesChange,
-      onEdgesChange,
+      onNodesChange, // Prop
+      onEdgesChange, // Prop
       onNodeDeletion,
     );
   }, [
@@ -226,17 +215,16 @@ export function Flow({
             (node) => !nodeIdsToDelete.has(node.id),
           );
 
-          setNodes(newNodes);
-          setEdges(newEdges);
+          setNodes(newNodes); // Update local state
+          setEdges(newEdges); // Update local state
 
-          setTimeout(() => {
-            onNodesChange(newNodes);
-            onEdgesChange(newEdges);
+          // Propagate changes immediately
+          onNodesChange(newNodes);
+          onEdgesChange(newEdges);
 
-            if (onNodeDeletion && selectedNodes.length > 0) {
-              onNodeDeletion(selectedNodes, newNodes, newEdges);
-            }
-          }, 0);
+          if (onNodeDeletion && selectedNodes.length > 0) {
+            onNodeDeletion(selectedNodes, newNodes, newEdges);
+          }
         }
       }
     },
@@ -266,7 +254,7 @@ export function Flow({
             flowPosition,
             nodes,
             setNodes,
-            onNodesChange,
+            onNodesChange, // Prop
           );
         }
       };
@@ -291,7 +279,7 @@ export function Flow({
 
   const onConnect = useCallback(
     (params: Connection) => {
-      onConnectBase(params, edges, setEdges, onEdgesChange, nodes);
+      onConnectBase(params, edges, setEdges, onEdgesChange, nodes); // Prop
     },
     [onConnectBase, edges, setEdges, onEdgesChange, nodes],
   );
@@ -302,7 +290,7 @@ export function Flow({
         nodeType: string,
         position: { x: number; y: number },
       ) => {
-        createNodeFromType(nodeType, position, nodes, setNodes, onNodesChange);
+        createNodeFromType(nodeType, position, nodes, setNodes, onNodesChange); // Prop
       };
 
       onDropBase(event, reactFlowWrapper, createNodeAtPosition);
@@ -332,91 +320,56 @@ export function Flow({
         `[Flow] updateNodeData called for node ${nodeId} with data:`,
         newData,
       );
-
+      let updatedNodesArray: FlowNode[] = [];
       setNodes((nds) => {
-        const updatedNodes = nds.map((node) => {
+        updatedNodesArray = nds.map((node) => {
           if (node.id === nodeId) {
-            const updatedNode = {
-              ...node,
-              data: { ...newData },
-            };
-            console.log(
-              `[Flow] Updated node ${nodeId} from:`,
-              node.data,
-              "to:",
-              updatedNode.data,
-            );
-            return updatedNode;
+            return { ...node, data: { ...node.data, ...newData } }; // Ensure existing data is preserved
           }
           return node;
         });
-        return updatedNodes;
+        return updatedNodesArray;
       });
-
-      setTimeout(() => {
-        console.log(
-          `[Flow] Notifying parent component about node ${nodeId} update`,
-        );
-        const updatedNodes = nodes.map((node) =>
-          node.id === nodeId ? { ...node, data: { ...newData } } : node,
-        );
-
-        onNodesChange(updatedNodes);
-      }, 0);
-    },
-    [nodes, setNodes, onNodesChange],
-  );
-
-  const handleNodesChange = useCallback(
-    (changes: any) => {
-      console.log("[Flow] handleNodesChange called with changes:", changes);
-
-      const removeChanges = changes.filter(
-        (change) => change.type === "remove",
-      );
-      if (removeChanges.length > 0) {
-        console.log("[Flow] Remove changes detected:", removeChanges);
-        if (processingDeletion) {
-          console.log(
-            "[Flow] Skipping additional remove processing as deletion already in progress",
-          );
-          onNodesChangeInternal(changes);
-          return;
-        }
-      }
-
-      onNodesChangeInternal(changes);
-
-      if (removeChanges.length === 0) {
-        setTimeout(() => {
-          console.log(
-            "[Flow] Notifying parent after node changes, current nodes:",
-            getNodes(),
-          );
-          const currentNodes = getNodes();
-          onNodesChange(currentNodes);
-        }, 0);
+      // Propagate change immediately
+      if (updatedNodesArray.length > 0) {
+         console.log(`[Flow] Notifying parent component about node ${nodeId} update`);
+        onNodesChange(updatedNodesArray);
       }
     },
-    [onNodesChange, onNodesChangeInternal, getNodes, processingDeletion],
+    [setNodes, onNodesChange], // Removed nodes from dependency array as setNodes provides current nodes
   );
 
-  const handleEdgesChange = useCallback(
+  // Wrapper for onNodesChangeInternal to propagate to parent
+  const onNodesChangeInternal = useCallback(
     (changes: any) => {
-      console.log("[Flow] handleEdgesChange called with changes:", changes);
-      onEdgesChangeInternal(changes);
-
-      setTimeout(() => {
-        console.log(
-          "[Flow] Notifying parent after edge changes, current edges:",
-          edges,
-        );
-        const updatedEdges = edges.map((edge) => ({ ...edge }));
-        onEdgesChange(updatedEdges);
-      }, 0);
+      console.log("[Flow] onNodesChangeInternal (local) called with changes:", changes);
+      setNodes((nds) => applyNodeChanges(changes, nds));
+      // Propagate changes to parent immediately
+      // We need to apply changes to the current `nodes` state before sending
+      // This requires careful handling if `nodes` state isn't updated yet by setNodes
+      // A safer way is to get the latest nodes after setNodes has processed
+      // For now, let's assume setNodes updates `nodes` in time for the next render cycle
+      // or rely on the parent to manage the source of truth.
+      // The parent `onNodesChange` expects the full array of nodes.
+      // We need to calculate the new state of nodes based on `changes` and current `nodes`.
+      const newNodes = applyNodeChanges(changes, nodes); // Apply changes to current `nodes`
+      onNodesChange(newNodes); // Propagate the full new array
     },
-    [edges, onEdgesChange, onEdgesChangeInternal],
+    [setNodes, onNodesChange, nodes], // Added nodes to dependency array
   );
+
+  // Wrapper for onEdgesChangeInternal to propagate to parent
+  const onEdgesChangeInternal = useCallback(
+    (changes: any) => {
+      console.log("[Flow] onEdgesChangeInternal (local) called with changes:", changes);
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+      // Propagate changes to parent immediately
+      const newEdges = applyEdgeChanges(changes, edges); // Apply changes to current `edges`
+      onEdgesChange(newEdges); // Propagate the full new array
+    },
+    [setEdges, onEdgesChange, edges], // Added edges to dependency array
+  );
+
 
   // Effect to synchronize internal state with propsNodes and propsEdges
   useEffect(() => {
@@ -431,11 +384,9 @@ export function Flow({
     if (focusNodeId && reactFlowInstance) {
       console.log(`[Flow] Focusing on node: ${focusNodeId}`);
       
-      // Find the node we want to focus on
       const nodeToFocus = nodes.find(node => node.id === focusNodeId);
       
       if (nodeToFocus) {
-        // Center view on this node with animation
         reactFlowInstance.setCenter(
           nodeToFocus.position.x, 
           nodeToFocus.position.y,
@@ -457,7 +408,6 @@ export function Flow({
     const selectedNode = nodes.find((node) => node.selected);
     setSelectedNodeId(selectedNode ? selectedNode.id : null);
 
-    // Check for custom variable usage
     if (!variableTipDismissed) {
       let hasVariables = false;
       let hasAnyContent = false;
@@ -468,36 +418,33 @@ export function Flow({
           for (const field of messageFields) {
             const content = node.data[field];
             if (typeof content === 'string') {
-              // Check if content is more than just an empty Tiptap paragraph
               if (content.replace(/<p><\/p>/g, '').trim() !== '') {
                 hasAnyContent = true;
               }
-              // Check for variable patterns
               if (content.includes('data-type="variable-mention"') || /\{\{.*?\}\}/.test(content)) {
                 hasVariables = true;
-                break; // Found a variable, no need to check further for this node
+                break; 
               }
             }
           }
         }
-        if (hasVariables) return; // Exit early if a variable is found in any node
+        if (hasVariables) return; 
       });
 
       if (hasVariables) {
-        setShowVariableTip(false); // Hide tip if variables are used
-      } else if (nodes.length > 0 && hasAnyContent) { // Only show tip if there are nodes with some content
-        // TODO: Ideally, use a unique key per agent flow, e.g., `variableTipDismissed_flow_${agentId}`
+        setShowVariableTip(false); 
+      } else if (nodes.length > 0 && hasAnyContent) { 
         const dismissed = localStorage.getItem('variableTipDismissed_generic_flow');
         if (!dismissed) {
           setShowVariableTip(true);
         } else {
-          setShowVariableTip(false); // Ensure it's hidden if dismissed
+          setShowVariableTip(false); 
         }
       } else {
-        setShowVariableTip(false); // Hide if no nodes or no content
+        setShowVariableTip(false); 
       }
     } else {
-      setShowVariableTip(false); // Ensure it's hidden if globally dismissed state is true
+      setShowVariableTip(false); 
     }
   }, [nodes, variableTipDismissed]);
 
@@ -512,17 +459,9 @@ export function Flow({
           className="w-full h-full"
           tabIndex={0}
           onKeyDown={handleFlowKeyDown}
-          style={{ outline: "none", position: "relative" }} // Combined styles
+          style={{ outline: "none", position: "relative" }}
         >
-          {/* Log when we're in beta mode */}
-          {(() => {
-            console.log("🔍 Flow.tsx - creationMode:", creationMode);
-            return null;
-          })()}
           
-          {/* Remove beta mode command deck input - now removed */}
-          
-          {/* Custom context menu that appears at the cursor position */}
           {rightClickedNodeId !== undefined ? (
             <CustomContextMenu
               rightClickedNodeId={rightClickedNodeId}
@@ -530,22 +469,21 @@ export function Flow({
               onAddNode={handleContextMenuAddNode}
               onDeleteNode={handleDeleteSelectedNode}
               onClose={() => setRightClickedNodeId(undefined)}
-              nodes={nodes} // Pass current nodes to check for existing Start Node
+              nodes={nodes} 
             />
           ) : null}
 
-          {/* Original context menu wrapper */}
           <FlowContextMenu
             rightClickedNodeId={rightClickedNodeId}
             onAddNode={handleContextMenuAddNode}
             onDeleteNode={handleDeleteSelectedNode}
-            nodes={nodes} // Pass current nodes
+            nodes={nodes} 
           >
             <ReactFlow
               nodes={nodes.filter(node => node.type !== "triggerNode")}
               edges={edges}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={handleEdgesChange}
+              onNodesChange={onNodesChangeInternal} // Use wrapped internal handler
+              onEdgesChange={onEdgesChangeInternal} // Use wrapped internal handler
               onConnect={onConnect}
               onEdgeClick={onEdgeClick}
               onDragOver={onDragOver}
@@ -553,10 +491,10 @@ export function Flow({
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               fitView
-              fitViewOptions={{ padding: 0.5, maxZoom: 0.8 }} // Increased padding and limited max zoom
+              fitViewOptions={{ padding: 0.5, maxZoom: 0.8 }}
               defaultEdgeOptions={defaultEdgeOptions}
               connectionMode={ConnectionMode.Loose}
-              className="bg-transparent overflow-hidden" // Changed background to transparent
+              className="bg-transparent overflow-hidden"
               panOnScroll={true}
               zoomOnScroll={true}
               preventScrolling={true}
@@ -572,28 +510,22 @@ export function Flow({
               onInit={(reactFlowInstance) => {
                 console.log("[Flow] ReactFlow initialized");
                 
-                // Log viewport dimensions for debug
                 const viewport = reactFlowInstance.getViewport();
                 console.log("[Flow] Initial viewport:", viewport);
                 
                 setTimeout(() => {
-                  // Use a more zoomed-out view with more padding and limited zoom
                   reactFlowInstance.fitView({ 
                     padding: 0.5,
                     maxZoom: 0.8,
-                    duration: 800 // Smoother animation
+                    duration: 800
                   });
                   
-                  // Log viewport after fitView
                   const afterFitViewport = reactFlowInstance.getViewport();
                   console.log("[Flow] Viewport after fitView:", afterFitViewport);
                 }, 100);
 
                 const currentNodes = reactFlowInstance.getNodes();
                 console.log("[Flow] Current nodes after init:", currentNodes);
-
-                // Removed the logic that referenced safeInitialNodes,
-                // as initialization is now handled by the useEffect hook syncing props.
               }}
             >
               <Background className="opacity-40" />
@@ -608,7 +540,7 @@ export function Flow({
                     case "endNode":
                       return "#f87171";
                     case "startNode":
-                      return "#a78bfa"; // purple-400
+                      return "#a78bfa";
                     default:
                       return "#60a5fa";
                   }
@@ -622,7 +554,7 @@ export function Flow({
                 showWidgets={showWidgets}
                 setShowWidgets={setShowWidgets}
                 onDragStart={onDragStart}
-                availableWidgets={currentWidgets} // Pass currentWidgets to WidgetPanel
+                availableWidgets={currentWidgets}
               />
 
               {showVariableTip && (
@@ -634,7 +566,6 @@ export function Flow({
                       onClick={() => {
                         setShowVariableTip(false);
                         setVariableTipDismissed(true);
-                        // TODO: Ideally, use a unique key per agent flow
                         localStorage.setItem('variableTipDismissed_generic_flow', 'true');
                       }}
                       className="ml-2 p-0.5 rounded-full hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors"

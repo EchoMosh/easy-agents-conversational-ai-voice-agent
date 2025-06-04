@@ -17,12 +17,12 @@ import { cn } from "@/lib/utils";
 // import { fetchVapiCalls, fetchVapiCallDetails } from '@/utils/vapi-api';
 
 // Types (can be moved to a separate types file if not already)
-interface VapiCall {
+interface VoiceCall {
   id: string;
-  assistantId?: string; // Vapi uses assistant_id, but we'll map to our agent
+  assistantId?: string; // Voice service uses assistant_id, but we'll map to our agent
   createdAt: string; // ISO 8601 date string
   summary?: string;
-  // Add other relevant fields from Vapi call object
+  // Add other relevant fields from voice call object
 }
 
 interface Agent {
@@ -37,8 +37,8 @@ interface Agent {
 
 const TranscriptionsPage: React.FC = () => {
   const { currentWorkspace } = useWorkspace(); // Get current workspace
-  const [calls, setCalls] = useState<VapiCall[]>([]);
-  const [filteredCalls, setFilteredCalls] = useState<VapiCall[]>([]);
+  const [calls, setCalls] = useState<VoiceCall[]>([]);
+  const [filteredCalls, setFilteredCalls] = useState<VoiceCall[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]); // Assuming we can fetch agents
   const [selectedAgentFilter, setSelectedAgentFilter] = useState<string | null>(null);
   const [dateRangeFilter, setDateRangeFilter] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
@@ -90,12 +90,12 @@ const TranscriptionsPage: React.FC = () => {
     fetchAgentsForWorkspace();
   }, [currentWorkspace]); // Dependency: currentWorkspace (supabase client is stable, typically)
 
-  // Fetch all calls from Vapi
+  // Fetch all calls from voice service
   useEffect(() => {
     // Ensure this runs after agents might have been fetched, or in parallel if independent.
     // Current setup runs it in parallel.
     if (!vapiApiKey) {
-      setError(prevError => prevError ? `${prevError}\nVapi API key is not configured.` : "Vapi API key is not configured. Please set VITE_VAPI_API_KEY in your .env file.");
+      setError(prevError => prevError ? `${prevError}\nVoice API key is not configured.` : "Voice API key is not configured. Please set VITE_VAPI_API_KEY in your .env file.");
       setIsLoading(false);
       return;
     }
@@ -104,8 +104,7 @@ const TranscriptionsPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Vapi's endpoint for listing calls is indeed GET /call
-        // Reference: https://docs.vapi.ai/api-reference/get-call-list
+        // Voice service endpoint for listing calls
         const response = await fetch('https://api.vapi.ai/call', {
           headers: {
             Authorization: `Bearer ${vapiApiKey}`,
@@ -115,9 +114,9 @@ const TranscriptionsPage: React.FC = () => {
           const errorBody = await response.json().catch(() => ({ message: `Failed to fetch calls: ${response.status} ${response.statusText}` }));
           throw new Error(errorBody.message || `Failed to fetch calls: ${response.status} ${response.statusText}`);
         }
-        // Vapi returns an array of call objects directly.
-        const data: VapiCall[] = await response.json();
-        // Ensure assistantId is mapped from assistant_id if Vapi returns that
+        // Voice service returns an array of call objects directly.
+        const data: VoiceCall[] = await response.json();
+        // Ensure assistantId is mapped from assistant_id if voice service returns that
         const mappedData = data.map(call => ({
           ...call,
           assistantId: (call as any).assistant_id || call.assistantId,
@@ -125,7 +124,7 @@ const TranscriptionsPage: React.FC = () => {
         setCalls(mappedData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching calls.');
-        console.error("Vapi call fetch error:", err);
+        console.error("Voice service call fetch error:", err);
       } finally {
         setIsLoading(false);
       }

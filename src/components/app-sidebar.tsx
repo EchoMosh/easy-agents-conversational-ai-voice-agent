@@ -5,15 +5,12 @@ import {
   AudioWaveform,
   GalleryVerticalEnd,
   Command,
-  MessageSquare,
-  Search,
-  Home,
-  Grid,
-  Play,
-  Heart,
-  DollarSign,
-  HelpCircle,
+  LayoutDashboard,
+  Users,
+  BookOpen,
   Settings,
+  Bot,
+  FileText,
   Frame,
   PieChart,
   Map,
@@ -21,9 +18,9 @@ import {
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/context/workspace-context";
 
-import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
+import { NavSimple } from "@/components/nav-simple";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
@@ -33,94 +30,67 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import {
-  mainMenuItems,
-  historyMenuItems,
-} from "@/components/dashboard/sidebar/menu-items";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
   const [username, setUsername] = useState<string>("Meng To");
   const [email, setEmail] = useState<string>("ui@designer.com");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  
+  // Get workspace data from context
+  const { currentWorkspace, workspaces } = useWorkspace();
 
-  // Sample data for the sidebar components
-  const teams = [
-    {
-      name: "Acme Inc",
+  // Convert workspaces to teams format for TeamSwitcher
+  const teams = workspaces.map((workspace) => ({
+    name: workspace.name,
+    logo: GalleryVerticalEnd, // You can map different icons based on workspace.icon
+    plan: "Workspace", // You can add plan info to workspace model if needed
+  }));
+
+  // If no workspaces yet, show current workspace or fallback
+  if (teams.length === 0 && currentWorkspace) {
+    teams.push({
+      name: currentWorkspace.name,
       logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      plan: "Workspace",
+    });
+  }
+
+
+  // Define app-specific menu items that match the dock navigation
+  const appMenuItems = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutDashboard,
     },
     {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
+      title: "Leads",
+      url: "/dashboard/leads",
+      icon: Users,
     },
     {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
+      title: "Agents",
+      url: "/dashboard/agents",
+      icon: Bot,
+    },
+    {
+      title: "Transcriptions",
+      url: "/dashboard/transcriptions",
+      icon: FileText,
+    },
+    {
+      title: "Knowledge Base",
+      url: "/dashboard/knowledge",
+      icon: BookOpen,
+    },
+    {
+      title: "Settings",
+      url: "/dashboard/settings",
+      icon: Settings,
     },
   ];
 
-  const projects = [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ];
-
-  // Format existing menu items to match the NavMain component's expected format
-  const navMainItems = mainMenuItems.map((item) => {
-    // Check if the current path matches this menu item's URL exactly
-    const isPathExactMatch = location.pathname === item.url;
-
-    // For sub-path matching, we need to be more specific:
-    // 1. The current path should start with the menu item's URL
-    // 2. The menu item's URL shouldn't be the dashboard home URL to prevent it from being active for all dashboard routes
-    // 3. The menu item's URL length should be greater than "/dashboard/" to avoid unwanted matches
-    const isSubPathMatch =
-      location.pathname.startsWith(item.url) &&
-      item.url !== "/dashboard/home" &&
-      // Ensure we're not matching "/dashboard/" as a parent of all dashboard routes
-      (item.url === "/dashboard/" ? location.pathname === "/dashboard/" : true);
-
-    return {
-      title: item.title,
-      url: item.url,
-      icon: item.icon,
-      isActive: isPathExactMatch || isSubPathMatch,
-      items: [], // No subitems for now
-    };
-  });
-
-  // Add history items to the navMainItems
-  const navHistoryItems = historyMenuItems.map((item) => {
-    const isPathExactMatch = location.pathname === item.url;
-    // Apply the same specific sub-path matching logic for consistency
-    const isSubPathMatch =
-      location.pathname.startsWith(item.url) &&
-      !item.url.endsWith("/dashboard/");
-
-    return {
-      title: item.title,
-      url: item.url,
-      icon: item.icon,
-      isActive: isPathExactMatch || isSubPathMatch,
-      items: [], // No subitems for now
-    };
-  });
 
   const generateRandomAvatar = () => {
     const seed = Math.random().toString(36).substring(7);
@@ -165,16 +135,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r bg-[#1e2235] text-white"
+      className=""
       {...props}
     >
       <SidebarHeader>
         <TeamSwitcher teams={teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMainItems} />
-        <NavMain items={navHistoryItems} />
-        <NavProjects projects={projects} />
+        <NavSimple items={appMenuItems} label="Platform" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

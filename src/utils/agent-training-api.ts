@@ -1,117 +1,125 @@
-
 import { Agent } from '@/types/agent-types';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SendUserMessageResponse {
   message: string;
   success: boolean;
+  chatId?: string;
   [key: string]: any;
 }
 
-interface TrainingExample {
-  user_message: string;
-  corrected_response: string;
+interface ConversationState {
+  lastChatId?: string;
 }
 
+// Store conversation state per agent
+const conversationStates = new Map<string, ConversationState>();
+
 /**
- * Sends a user message to the training webhook
+ * Sends a user message to VAPI's chat API
  */
 export async function sendUserMessage(
   agentId: string, 
   message: string, 
-  conversationHistory: {role: string, content: string}[] = []
+  conversationHistory: {role: string, content: string}[] = [],
+  onProgress?: (chunk: string) => void
 ): Promise<SendUserMessageResponse> {
   try {
-    console.log(`[TrainingAPI] Sending user message to webhook for agent ${agentId}:`, message);
-    console.log(`[TrainingAPI] Including conversation history:`, conversationHistory);
+    console.log(`[ChatAPI] Sending user message to VAPI for agent ${agentId}:`, message);
     
-    // Fetch full agent data to include in the webhook
-    const { data: fullAgentData, error: agentError } = await supabase
+    // Fetch agent data to get the VAPI assistant ID
+    const { data: agentData, error: agentError } = await supabase
       .from('agents')
-      .select('*')
+      .select('v_agent_id, name')
       .eq('id', agentId)
       .single();
       
     if (agentError) {
-      console.error('[TrainingAPI] Error fetching agent data:', agentError);
+      console.error('[ChatAPI] Error fetching agent data:', agentError);
       throw new Error(`Failed to fetch agent data: ${agentError.message}`);
     }
     
-    console.log('[TrainingAPI] Retrieved agent data:', fullAgentData);
-    
-    // Fetch training examples for this agent
-    const { data: trainingExamples, error: examplesError } = await supabase
-      .from('agent_training_examples')
-      .select('user_message, corrected_response')
-      .eq('agent_id', agentId)
-      .limit(10) // Limit to most recent 10 examples
-      .order('created_at', { ascending: false });
-    
-    if (examplesError) {
-      console.error('[TrainingAPI] Error fetching training examples:', examplesError);
+    if (!agentData.v_agent_id) {
+      throw new Error('Agent does not have a VAPI assistant ID configured');
     }
     
-    console.log('[TrainingAPI] Retrieved training examples:', trainingExamples);
+    console.log('[ChatAPI] Using VAPI assistant ID:', agentData.v_agent_id);
     
-    // Create enhanced payload with more agent information
-    const payload = {
-      agent_id: agentId,
-      message,
-      conversation_history: conversationHistory,
-      timestamp: new Date().toISOString(),
-      
-      // Include additional agent information
-      agent_details: {
-        name: fullAgentData.name,
-        role: fullAgentData.role,
-        objective: fullAgentData.objective,
-        language: fullAgentData.language,
-        humor_level: fullAgentData.humor_level,
-        interaction_type: fullAgentData.interaction_type,
-        knowledge_ids: fullAgentData.knowledge_ids,
-        elevenlabs_agent_id: fullAgentData.elevenlabs_agent_id,
-        voice_id: fullAgentData.voice_id,
-        mermaid_chart: fullAgentData.mermaid_chart
-      },
-      
-      // Include training examples if available
-      training_examples: trainingExamples || []
+    // Get or create conversation state
+    let conversationState = conversationStates.get(agentId);
+    if (!conversationState) {
+      conversationState = {};
+      conversationStates.set(agentId, conversationState);
+    }
+    
+    // Prepare VAPI chat request
+    const requestBody: any = {
+      assistantId: agentData.v_agent_id,
+      input: message
     };
     
-    console.log('[TrainingAPI] Enhanced webhook payload:', payload);
+    // Add previous chat ID for context if available
+    if (conversationState.lastChatId) {
+      requestBody.previousChatId = conversationState.lastChatId;
+    }
     
-    const response = await fetch('https://moshi.app.n8n.cloud/webhook/train-agent', {
+    console.log('[ChatAPI] VAPI request:', requestBody);
+    
+    const response = await fetch('https://api.vapi.ai/chat', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${import.meta.env.VITE_VAPI_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(requestBody),
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[TrainingAPI] Webhook error:', errorText);
-      throw new Error(`Message webhook returned status ${response.status}: ${errorText}`);
+      console.error('[ChatAPI] VAPI error:', errorText);
+      throw new Error(`VAPI chat API returned status ${response.status}: ${errorText}`);
     }
     
-    const data = await response.json();
-    console.log('[TrainingAPI] Message webhook response:', data);
+    // Handle regular JSON response
+    const chatResponse = await response.json();
+    console.log('[ChatAPI] VAPI response:', chatResponse);
     
-    // Handle the new response format with "output" field
-    if (Array.isArray(data) && data.length > 0 && data[0].output) {
-      return {
-        message: data[0].output.trim(),
-        success: true
-      };
+    // Extract the chat ID for context
+    const currentChatId = chatResponse.id;
+    
+    // Extract the assistant's response
+    let fullResponse = '';
+    if (chatResponse.output && chatResponse.output.length > 0) {
+      fullResponse = chatResponse.output[0].content || '';
     }
+    
+    // Update conversation state with new chat ID
+    if (currentChatId) {
+      conversationState.lastChatId = currentChatId;
+    }
+    
+    // Simulate typing effect if onProgress callback is provided
+    if (onProgress && fullResponse) {
+      console.log('[ChatAPI] Simulating typing effect for:', fullResponse);
+      
+      // Send characters one by one with a small delay
+      for (let i = 0; i < fullResponse.length; i++) {
+        setTimeout(() => {
+          onProgress(fullResponse[i]);
+        }, i * 30); // 30ms delay between characters
+      }
+    }
+    
+    console.log('[ChatAPI] Complete response received:', fullResponse);
     
     return {
-      message: data.message || 'Default response message',
+      message: fullResponse.trim() || 'No response received',
       success: true,
-      ...data
+      chatId: currentChatId
     };
+    
   } catch (error) {
-    console.error('[TrainingAPI] Error sending user message:', error);
+    console.error('[ChatAPI] Error sending user message:', error);
     
     return {
       message: 'Error processing your message. Please try again later.',
@@ -119,4 +127,19 @@ export async function sendUserMessage(
       error: error instanceof Error ? error.message : String(error)
     };
   }
+}
+
+/**
+ * Reset conversation context for an agent
+ */
+export function resetConversation(agentId: string): void {
+  conversationStates.delete(agentId);
+  console.log(`[ChatAPI] Reset conversation context for agent ${agentId}`);
+}
+
+/**
+ * Get the current conversation state for an agent (for debugging)
+ */
+export function getConversationState(agentId: string): ConversationState | undefined {
+  return conversationStates.get(agentId);
 }

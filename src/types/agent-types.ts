@@ -1,4 +1,3 @@
-
 import { Node as ReactFlowNode, Edge } from '@xyflow/react';
 
 // Rename to avoid conflict with the imported type
@@ -86,6 +85,7 @@ export interface Agent {
   name: string;
   role: "receptionist" | "sales_agent" | "customer_support" | "technical_advisor" | "appointment_scheduler" | "product_specialist" | "virtual_assistant";
   user_id: string;
+  workspace_id?: string; // Added workspace_id as it seems to be a common requirement
   flow: FlowData | string;
   is_active: boolean;
   created_at?: string;
@@ -121,7 +121,4 @@ export interface Agent {
   last_trained_at?: string;
   training_webhook_url?: string;
   training_examples?: TrainingExample[];
-
-  // Mode agent was created in
-  creation_mode?: 'stable' | 'beta';
 }

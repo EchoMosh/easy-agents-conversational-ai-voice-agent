@@ -62,22 +62,26 @@ export function useFlowManagement(
     if (agent?.flow) {
       try {
         console.log(
-          "[AgentFlowPage] Processing initial flow data:",
+          "[AgentFlowPage] Processing flow data from agent:",
           agent.flow,
         );
         const flowData =
           typeof agent.flow === "string" ? JSON.parse(agent.flow) : agent.flow;
+        
+        console.log("[AgentFlowPage] Parsed flow data:", flowData);
         setFlowState(flowData as FlowData);
 
         let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
         mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
-        console.log("[AgentFlowPage] Initial Mermaid Chart:", mermaidChartStr);
+        console.log("[AgentFlowPage] Generated Mermaid Chart:", mermaidChartStr);
         setMermaidChart(mermaidChartStr);
       } catch (error) {
-        console.error("[AgentFlowPage] Error generating mermaid chart:", error);
-        setMermaidChart("graph TD\n  Error[Error generating chart]");
+        console.error("[AgentFlowPage] Error processing flow data:", error);
+        setFlowState({ nodes: [], edges: [] });
+        setMermaidChart("graph TD\n  Error[Error processing flow]");
       }
     } else {
+      console.log("[AgentFlowPage] No flow data available, setting empty state");
       setFlowState({ nodes: [], edges: [] });
       setMermaidChart("graph TD\n  EmptyFlow[Empty Flow]");
     }
@@ -85,9 +89,9 @@ export function useFlowManagement(
 
   const handleNodesChange = useCallback(
     (newNodes: Node[]) => {
-      if (!agent?.flow) {
+      if (!agent) {
         console.log(
-          "[AgentFlowPage] handleNodesChange: No agent flow data available",
+          "[AgentFlowPage] handleNodesChange: No agent data available",
         );
         return;
       }
@@ -132,9 +136,9 @@ export function useFlowManagement(
 
   const handleEdgesChange = useCallback(
     (newEdges: Edge[]) => {
-      if (!agent?.flow) {
+      if (!agent) {
         console.log(
-          "[AgentFlowPage] handleEdgesChange: No agent flow data available",
+          "[AgentFlowPage] handleEdgesChange: No agent data available",
         );
         return;
       }
