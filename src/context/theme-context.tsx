@@ -55,3 +55,5 @@ export const useThemeStyle = () => {
   }
   return context;
 };
+
+export default ThemeProvider;

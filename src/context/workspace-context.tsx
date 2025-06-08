@@ -196,3 +196,5 @@ export const useWorkspace = () => {
   }
   return context;
 };
+
+export default WorkspaceProvider;

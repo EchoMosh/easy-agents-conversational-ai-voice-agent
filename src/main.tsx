@@ -9,11 +9,10 @@ import "./index.css";
 import "./styles/theme-styles.css";
 import "./styles/lightning-effects.css";
 import { Toaster } from "./components/ui/toaster";
-import { WorkspaceProvider } from "./context/workspace-context";
-import { AuthProvider } from "./context/auth-context";
-import { ThemeProvider } from "./context/theme-context";
+import WorkspaceProvider from "./context/workspace-context";
+import AuthProvider from "./context/auth-context";
+import ThemeProvider from "./context/theme-context";
 import { AppLoadingProvider } from "./context/app-loading-context";
-import { AuthProvider } from "./context/auth-context";
 
 const queryClient = new QueryClient({
   defaultOptions: {
