@@ -125,9 +125,17 @@ export function useAgentData(
   }) => {
     if (!id) return;
     console.log("[AgentFlowPage] Updating agent settings:", settings);
+  
+    // Map to snake_case for Supabase
+    const dbUpdates: { [key: string]: any } = {};
+    if (settings.voiceId) dbUpdates.voice_id = settings.voiceId;
+    if (settings.language) dbUpdates.language = settings.language;
+    if (settings.humorLevel) dbUpdates.humor_level = settings.humorLevel;
+    if (settings.maxDurationSeconds) dbUpdates.max_duration_seconds = settings.maxDurationSeconds;
+
     const { error } = await supabase
       .from("agents")
-      .update(settings)
+      .update(dbUpdates)
       .eq("id", id);
 
     if (error) {

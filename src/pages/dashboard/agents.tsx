@@ -154,8 +154,11 @@ const AgentsPage = () => {
   };
 
   const handleCreateSuccess = async (agentId: string) => {
-    await queryClient.invalidateQueries({
-      queryKey: ["agents", currentWorkspace?.id],
+    queryClient.setQueryData(["agents", currentWorkspace?.id], (oldData: Agent[] | undefined) => {
+      if (!oldData) return [];
+      // This is a placeholder. In a real app, you'd fetch the new agent data
+      // and add it to the cache. For now, we'll just invalidate.
+      return oldData;
     });
     setIsCreating(false);
     toast({

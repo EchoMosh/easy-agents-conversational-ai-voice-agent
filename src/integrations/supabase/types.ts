@@ -100,6 +100,7 @@ export type Database = {
           mermaid_chart: string | null
           name: string
           objective: string
+          primary_phone_number_id: string | null
           role: Database["public"]["Enums"]["agent_role"]
           user_id: string
           v_agent_id: string | null
@@ -119,6 +120,7 @@ export type Database = {
           mermaid_chart?: string | null
           name: string
           objective: string
+          primary_phone_number_id?: string | null
           role: Database["public"]["Enums"]["agent_role"]
           user_id: string
           v_agent_id?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           mermaid_chart?: string | null
           name?: string
           objective?: string
+          primary_phone_number_id?: string | null
           role?: Database["public"]["Enums"]["agent_role"]
           user_id?: string
           v_agent_id?: string | null
@@ -145,6 +148,13 @@ export type Database = {
           workspace_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "agents_primary_phone_number_id_fkey"
+            columns: ["primary_phone_number_id"]
+            isOneToOne: false
+            referencedRelation: "phone_numbers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "agents_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -396,6 +406,82 @@ export type Database = {
           },
         ]
       }
+      phone_numbers: {
+        Row: {
+          id: string
+          workspace_id: string
+          twilio_phone_number: string
+          twilio_sid: string
+          friendly_name: string | null
+          capabilities: Json
+          area_code: string | null
+          country_code: string
+          monthly_cost: number
+          status: string
+          inbound_agent_id: string | null
+          outbound_agent_id: string | null
+          vapi_phone_number_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          twilio_phone_number: string
+          twilio_sid: string
+          friendly_name?: string | null
+          capabilities?: Json
+          area_code?: string | null
+          country_code?: string
+          monthly_cost?: number
+          status?: string
+          inbound_agent_id?: string | null
+          outbound_agent_id?: string | null
+          vapi_phone_number_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          twilio_phone_number?: string
+          twilio_sid?: string
+          friendly_name?: string | null
+          capabilities?: Json
+          area_code?: string | null
+          country_code?: string
+          monthly_cost?: number
+          status?: string
+          inbound_agent_id?: string | null
+          outbound_agent_id?: string | null
+          vapi_phone_number_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_numbers_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_numbers_inbound_agent_id_fkey"
+            columns: ["inbound_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_numbers_outbound_agent_id_fkey"
+            columns: ["outbound_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipelines: {
         Row: {
           columns: Json
@@ -515,6 +601,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      voice_previews: {
+        Row: {
+          id: string
+          voice_id: string
+          voice_name: string
+          preview_url: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          voice_id: string
+          voice_name: string
+          preview_url: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          voice_id?: string
+          voice_name?: string
+          preview_url?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       workspace_members: {
         Row: {

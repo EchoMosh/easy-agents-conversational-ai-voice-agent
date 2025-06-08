@@ -1,8 +1,0 @@
-
-project_id = "ahpmmgnkksrbpthniptg"
-[functions.generate-agent-call]
-verify_jwt = true
-[functions.create-elevenlabs-agent]
-verify_jwt = true
-[functions.webhook-relay]
-verify_jwt = true

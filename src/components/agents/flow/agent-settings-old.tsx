@@ -39,6 +39,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { 
+  uploadFileToVapi, 
+  createVapiKnowledgeBase, 
+  updateAgentKnowledgeBase,
+  VapiFile 
+} from '@/utils/vapi-knowledge-api';
+import { Upload, FileText, Loader2 } from 'lucide-react';
+
+// Type for voice preview cache
+interface VoicePreview {
+  voice_id: string;
+  voice_name: string;
+  preview_url: string;
+}
 
 // Helper function to convert country code to flag emoji
 const getFlagEmoji = (countryCode: string): string => {
@@ -50,13 +64,16 @@ const getFlagEmoji = (countryCode: string): string => {
   return String.fromCodePoint(...codePoints);
 };
 
-// Available voices data
-const voices = [
-  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", gender: "female", image: "/voice-characters/laura.png", countryCode: "US" },
-  { id: "UgBBYS2sOqTuMpoF3BR0", name: "Thomas", gender: "male", image: "/voice-characters/thomas.png", countryCode: "US" },
-  { id: "pwMBn0SsmN1220Aorv15", name: "Michael", gender: "male", image: "/voice-characters/michael.png", countryCode: "US" },
-  { id: "tempGabrielID12345", name: "Gabriel", gender: "male", image: "/voice-characters/gabriel.png", countryCode: "MX" }
-];
+// Type for ElevenLabs Voice
+interface ElevenLabsVoice {
+  voice_id: string;
+  name: string;
+  labels: {
+    gender: string;
+    accent: string;
+  };
+  samples: { sample_id: string }[];
+}
 
 // Updated languages data with correct language codes
 const languages = [
@@ -103,13 +120,12 @@ interface AgentSettingsProps {
   onUpdateSettings: (settings: {
     voiceId?: string;
     language?: string;
-    knowledgeBaseId?: string;
     humorLevel?: number;
     maxDurationSeconds?: number;
   }) => Promise<void>;
 }
 
-export function AgentSettingsRedesigned({
+export function AgentSettings({
   agentId,
   currentVoice,
   currentLanguage,
@@ -118,7 +134,8 @@ export function AgentSettingsRedesigned({
 }: AgentSettingsProps) {
   const [open, setOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState("voice");
-  const [selectedVoice, setSelectedVoice] = React.useState(currentVoice || voices[0].id);
+  const [voices, setVoices] = React.useState<ElevenLabsVoice[]>([]);
+  const [selectedVoice, setSelectedVoice] = React.useState(currentVoice);
   const [language, setLanguage] = React.useState(currentLanguage || "en");
   const [knowledgeBase, setKnowledgeBase] = React.useState("none");
   const [isLoading, setIsLoading] = React.useState(false);
@@ -134,6 +151,19 @@ export function AgentSettingsRedesigned({
   const [acknowledgementPhrases, setAcknowledgementPhrases] = React.useState<string[]>([
     "I understand", "I see", "got it"
   ]);
+  const [vapiAgentId, setVapiAgentId] = React.useState<string | null>(null);
+  const [firstMessage, setFirstMessage] = React.useState<string>("");
+  const [mermaidChart, setMermaidChart] = React.useState<string>("");
+  
+  // Vapi Knowledge Base states
+  const [vapiFiles, setVapiFiles] = React.useState<VapiFile[]>([]);
+  const [isUploadingFile, setIsUploadingFile] = React.useState(false);
+  const [isCreatingKnowledgeBase, setIsCreatingKnowledgeBase] = React.useState(false);
+  const [kbSearchType, setKbSearchType] = React.useState<'semantic' | 'fulltext' | 'hybrid'>('semantic');
+  const [kbTopK, setKbTopK] = React.useState(3);
+  const [kbScoreThreshold, setKbScoreThreshold] = React.useState(0.7);
+  const [vapiKnowledgeBaseId, setVapiKnowledgeBaseId] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
   
@@ -172,7 +202,55 @@ export function AgentSettingsRedesigned({
   }, []);
   
   React.useEffect(() => {
+    const fetchVoices = async () => {
+      try {
+        // Use Supabase Edge Function to get voices
+        const { data, error } = await supabase.functions.invoke('get-elevenlabs-voices');
+        
+        if (error) {
+          console.error("Error fetching voices via edge function:", error);
+          throw error;
+        }
+        
+        if (data && data.voices && Array.isArray(data.voices)) {
+          setVoices(data.voices);
+          if (!selectedVoice && data.voices.length > 0) {
+            setSelectedVoice(data.voices[0].voice_id);
+          }
+        } else {
+          throw new Error("Invalid response format from voices API");
+        }
+      } catch (error) {
+        console.error("Error fetching ElevenLabs voices:", error);
+        // Use fallback voices on any error
+        const fallbackVoices = [
+          {
+            voice_id: "uYXf8XasLslADfZ2MB4u",
+            name: "Laura",
+            labels: { gender: "female", accent: "american" },
+            samples: []
+          },
+          {
+            voice_id: "pNInz6obpgDQGcFmaJgB",
+            name: "Adam",
+            labels: { gender: "male", accent: "american" },
+            samples: []
+          }
+        ];
+        setVoices(fallbackVoices);
+        if (!selectedVoice) {
+          setSelectedVoice(fallbackVoices[0].voice_id);
+        }
+        toast({
+          title: "Warning",
+          description: "Using fallback voices. Please check your ElevenLabs API configuration.",
+          variant: "destructive",
+        });
+      }
+    };
+
     if (open) {
+      fetchVoices();
       refetch();
       
       const fetchAgentData = async () => {
@@ -202,8 +280,8 @@ export function AgentSettingsRedesigned({
               setKnowledgeBase("none");
             }
             
-            if (agentData.maxDurationSeconds) {
-              setMaxDurationSeconds(agentData.maxDurationSeconds);
+            if (agentData.max_duration_seconds) {
+              setMaxDurationSeconds(agentData.max_duration_seconds);
             }
             
             if (agentData.call_timing?.silenceTimeoutSeconds) {
@@ -224,6 +302,34 @@ export function AgentSettingsRedesigned({
             
             if (agentData.speaking_behavior?.acknowledgementPhrases) {
               setAcknowledgementPhrases(agentData.speaking_behavior.acknowledgementPhrases);
+            }
+            
+            if (agentData.v_agent_id) {
+              setVapiAgentId(agentData.v_agent_id);
+            }
+            
+            if (agentData.first_message) {
+              setFirstMessage(agentData.first_message);
+            }
+            
+            if (agentData.mermaid_chart) {
+              setMermaidChart(agentData.mermaid_chart);
+            }
+            
+            if (agentData.vapi_knowledge_base_id) {
+              setVapiKnowledgeBaseId(agentData.vapi_knowledge_base_id);
+            }
+            
+            if (agentData.vapi_file_ids && agentData.vapi_file_ids.length > 0) {
+              // Note: We're storing file IDs but not fetching full file info from Vapi API
+              // In a production app, you might want to fetch and display file details
+              setVapiFiles(agentData.vapi_file_ids.map(id => ({ 
+                id, 
+                name: 'Uploaded file', 
+                size: 0, 
+                createdAt: '', 
+                updatedAt: '' 
+              })));
             }
           }
         } catch (error) {
@@ -251,24 +357,14 @@ export function AgentSettingsRedesigned({
   const handleSave = async () => {
     setIsLoading(true);
     try {
+      // Only update fields that exist in the agents table
       const updateData = {
         voice_id: selectedVoice,
         language: language,
         knowledge_ids: knowledgeBase && knowledgeBase !== "none" ? [knowledgeBase] : [],
-        maxDurationSeconds: maxDurationSeconds,
-        background_sound: backgroundSound ? "office" : "off",
-        
-        call_timing: {
-          silenceTimeoutSeconds: silenceTimeoutSeconds,
-          maxDurationSeconds: maxDurationSeconds
-        },
-        
-        speaking_behavior: {
-          startSpeakingDelay: startSpeakingDelay,
-          smartEndpointingEnabled: smartEndpointing,
-          acknowledgementPhrases: acknowledgementPhrases
-        }
-      };
+        vapi_knowledge_base_id: vapiKnowledgeBaseId,
+        vapi_file_ids: vapiFiles.map(f => f.id)
+      } as any;
       
       const { error } = await supabase
         .from('agents')
@@ -279,10 +375,46 @@ export function AgentSettingsRedesigned({
         throw new Error(`Database error: ${error.message}`);
       }
       
+      // Update Vapi agent if v_agent_id exists
+      if (vapiAgentId) {
+        try {
+          const response = await supabase.functions.invoke('update-vapi-agent', {
+            body: {
+              agent_id: agentId,
+              v_agent_id: vapiAgentId,
+              voice_id: selectedVoice,
+              language: language,
+              first_message: firstMessage || `Hello! This is an AI assistant. How can I help you today?`,
+              mermaid_chart: mermaidChart || "",
+              max_duration_seconds: maxDurationSeconds,
+              background_sound: backgroundSound ? "office" : "off",
+              knowledge_base_id: vapiKnowledgeBaseId
+            }
+          });
+          
+          if (response.error) {
+            console.error('Failed to update Vapi agent:', response.error);
+            toast({
+              title: "Warning",
+              description: "Agent settings saved but Vapi update failed. The agent may not reflect all changes.",
+              variant: "destructive",
+            });
+          } else {
+            console.log('Vapi agent updated successfully');
+          }
+        } catch (vapiError) {
+          console.error('Error updating Vapi agent:', vapiError);
+          toast({
+            title: "Warning",
+            description: "Agent settings saved but Vapi update failed. The agent may not reflect all changes.",
+            variant: "destructive",
+          });
+        }
+      }
+      
       await onUpdateSettings({
         voiceId: selectedVoice,
         language,
-        knowledgeBaseId: knowledgeBase === "none" ? null : knowledgeBase,
         maxDurationSeconds: maxDurationSeconds,
       });
       
@@ -312,61 +444,57 @@ export function AgentSettingsRedesigned({
       });
       return;
     }
-    
+
     if (isPreviewingVoice) {
       audioElement.pause();
       audioElement.currentTime = 0;
       setIsPreviewingVoice(false);
       return;
     }
-    
+
     try {
       setIsPreviewingVoice(true);
+
+      const voice = voices.find(v => v.voice_id === selectedVoice);
+      const voiceName = voice?.name || 'this voice';
+      const previewText = `Hello! This is a preview of ${voiceName}. I'm ready to assist you with your needs.`;
       
-      const previewText = "Hello, this is a preview of my voice.";
+      console.log('Generating voice preview for:', voiceName);
       
-      const payload = { 
-        text: previewText,
-        voice_id: selectedVoice,
-        model_id: "eleven_multilingual_v2"
-      };
-      
-      const response = await supabase.functions.invoke('text-to-speech', {
-        method: 'POST',
-        body: payload,
+      // Use Supabase Edge Function for voice sample
+      const { data, error } = await supabase.functions.invoke('get-elevenlabs-voice-sample', {
+        body: {
+          voice_id: selectedVoice,
+          text: previewText
+        }
       });
-      
-      if (response.error) {
-        throw new Error(`Failed to generate voice preview: ${response.error}`);
+
+      if (error) {
+        console.error('Voice preview error:', error);
+        throw new Error(`Failed to generate voice preview: ${error.message}`);
       }
-      
-      if (!response.data?.audio_content) {
-        throw new Error('No audio content received');
+
+      if (!data?.audioUrl) {
+        throw new Error('No audio URL received from voice preview service');
       }
+
+      // Play the audio from the returned URL
+      audioElement.src = data.audioUrl;
       
-      const binaryData = atob(response.data.audio_content);
-      const bytes = new Uint8Array(binaryData.length);
-      for (let i = 0; i < binaryData.length; i++) {
-        bytes[i] = binaryData.charCodeAt(i);
-      }
-      
-      const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      audioElement.src = audioUrl;
-      audioElement.load();
-      
-      await audioElement.play();
-      
+      // Clean up when done
       audioElement.onended = () => {
         setIsPreviewingVoice(false);
-        URL.revokeObjectURL(audioUrl);
       };
+
+      // Play the audio
+      audioElement.load();
+      await audioElement.play();
+
     } catch (error) {
       console.error('Error previewing voice:', error);
       toast({
         title: "Error",
-        description: "Failed to preview voice",
+        description: error instanceof Error ? error.message : "Failed to preview voice. Please check your ElevenLabs configuration.",
         variant: "destructive",
       });
       setIsPreviewingVoice(false);
@@ -384,6 +512,84 @@ export function AgentSettingsRedesigned({
   };
 
   const [newPhrase, setNewPhrase] = React.useState("");
+
+  const handleFileUpload = async (files: FileList) => {
+    setIsUploadingFile(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // Check file size (Vapi recommends < 300KB)
+        if (file.size > 300 * 1024) {
+          toast({
+            title: "Warning",
+            description: `${file.name} is larger than 300KB. This may affect performance.`,
+            variant: "destructive",
+          });
+        }
+        
+        const vapiFile = await uploadFileToVapi(file);
+        return vapiFile;
+      });
+      
+      const uploadedFiles = await Promise.all(uploadPromises);
+      setVapiFiles(prev => [...prev, ...uploadedFiles]);
+      
+      toast({
+        title: "Success",
+        description: `Uploaded ${uploadedFiles.length} file(s) to Vapi`,
+      });
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to upload files",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingFile(false);
+    }
+  };
+
+  const createKnowledgeBase = async () => {
+    if (vapiFiles.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please upload at least one file",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsCreatingKnowledgeBase(true);
+    try {
+      const kb = await createVapiKnowledgeBase(
+        `${agentId}-knowledge-base`,
+        vapiFiles.map(f => f.id),
+        agentId,
+        {
+          searchType: kbSearchType,
+          topK: kbTopK,
+          scoreThreshold: kbScoreThreshold,
+        }
+      );
+      
+      setVapiKnowledgeBaseId(kb.id);
+      await updateAgentKnowledgeBase(agentId, kb.id, vapiFiles.map(f => f.id));
+      
+      toast({
+        title: "Success",
+        description: "Knowledge base created successfully",
+      });
+    } catch (error) {
+      console.error('Error creating knowledge base:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create knowledge base",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingKnowledgeBase(false);
+    }
+  };
 
   return (
     <TooltipProvider>
@@ -459,17 +665,10 @@ export function AgentSettingsRedesigned({
                       <SelectTrigger className="flex-1 h-11 rounded-lg border-input bg-background hover:bg-accent/50 transition-colors">
                         <SelectValue>
                           {(() => {
-                            const v = voices.find(voice => voice.id === selectedVoice);
+                            const v = voices.find(voice => voice.voice_id === selectedVoice);
                             if (!v) return null;
                             return (
                               <span className="flex items-center gap-3">
-                                <Avatar className="h-7 w-7 ring-2 ring-background">
-                                  <AvatarImage src={v.image} alt={v.name} className="object-cover object-top" />
-                                  <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-                                    {v.name.substring(0, 1)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-base">{getFlagEmoji(v.countryCode)}</span>
                                 <span className="font-medium">{v.name}</span>
                               </span>
                             );
@@ -478,15 +677,8 @@ export function AgentSettingsRedesigned({
                       </SelectTrigger>
                       <SelectContent className="rounded-lg">
                         {voices.map((voice) => (
-                          <SelectItem key={voice.id} value={voice.id} className="py-2.5 px-3 rounded-md">
+                          <SelectItem key={voice.voice_id} value={voice.voice_id} className="py-2.5 px-3 rounded-md">
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-7 w-7">
-                                <AvatarImage src={voice.image} alt={voice.name} className="object-cover object-top" />
-                                <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-                                  {voice.name.substring(0,1)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-base">{getFlagEmoji(voice.countryCode)}</span>
                               <span className="font-medium">{voice.name}</span>
                             </div>
                           </SelectItem>
@@ -599,15 +791,15 @@ export function AgentSettingsRedesigned({
                       </TooltipContent>
                     </Tooltip>
                   </Label>
-                  <Input 
-                    type="number" 
-                    min={0} 
-                    max={2} 
-                    step={0.1}
-                    value={startSpeakingDelay} 
-                    onChange={(e) => setStartSpeakingDelay(parseFloat(e.target.value))} 
-                    className="h-11 rounded-lg border-input bg-background hover:bg-accent/50 transition-colors"
-                  />
+                    <Input 
+                      type="number" 
+                      min={0} 
+                      max={2} 
+                      step={0.1}
+                      value={startSpeakingDelay} 
+                      onChange={(e) => setStartSpeakingDelay(parseFloat(e.target.value))} 
+                      className="h-11 rounded-lg border-input bg-background hover:bg-accent/50 transition-colors"
+                    />
                 </div>
 
                 {/* Toggle Settings */}
@@ -665,21 +857,135 @@ export function AgentSettingsRedesigned({
             <section className="space-y-4 animate-in fade-in duration-200">
               
               <div className="space-y-4">
-                {/* Knowledge Base */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">Knowledge Base</Label>
-                  <Select onValueChange={setKnowledgeBase} value={knowledgeBase}>
-                    <SelectTrigger className="h-11 rounded-lg border-input bg-background hover:bg-accent/50 transition-colors">
-                      <SelectValue placeholder={isLoadingDocuments ? "Loading..." : "Select knowledge base"} />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-lg">
-                      {knowledgeBases.map((kb) => (
-                        <SelectItem key={kb.id} value={kb.id} className="py-2 rounded-md">
-                          {kb.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Vapi Knowledge Base */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium text-foreground">Vapi Knowledge Base</Label>
+                    {vapiKnowledgeBaseId && (
+                      <Badge variant="outline" className="text-xs">
+                        Knowledge Base Active
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* File Upload Area */}
+                  <div 
+                    className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (e.dataTransfer.files.length > 0) {
+                        handleFileUpload(e.dataTransfer.files);
+                      }
+                    }}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept=".txt,.pdf,.docx,.doc,.csv,.md"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleFileUpload(e.target.files);
+                        }
+                      }}
+                    />
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {isUploadingFile ? "Uploading..." : "Click or drag files here to upload"}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Supports: TXT, PDF, DOCX, DOC, CSV, MD (< 300KB recommended)
+                    </p>
+                  </div>
+                  
+                  {/* Uploaded Files */}
+                  {vapiFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Uploaded Files</Label>
+                      <div className="space-y-1">
+                        {vapiFiles.map((file) => (
+                          <div key={file.id} className="flex items-center gap-2 p-2 bg-accent/30 rounded-lg">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm flex-1 truncate">{file.name}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setVapiFiles(prev => prev.filter(f => f.id !== file.id))}
+                              className="h-6 w-6 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Knowledge Base Configuration */}
+                  {vapiFiles.length > 0 && !vapiKnowledgeBaseId && (
+                    <div className="space-y-3 p-4 bg-accent/20 rounded-lg">
+                      <Label className="text-sm font-medium">Knowledge Base Configuration</Label>
+                      
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Search Type</Label>
+                          <Select value={kbSearchType} onValueChange={(v: any) => setKbSearchType(v)}>
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="semantic">Semantic</SelectItem>
+                              <SelectItem value="fulltext">Full Text</SelectItem>
+                              <SelectItem value="hybrid">Hybrid</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Top K Results</Label>
+                          <Input 
+                            type="number" 
+                            min={1} 
+                            max={10} 
+                            value={kbTopK} 
+                            onChange={(e) => setKbTopK(parseInt(e.target.value))}
+                            className="h-9"
+                          />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Score Threshold</Label>
+                          <Input 
+                            type="number" 
+                            min={0} 
+                            max={1} 
+                            step={0.1}
+                            value={kbScoreThreshold} 
+                            onChange={(e) => setKbScoreThreshold(parseFloat(e.target.value))}
+                            className="h-9"
+                          />
+                        </div>
+                      </div>
+                      
+                      <Button
+                        onClick={createKnowledgeBase}
+                        disabled={isCreatingKnowledgeBase}
+                        className="w-full"
+                      >
+                        {isCreatingKnowledgeBase ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Creating Knowledge Base...
+                          </>
+                        ) : (
+                          "Create Knowledge Base"
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Acknowledgement Phrases */}

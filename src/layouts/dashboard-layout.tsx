@@ -49,23 +49,21 @@ function DashboardLayout() {
 
   // Effect to redirect if workspace is not loading but also not ready
   useEffect(() => {
-    // More conservative redirect: only if loading is done, no workspace, never had one, and not on onboarding page.
-    if (!workspaceLoading && !currentWorkspace && !hasLoadedWorkspaceOnce && location.pathname !== "/onboarding") {
+    // If loading is complete, but there's no workspace, redirect to onboarding.
+    if (!workspaceLoading && !currentWorkspace && location.pathname !== "/onboarding") {
       console.log(
-        "Initial workspace setup needed, redirecting to onboarding from:",
+        "No workspace found after loading, redirecting to onboarding from:",
         location.pathname
       );
       navigate("/onboarding");
     }
-  }, [workspaceLoading, currentWorkspace, hasLoadedWorkspaceOnce, navigate, location.pathname]);
+  }, [workspaceLoading, currentWorkspace, navigate, location.pathname]);
 
-  // Show full loading screen ONLY for critical loading AND if workspace has never been loaded,
-  // OR if there's no current workspace AND it has never been loaded.
-  // This condition should now be more stable due to hasLoadedWorkspaceOnce from context.
-  if ((isCriticalLoading && !hasLoadedWorkspaceOnce) || (!currentWorkspace && !hasLoadedWorkspaceOnce)) {
+  // Show a loading screen if there is no current workspace yet.
+  if (!currentWorkspace) {
     return (
       <LoadingScreen
-        message={criticalLoadingMessage || (!currentWorkspace ? "Waiting for workspace..." : "Loading initial workspace...")}
+        message={criticalLoadingMessage || "Loading workspace..."}
       />
     );
   }

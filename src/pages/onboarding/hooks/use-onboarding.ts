@@ -24,7 +24,7 @@ export const useOnboarding = () => {
   
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { createDefaultWorkspace } = useWorkspace();
+  const { createDefaultWorkspace, isWorkspaceReady, hasLoadedWorkspaceOnce } = useWorkspace();
 
   useEffect(() => {
     checkSession();
@@ -39,35 +39,53 @@ export const useOnboarding = () => {
         return;
       }
 
-      // Check if user has any workspaces
+      // First check the user's profile for onboarding status
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Profile check error:', profileError);
+      }
+
+      // If profile explicitly shows onboarding completed, skip onboarding
+      if (profile?.onboarding_completed === true) {
+        setCheckingSession(false);
+        navigate("/dashboard/agents");
+        return;
+      }
+
+      // Check if user has any workspaces (existing user check)
       try {
         const { data: memberData, error: memberError } = await supabase
           .from('workspace_members')
           .select('workspace_id')
           .eq('user_id', session.user.id);
 
-        if (memberError) {
-          console.error('Workspace check error:', memberError);
-          // Continue with onboarding regardless of error type - the user will create a workspace
-        }
-
-        // If user has workspaces and onboarding is completed, redirect to dashboard
-        if (memberData && memberData.length > 0) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (profile?.onboarding_completed) {
-            navigate("/dashboard/agents");
-            return;
+        if (!memberError && memberData && memberData.length > 0) {
+          // User has workspaces, they're an existing user
+          console.log('Existing user detected with workspaces, ensuring onboarding flag is set');
+          
+          // Ensure the onboarding_completed flag is set for this user
+          if (!profile?.onboarding_completed) {
+            await supabase
+              .from('profiles')
+              .update({ onboarding_completed: true })
+              .eq('id', session.user.id);
           }
+
+          setCheckingSession(false);
+          navigate("/dashboard/agents");
+          return;
         }
       } catch (error) {
         console.error("Failed to check workspace membership:", error);
-        // Continue with onboarding
       }
+
+
+      // If we reach here, treat as new user needing onboarding
       
       setCheckingSession(false);
     } catch (error: any) {

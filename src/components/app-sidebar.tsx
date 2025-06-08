@@ -14,6 +14,7 @@ import {
   Frame,
   PieChart,
   Map,
+  Phone,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -73,6 +74,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Agents",
       url: "/dashboard/agents",
       icon: Bot,
+    },
+    {
+      title: "Phone Numbers",
+      url: "/dashboard/phone-numbers",
+      icon: Phone,
     },
     {
       title: "Transcriptions",

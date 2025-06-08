@@ -11,7 +11,6 @@ import { MessageSquare, Headphones, RefreshCw, AlertTriangle } from "lucide-reac
 import { Agent } from "@/types/agent";
 import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
 import { AgentVoiceCall } from "@/components/agents/voice-call/agent-voice-call";
-import axios from "axios";
 import { supabase } from "@/integrations/supabase/client";
 
 const LAURA_VOICE_ID = "uYXf8XasLslADfZ2MB4u";
@@ -53,8 +52,20 @@ export function TestAgentDialog({
     setIsUpdatingAgent(true);
     setUpdateError(null);
     try {
-      let currentAgentData = JSON.parse(JSON.stringify(agent)); // Deep clone
-      let voiceIdForPayload = currentAgentData.voice_id || null;
+      // Fetch fresh agent data from Supabase to ensure we have the latest updates
+      const { data: freshAgentData, error: fetchError } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('id', agent.id)
+        .single();
+      
+      if (fetchError) {
+        console.error("Failed to fetch fresh agent data:", fetchError);
+        throw new Error(`Failed to fetch agent data: ${fetchError.message}`);
+      }
+      
+      let currentAgentData = freshAgentData || JSON.parse(JSON.stringify(agent)); // Use fresh data or fallback to prop
+      let voiceIdForPayload = currentAgentData.voice_id || LAURA_VOICE_ID; // Default to Laura's voice
 
       if (currentAgentData.voice_character === "Laura") {
         console.log("Laura's voice selected. Attempting to update Supabase with ID:", LAURA_VOICE_ID);
@@ -65,20 +76,26 @@ export function TestAgentDialog({
           currentAgentData.voice_id = LAURA_VOICE_ID;
         } catch (supabaseError) {
           console.error("Failed to update Laura's voice ID in Supabase:", supabaseError);
-          // Not setting component-level error here, as it's a background detail.
-          // The main webhook call will proceed.
         }
       }
 
-      if (!currentAgentData.conversation_config) {
-        currentAgentData.conversation_config = {};
+      // Ensure we always have a valid voice ID
+      if (!voiceIdForPayload) {
+        voiceIdForPayload = LAURA_VOICE_ID;
+        console.log("No voice ID found, defaulting to Laura's voice:", LAURA_VOICE_ID);
       }
-      if (!currentAgentData.conversation_config.tts) {
-        currentAgentData.conversation_config.tts = {};
-      }
-      currentAgentData.conversation_config.tts.optimize_streaming_latency = 0;
+
+      console.log("Final voiceIdForPayload:", voiceIdForPayload, "Type:", typeof voiceIdForPayload);
+
+      const vapiId = currentAgentData.v_agent_id || currentAgentData.elevenlabs_agent_id || null;
       
-      const vapiId = currentAgentData.v_agent_id || currentAgentData.elevenlabs_agent_id || currentAgentData.id;
+      console.log("TestAgentDialog: vapiId found:", vapiId);
+      
+      // If no vapiId exists, we cannot proceed
+      if (!vapiId) {
+        console.error("TestAgentDialog: No vapiId found for agent");
+        throw new Error("No Vapi assistant ID found. Please ensure the agent has been properly created in Vapi.");
+      }
 
       // Ensure firstMessageNode is defined and cleaned
       const rawFirstMessage = typeof agent.flow === 'string'
@@ -88,31 +105,33 @@ export function TestAgentDialog({
       
       const cleanedFirstMessage = rawFirstMessage.replace(/<[^>]*>?/gm, '');
 
-      // Create a copy of currentAgentData to modify for the payload
-      const agentDetailsPayload = { ...currentAgentData };
-      delete agentDetailsPayload.flow; // Remove the flow property
+      // Get mermaid chart from agent data
+      const mermaidChart = currentAgentData.mermaid_chart || "";
       
-      const webhookPayload = {
-        vapi_id: vapiId,
-        first_message: cleanedFirstMessage, 
-        language: currentAgentData.language || "en",
-        voice_id: voiceIdForPayload,
-        agent_details: agentDetailsPayload, // Use the modified agent_details
-      };
-      
-      console.log("TestAgentDialog: Sending agent data to webhook:", JSON.stringify(webhookPayload, null, 2));
-      
-      await axios.post(
-        "https://moshi.app.n8n.cloud/webhook/update-agent",
-        webhookPayload,
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-      
-      console.log("TestAgentDialog: Agent data sent to webhook successfully.");
+      // Use Supabase Edge Function instead of direct API calls
+      const { data, error } = await supabase.functions.invoke('update-vapi-agent', {
+        body: {
+          agent_id: currentAgentData.id,
+          v_agent_id: vapiId,
+          voice_id: voiceIdForPayload,
+          language: currentAgentData.language || "en",
+          first_message: cleanedFirstMessage,
+          mermaid_chart: mermaidChart,
+          max_duration_seconds: currentAgentData.maxDurationSeconds || 600,
+          background_sound: currentAgentData.background_sound === "off" ? "off" : (currentAgentData.background_sound || "office")
+        }
+      });
+
+      if (error) {
+        console.error("TestAgentDialog: Error from update-vapi-agent function:", error);
+        throw new Error(`Failed to update agent: ${error.message}`);
+      }
+
+      console.log("TestAgentDialog: Agent updated successfully via edge function");
       setIsUpdatingAgent(false);
       return true;
     } catch (error) {
-      console.error("TestAgentDialog: Error sending agent data to webhook:", error);
+      console.error("TestAgentDialog: Error updating agent:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error during agent update.';
       setUpdateError(`Failed to update agent: ${errorMessage}`);
       setIsUpdatingAgent(false);
@@ -136,8 +155,12 @@ export function TestAgentDialog({
   useEffect(() => {
     setDialogOpen(open);
     if (open) {
-      // Trigger agent update when dialog is opened
-      sendAgentDataToWebhookInternal();
+      // Add a delay to ensure any pending updates from settings have completed
+      const timeoutId = setTimeout(() => {
+        sendAgentDataToWebhookInternal();
+      }, 500); // 500ms delay to allow settings updates to complete
+      
+      return () => clearTimeout(timeoutId);
     } else {
       // Reset states when dialog is closed externally or by onOpenChange(false)
       setIsUpdatingAgent(false);

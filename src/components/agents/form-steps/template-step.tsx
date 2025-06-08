@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { Agent } from "@/types/agent";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TemplateStepProps {
   selectedTemplate: string;
@@ -53,68 +54,8 @@ export function TemplateStep({
       return;
     }
     
-    setIsLoading(true);
-    setCreationStatus("Creating agent through n8n webhook...");
-    
-    try {
-      const webhookUrl = "https://moshi.app.n8n.cloud/webhook/create-agent";
-      
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          agentName: agentName,
-          role: "virtual_assistant",
-          language: "en"
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to create agent via n8n webhook: ${response.statusText}`);
-      }
-      
-      let data;
-      try {
-        data = await response.json();
-        console.log('n8n webhook response:', data);
-      } catch (error) {
-        console.error('Failed to parse webhook response:', error);
-        throw new Error('Invalid response from n8n webhook');
-      }
-      
-      if (!data) {
-        console.error('No data in response');
-        throw new Error('No data returned from n8n webhook');
-      }
-      
-      const vAgentId = data.v_agent_id;
-      console.log('Received v_agent_id:', vAgentId);
-      
-      if (!vAgentId) {
-        console.error('No v_agent_id in response:', data);
-        throw new Error('No v_agent_id returned from n8n webhook');
-      }
-      
-      toast({
-        title: "Success",
-        description: "Agent created successfully via n8n",
-      });
-      
-      await onNext(vAgentId);
-      
-    } catch (error) {
-      console.error('Error creating agent:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create agent",
-      });
-    } finally {
-      setIsLoading(false);
-      setCreationStatus(null);
-    }
+    // Just proceed to next step - no agent creation here
+    onNext();
   };
 
   return (

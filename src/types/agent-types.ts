@@ -96,11 +96,13 @@ export interface Agent {
   voice_id?: string;
   humor_level?: number;
   humorLevel?: number; // Keep for backward compatibility
-  maxDurationSeconds?: number;
+  max_duration_seconds?: number;
   mermaid_chart?: string;
   elevenlabs_agent_id?: string;
   knowledge_ids?: string[];
   v_agent_id?: string;
+  vapi_knowledge_base_id?: string;
+  vapi_file_ids?: string[];
   
   // Advanced configuration options
   voice_config?: VoiceConfig;

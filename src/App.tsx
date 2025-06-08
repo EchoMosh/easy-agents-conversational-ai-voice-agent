@@ -1,3 +1,4 @@
+import React from "react";
 import { Routes, Route, useRoutes } from "react-router-dom";
 import routes from "tempo-routes";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,6 +23,7 @@ import ChatsPage from "@/pages/dashboard/chats";
 import { ChatPage } from "@/pages/dashboard/chat";
 import KnowledgePage from "@/pages/dashboard/knowledge";
 import TranscriptionsPage from "@/pages/dashboard/transcriptions-page";
+import { PhoneNumbersPage } from "@/pages/dashboard/phone-numbers/phone-numbers-page";
 import AutomationsPage from "@/pages/dashboard/automations";
 import ActivitiesPage from "@/pages/dashboard/activities";
 import DashboardPage from "@/pages/dashboard/dashboard";
@@ -84,6 +86,14 @@ function AppContent() {
             <Route path="/dashboard/chats/:id" element={<ChatPage />} />
             <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
             <Route path="/dashboard/transcriptions" element={<TranscriptionsPage />} />
+            <Route
+              path="/dashboard/phone-numbers"
+              element={
+                <React.Suspense fallback={<LoadingScreen message="Loading phone numbers..." />}>
+                  <PhoneNumbersPage />
+                </React.Suspense>
+              }
+            />
             <Route
               path="/dashboard/automations"
               element={<AutomationsPage />}

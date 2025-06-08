@@ -47,10 +47,12 @@ export function EndNode({ id, data }: { id: string; data: { message?: string } }
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
             End Call Message
           </label>
-          <TipTapGreetingEditor
-            value={message}
-            onChange={handleMessageChange}
-          />
+          <div className="relative nodrag w-full">
+            <TipTapGreetingEditor
+              value={message}
+              onChange={handleMessageChange}
+            />
+          </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2"> {/* Increased margin-top for spacing */}
             Assistant will say this message before ending the call.
           </p>

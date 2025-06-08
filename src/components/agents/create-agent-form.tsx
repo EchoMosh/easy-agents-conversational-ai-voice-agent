@@ -4,13 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/context/workspace-context";
 import { Agent } from "@/types/agent";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
 import { TemplateStep } from "./form-steps/template-step";
+import { PhoneNumberStep } from "./form-steps/phone-number-step";
 import { getDefaultFlow } from "./utils/default-flow";
 import { AIVoiceLoader } from "./ai-voice-loader";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface CreateAgentFormProps {
   onSuccess: (agentId: string) => Promise<void>;
@@ -20,12 +21,13 @@ interface CreateAgentFormProps {
 export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, isWorkspaceReady } = useWorkspace();
   const [step, setStep] = useState(1); // Start at step 1 (Name)
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creationStatus, setCreationStatus] = useState<string | null>(null);
   const [vAgentId, setVAgentId] = useState<string | null>(null);
+  const [selectedPhoneNumberId, setSelectedPhoneNumberId] = useState<string | null>(null);
   const [newAgent, setNewAgent] = useState<{
     name: string;
     role: Agent["role"];
@@ -36,28 +38,12 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     template: "",
   });
 
-  const handleNextFromTemplate = async (vAgentIdFromWebhook?: string) => {
-    console.log("Received vAgentIdFromWebhook:", vAgentIdFromWebhook);
-
-    if (!vAgentIdFromWebhook) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No agent ID received from n8n, please try again",
-      });
-      return;
-    }
-
-    setVAgentId(vAgentIdFromWebhook);
-
-    // Immediately proceed with agent creation after setting vAgentId
-    await handleCreateAgent(vAgentIdFromWebhook);
+  const handleNextFromTemplate = async () => {
+    // Just proceed to phone number step - no agent creation here
+    setStep(3);
   };
 
-  const handleCreateAgent = async (currentVAgentId?: string) => {
-    // Use the passed in vAgentId or fall back to the state value
-    const finalVAgentId = currentVAgentId || vAgentId;
-
+  const handleCreateAgent = async () => {
     if (!newAgent.name) {
       toast({
         variant: "destructive",
@@ -67,18 +53,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       return;
     }
 
-    if (!finalVAgentId) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No agent ID received, please try again",
-      });
-      return;
-    }
-
     setIsCreating(true);
     setError(null);
-    setCreationStatus("Creating agent in database...");
+    setCreationStatus("Validating workspace...");
 
     const {
       data: { session },
@@ -104,15 +81,52 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       return;
     }
 
+    // Verify the workspace exists in the database
+    const { data: workspaceExists, error: workspaceCheckError } = await supabase
+      .from("workspaces")
+      .select("id")
+      .eq("id", currentWorkspace.id)
+      .single();
+
+    if (workspaceCheckError || !workspaceExists) {
+      console.error("Workspace validation error:", workspaceCheckError);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid workspace. Please refresh the page and try again.",
+      });
+      setIsCreating(false);
+      return;
+    }
+
+    let createdVAgentId: string | null = null;
+
     try {
-      console.log(
-        "Creating agent with name:",
-        newAgent.name,
-        "role:",
-        newAgent.role,
-        "v_agent_id:",
-        finalVAgentId
-      );
+      // Step 1: Create Vapi agent first
+      setCreationStatus("Creating Vapi agent...");
+      console.log("Creating Vapi agent with name:", newAgent.name);
+
+      const { data: vapiData, error: vapiError } = await supabase.functions.invoke('create-vapi-agent', {
+        body: {
+          agentName: newAgent.name,
+          role: newAgent.role,
+          language: "en"
+        }
+      });
+
+      if (vapiError) {
+        throw new Error(`Failed to create Vapi agent: ${vapiError.message}`);
+      }
+
+      createdVAgentId = vapiData?.v_agent_id;
+      if (!createdVAgentId) {
+        throw new Error('No v_agent_id returned from create-vapi-agent function');
+      }
+
+      console.log("Vapi agent created with ID:", createdVAgentId);
+
+      // Step 2: Create database record
+      setCreationStatus("Creating agent in database...");
 
       const flow = getDefaultFlow();
 
@@ -128,7 +142,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           objective: "answer_calls",
           interaction_type: ["inbound"],
           language: "en",
-          v_agent_id: finalVAgentId,
+          v_agent_id: createdVAgentId,
         })
         .select()
         .single();
@@ -140,18 +154,45 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         );
       }
 
+      // Step 3: If a phone number was selected, assign it
+      if (selectedPhoneNumberId) {
+        setCreationStatus("Assigning phone number...");
+        
+        const { error: phoneError } = await supabase
+          .from("phone_numbers")
+          .update({ inbound_agent_id: agentData.id })
+          .eq("id", selectedPhoneNumberId);
+
+        if (phoneError) {
+          console.error("Error assigning phone number:", phoneError);
+          // Don't fail the entire creation, just warn
+          toast({
+            title: "Warning",
+            description: "Agent created but phone number assignment failed",
+            variant: "default",
+          });
+        }
+      }
+
       setCreationStatus("Agent created successfully, redirecting...");
 
       toast({
         title: "Success",
-        description:
-          "Agent created successfully. Redirecting to flow editor...",
+        description: "Agent created successfully. Redirecting to flow editor...",
       });
 
       await onSuccess(agentData.id);
       navigate(`/dashboard/agents/flow/${agentData.id}`, { replace: true });
+
     } catch (error) {
       console.error("Error creating agent:", error);
+      
+      // If we created a Vapi agent but failed to create the database record,
+      // we should ideally clean up the Vapi agent, but for now we'll just log it
+      if (createdVAgentId) {
+        console.warn("Vapi agent created but database record failed. Vapi agent ID:", createdVAgentId);
+      }
+
       setError(
         typeof error === "object" && error !== null && "message" in error
           ? String(error.message)
@@ -171,6 +212,14 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       setCreationStatus(null);
     }
   };
+
+  if (!isWorkspaceReady) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (isCreating) {
     return (
@@ -195,7 +244,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
   return (
     <div className="space-y-6 py-6">
-      <CreateAgentProgress currentStep={step} totalSteps={2} />
+      <CreateAgentProgress currentStep={step} totalSteps={3} />
 
       {error && (
         <Alert variant="destructive">
@@ -226,6 +275,16 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             onBack={() => setStep(1)} // Go back to NameStep
             showOnlyScratch={true}
             agentName={newAgent.name}
+          />
+        )}
+
+        {step === 3 && currentWorkspace && (
+          <PhoneNumberStep
+            workspaceId={currentWorkspace.id}
+            selectedPhoneNumberId={selectedPhoneNumberId}
+            onPhoneNumberSelect={setSelectedPhoneNumberId}
+            onNext={() => handleCreateAgent()}
+            onBack={() => setStep(2)}
           />
         )}
       </div>
