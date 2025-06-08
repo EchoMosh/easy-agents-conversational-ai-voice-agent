@@ -76,16 +76,28 @@ const AuthPage = () => {
         if (error) throw error;
 
         if (data.user) {
-          console.log("Login successful, checking profile");
+          console.log("Login successful, checking profile and workspace");
           const { data: profile } = await supabase
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', data.user.id)
             .maybeSingle();
 
-          console.log("Profile check:", profile);
-          
-          if (profile?.onboarding_completed) {
+          const { data: memberships, error: membershipError } = await supabase
+            .from('workspace_members')
+            .select('workspace_id')
+            .eq('user_id', data.user.id)
+            .limit(1);
+
+          if (membershipError) {
+            console.error('Workspace membership fetch error:', membershipError);
+          }
+
+          const hasWorkspace = memberships && memberships.length > 0;
+
+          console.log('Profile check:', profile, 'Has workspace:', hasWorkspace);
+
+          if (profile?.onboarding_completed && hasWorkspace) {
             navigate("/dashboard/agents");
           } else {
             navigate("/onboarding");

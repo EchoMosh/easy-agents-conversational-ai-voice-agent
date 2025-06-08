@@ -47,17 +47,8 @@ function DashboardLayout() {
   // We're now using a direct registration in the workspace context
   // No need to re-register the loading state here
 
-  // Effect to redirect if workspace is not loading but also not ready
-  useEffect(() => {
-    // If loading is complete, but there's no workspace, redirect to onboarding.
-    if (!workspaceLoading && !currentWorkspace && location.pathname !== "/onboarding") {
-      console.log(
-        "No workspace found after loading, redirecting to onboarding from:",
-        location.pathname
-      );
-      navigate("/onboarding");
-    }
-  }, [workspaceLoading, currentWorkspace, navigate, location.pathname]);
+  // WorkspaceContext already handles onboarding redirect when no workspace exists
+  // Removing extra navigation here avoids potential redirect loops
 
   // Show a loading screen if there is no current workspace yet.
   if (!currentWorkspace) {
