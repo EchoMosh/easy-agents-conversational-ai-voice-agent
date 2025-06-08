@@ -12,6 +12,7 @@ import { Toaster } from "./components/ui/toaster";
 import { WorkspaceProvider } from "./context/workspace-context";
 import { ThemeProvider } from "./context/theme-context";
 import { AppLoadingProvider } from "./context/app-loading-context";
+import { AuthProvider } from "./context/auth-context";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,10 +38,12 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         >
           <ThemeProvider>
             <AppLoadingProvider>
-              <WorkspaceProvider>
-                <App />
-                <Toaster />
-              </WorkspaceProvider>
+              <AuthProvider>
+                <WorkspaceProvider>
+                  <App />
+                  <Toaster />
+                </WorkspaceProvider>
+              </AuthProvider>
             </AppLoadingProvider>
           </ThemeProvider>
         </NextThemesProvider>

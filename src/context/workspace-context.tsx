@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { LoadingPriority, useAppLoading } from "./app-loading-context";
 import { useApiLoading } from "@/hooks/use-api-loading";
+import { useAuth } from "./auth-context";
 
 interface Workspace {
   id: string;
@@ -49,6 +50,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [creationError, setCreationError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { session } = useAuth();
 
   // Use register loading state directly from app-loading-context
   // This is safe because it properly handles hooks at the component level
@@ -75,9 +77,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       console.log(
         `Fetching workspaces... (attempt ${retryCount + 1}/${maxRetries + 1})`
       );
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
 
       if (!session) {
         console.log("No session found, waiting for auth...");
@@ -228,10 +227,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   ): Promise<Workspace | null> => {
     try {
       setCreationError(null);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
       if (!session) return null;
 
       // Use the custom workspace name if provided
@@ -339,10 +334,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const switchWorkspace = async (workspace: Workspace) => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
       if (!session) return;
 
       // Update the current workspace in the profile
@@ -376,75 +367,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // Custom hook to check if workspace is ready
   const isWorkspaceReady = Boolean(activeWorkspace?.id || previousWorkspace?.id);
 
-  // Initialize workspace loading when the app starts
+  // Clear redirect attempts on mount
   useEffect(() => {
-    // Clear any previous redirect attempts when mounting
     localStorage.removeItem("workspaceRedirectAttempt");
+  }, []);
 
-    // Keep track of last auth event time to prevent duplicates
-    let lastAuthEventTime = 0;
-    const MIN_EVENT_INTERVAL = 2000; // 2 seconds minimum between events
-    let isAuthenticated = !!activeWorkspace; // Initialize based on cached workspace
+  useEffect(() => {
+    if (session) {
+      fetchWorkspaces();
+    } else {
+      localStorage.removeItem("cachedWorkspace");
+      setPreviousWorkspace(null);
+      setActiveWorkspace(null);
+      setWorkspaces([]);
+      setHasLoadedWorkspaceOnce(false);
+      setIsLoading(false);
+    }
+  }, [session]);
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      const now = Date.now();
-      console.log(`[Auth Debug] Auth event: ${event}, session: ${!!session}, time since last: ${now - lastAuthEventTime}ms, isAuthenticated: ${isAuthenticated}`);
-
-      if (event === "SIGNED_IN") {
-        if (session && (now - lastAuthEventTime > MIN_EVENT_INTERVAL || !isAuthenticated)) {
-          console.log("User signed in (genuine sign-in event or initial load), fetching workspaces...");
-          isAuthenticated = true;
-          fetchWorkspaces();
-        } else if (session && isAuthenticated) {
-          console.log("Ignoring likely token refresh or duplicate SIGNED_IN event (already authenticated).");
-        } else if (!session) {
-          console.log("SIGNED_IN event but no session, likely an error or race condition.");
-        }
-      } else if (event === "TOKEN_REFRESHED") {
-        console.log("Token refreshed - maintaining current workspace state. Session:", !!session);
-        // Ensure isAuthenticated is true if we have a session
-        if (session) isAuthenticated = true;
-        // Do NOT fetch workspaces again
-      } else if (event === "SIGNED_OUT") {
-        console.log("User signed out, clearing workspace state");
-        isAuthenticated = false;
-        localStorage.removeItem('cachedWorkspace');
-        setPreviousWorkspace(null);
-        setActiveWorkspace(null);
-        setWorkspaces([]);
-        setHasLoadedWorkspaceOnce(false); // Reset this on sign out
-      }
-      lastAuthEventTime = now;
-    });
-
-    // Initial fetch - only if not already loading and no active workspace from cache
-    // The `isLoading` check here might be tricky due to initial state `true`.
-    // `fetchWorkspaces` itself sets `isLoading = true` at the start.
-    // The primary trigger for initial fetch should be the SIGNED_IN event.
-    // However, we also need to handle the case where a session might already exist when the provider mounts.
-    // Let's check session on mount and fetch if a session exists and no workspace is cached,
-    // or if the auth listener fires SIGNED_IN.
-    const checkSessionAndFetch = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session && !activeWorkspace) { // If session exists and no workspace from cache
-        console.log("Session exists on mount, no cached workspace, fetching workspaces...");
-        isAuthenticated = true; // Assume authenticated if session exists
-        fetchWorkspaces();
-      } else if (activeWorkspace) { // If workspace from cache
-        console.log("Using cached workspace initially.");
-        setHasLoadedWorkspaceOnce(true);
-        setIsLoading(false);
-      } else { // No session, no cache
-        setIsLoading(false); // Not loading if no session and no cache
-      }
-    };
-    checkSessionAndFetch();
-
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, []); // Keep empty dependency array for single setup/cleanup
 
   const value = {
     currentWorkspace: activeWorkspace || previousWorkspace, // Use fallback

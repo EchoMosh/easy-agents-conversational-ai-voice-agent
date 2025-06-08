@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { steps } from "../components/steps";
 import type { OnboardingData } from "../types";
@@ -25,15 +26,21 @@ export const useOnboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createDefaultWorkspace, isWorkspaceReady, hasLoadedWorkspaceOnce } = useWorkspace();
+  const { session, isAuthLoading } = useAuth();
 
   useEffect(() => {
-    checkSession();
-  }, []);
+    if (!isAuthLoading) {
+      if (!session) {
+        navigate("/auth");
+      } else {
+        checkSession();
+      }
+    }
+  }, [isAuthLoading, session]);
 
   const checkSession = async () => {
     try {
       setCheckingSession(true);
-      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
         return;
@@ -106,8 +113,12 @@ export const useOnboarding = () => {
   const completeOnboarding = async () => {
     setIsCompleting(true);
     setError(null);
-    const { data: { session } } = await supabase.auth.getSession();
-    
+    if (!session?.user) {
+      navigate("/auth");
+      setIsCompleting(false);
+      return;
+    }
+
     if (session?.user) {
       try {
         console.log("Starting onboarding completion for user:", session.user.id);

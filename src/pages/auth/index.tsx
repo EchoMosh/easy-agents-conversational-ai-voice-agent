@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,30 +20,21 @@ const AuthPage = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session, isAuthLoading } = useAuth();
 
   useEffect(() => {
     // Check the mode param from URL
-    const mode = searchParams.get('mode');
-    setIsSignUp(mode === 'signup');
-    
+    const mode = searchParams.get("mode");
+    setIsSignUp(mode === "signup");
+
     // Clear previous error when switching modes
     setAuthError(null);
 
-    // Check if there's an existing session
-    const checkSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          // If already logged in, redirect to dashboard
-          navigate("/dashboard/agents");
-        }
-      } catch (error) {
-        console.error("Session check error:", error);
-      }
-    };
-    
-    checkSession();
-  }, [searchParams, navigate]);
+    // If user already has a session after loading, redirect
+    if (!isAuthLoading && session) {
+      navigate("/dashboard/agents");
+    }
+  }, [searchParams, navigate, session, isAuthLoading]);
 
   const handleToggleMode = () => {
     setAuthError(null); // Clear errors on mode switch
