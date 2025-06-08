@@ -23,8 +23,8 @@ interface WorkspaceContextType {
   currentWorkspace: Workspace | null;
   workspaces: Workspace[];
   isLoading: boolean;
-  isWorkspaceReady: boolean; // Add a flag that other components can check
-  hasLoadedWorkspaceOnce: boolean; // To track initial full load
+  isWorkspaceReady: boolean;
+  hasLoadedWorkspaceOnce: boolean;
   switchWorkspace: (workspace: Workspace) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
   createDefaultWorkspace: (
@@ -37,7 +37,6 @@ interface WorkspaceContextType {
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
   undefined
 );
-
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const cachedWorkspace = localStorage.getItem('cachedWorkspace');
@@ -62,6 +61,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return () => unregisterLoadingState('workspace');
   }, [isLoading, registerLoadingState, unregisterLoadingState, hasLoadedWorkspaceOnce]);
 
+  // Clear redirect attempts on mount
+  useEffect(() => {
+    localStorage.removeItem("workspaceRedirectAttempt");
+  }, []);
+
   useEffect(() => {
     if (data) {
       setWorkspaces(data.workspaces);
@@ -71,10 +75,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('cachedWorkspace', JSON.stringify(data.current));
         if (!hasLoadedWorkspaceOnce) setHasLoadedWorkspaceOnce(true);
       } else if (data.workspaces.length === 0 && session) {
-        navigate('/onboarding');
+        // Ensure we're not in a loop - use local storage to prevent infinite redirects
+        const redirectAttempt = localStorage.getItem("workspaceRedirectAttempt");
+        const now = Date.now();
+
+        if (!redirectAttempt || now - parseInt(redirectAttempt) > 30000) { // 30 seconds threshold
+          localStorage.setItem("workspaceRedirectAttempt", now.toString());
+          navigate('/onboarding');
+        }
       }
     }
     if (!session) {
+      localStorage.removeItem("cachedWorkspace");
       setPreviousWorkspace(null);
       setActiveWorkspace(null);
       setWorkspaces([]);

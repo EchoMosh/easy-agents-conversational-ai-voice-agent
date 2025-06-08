@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,38 +32,48 @@ export const useOnboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createDefaultWorkspace, isWorkspaceReady, hasLoadedWorkspaceOnce } = useWorkspace();
-  const { session } = useAuth();
+  const { session, isAuthLoading } = useAuth();
 
   useEffect(() => {
-    checkSession();
-  }, [session]);
+    if (!isAuthLoading) {
+      if (!session) {
+        navigate("/auth");
+      } else {
+        checkSession();
+      }
+    }
+  }, [isAuthLoading, session]);
 
   const checkSession = async () => {
-    setCheckingSession(true);
+    try {
+      setCheckingSession(true);
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
 
-    if (!session) {
-      navigate("/auth");
-      return;
-    }
+      // Check if the user's profile has already completed onboarding
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", session.user.id)
+        .maybeSingle();
 
-    // Check if the user's profile has already completed onboarding
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("onboarding_completed")
-      .eq("id", session.user.id)
-      .maybeSingle();
+      if (profileError) {
+        console.error("Profile check error:", profileError);
+      }
 
-    if (profileError) {
-      console.error("Profile check error:", profileError);
-    }
+      if (profile?.onboarding_completed) {
+        setCheckingSession(false);
+        navigate("/dashboard/agents");
+        return;
+      }
 
-    if (profile?.onboarding_completed) {
       setCheckingSession(false);
-      navigate("/dashboard/agents");
-      return;
+    } catch (error) {
+      console.error("Session check error:", error);
+      setCheckingSession(false);
     }
-
-    setCheckingSession(false);
   };
 
   const handleInputChange = (value: string) => {
@@ -77,6 +86,7 @@ export const useOnboarding = () => {
 
     if (!session?.user) {
       navigate("/auth");
+      setIsCompleting(false);
       return;
     }
 
@@ -102,7 +112,7 @@ export const useOnboarding = () => {
 
       console.log("Profile updated successfully");
 
-        // Update the user metadata 
+      // Update the user metadata 
       const { error: metadataError } = await supabase.auth.updateUser({
         data: {
           firstName: data.firstName,
@@ -122,8 +132,8 @@ export const useOnboarding = () => {
 
       console.log("User metadata updated successfully");
 
-        // Create the workspace using context method with the name from onboarding
-        // The database trigger will automatically add the user as a member
+      // Create the workspace using context method with the name from onboarding
+      // The database trigger will automatically add the user as a member
       try {
         console.log("Creating workspace using context method with name:", data.workspaceName);
         const workspace = await createDefaultWorkspace(data.workspaceName, data.workspaceIcon);
@@ -144,7 +154,7 @@ export const useOnboarding = () => {
         return;
       }
 
-        // Add delay to allow database changes to propagate
+      // Add delay to allow database changes to propagate
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       navigate("/dashboard/agents");
