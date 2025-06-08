@@ -7,22 +7,41 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
-    // Load current session on mount
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
+    let mounted = true;
+
+    const loadSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (mounted) {
+          setSession(data.session);
+          setIsAuthLoading(false);
+        }
+      } catch (error) {
+        console.error('Error loading session:', error);
+        if (mounted) {
+          setIsAuthLoading(false);
+        }
+      }
+    };
+
+    loadSession();
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
-      setSession(sess);
+      if (mounted) {
+        setSession(sess);
+        setIsAuthLoading(false);
+      }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  return { session };
+  return { session, isAuthLoading };
 };

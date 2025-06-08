@@ -13,10 +13,11 @@ import { useWorkspace as useWorkspaceQuery } from "@/hooks/use-workspace";
 import { useAuth } from "./auth-context";
 import { useQueryClient } from "@tanstack/react-query";
 
+// Define the Workspace type (assuming it's not imported)
 interface Workspace {
   id: string;
   name: string;
-  icon: string;
+  icon?: string;
 }
 
 interface WorkspaceContextType {
@@ -27,16 +28,11 @@ interface WorkspaceContextType {
   hasLoadedWorkspaceOnce: boolean;
   switchWorkspace: (workspace: Workspace) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
-  createDefaultWorkspace: (
-    customWorkspaceName?: string,
-    customIcon?: string
-  ) => Promise<Workspace | null>;
+  createDefaultWorkspace: (customWorkspaceName?: string, customIcon?: string) => Promise<Workspace | null>;
   creationError: string | null;
 }
 
-const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
-  undefined
-);
+const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const cachedWorkspace = localStorage.getItem('cachedWorkspace');
@@ -178,7 +174,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const isWorkspaceReady = Boolean(activeWorkspace?.id || previousWorkspace?.id);
 
-  const value = {
+  const value: WorkspaceContextType = {
     currentWorkspace: activeWorkspace || previousWorkspace,
     workspaces,
     isLoading,
