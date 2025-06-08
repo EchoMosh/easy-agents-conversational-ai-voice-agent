@@ -1,7 +1,16 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useRegisterLoadingState, LoadingPriority } from "@/context/app-loading-context";
+import {
+  useRegisterLoadingState,
+  LoadingPriority,
+} from "@/context/app-loading-context";
 
 interface AuthContextType {
   session: Session | null;
@@ -14,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  // register global loading state
+  // Register auth loading as HIGH priority
   useRegisterLoadingState("authentication", isAuthLoading, LoadingPriority.HIGH);
 
   useEffect(() => {
@@ -30,11 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthLoading(false);
     };
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) {
-        setSession(session);
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (mounted) {
+          setSession(session);
+        }
       }
-    });
+    );
 
     getInitialSession();
 
@@ -58,4 +69,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
