@@ -47,13 +47,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    getInitialSession();
+    if (!session) {
+      getInitialSession();
+    } else {
+      setIsAuthLoading(false);
+    }
 
     return () => {
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, []);
+  }, [session]);
 
   return (
     <AuthContext.Provider value={{ session, isAuthLoading }}>

@@ -26,9 +26,12 @@ interface WorkspaceContextType {
   isLoading: boolean;
   isWorkspaceReady: boolean;
   hasLoadedWorkspaceOnce: boolean;
-  switchWorkspace: (workspace: Workspace) => Promise<void>;
+  switchWorkspace: (workspace: Workspace) => Promise<Workspace>;
   refreshWorkspaces: () => Promise<void>;
-  createDefaultWorkspace: (customWorkspaceName?: string, customIcon?: string) => Promise<Workspace | null>;
+  createDefaultWorkspace: (params?: {
+    name?: string;
+    icon?: string;
+  }) => Promise<Workspace | null>;
   creationError: string | null;
 }
 
@@ -39,17 +42,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     cachedWorkspace ? JSON.parse(cachedWorkspace) : null
   );
-  const [previousWorkspace, setPreviousWorkspace] = useState<Workspace | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [hasLoadedWorkspaceOnce, setHasLoadedWorkspaceOnce] = useState(false);
-  const [creationError, setCreationError] = useState<string | null>(null);
   const { registerLoadingState, unregisterLoadingState } = useAppLoading();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { session } = useAuth();
 
-  const { data, isLoading } = useWorkspaceQuery();
+  const workspaceQuery = useWorkspaceQuery();
+  const {
+    workspaces: data,
+    isLoading,
+    isWorkspaceReady,
+    currentWorkspace,
+    hasLoadedWorkspaceOnce,
+  } = workspaceQuery;
 
   useEffect(() => {
     const priority = hasLoadedWorkspaceOnce ? LoadingPriority.MEDIUM : LoadingPriority.HIGH;
@@ -64,126 +71,45 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (data) {
-      setWorkspaces(data.workspaces);
-      if (data.current) {
-        setPreviousWorkspace(activeWorkspace);
-        setActiveWorkspace(data.current);
-        localStorage.setItem('cachedWorkspace', JSON.stringify(data.current));
-        if (!hasLoadedWorkspaceOnce) setHasLoadedWorkspaceOnce(true);
-      } else if (data.workspaces.length === 0 && session) {
-        // Ensure we're not in a loop - use local storage to prevent infinite redirects
+      setWorkspaces(data);
+      if (currentWorkspace) {
+        setActiveWorkspace(currentWorkspace);
+        localStorage.setItem(
+          "cachedWorkspace",
+          JSON.stringify(currentWorkspace)
+        );
+        if (!hasLoadedWorkspaceOnce) {}
+      } else if (data.length === 0 && session) {
         const redirectAttempt = localStorage.getItem("workspaceRedirectAttempt");
         const now = Date.now();
 
-        if (!redirectAttempt || now - parseInt(redirectAttempt) > 30000) { // 30 seconds threshold
+        if (!redirectAttempt || now - parseInt(redirectAttempt) > 30000) {
           localStorage.setItem("workspaceRedirectAttempt", now.toString());
-          navigate('/onboarding');
+          navigate("/onboarding");
         }
       }
     }
     if (!session) {
       localStorage.removeItem("cachedWorkspace");
-      setPreviousWorkspace(null);
       setActiveWorkspace(null);
       setWorkspaces([]);
-      setHasLoadedWorkspaceOnce(false);
     }
-  }, [data, session, navigate, activeWorkspace, hasLoadedWorkspaceOnce]);
+  }, [data, session, navigate, hasLoadedWorkspaceOnce, currentWorkspace]);
 
-  const refreshWorkspaces = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['workspace'] });
-  };
-
-  const createDefaultWorkspace = async (
-    customWorkspaceName?: string,
-    customIcon?: string
-  ): Promise<Workspace | null> => {
-    try {
-      setCreationError(null);
-      if (!session) return null;
-
-      let workspaceName: string;
-      if (customWorkspaceName) {
-        workspaceName = customWorkspaceName;
-      } else {
-        workspaceName = 'My Workspace';
-        try {
-          const { data: userMeta } = await supabase.auth.getUser();
-          const firstName = userMeta?.user?.user_metadata?.firstName;
-          if (firstName) {
-            workspaceName = `${firstName}'s Workspace`;
-          } else {
-            const email = session.user.email || '';
-            const username = email.split('@')[0];
-            workspaceName = `${username}'s Workspace`;
-          }
-        } catch {
-          /* ignore */
-        }
-      }
-
-      const workspaceIcon = customIcon || 'building';
-
-      const { data: workspace, error: workspaceError } = await supabase
-        .from('workspaces')
-        .insert({ name: workspaceName, icon: workspaceIcon, owner_id: session.user.id })
-        .select()
-        .single();
-      if (workspaceError) {
-        setCreationError(workspaceError.message);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to create workspace.' });
-        throw workspaceError;
-      }
-
-      await supabase
-        .from('profiles')
-        .update({ current_workspace_id: workspace.id })
-        .eq('id', session.user.id);
-
-      const newWorkspace = { id: workspace.id, name: workspace.name, icon: workspace.icon || 'building' };
-      setWorkspaces((prev) => [...prev, newWorkspace]);
-      setPreviousWorkspace(activeWorkspace);
-      setActiveWorkspace(newWorkspace);
-      localStorage.setItem('cachedWorkspace', JSON.stringify(newWorkspace));
-      toast({ title: 'Workspace created', description: `Workspace "${workspaceName}" created` });
-      await refreshWorkspaces();
-      return newWorkspace;
-    } catch (error: any) {
-      setCreationError(error.message || 'Unknown error');
-      return null;
-    }
-  };
-
-  const switchWorkspace = async (workspace: Workspace) => {
-    try {
-      if (!session) return;
-      const { error } = await supabase
-        .from('profiles')
-        .update({ current_workspace_id: workspace.id })
-        .eq('id', session.user.id);
-      if (error) throw error;
-      setPreviousWorkspace(activeWorkspace);
-      setActiveWorkspace(workspace);
-      localStorage.setItem('cachedWorkspace', JSON.stringify(workspace));
-      toast({ title: 'Workspace switched', description: `Switched to ${workspace.name}` });
-      await refreshWorkspaces();
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to switch workspace' });
-    }
-  };
-
-  const isWorkspaceReady = Boolean(activeWorkspace?.id || previousWorkspace?.id);
+  const refreshWorkspaces = workspaceQuery.refreshWorkspaces;
+  const createDefaultWorkspace = workspaceQuery.createDefaultWorkspace;
+  const switchWorkspace = workspaceQuery.switchWorkspace;
 
   const value: WorkspaceContextType = {
-    currentWorkspace: activeWorkspace || previousWorkspace,
+    currentWorkspace: activeWorkspace,
     workspaces,
     isLoading,
     isWorkspaceReady,
     hasLoadedWorkspaceOnce,
     switchWorkspace,
     refreshWorkspaces,
-    createDefaultWorkspace,
-    creationError,
+    createDefaultWorkspace: workspaceQuery.createDefaultWorkspace,
+    creationError: workspaceQuery.creationError,
   };
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;

@@ -57,14 +57,14 @@ export function useWorkspace() {
   });
 
   const createDefaultWorkspace = useMutation({
-    mutationFn: async ({ name, icon }: CreateParams): Promise<Workspace> => {
+    mutationFn: async (params: CreateParams = {}): Promise<Workspace> => {
       if (!session) throw new Error("No session");
-      const workspaceName = name || "My Workspace";
+      const workspaceName = params.name || "My Workspace";
       const { data, error } = await supabase
         .from("workspaces")
         .insert({
           name: workspaceName,
-          icon: icon || "building",
+          icon: params.icon || "building",
           owner_id: session.user.id,
         })
         .select()
@@ -74,7 +74,11 @@ export function useWorkspace() {
         .from("profiles")
         .update({ current_workspace_id: data.id })
         .eq("id", session.user.id);
-      const workspace = { id: data.id, name: data.name, icon: data.icon || "building" };
+      const workspace = {
+        id: data.id,
+        name: data.name,
+        icon: data.icon || "building",
+      };
       localStorage.setItem("cachedWorkspace", JSON.stringify(workspace));
       return workspace;
     },
