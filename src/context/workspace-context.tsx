@@ -38,81 +38,45 @@ interface WorkspaceContextType {
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const cachedWorkspace = localStorage.getItem('cachedWorkspace');
-  const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
-    cachedWorkspace ? JSON.parse(cachedWorkspace) : null
-  );
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const { registerLoadingState, unregisterLoadingState } = useAppLoading();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { session } = useAuth();
 
   const workspaceQuery = useWorkspaceQuery();
-  const {
-    workspaces: data,
-    isLoading,
-    isWorkspaceReady,
-    currentWorkspace,
-    hasLoadedWorkspaceOnce,
-  } = workspaceQuery;
 
   useEffect(() => {
-    const priority = hasLoadedWorkspaceOnce ? LoadingPriority.MEDIUM : LoadingPriority.HIGH;
-    registerLoadingState('workspace', isLoading, priority);
+    const priority = workspaceQuery.hasLoadedWorkspaceOnce ? LoadingPriority.MEDIUM : LoadingPriority.HIGH;
+    registerLoadingState('workspace', workspaceQuery.isLoading, priority);
     return () => unregisterLoadingState('workspace');
-  }, [isLoading, registerLoadingState, unregisterLoadingState, hasLoadedWorkspaceOnce]);
+  }, [workspaceQuery.isLoading, registerLoadingState, unregisterLoadingState, workspaceQuery.hasLoadedWorkspaceOnce]);
 
   // Clear redirect attempts on mount
   useEffect(() => {
     localStorage.removeItem("workspaceRedirectAttempt");
   }, []);
 
+  // Handle navigation to onboarding if no workspaces
   useEffect(() => {
-    if (data) {
-      setWorkspaces(data);
-      if (currentWorkspace) {
-        setActiveWorkspace(currentWorkspace);
-        localStorage.setItem(
-          "cachedWorkspace",
-          JSON.stringify(currentWorkspace)
-        );
-        if (!hasLoadedWorkspaceOnce) {}
-      } else if (data.length === 0 && session) {
-        const redirectAttempt = localStorage.getItem("workspaceRedirectAttempt");
-        const now = Date.now();
+    if (workspaceQuery.workspaces && workspaceQuery.workspaces.length === 0 && session && workspaceQuery.hasLoadedWorkspaceOnce) {
+      const redirectAttempt = localStorage.getItem("workspaceRedirectAttempt");
+      const now = Date.now();
 
-        if (!redirectAttempt || now - parseInt(redirectAttempt) > 30000) {
-          localStorage.setItem("workspaceRedirectAttempt", now.toString());
-          navigate("/onboarding");
-        }
+      if (!redirectAttempt || now - parseInt(redirectAttempt) > 30000) {
+        localStorage.setItem("workspaceRedirectAttempt", now.toString());
+        navigate("/onboarding");
       }
     }
+  }, [workspaceQuery.workspaces, session, navigate, workspaceQuery.hasLoadedWorkspaceOnce]);
+
+  // Clear cache when session ends
+  useEffect(() => {
     if (!session) {
       localStorage.removeItem("cachedWorkspace");
-      setActiveWorkspace(null);
-      setWorkspaces([]);
     }
-  }, [data, session, navigate, hasLoadedWorkspaceOnce, currentWorkspace]);
+  }, [session]);
 
-  const refreshWorkspaces = workspaceQuery.refreshWorkspaces;
-  const createDefaultWorkspace = workspaceQuery.createDefaultWorkspace;
-  const switchWorkspace = workspaceQuery.switchWorkspace;
-
-  const value: WorkspaceContextType = {
-    currentWorkspace: activeWorkspace,
-    workspaces,
-    isLoading,
-    isWorkspaceReady,
-    hasLoadedWorkspaceOnce,
-    switchWorkspace,
-    refreshWorkspaces,
-    createDefaultWorkspace: workspaceQuery.createDefaultWorkspace,
-    creationError: workspaceQuery.creationError,
-  };
-
-  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
+  // Simply pass through all the data from useWorkspaceQuery
+  return <WorkspaceContext.Provider value={workspaceQuery}>{children}</WorkspaceContext.Provider>;
 }
 
 export const useWorkspace = () => {
