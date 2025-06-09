@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, [session]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ session, isAuthLoading }}>

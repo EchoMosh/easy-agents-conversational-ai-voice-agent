@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth";
+import { useMemo } from "react";
 
 export interface Workspace {
   id: string;
@@ -87,7 +88,7 @@ export function useWorkspace() {
     },
   });
 
-  const currentWorkspace = (() => {
+  const currentWorkspace = useMemo(() => {
     const cached = localStorage.getItem("cachedWorkspace");
     const fromCache = cached ? (JSON.parse(cached) as Workspace) : null;
     if (workspacesQuery.data && workspacesQuery.data.length > 0) {
@@ -97,7 +98,7 @@ export function useWorkspace() {
       );
     }
     return fromCache;
-  })();
+  }, [workspacesQuery.data]);
 
   const refreshWorkspaces = () =>
     queryClient.invalidateQueries({ queryKey: ["workspaces", session?.user.id] });
