@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect, useContext } from 'react';
 import { PlayCircle, Zap, MessageCirclePlus, Plus, Pencil, X as CloseIcon, AlertTriangle, PhoneIncoming, Facebook, Edit3 as DraftIcon } from 'lucide-react';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/node-update-context';
-import { TipTapGreetingEditor } from './greeting/tiptap-greeting-editor';
+import { GreetingInput } from './greeting/greeting-input';
 import { NodeAction } from '@/types/agent-types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -232,7 +232,7 @@ export function StartNode({
             <Label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               First Message
             </Label>
-            <TipTapGreetingEditor
+            <GreetingInput
               value={firstMessage}
               onChange={handleFirstMessageChange}
             />

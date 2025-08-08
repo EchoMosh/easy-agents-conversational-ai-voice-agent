@@ -97,8 +97,9 @@ export default function LeadsPage() {
     };
   }, [leads]); // Combined dependency array to avoid excessive re-renders
 
-  // Handle edit lead directly
+// Handle edit lead directly
   const handleEditLead = (lead: Lead) => {
+    console.log("🐛DEBUG handleEditLead argument:", lead);
     setEditingLead(lead);
   };
 

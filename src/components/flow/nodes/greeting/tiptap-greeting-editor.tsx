@@ -102,7 +102,7 @@ export function TipTapGreetingEditor({ value, onChange }: TipTapGreetingEditorPr
         
         <EditorContent 
           editor={editor} 
-          className="prose dark:prose-invert prose-sm max-w-none cursor-text nodrag w-full"
+          className="prose prose-sm max-w-none cursor-text nodrag w-full text-gray-900 dark:prose-invert dark:text-white"
         />
       </div>
       

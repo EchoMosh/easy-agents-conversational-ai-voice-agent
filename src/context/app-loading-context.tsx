@@ -86,9 +86,10 @@ export function AppLoadingProvider({
     // Determine if we should show loading based on timestamps and priorities
     const shouldShowLoading = loadingItems.length > 0;
 
-    console.log(
-      `Loading state calculation: shouldShow=${shouldShowLoading}, currentlyShowing=${isAnyLoading}, items=${loadingItems.length}`
-    );
+    // Commented out to reduce console noise during debugging
+    // console.log(
+    //   `Loading state calculation: shouldShow=${shouldShowLoading}, currentlyShowing=${isAnyLoading}, items=${loadingItems.length}`
+    // );
 
     // Enhanced state transitions with smoothing to prevent flicker
     if (shouldShowLoading) {
@@ -169,19 +170,20 @@ export function AppLoadingProvider({
   useEffect(() => {
     const cleanup = calculateLoadingState();
 
-    console.log(
-      "Loading states:",
-      Object.fromEntries(
-        Object.entries(loadingStates).map(([id, state]) => [
-          id,
-          state.isLoading,
-        ])
-      ),
-      "IsAnyLoading:",
-      isAnyLoading,
-      "IsCriticalLoading:",
-      isCriticalLoading
-    );
+      // Commented out to reduce console noise during debugging
+      // console.log(
+      //   "Loading states:",
+      //   Object.fromEntries(
+      //     Object.entries(loadingStates).map(([id, state]) => [
+      //       id,
+      //       state.isLoading,
+      //     ])
+      //   ),
+      //   "IsAnyLoading:",
+      //   isAnyLoading,
+      //   "IsCriticalLoading:",
+      //   isCriticalLoading
+      // );
 
     return cleanup;
   }, [loadingStates, calculateLoadingState, isAnyLoading, isCriticalLoading]);

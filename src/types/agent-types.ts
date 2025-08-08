@@ -103,6 +103,7 @@ export interface Agent {
   v_agent_id?: string;
   vapi_knowledge_base_id?: string;
   vapi_file_ids?: string[];
+  trieve_dataset_id?: string;
   
   // Advanced configuration options
   voice_config?: VoiceConfig;

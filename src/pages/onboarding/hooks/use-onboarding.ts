@@ -31,7 +31,7 @@ export const useOnboarding = () => {
   
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { createDefaultWorkspace, isWorkspaceReady, hasLoadedWorkspaceOnce } = useWorkspace();
+  const { createDefaultWorkspace, isWorkspaceReady, hasLoadedWorkspaceOnce, refreshWorkspaces } = useWorkspace();
   const { session, isAuthLoading } = useAuth();
 
   useEffect(() => {
@@ -64,9 +64,21 @@ export const useOnboarding = () => {
       }
 
       if (profile?.onboarding_completed) {
-        setCheckingSession(false);
-        navigate("/dashboard/agents");
-        return;
+        // Also check if they have a workspace before redirecting
+        const { data: memberData } = await supabase
+          .from("workspace_members")
+          .select("workspace_id")
+          .eq("user_id", session.user.id)
+          .limit(1);
+          
+        if (memberData && memberData.length > 0) {
+          // User has completed onboarding AND has a workspace, redirect to dashboard
+          setCheckingSession(false);
+          navigate("/dashboard/agents");
+          return;
+        }
+        // User completed onboarding but has no workspace, let them go through onboarding again
+        console.log("User has completed onboarding but has no workspace, allowing re-onboarding");
       }
 
       setCheckingSession(false);
@@ -84,14 +96,29 @@ export const useOnboarding = () => {
     setIsCompleting(true);
     setError(null);
 
-    if (!session?.user) {
-      navigate("/auth");
-      setIsCompleting(false);
-      return;
-    }
-
     try {
-      console.log("Starting onboarding completion for user:", session.user.id);
+      // Force refresh session before any database operations
+      console.log("Refreshing session before onboarding completion...");
+      const { data: { session: refreshedSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session refresh error:", sessionError);
+        throw new Error("Failed to refresh session");
+      }
+      
+      if (!refreshedSession?.user) {
+        console.error("No valid session found after refresh");
+        navigate("/auth");
+        setIsCompleting(false);
+        return;
+      }
+
+      console.log("Session refreshed successfully. User ID:", refreshedSession.user.id);
+      console.log("Starting onboarding completion for user:", refreshedSession.user.id);
+
+      // Log session data to check authentication context in client
+      console.log("Checking authentication context from client session...");
+      console.log("Session user data:", refreshedSession.user);
 
       // First update the user profile before creating workspace
       const { error: profileError } = await supabase
@@ -103,7 +130,7 @@ export const useOnboarding = () => {
           employee_count: data.employeeCount,
           onboarding_completed: true,
         })
-        .eq("id", session.user.id);
+        .eq("id", refreshedSession.user.id); // Use refreshed session
 
       if (profileError) {
         console.error("Profile update error:", profileError);
@@ -136,10 +163,19 @@ export const useOnboarding = () => {
       // The database trigger will automatically add the user as a member
       try {
         console.log("Creating workspace using context method with name:", data.workspaceName);
+        console.log("Current time before workspace creation:", new Date().toISOString());
+        const startTime = Date.now();
+        
+        // The createDefaultWorkspace function now has session refresh built-in,
+        // but we've also refreshed here for extra safety
         const workspace = await createDefaultWorkspace({
           name: data.workspaceName,
           icon: data.workspaceIcon,
         });
+        
+        const endTime = Date.now();
+        console.log("Workspace creation took", (endTime - startTime) / 1000, "seconds");
+        console.log("Current time after workspace creation:", new Date().toISOString());
 
         if (!workspace) {
           console.error("Workspace creation returned empty workspace");
@@ -150,15 +186,36 @@ export const useOnboarding = () => {
 
         console.log("Workspace created successfully:", workspace);
 
+        // Force a refresh of workspace data to ensure the loading state updates
+        console.log("Refreshing workspace data after creation");
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Small delay before refresh
+        try {
+          console.log("Current time before workspace refresh:", new Date().toISOString());
+          const refreshStartTime = Date.now();
+          await refreshWorkspaces();
+          const refreshEndTime = Date.now();
+          console.log("Workspace refresh took", (refreshEndTime - refreshStartTime) / 1000, "seconds");
+          console.log("Workspace data refreshed successfully");
+          console.log("Current time after workspace refresh:", new Date().toISOString());
+        } catch (refreshError) {
+          console.error("Error refreshing workspace data:", refreshError);
+        }
+
       } catch (workspaceError: any) {
         console.error("Workspace creation error:", workspaceError);
+        if (workspaceError.details) {
+          console.error("Error details:", workspaceError.details);
+        }
+        if (workspaceError.hint) {
+          console.error("Error hint:", workspaceError.hint);
+        }
         setError(workspaceError.message || "Failed to create workspace");
         setIsCompleting(false);
         return;
       }
 
       // Add delay to allow database changes to propagate
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       navigate("/dashboard/agents");
     } catch (error: any) {

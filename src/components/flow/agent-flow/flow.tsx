@@ -64,6 +64,7 @@ interface FlowProps {
     remainingEdges: Edge[],
   ) => void;
   focusNodeId?: string | null;
+  showDemoCursor?: boolean; // optional fake cursor overlay for demo
 }
 
 export function Flow({
@@ -73,6 +74,7 @@ export function Flow({
   onEdgesChange,
   onNodeDeletion,
   focusNodeId,
+  showDemoCursor,
 }: FlowProps) {
 
   const [nodes, setNodes, onNodesChangeInternalOriginal] = useNodesState([]);
@@ -86,6 +88,14 @@ export function Flow({
   const [showVariableTip, setShowVariableTip] = useState(false);
   const [variableTipDismissed, setVariableTipDismissed] = useState(false);
   const reactFlowInstance = useReactFlow();
+
+  // Fake cursor overlay state (demo-only)
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number; visible: boolean }>({
+    x: 0,
+    y: 0,
+    visible: false,
+  });
+  const prevNodeCountRef = useRef(0);
 
   useEffect(() => {
     console.log("[Flow] Loading stable widget definitions.");
@@ -403,6 +413,24 @@ export function Flow({
     }
   }, []);
 
+  // Move demo cursor to newly added node centers
+  useEffect(() => {
+    if (!showDemoCursor || !reactFlowInstance) return;
+
+    const count = nodes.length;
+    if (count > prevNodeCountRef.current) {
+      const latest = nodes[count - 1];
+      if (latest) {
+        const { x, y, zoom } = reactFlowInstance.getViewport();
+        // Approximate node center with slight offset
+        const screenX = latest.position.x * zoom + x + 60;
+        const screenY = latest.position.y * zoom + y + 40;
+        setCursorPos({ x: screenX, y: screenY, visible: true });
+      }
+      prevNodeCountRef.current = count;
+    }
+  }, [nodes, showDemoCursor, reactFlowInstance]);
+
   // Track selected node & check for variable usage
   useEffect(() => {
     const selectedNode = nodes.find((node) => node.selected);
@@ -577,6 +605,19 @@ export function Flow({
                 </Panel>
               )}
             </ReactFlow>
+
+            {showDemoCursor && cursorPos.visible && (
+              <div
+                className="pointer-events-none absolute z-[1000] transition-all duration-700 ease-out"
+                style={{
+                  left: cursorPos.x,
+                  top: cursorPos.y,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <div className="w-5 h-5 rounded-full bg-white border border-neutral-400 shadow-[0_2px_8px_rgba(0,0,0,0.25)]" />
+              </div>
+            )}
           </FlowContextMenu>
         </div>
       </div>

@@ -30,13 +30,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "agent_knowledge_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "agent_knowledge_knowledge_id_fkey"
             columns: ["knowledge_id"]
             isOneToOne: false
@@ -76,74 +69,150 @@ export type Database = {
           user_id?: string
           user_message?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "agent_training_examples_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       agents: {
         Row: {
-          created_at: string
+          background_denoising_enabled: boolean | null
+          background_sound:
+            | Database["public"]["Enums"]["background_sound_enum"]
+            | null
+          call_timing: Json | null
+          created_at: string | null
           elevenlabs_agent_id: string | null
+          end_call_message: string | null
+          end_call_phrases: string[] | null
+          first_message: string | null
+          first_message_mode:
+            | Database["public"]["Enums"]["first_message_mode_enum"]
+            | null
           flow: Json | null
           humor_level: number | null
           id: string
-          interaction_type: string[]
+          interaction_type: string[] | null
           is_active: boolean | null
           knowledge_ids: string[] | null
           language: string | null
+          last_trained_at: string | null
+          max_duration_seconds: number | null
+          maxDurationSeconds: number | null
           mermaid_chart: string | null
+          model_config: Json | null
           name: string
-          objective: string
+          objective: string | null
           primary_phone_number_id: string | null
-          role: Database["public"]["Enums"]["agent_role"]
-          user_id: string
+          role: Database["public"]["Enums"]["agent_role"] | null
+          silence_timeout_message: string | null
+          speaking_behavior: Json | null
+          training_examples: Json | null
+          training_status:
+            | Database["public"]["Enums"]["training_status_enum"]
+            | null
+          training_webhook_url: string | null
+          transcriber_config: Json | null
+          trieve_dataset_id: string | null
+          updated_at: string | null
+          user_id: string | null
           v_agent_id: string | null
+          vapi_file_ids: string[] | null
+          vapi_knowledge_base_id: string | null
+          voice_config: Json | null
           voice_id: string | null
           workspace_id: string | null
         }
         Insert: {
-          created_at?: string
+          background_denoising_enabled?: boolean | null
+          background_sound?:
+            | Database["public"]["Enums"]["background_sound_enum"]
+            | null
+          call_timing?: Json | null
+          created_at?: string | null
           elevenlabs_agent_id?: string | null
+          end_call_message?: string | null
+          end_call_phrases?: string[] | null
+          first_message?: string | null
+          first_message_mode?:
+            | Database["public"]["Enums"]["first_message_mode_enum"]
+            | null
           flow?: Json | null
           humor_level?: number | null
           id?: string
-          interaction_type?: string[]
+          interaction_type?: string[] | null
           is_active?: boolean | null
           knowledge_ids?: string[] | null
           language?: string | null
+          last_trained_at?: string | null
+          max_duration_seconds?: number | null
+          maxDurationSeconds?: number | null
           mermaid_chart?: string | null
+          model_config?: Json | null
           name: string
-          objective: string
+          objective?: string | null
           primary_phone_number_id?: string | null
-          role: Database["public"]["Enums"]["agent_role"]
-          user_id: string
+          role?: Database["public"]["Enums"]["agent_role"] | null
+          silence_timeout_message?: string | null
+          speaking_behavior?: Json | null
+          training_examples?: Json | null
+          training_status?:
+            | Database["public"]["Enums"]["training_status_enum"]
+            | null
+          training_webhook_url?: string | null
+          transcriber_config?: Json | null
+          trieve_dataset_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
           v_agent_id?: string | null
+          vapi_file_ids?: string[] | null
+          vapi_knowledge_base_id?: string | null
+          voice_config?: Json | null
           voice_id?: string | null
           workspace_id?: string | null
         }
         Update: {
-          created_at?: string
+          background_denoising_enabled?: boolean | null
+          background_sound?:
+            | Database["public"]["Enums"]["background_sound_enum"]
+            | null
+          call_timing?: Json | null
+          created_at?: string | null
           elevenlabs_agent_id?: string | null
+          end_call_message?: string | null
+          end_call_phrases?: string[] | null
+          first_message?: string | null
+          first_message_mode?:
+            | Database["public"]["Enums"]["first_message_mode_enum"]
+            | null
           flow?: Json | null
           humor_level?: number | null
           id?: string
-          interaction_type?: string[]
+          interaction_type?: string[] | null
           is_active?: boolean | null
           knowledge_ids?: string[] | null
           language?: string | null
+          last_trained_at?: string | null
+          max_duration_seconds?: number | null
+          maxDurationSeconds?: number | null
           mermaid_chart?: string | null
+          model_config?: Json | null
           name?: string
-          objective?: string
+          objective?: string | null
           primary_phone_number_id?: string | null
-          role?: Database["public"]["Enums"]["agent_role"]
-          user_id?: string
+          role?: Database["public"]["Enums"]["agent_role"] | null
+          silence_timeout_message?: string | null
+          speaking_behavior?: Json | null
+          training_examples?: Json | null
+          training_status?:
+            | Database["public"]["Enums"]["training_status_enum"]
+            | null
+          training_webhook_url?: string | null
+          transcriber_config?: Json | null
+          trieve_dataset_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
           v_agent_id?: string | null
+          vapi_file_ids?: string[] | null
+          vapi_knowledge_base_id?: string | null
+          voice_config?: Json | null
           voice_id?: string | null
           workspace_id?: string | null
         }
@@ -173,6 +242,7 @@ export type Database = {
           file_type: string
           id: string
           title: string
+          trieve_dataset_id: string | null
           updated_at: string
           user_id: string
           workspace_id: string | null
@@ -185,6 +255,7 @@ export type Database = {
           file_type: string
           id?: string
           title: string
+          trieve_dataset_id?: string | null
           updated_at?: string
           user_id: string
           workspace_id?: string | null
@@ -197,19 +268,12 @@ export type Database = {
           file_type?: string
           id?: string
           title?: string
+          trieve_dataset_id?: string | null
           updated_at?: string
           user_id?: string
           workspace_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "knowledge_documents_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       lead_activities: {
         Row: {
@@ -397,75 +461,61 @@ export type Database = {
             referencedRelation: "pipelines"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "leads_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
         ]
       }
       phone_numbers: {
         Row: {
+          area_code: string | null
+          capabilities: Json | null
+          country_code: string | null
+          created_at: string | null
+          friendly_name: string | null
           id: string
-          workspace_id: string
+          inbound_agent_id: string | null
+          monthly_cost: number | null
+          outbound_agent_id: string | null
+          status: string | null
           twilio_phone_number: string
           twilio_sid: string
-          friendly_name: string | null
-          capabilities: Json
-          area_code: string | null
-          country_code: string
-          monthly_cost: number
-          status: string
-          inbound_agent_id: string | null
-          outbound_agent_id: string | null
+          updated_at: string | null
           vapi_phone_number_id: string | null
-          created_at: string
-          updated_at: string
+          workspace_id: string
         }
         Insert: {
+          area_code?: string | null
+          capabilities?: Json | null
+          country_code?: string | null
+          created_at?: string | null
+          friendly_name?: string | null
           id?: string
-          workspace_id: string
+          inbound_agent_id?: string | null
+          monthly_cost?: number | null
+          outbound_agent_id?: string | null
+          status?: string | null
           twilio_phone_number: string
           twilio_sid: string
-          friendly_name?: string | null
-          capabilities?: Json
-          area_code?: string | null
-          country_code?: string
-          monthly_cost?: number
-          status?: string
-          inbound_agent_id?: string | null
-          outbound_agent_id?: string | null
+          updated_at?: string | null
           vapi_phone_number_id?: string | null
-          created_at?: string
-          updated_at?: string
+          workspace_id: string
         }
         Update: {
+          area_code?: string | null
+          capabilities?: Json | null
+          country_code?: string | null
+          created_at?: string | null
+          friendly_name?: string | null
           id?: string
-          workspace_id?: string
+          inbound_agent_id?: string | null
+          monthly_cost?: number | null
+          outbound_agent_id?: string | null
+          status?: string | null
           twilio_phone_number?: string
           twilio_sid?: string
-          friendly_name?: string | null
-          capabilities?: Json
-          area_code?: string | null
-          country_code?: string
-          monthly_cost?: number
-          status?: string
-          inbound_agent_id?: string | null
-          outbound_agent_id?: string | null
+          updated_at?: string | null
           vapi_phone_number_id?: string | null
-          created_at?: string
-          updated_at?: string
+          workspace_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "phone_numbers_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "phone_numbers_inbound_agent_id_fkey"
             columns: ["inbound_agent_id"]
@@ -478,6 +528,13 @@ export type Database = {
             columns: ["outbound_agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_numbers_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -507,15 +564,7 @@ export type Database = {
           user_id?: string
           workspace_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "pipelines_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -557,15 +606,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           username?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_current_workspace_id_fkey"
-            columns: ["current_workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       tags: {
         Row: {
@@ -592,64 +633,53 @@ export type Database = {
           user_id?: string
           workspace_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "tags_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       voice_previews: {
         Row: {
+          created_at: string | null
           id: string
+          preview_url: string
+          updated_at: string | null
           voice_id: string
           voice_name: string
-          preview_url: string
-          created_at: string
-          updated_at: string
         }
         Insert: {
+          created_at?: string | null
           id?: string
+          preview_url: string
+          updated_at?: string | null
           voice_id: string
           voice_name: string
-          preview_url: string
-          created_at?: string
-          updated_at?: string
         }
         Update: {
+          created_at?: string | null
           id?: string
+          preview_url?: string
+          updated_at?: string | null
           voice_id?: string
           voice_name?: string
-          preview_url?: string
-          created_at?: string
-          updated_at?: string
         }
         Relationships: []
       }
       workspace_members: {
         Row: {
           created_at: string
-          id: string
-          role: Database["public"]["Enums"]["workspace_role"]
+          role: string
           updated_at: string
           user_id: string
           workspace_id: string
         }
         Insert: {
           created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["workspace_role"]
+          role?: string
           updated_at?: string
           user_id: string
           workspace_id: string
         }
         Update: {
           created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["workspace_role"]
+          role?: string
           updated_at?: string
           user_id?: string
           workspace_id?: string
@@ -667,26 +697,23 @@ export type Database = {
       workspaces: {
         Row: {
           created_at: string
-          icon: string
+          icon: string | null
           id: string
           name: string
-          owner_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          icon?: string
+          icon?: string | null
           id?: string
           name: string
-          owner_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          icon?: string
+          icon?: string | null
           id?: string
           name?: string
-          owner_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -697,10 +724,7 @@ export type Database = {
     }
     Functions: {
       is_workspace_member: {
-        Args: {
-          workspace_id: string
-          user_id: string
-        }
+        Args: { workspace_id: string; user_id: string }
         Returns: boolean
       }
     }
@@ -719,6 +743,8 @@ export type Database = {
         | "appointment_scheduler"
         | "product_specialist"
         | "virtual_assistant"
+      background_sound_enum: "off" | "office" | "cafe" | "nature"
+      first_message_mode_enum: "assistant-speaks-first" | "user-speaks-first"
       lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
       tag_color:
         | "gray"
@@ -728,6 +754,7 @@ export type Database = {
         | "blue"
         | "purple"
         | "pink"
+      training_status_enum: "not_started" | "in_progress" | "completed"
       workspace_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
@@ -736,27 +763,29 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -764,20 +793,22 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -785,20 +816,22 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -806,21 +839,23 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
@@ -829,6 +864,35 @@ export type CompositeTypes<
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      activity_type: [
+        "note",
+        "status_change",
+        "contact_update",
+        "name_update",
+        "variable_add",
+      ],
+      agent_role: [
+        "receptionist",
+        "sales_agent",
+        "customer_support",
+        "technical_advisor",
+        "appointment_scheduler",
+        "product_specialist",
+        "virtual_assistant",
+      ],
+      background_sound_enum: ["off", "office", "cafe", "nature"],
+      first_message_mode_enum: ["assistant-speaks-first", "user-speaks-first"],
+      lead_status: ["new", "contacted", "qualified", "converted", "lost"],
+      tag_color: ["gray", "red", "yellow", "green", "blue", "purple", "pink"],
+      training_status_enum: ["not_started", "in_progress", "completed"],
+      workspace_role: ["owner", "admin", "member"],
+    },
+  },
+} as const

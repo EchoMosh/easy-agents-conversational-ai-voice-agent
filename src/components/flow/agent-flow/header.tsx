@@ -47,6 +47,8 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
   const [showTestAgentDialog, setShowTestAgentDialog] = useState<boolean>(false);
   const [showLaunchAgentDialog, setShowLaunchAgentDialog] = useState(false);
   const [showCallLogsModal, setShowCallLogsModal] = useState(false); // Added state for call logs modal
+  const [showSettingsModal, setShowSettingsModal] = useState(false); // Added state for settings modal
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [isUpdatingAgent, setIsUpdatingAgent] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
@@ -367,20 +369,16 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[180px] p-1.5 rounded-lg border-slate-200 dark:border-slate-700 shadow-lg">
-              <AgentSettings
-                agentId={agent.id}
-                currentVoice={agent.voice_id || undefined}
-                currentLanguage={agent.language}
-                onUpdateSettings={onUpdateSettings}
+              <DropdownMenuItem
+                className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setShowSettingsModal(true);
+                }}
               >
-                <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
-                >
-                  <Settings className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" />
-                  <span className="text-slate-700 dark:text-slate-300">Settings</span>
-                </DropdownMenuItem>
-              </AgentSettings>
+                <Settings className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" />
+                <span className="text-slate-700 dark:text-slate-300">Settings</span>
+              </DropdownMenuItem>
               
               <DropdownMenuItem 
                 className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -448,6 +446,15 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         agent={agent}
         isOpen={showCallLogsModal}
         onClose={() => setShowCallLogsModal(false)}
+      />
+
+      <AgentSettings
+        agentId={agent.id}
+        currentVoice={agent.voice_id || undefined}
+        currentLanguage={agent.language}
+        open={showSettingsModal}
+        onOpenChange={setShowSettingsModal}
+        onUpdateSettings={onUpdateSettings}
       />
     </>
   );

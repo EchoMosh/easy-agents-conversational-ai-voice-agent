@@ -37,25 +37,73 @@ function DashboardLayout() {
     isLoading: workspaceLoading,
     isWorkspaceReady,
     currentWorkspace,
-    hasLoadedWorkspaceOnce, // Consume new flag
+    hasLoadedWorkspaceOnce,
+    workspaces,
   } = useWorkspace();
   const { isAnyLoading, isCriticalLoading, criticalLoadingMessage } =
     useAppLoading();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // We're now using a direct registration in the workspace context
-  // No need to re-register the loading state here
+  // Handle workspace loading and redirect logic
+  useEffect(() => {
+    // Only proceed if workspace loading is complete
+    if (!hasLoadedWorkspaceOnce || workspaceLoading) return;
 
-  // WorkspaceContext already handles onboarding redirect when no workspace exists
-  // Removing extra navigation here avoids potential redirect loops
+    // Prevent redirect if we're already on the onboarding page
+    if (location.pathname === "/onboarding") return;
 
-  // Show a loading screen if there is no current workspace yet.
-  if (!currentWorkspace) {
+    // If no workspaces exist and we're done loading, redirect to onboarding
+    // But only if we haven't already attempted this redirect
+    if (workspaces.length === 0) {
+      const lastRedirect = sessionStorage.getItem("lastWorkspaceRedirect");
+      const now = Date.now();
+      
+      // Only redirect if we haven't redirected in the last 5 seconds
+      if (!lastRedirect || now - parseInt(lastRedirect) > 5000) {
+        console.log("DashboardLayout: No workspaces found, redirecting to onboarding");
+        sessionStorage.setItem("lastWorkspaceRedirect", now.toString());
+        navigate("/onboarding", { replace: true });
+      }
+    }
+  }, [hasLoadedWorkspaceOnce, workspaceLoading, workspaces, navigate, location.pathname]);
+
+  // Show loading screen while workspace is loading
+  if (!hasLoadedWorkspaceOnce || workspaceLoading) {
     return (
       <LoadingScreen
         message={criticalLoadingMessage || "Loading workspace..."}
       />
+    );
+  }
+
+  // If no current workspace after loading is done, show a message
+  // This handles edge cases where workspaces exist but none is current
+  if (!currentWorkspace && workspaces.length > 0) {
+    return (
+      <LoadingScreen
+        message="Setting up your workspace..."
+      />
+    );
+  }
+
+  // If we're here with no workspace and no redirect happened, show error
+  if (!currentWorkspace) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold mb-4">No Workspace Found</h2>
+          <p className="text-muted-foreground mb-4">
+            Please complete the onboarding process to create your workspace.
+          </p>
+          <button
+            onClick={() => navigate("/onboarding")}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Go to Onboarding
+          </button>
+        </div>
+      </div>
     );
   }
   

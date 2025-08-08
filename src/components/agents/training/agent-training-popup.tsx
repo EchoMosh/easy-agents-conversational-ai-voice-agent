@@ -9,6 +9,7 @@ import { sendUserMessage } from "@/utils/agent-training-api";
 import { useToast } from "@/hooks/use-toast";
 import { FlowData, FlowNode } from "@/types/agent-types";
 import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
 
 // Utility function to strip HTML tags
 const stripHtmlTags = (html: string): string => {
@@ -541,13 +542,50 @@ export function AgentTrainingPopup({
                       </div>
                     ) : (
                       <>
-                        <p className="text-sm leading-relaxed">
-                          {stripHtmlTags(message.content)}
-                          {/* FIXED: Only show cursor when actively streaming AND there's content */}
-                          {isStreaming && message.content.length > 0 && (
-                            <span className="inline-block w-2 h-4 bg-blue-500 dark:bg-blue-400 ml-1 animate-pulse" />
-                          )}
-                        </p>
+                        {message.content === "" && !isUser ? (
+                          <div className="flex items-center justify-center py-2">
+                            <div className="flex items-center gap-1.5">
+                              <motion.div 
+                                className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full"
+                                animate={{ y: [0, -4, 0] }}
+                                transition={{ 
+                                  repeat: Infinity, 
+                                  duration: 1.2, 
+                                  ease: "easeInOut",
+                                  delay: 0 
+                                }}
+                              />
+                              <motion.div 
+                                className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full"
+                                animate={{ y: [0, -4, 0] }}
+                                transition={{ 
+                                  repeat: Infinity, 
+                                  duration: 1.2, 
+                                  ease: "easeInOut",
+                                  delay: 0.2 
+                                }}
+                              />
+                              <motion.div 
+                                className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full"
+                                animate={{ y: [0, -4, 0] }}
+                                transition={{ 
+                                  repeat: Infinity, 
+                                  duration: 1.2, 
+                                  ease: "easeInOut",
+                                  delay: 0.4 
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm leading-relaxed">
+                            {stripHtmlTags(message.content)}
+                            {/* Only show cursor when actively streaming AND there's content */}
+                            {isStreaming && message.content.length > 0 && (
+                              <span className="inline-block w-2 h-4 bg-blue-500 dark:bg-blue-400 ml-1 animate-pulse" />
+                            )}
+                          </p>
+                        )}
                         
                         {message.correction && (
                           <div className="mt-2 p-2 bg-white dark:bg-gray-700/50 rounded-xl border border-green-300 dark:border-green-600/70">
@@ -574,19 +612,36 @@ export function AgentTrainingPopup({
                 <div className="flex justify-start">
                   <div className="max-w-[50%] rounded-3xl px-3 py-2 bg-gray-100 dark:bg-gray-700/80 rounded-bl-lg">
                     <div className="flex space-x-1.5 h-5 items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"
-                        style={{
-                          animationDelay: "200ms",
+                      <motion.div 
+                        className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500"
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          duration: 1.2, 
+                          ease: "easeInOut",
+                          delay: 0 
                         }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"
-                        style={{
-                          animationDelay: "400ms",
+                      />
+                      <motion.div 
+                        className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500"
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          duration: 1.2, 
+                          ease: "easeInOut",
+                          delay: 0.2 
                         }}
-                      ></div>
+                      />
+                      <motion.div 
+                        className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500"
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          duration: 1.2, 
+                          ease: "easeInOut",
+                          delay: 0.4 
+                        }}
+                      />
                     </div>
                   </div>
                 </div>

@@ -13,6 +13,8 @@ export const supabase = createClient<Database>(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY,
 );
+// Expose Supabase client to browser console
+;(window as any).supabase = supabase;
 
 // Helper for getting the current workspace ID
 export const getCurrentWorkspaceId = async (): Promise<string | null> => {

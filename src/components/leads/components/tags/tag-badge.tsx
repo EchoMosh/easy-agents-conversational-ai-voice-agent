@@ -1,17 +1,16 @@
 
 
-import { Edit, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Tag } from "@/types/tag-types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Update the Tag type to make user_id optional
 interface TagBadgeProps {
   tag: Omit<Tag, 'user_id'> & { user_id?: string };
-  onEdit?: () => void;
   onDelete?: () => void;
 }
 
-export function TagBadge({ tag, onEdit, onDelete }: TagBadgeProps) {
+export function TagBadge({ tag, onDelete }: TagBadgeProps) {
   // Determine if tag is long and might need to be truncated
   const isLongTag = tag.name.length > 15;
   
@@ -32,14 +31,6 @@ export function TagBadge({ tag, onEdit, onDelete }: TagBadgeProps) {
         <span>{tag.name}</span>
       )}
       
-      {onEdit && (
-        <button
-          onClick={onEdit}
-          className="text-blue-600 hover:text-blue-800 flex items-center"
-        >
-          <Edit className="h-3 w-3" />
-        </button>
-      )}
       
       {onDelete && (
         <button

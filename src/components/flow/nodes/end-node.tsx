@@ -1,24 +1,15 @@
 
 import { Handle, Position } from '@xyflow/react';
 import { X } from 'lucide-react';
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext } from 'react';
 import { NodeUpdateContext } from '@/components/flow/agent-flow/node-update-context';
-import { TipTapGreetingEditor } from './greeting/tiptap-greeting-editor'; // Import the editor
+import { GreetingInput } from './greeting/greeting-input'; // Use the same component as Greeting node
 
 export function EndNode({ id, data }: { id: string; data: { message?: string } }) {
   // Ensure initial value is a string, defaulting to an empty paragraph for TipTap
   const initialMessageValue = typeof data?.message === 'string' ? data.message : '<p></p>';
   const [message, setMessage] = useState(initialMessageValue);
   const { updateNodeData } = useContext(NodeUpdateContext);
-
-  // Sync with incoming data changes
-  useEffect(() => {
-    const newInitialMessage = typeof data?.message === 'string' ? data.message : '<p></p>';
-    if (data?.message !== undefined && newInitialMessage !== message) {
-      setMessage(newInitialMessage);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.message]); // Only depend on data.message
 
   const handleMessageChange = (value: string) => {
     setMessage(value);
@@ -47,12 +38,7 @@ export function EndNode({ id, data }: { id: string; data: { message?: string } }
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
             End Call Message
           </label>
-          <div className="relative nodrag w-full">
-            <TipTapGreetingEditor
-              value={message}
-              onChange={handleMessageChange}
-            />
-          </div>
+          <GreetingInput value={message} onChange={handleMessageChange} />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2"> {/* Increased margin-top for spacing */}
             Assistant will say this message before ending the call.
           </p>

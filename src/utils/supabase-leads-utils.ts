@@ -1,11 +1,10 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 
 interface LeadData {
   first_name?: string;
   last_name?: string;
-  email: string;
+  email?: string;
   phone?: string;
   company?: string;
   job_title?: string;
@@ -38,44 +37,50 @@ export async function importLeads(
       throw new Error('No valid leads to import');
     }
     
-    // Check for required fields
-    const invalidLeads = leads.filter(lead => !lead.email);
+    // Check for required fields - only first name and phone are required
+    const invalidLeads = leads.filter(lead => {
+      const hasFirstName = lead.first_name && lead.first_name.trim();
+      const hasPhone = lead.phone && lead.phone.trim();
+      
+      return !hasFirstName || !hasPhone;
+    });
+    
     if (invalidLeads.length > 0) {
-      throw new Error(`${invalidLeads.length} leads are missing required email field`);
+      throw new Error(`${invalidLeads.length} leads are missing required fields (first name and phone number)`);
     }
     
-    // Handle duplicates if needed
-    let leadsToImport = leads;
-    if (removeDuplicates) {
-      // Get unique leads by email
-      const uniqueEmails = new Set();
-      leadsToImport = leads.filter(lead => {
-        const email = lead.email.toLowerCase();
-        if (uniqueEmails.has(email)) {
-          return false;
-        }
-        uniqueEmails.add(email);
-        return true;
-      });
-    }
-    
-    // Check for existing leads in database if removing duplicates
-    if (removeDuplicates) {
-      const emails = leadsToImport.map(lead => lead.email.toLowerCase());
+    // Remove duplicates within the CSV file based on phone number (since phone is now required)
+    const uniquePhones = new Set();
+    let leadsToImport = leads.filter(lead => {
+      const phone = lead.phone?.trim();
+      if (!phone) return false; // Don't import leads without phone
       
-      const { data: existingLeads, error: checkError } = await supabase
-        .from('leads')
-        .select('email')
-        .in('email', emails)
-        .eq('workspace_id', workspaceId);
-      
-      if (checkError) {
-        throw new Error(`Error checking for existing leads: ${checkError.message}`);
+      if (uniquePhones.has(phone)) {
+        return false; // Skip duplicate phone numbers within the CSV
       }
+      uniquePhones.add(phone);
+      return true;
+    });
+    
+    // Check for existing leads in database only if removing duplicates is enabled
+    if (removeDuplicates) {
+      const phones = leadsToImport.map(lead => lead.phone?.trim()).filter(phone => phone);
       
-      if (existingLeads && existingLeads.length > 0) {
-        const existingEmails = new Set(existingLeads.map(lead => lead.email.toLowerCase()));
-        leadsToImport = leadsToImport.filter(lead => !existingEmails.has(lead.email.toLowerCase()));
+      if (phones.length > 0) {
+        const { data: existingLeads, error: checkError } = await supabase
+          .from('leads')
+          .select('phone')
+          .in('phone', phones)
+          .eq('workspace_id', workspaceId);
+        
+        if (checkError) {
+          throw new Error(`Error checking for existing leads: ${checkError.message}`);
+        }
+        
+        if (existingLeads && existingLeads.length > 0) {
+          const existingPhones = new Set(existingLeads.map(lead => lead.phone));
+          leadsToImport = leadsToImport.filter(lead => !existingPhones.has(lead.phone));
+        }
       }
     }
     
@@ -90,15 +95,19 @@ export async function importLeads(
       
       // If there's still no name, use email username as fallback
       if (!name) {
-        name = lead.email.split('@')[0];
+        if (lead.email) {
+          name = lead.email.split('@')[0];
+        } else {
+          name = 'Unknown Lead';
+        }
       }
       
       // Create the database record with the required fields
       const leadRecord = {
         id: uuidv4(),
         name,
-        email: lead.email,
-        phone: lead.phone,
+        email: lead.email || null, // Email is now optional
+        phone: lead.phone, // Phone is required
         workspace_id: workspaceId,
         user_id: userId,
         created_at: new Date().toISOString(),
@@ -124,60 +133,11 @@ export async function importLeads(
       throw new Error(`Error inserting leads: ${insertError.message}`);
     }
     
-    // Add tags if provided
-    if (tags && tags.length > 0 && insertedLeads && insertedLeads.length > 0) {
-      const leadIds = insertedLeads.map(lead => lead.id);
-      
-      // Create an array to hold all lead_tag entries
-      const allLeadTags = [];
-      
-      // Make sure all the tags exist
-      for (const tagId of tags) {
-        // Check if this tag exists
-        const { data: existingTag } = await supabase
-          .from('tags')
-          .select('id, name, color')
-          .eq('id', tagId)
-          .single();
-        
-        if (!existingTag) {
-          console.warn(`Tag ${tagId} does not exist, skipping`);
-          continue;
-        }
-        
-        // Create lead_tag entries for each lead with this tag
-        const leadTagsForThisTag = leadIds.map(leadId => ({
-          lead_id: leadId,
-          tag_id: tagId,
-          created_at: new Date().toISOString(),
-        }));
-        
-        // Add to our collection
-        allLeadTags.push(...leadTagsForThisTag);
-      }
-      
-      // Insert in batches of 100 to avoid hitting limits
-      for (let i = 0; i < allLeadTags.length; i += 100) {
-        const batch = allLeadTags.slice(i, i + 100);
-        
-        const { error: tagError } = await supabase
-          .from('lead_tags')
-          .insert(batch);
-        
-        if (tagError) {
-          console.error(`Error adding tags to leads: ${tagError.message}`);
-        }
-        
-        // Small delay to avoid overwhelming the database
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-    }
-    
     return {
       success: true,
       imported: leadsWithMetadata.length,
       duplicates: leads.length - leadsWithMetadata.length,
-      tags: tags.length,
+      tags: 0, // No tags since we removed the tagging feature
     };
   } catch (error) {
     console.error('Import leads error:', error);
@@ -223,7 +183,7 @@ export async function processAndImportLeads(
       );
       
       // Create lead object using column mapping
-      const lead: LeadData = { email: '' }; // Initialize with required field
+      const lead: LeadData = {};
       
       headerRow.forEach((header, index) => {
         const fieldName = columnMapping[header];
@@ -232,8 +192,8 @@ export async function processAndImportLeads(
         }
       });
       
-      // Only add lead if it has an email
-      if (lead.email) {
+      // Add lead if it has required fields (first_name and phone)
+      if (lead.first_name && lead.phone) {
         leads.push(lead);
       }
     }

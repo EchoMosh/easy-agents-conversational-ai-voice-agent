@@ -45,7 +45,13 @@ export function ThemeSelector() {
               "relative h-auto flex-col items-start justify-start p-4 text-left",
               themeStyle === theme.id && "border-2 border-primary"
             )}
-            onClick={() => setThemeStyle(theme.id as "default" | "blue" | "green")}
+            onClick={() => {
+              setThemeStyle(theme.id as "default" | "blue" | "green");
+              // Force a style refresh by toggling a data attribute on the root element
+              setTimeout(() => {
+                document.documentElement.setAttribute("data-theme-style", theme.id);
+              }, 0);
+            }}
           >
             {themeStyle === theme.id && (
               <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">

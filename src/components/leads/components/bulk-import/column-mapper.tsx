@@ -27,9 +27,9 @@ interface ColumnMapperProps {
 
 const FIELD_OPTIONS = [
   { value: "first_name", label: "First Name", required: true },
-  { value: "last_name", label: "Last Name", required: true },
-  { value: "email", label: "Email", required: true },
-  { value: "phone", label: "Phone", required: false },
+  { value: "last_name", label: "Last Name", required: false },
+  { value: "email", label: "Email", required: false },
+  { value: "phone", label: "Phone", required: true },
   { value: "company", label: "Company", required: false },
   { value: "job_title", label: "Position", required: false },
   { value: "custom", label: "Custom", required: false },
@@ -355,7 +355,7 @@ export function ColumnMapper({
                   )}
                 </div>
                 <span className="text-sm font-medium">
-                  Remove duplicate emails
+                  Remove duplicate phone numbers
                 </span>
               </div>
 
@@ -379,7 +379,7 @@ export function ColumnMapper({
                   )}
                 </div>
                 <span className="text-sm font-medium">
-                  Keep duplicate emails
+                  Keep duplicate phone numbers
                 </span>
               </div>
             </div>

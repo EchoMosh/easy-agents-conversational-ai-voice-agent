@@ -61,11 +61,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Define app-specific menu items that match the dock navigation
   const appMenuItems = [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
       title: "Leads",
       url: "/dashboard/leads",
       icon: Users,
@@ -151,7 +146,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSimple items={appMenuItems} label="Platform" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} />
       </SidebarFooter>
       {/* <SidebarRail /> Removed to prevent hover-to-expand */}
     </Sidebar>

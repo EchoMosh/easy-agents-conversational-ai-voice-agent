@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Tag } from "@/types/tag-types";
 import { TagsManager } from "./components/tags/tags-manager";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { validatePhoneUniqueness } from "@/utils/phone-validation";
 
 interface NewLeadFormProps {
   onSuccess: () => void;
@@ -27,7 +28,11 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [variables, setVariables] = useState<Variable[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [existingTags, setExistingTags] = useState<Tag[]>([]);
   const [phone, setPhone] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
   const [activeTab, setActiveTab] = useState("contact");
   const { currentWorkspace } = useWorkspace();
@@ -48,6 +53,25 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
     },
     enabled: !!currentWorkspace?.id,
   });
+
+  useEffect(() => {
+    const fetchAllTags = async () => {
+      if (!currentWorkspace?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from("tags")
+          .select("*")
+          .eq("workspace_id", currentWorkspace.id);
+        if (error) throw error;
+        setExistingTags(data || []);
+      } catch (error) {
+        console.error("Error fetching all tags:", error);
+        toast.error("Failed to load existing tags");
+      }
+    };
+
+    fetchAllTags();
+  }, [currentWorkspace?.id]);
 
   const handleAddTag = async (name: string) => {
     try {
@@ -89,11 +113,14 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       return;
     }
 
+    // Validate phone number uniqueness
+    const isPhoneValid = await validatePhoneUniqueness(phone, currentWorkspace.id);
+    if (!isPhoneValid) {
+      toast.error("This phone number is already associated with another lead in this workspace");
+      return;
+    }
+
     setIsLoading(true);
-    const formData = new FormData(e.currentTarget);
-    const firstName = formData.get("firstName") as string;
-    const lastName = formData.get("lastName") as string;
-    const email = formData.get("email") as string;
 
     try {
       const {
@@ -101,15 +128,6 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("No authenticated user found");
-      }
-
-      const selectedPipeline = selectedPipelineId
-        ? pipelines.find((p) => p.id === selectedPipelineId)
-        : null;
-
-      let initialStatus = "new";
-      if (selectedPipeline && selectedPipeline.columns.length > 0) {
-        initialStatus = selectedPipeline.columns[0].title;
       }
 
       const { data: leadData, error: leadError } = await supabase
@@ -120,8 +138,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
             email: email || null,
             phone: phone || null,
             user_id: user.id,
-            pipeline_id: selectedPipelineId || null,
-            status: initialStatus,
+            status: "new",
             workspace_id: currentWorkspace.id,
           },
         ])
@@ -214,21 +231,16 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
           <ContactInfoForm
             phone={phone}
             onPhoneChange={setPhone}
+            firstName={firstName}
+            onFirstNameChange={setFirstName}
+            lastName={lastName}
+            onLastNameChange={setLastName}
+            email={email}
+            onEmailChange={setEmail}
             required={true}
           />
 
-          <div className="pt-1">
-            <PipelineSelect
-              pipelines={pipelines}
-              selectedPipelineId={selectedPipelineId}
-              onPipelineChange={setSelectedPipelineId}
-              refetchPipelines={refetchPipelines}
-              required={false}
-            />
-            <p className="text-xs text-gray-600 mt-1">
-              Pipeline selection is optional
-            </p>
-          </div>
+          {/* Pipeline selection removed as per user request */}
         </TabsContent>
 
         <TabsContent value="variables" className="pt-1 mt-0">
@@ -260,10 +272,14 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
                     <TagsManager
                       leadId={""} // temporary ID for new leads
                       tags={tags}
+                      existingTags={existingTags}
                       isNewLead={true}
                       onAddTagForNewLead={handleAddTag}
                       onRemoveTagForNewLead={handleRemoveTag}
                     />
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    Tags will be saved when the lead is created.
                   </div>
                 </div>
               </ScrollArea>

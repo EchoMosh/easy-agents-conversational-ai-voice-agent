@@ -678,9 +678,19 @@ export function AgentVoiceCall({
                 
                 return (
                   <div key={message.id} className={`flex flex-col mb-2 ${isUser ? "items-end" : "items-start"}`}>
-                    <div className={`${bubbleBaseStyle} ${isUser ? userBubbleStyle : agentBubbleStyle}`}>
-                      <p className="text-sm leading-relaxed">{message.content}</p>
-                    </div>
+                    {message.content === "" && !isUser ? (
+                      <div className="flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full px-4 py-2 w-20 shadow-md">
+                        <div className="flex items-center gap-1">
+                          <div className="h-2 w-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                          <div className="h-2 w-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                          <div className="h-2 w-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "600ms" }}></div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`${bubbleBaseStyle} ${isUser ? userBubbleStyle : agentBubbleStyle}`}>
+                        <p className="text-sm leading-relaxed">{message.content}</p>
+                      </div>
+                    )}
                     
                     <div className={`mt-1 ${isUser ? 'mr-1' : 'ml-1'}`}>
                       <span className="text-[10px] text-gray-400 dark:text-gray-500/80">

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Settings Dialog Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .issue {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        .solution {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .code-block code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Agent Settings Dialog Fix Summary</h1>
+        
+        <div class="test-section issue">
+            <h2>Issue Identified</h2>
+            <p>The AgentSettings dialog was creating an invisible overlay that blocked all page interactions after closing. This was caused by improper state management where the component was mixing controlled and uncontrolled patterns.</p>
+            <ul>
+                <li>The dialog's internal state wasn't syncing properly with the parent's state</li>
+                <li>The <code>setOpen</code> function was incorrectly assigned, causing state updates to fail</li>
+                <li>When the parent set <code>showSettingsModal</code> to false, the dialog's portal wasn't properly cleaned up</li>
+            </ul>
+        </div>
+
+        <div class="test-section solution">
+            <h2>Solution Applied</h2>
+            <p>The AgentSettings component has been updated to be fully controlled:</p>
+            <div class="code-block">
+                <code>// Before - Mixed controlled/uncontrolled state
+const [internalOpen, setInternalOpen] = React.useState(false);
+const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+const setOpen = onOpenChange || setInternalOpen;
+
+// After - Fully controlled
+const open = controlledOpen ?? false;
+const setOpen = React.useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+  if (onOpenChange) {
+    const newValue = typeof value === 'function' ? value(open) : value;
+    onOpenChange(newValue);
+  }
+}, [onOpenChange, open]);</code>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>How It Works Now</h2>
+            <ol>
+                <li>The parent component (Header) maintains the dialog state with <code>showSettingsModal</code></li>
+                <li>When the user clicks the settings menu item, it sets <code>showSettingsModal</code> to true</li>
+                <li>The AgentSettings component receives this as the <code>open</code> prop</li>
+                <li>When the dialog needs to close (via X button, Cancel, or Save), it calls <code>onOpenChange(false)</code></li>
+                <li>The parent updates <code>showSettingsModal</code> to false</li>
+                <li>The dialog properly unmounts and cleans up its portal</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>Testing Instructions</h2>
+            <p>To verify the fix:</p>
+            <ol>
+                <li>Navigate to an agent's flow editor page</li>
+                <li>Click the three dots (⋮) menu in the header</li>
+                <li>Click "Settings" to open the dialog</li>
+                <li>Close the dialog using any method (X button, Cancel, Save, or clicking outside)</li>
+                <li>Verify that you can interact with the page normally (click buttons, hover over elements, etc.)</li>
+                <li>The invisible overlay issue should no longer occur</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

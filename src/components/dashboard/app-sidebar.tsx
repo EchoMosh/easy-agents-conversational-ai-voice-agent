@@ -12,11 +12,6 @@ import { WorkspaceSwitcher } from "@/components/workspaces/workspace-switcher";
 // Define app-specific menu items
 const appMenuItems = [
   {
-    title: "Dashboard",
-    icon: <LayoutDashboard className="w-full h-full" />,
-    href: "/dashboard",
-  },
-  {
     title: "Leads",
     icon: <Users className="w-full h-full" />,
     href: "/dashboard/leads",

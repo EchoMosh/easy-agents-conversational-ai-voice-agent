@@ -72,6 +72,36 @@ export function ChatMessages({ lead }: ChatMessagesProps) {
     { icon: <Heart className="size-4" />, type: "Like" },
   ];
 
+  // Typing animation component
+  const TypingAnimation = () => (
+    <div className="flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full px-4 py-2 w-20">
+      <div className="flex items-center gap-1">
+        <motion.div
+          animate={{ y: [0, -3, 0] }}
+          transition={{ repeat: Infinity, duration: 1.5, delay: 0 }}
+          className="h-2 w-2 bg-gray-500 dark:bg-gray-300 rounded-full"
+        />
+        <motion.div
+          animate={{ y: [0, -3, 0] }}
+          transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }}
+          className="h-2 w-2 bg-gray-500 dark:bg-gray-300 rounded-full"
+        />
+        <motion.div
+          animate={{ y: [0, -3, 0] }}
+          transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }}
+          className="h-2 w-2 bg-gray-500 dark:bg-gray-300 rounded-full"
+        />
+      </div>
+    </div>
+  );
+
+  // Check if there is a recent sent message without a received response
+  const isWaitingForResponse = () => {
+    if (leadMessages.length === 0) return false;
+    const lastMessage = leadMessages[leadMessages.length - 1];
+    return getMessageVariant(lastMessage) === "sent";
+  };
+
   return (
     <div className="h-full py-4">
       <ChatMessageList className="px-4">
@@ -121,7 +151,13 @@ export function ChatMessages({ lead }: ChatMessagesProps) {
                           : "Note"}
                       </span>
                     </div>
-                    {message.content}
+                    {message.isLoading && variant === "received" ? (
+                      <div className="py-2">
+                        <TypingAnimation />
+                      </div>
+                    ) : (
+                      message.content
+                    )}
                     {formattedDate && (
                       <ChatBubbleTimestamp timestamp={formattedDate} />
                     )}
@@ -142,6 +178,34 @@ export function ChatMessages({ lead }: ChatMessagesProps) {
               </motion.div>
             );
           })}
+          {isWaitingForResponse() && (
+            <motion.div
+              key="typing-indicator"
+              layout
+              initial={{ opacity: 0, scale: 1, y: 50, x: 0 }}
+              animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+              exit={{ opacity: 0, scale: 1, y: 1, x: 0 }}
+              transition={{
+                opacity: { duration: 0.1 },
+                layout: {
+                  type: "spring",
+                  bounce: 0.3,
+                  duration: 0.2,
+                },
+              }}
+              style={{ originX: 0.5, originY: 0.5 }}
+              className="flex flex-col gap-2 p-4"
+            >
+              <div className="flex items-start gap-2 ml-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>{lead.name.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <TypingAnimation />
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
         <div ref={messagesEndRef} />
       </ChatMessageList>

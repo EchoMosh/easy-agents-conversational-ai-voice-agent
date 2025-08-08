@@ -9,7 +9,7 @@ const corsHeaders = {
 
 interface CreateKnowledgeBaseRequest {
   name: string;
-  fileIds: string[];
+  trieveDatasetId: string;
   agentId: string;
   searchType?: 'semantic' | 'fulltext' | 'hybrid';
   topK?: number;
@@ -35,14 +35,14 @@ serve(async (req) => {
 
     const { 
       name, 
-      fileIds, 
+      trieveDatasetId, 
       agentId,
       searchType = 'semantic',
       topK = 3,
       scoreThreshold = 0.7
     } = await req.json() as CreateKnowledgeBaseRequest;
 
-    // Create knowledge base payload
+    // Create knowledge base payload using Trieve import
     const knowledgeBasePayload = {
       name,
       provider: "trieve",
@@ -53,15 +53,8 @@ serve(async (req) => {
         scoreThreshold
       },
       createPlan: {
-        type: "create",
-        chunkPlans: [
-          {
-            fileIds,
-            targetSplitsPerChunk: 50,
-            splitDelimiters: [".!?\n"],
-            rebalanceChunks: true
-          }
-        ]
+        type: "import",
+        providerId: trieveDatasetId
       }
     };
 
@@ -105,6 +98,8 @@ serve(async (req) => {
       .from('agents')
       .update({ 
         knowledge_ids: [knowledgeBase.id],
+        vapi_knowledge_base_id: knowledgeBase.id,
+        trieve_dataset_id: trieveDatasetId,
         updated_at: new Date().toISOString()
       })
       .eq('id', agentId);

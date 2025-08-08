@@ -102,9 +102,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     let createdVAgentId: string | null = null;
 
     try {
-      // Step 1: Create Vapi agent first
-      setCreationStatus("Creating Vapi agent...");
-      console.log("Creating Vapi agent with name:", newAgent.name);
+      // Step 1: Create AI agent first
+      setCreationStatus("Creating AI agent...");
+      console.log("Creating AI agent with name:", newAgent.name);
 
       const { data: vapiData, error: vapiError } = await supabase.functions.invoke('create-vapi-agent', {
         body: {

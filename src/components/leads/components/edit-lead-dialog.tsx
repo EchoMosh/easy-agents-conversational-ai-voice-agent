@@ -6,7 +6,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Tag as TagIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Lead } from "@/pages/dashboard/leads";
@@ -14,20 +13,13 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { convertJsonToPipeline } from "@/types/pipeline";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { PhoneInput } from "@/components/ui/phone-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useQueryClient } from "@tanstack/react-query";
 import { useWorkspace } from "@/context/workspace-context";
-import { Badge } from "@/components/ui/badge";
+import { TagsManager } from "./tags/tags-manager";
+import { Tag } from "@/types/tag-types";
+import { ContactInfoForm } from "./contact-info-form";
+import { CustomVariables } from "./custom-variables";
+import { validatePhoneUniqueness } from "@/utils/phone-validation";
 
 interface EditLeadDialogProps {
   isOpen: boolean;
@@ -65,184 +57,98 @@ export function EditLeadDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [variables, setVariables] = useState<Variable[]>([]);
   const [tags, setTags] = useState<SimpleTag[]>([]);
-  const [newTagName, setNewTagName] = useState("");
+  const [existingTags, setExistingTags] = useState<SimpleTag[]>([]);
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
   const [activeTab, setActiveTab] = useState("contact");
-  const [newVariableName, setNewVariableName] = useState("");
-  const [newVariableValue, setNewVariableValue] = useState("");
   const { currentWorkspace } = useWorkspace();
   const queryClient = useQueryClient();
 
-  // Set up form when a lead is selected for editing
-  useEffect(() => {
-    if (lead) {
-      // Split name into first and last name
-      const nameParts = lead.name.split(" ");
-      setFirstName(nameParts[0] || "");
-      setLastName(nameParts.slice(1).join(" ") || "");
-
-      setEmail(lead.email || "");
-      setPhone(lead.phone || "");
-      setSelectedPipelineId(lead.pipeline_id || "none");
-
-      // Convert lead variables to the format needed by the form
-      if (lead.variables) {
-        setVariables(
-          lead.variables.map((v) => ({
-            name: v.name,
-            value: v.value || "",
-          }))
-        );
-      } else {
-        setVariables([]);
-      }
-
-      // Set tags if available - ensuring they match our SimpleTag interface
-      if (lead.tags) {
-        const simpleTags = lead.tags.map((tag) => ({
-          id: tag.id,
-          name: tag.name,
-          color: (tag.color || "gray") as
-            | "gray"
-            | "red"
-            | "yellow"
-            | "green"
-            | "blue"
-            | "purple"
-            | "pink",
-          user_id: tag.user_id,
-        }));
-        setTags(simpleTags);
-      } else {
-        setTags([]);
-      }
-
-      // Reset active tab when opening
-      setActiveTab("contact");
+  const fetchAllTags = async () => {
+    if (!currentWorkspace?.id) return;
+    const { data, error } = await supabase
+      .from("tags")
+      .select("*")
+      .eq("workspace_id", currentWorkspace.id);
+    if (error) {
+      console.error("Error fetching workspace tags:", error);
+      toast.error("Failed to load tags");
+    } else {
+      setExistingTags(data);
+      console.log("🐝 workspace existingTags count:", data.length, data.map(t => t.name));
     }
-  }, [lead, isOpen]);
-
-  const { data: pipelines = [] } = useQuery({
-    queryKey: ["pipelines", currentWorkspace?.id],
-    queryFn: async () => {
-      if (!currentWorkspace?.id) return [];
-
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("workspace_id", currentWorkspace.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return (data || []).map(convertJsonToPipeline);
-    },
-    enabled: !!currentWorkspace?.id,
-  });
-
-  const handleAddVariable = () => {
-    if (!newVariableName.trim()) {
-      toast.error("Variable name cannot be empty");
-      return;
-    }
-
-    setVariables([
-      ...variables,
-      { name: newVariableName.trim(), value: newVariableValue },
-    ]);
-    setNewVariableName("");
-    setNewVariableValue("");
   };
 
-  const handleRemoveVariable = (index: number) => {
-    setVariables(variables.filter((_, i) => i !== index));
-  };
-
-  const handleAddTag = async () => {
-    if (!newTagName.trim()) return;
-
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        toast.error("You must be logged in to create tags");
-        return;
-      }
-
-      // First check if a tag with this name already exists
-      const { data: existingTags } = await supabase
-        .from("tags")
-        .select("*")
-        .eq("name", newTagName.trim())
-        .limit(1);
-
-      if (existingTags && existingTags.length > 0) {
-        // Tag exists, add it to our local state if not already there
-        const existingTag = existingTags[0];
-        if (!tags.some((t) => t.id === existingTag.id)) {
-          setTags([
-            ...tags,
-            {
-              id: existingTag.id,
-              name: existingTag.name,
-              color: (existingTag.color || "gray") as "gray",
-              user_id: existingTag.user_id,
-            },
-          ]);
-        }
-        setNewTagName("");
-
-        // Even for existing tags, we should invalidate the query
-        // in case this tag wasn't in the dropdown yet
-        queryClient.invalidateQueries({
-          queryKey: ["tags", currentWorkspace?.id],
-        });
-
-        return;
-      }
-
-      // Otherwise create a new tag
-      const { data: newTag, error } = await supabase
-        .from("tags")
-        .insert({
-          name: newTagName.trim(),
-          color: "gray",
-          user_id: userData.user.id,
-          workspace_id: currentWorkspace?.id, // Ensure workspace_id is set
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setTags([
-        ...tags,
-        {
-          id: newTag.id,
-          name: newTag.name,
-          color: "gray",
-          user_id: newTag.user_id,
-        },
-      ]);
-      setNewTagName("");
-
-      // Invalidate the tags query to update the tag filter dropdown
-      queryClient.invalidateQueries({
-        queryKey: ["tags", currentWorkspace?.id],
-      });
-
-      toast.success("Tag added");
-    } catch (error: any) {
-      console.error("Error adding tag:", error);
-      toast.error("Failed to add tag");
-    }
+  const handleAddTag = (name: string) => {
+    const newTag: SimpleTag = {
+      id: `temp-${Date.now()}`, // Temporary ID for new tags
+      name,
+      color: "gray",
+    };
+    setTags([...tags, newTag]);
+    console.log("🏷️ Added tag locally:", name, "Current tags:", [...tags, newTag].map(t => t.name));
   };
 
   const handleRemoveTag = (id: string) => {
-    setTags(tags.filter((tag) => tag.id !== id));
+    setTags(tags.filter(tag => tag.id !== id));
+    console.log("🗑️ Removed tag locally:", id, "Remaining tags:", tags.filter(tag => tag.id !== id).map(t => t.name));
   };
+
+  // Set up form when a lead is selected for editing
+  useEffect(() => {
+    if (!isOpen || !lead) return;
+
+    console.clear(); 
+    console.log("🚀 EditLeadDialog opened for lead:", lead.id);
+    console.log("📥 Initial tags on lead:", lead.tags);
+    
+    // Split name into first and last name
+    const nameParts = lead.name.split(" ");
+    setFirstName(nameParts[0] || "");
+    setLastName(nameParts.slice(1).join(" ") || "");
+
+    setEmail(lead.email || "");
+    setPhone(lead.phone || "");
+
+    // Convert lead variables to the format needed by the form
+    if (lead.variables) {
+      setVariables(
+        lead.variables.map((v) => ({
+          name: v.name,
+          value: v.value || "",
+        }))
+      );
+    } else {
+      setVariables([]);
+    }
+
+    // Set tags if available - ensuring they match our SimpleTag interface
+    if (lead.tags) {
+      const simpleTags = lead.tags.map((tag) => ({
+        id: tag.id,
+        name: tag.name,
+        color: (tag.color || "gray") as
+          | "gray"
+          | "red"
+          | "yellow"
+          | "green"
+          | "blue"
+          | "purple"
+          | "pink",
+        user_id: tag.user_id,
+      }));
+      setTags(simpleTags);
+    } else {
+      setTags([]);
+    }
+
+    // Reset active tab when opening
+    setActiveTab("contact");
+    
+    fetchAllTags();
+  }, [isOpen, lead]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -250,6 +156,15 @@ export function EditLeadDialog({
     if (!lead || !currentWorkspace?.id) {
       toast.error("Missing lead or workspace information");
       return;
+    }
+
+    // Validate phone number uniqueness (excluding current lead)
+    if (phone && phone.trim()) {
+      const isPhoneValid = await validatePhoneUniqueness(phone, currentWorkspace.id, lead.id);
+      if (!isPhoneValid) {
+        toast.error("This phone number is already associated with another lead in this workspace");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -262,20 +177,6 @@ export function EditLeadDialog({
         throw new Error("No authenticated user found");
       }
 
-      const selectedPipeline = selectedPipelineId
-        ? pipelines.find((p) => p.id === selectedPipelineId)
-        : null;
-
-      let status = lead.status || "new";
-      if (
-        selectedPipeline &&
-        selectedPipeline.columns.length > 0 &&
-        (!lead.status ||
-          !selectedPipeline.columns.some((c) => c.title === lead.status))
-      ) {
-        status = selectedPipeline.columns[0].title;
-      }
-
       const fullName = `${firstName} ${lastName}`.trim();
 
       // Update the lead basic info
@@ -285,9 +186,7 @@ export function EditLeadDialog({
           name: fullName,
           email: email || null,
           phone: phone || null,
-          pipeline_id:
-            selectedPipelineId === "none" ? null : selectedPipelineId || null,
-          status: status,
+          status: lead.status || "new",
           updated_at: new Date().toISOString(),
         })
         .eq("id", lead.id);
@@ -321,15 +220,18 @@ export function EditLeadDialog({
         .eq("lead_id", lead.id);
 
       const currentTagIds = currentLeadTags?.map((t) => t.tag_id) || [];
-      const newTagIds = tags.map((t) => t.id);
+      
+      // Separate existing tags from new tags (with temp IDs)
+      const existingTagIds = tags.filter(t => !t.id.startsWith('temp-')).map(t => t.id);
+      const newTags = tags.filter(t => t.id.startsWith('temp-'));
 
-      // Tags to remove - in currentTagIds but not in newTagIds
+      // Tags to remove - in currentTagIds but not in existingTagIds
       const tagsToRemove = currentTagIds.filter(
-        (id) => !newTagIds.includes(id)
+        (id) => !existingTagIds.includes(id)
       );
 
-      // Tags to add - in newTagIds but not in currentTagIds
-      const tagsToAdd = newTagIds.filter((id) => !currentTagIds.includes(id));
+      // Existing tags to add - in existingTagIds but not in currentTagIds
+      const existingTagsToAdd = existingTagIds.filter((id) => !currentTagIds.includes(id));
 
       // Remove tags
       if (tagsToRemove.length > 0) {
@@ -340,14 +242,66 @@ export function EditLeadDialog({
           .in("tag_id", tagsToRemove);
       }
 
-      // Add new tags
-      if (tagsToAdd.length > 0) {
-        const tagsToInsert = tagsToAdd.map((tagId) => ({
+      // Add existing tags
+      if (existingTagsToAdd.length > 0) {
+        const tagsToInsert = existingTagsToAdd.map((tagId) => ({
           lead_id: lead.id,
           tag_id: tagId,
         }));
 
         await supabase.from("lead_tags").insert(tagsToInsert);
+      }
+
+      // Create and add new tags
+      for (const newTag of newTags) {
+        // First check if a tag with this name already exists in the workspace
+        const { data: existingTag } = await supabase
+          .from("tags")
+          .select("id")
+          .eq("name", newTag.name)
+          .eq("workspace_id", currentWorkspace.id)
+          .single();
+
+        let tagId: string;
+
+        if (existingTag) {
+          // Use existing tag
+          tagId = existingTag.id;
+        } else {
+          // Create new tag
+          const { data: createdTag, error: tagError } = await supabase
+            .from("tags")
+            .insert({
+              name: newTag.name,
+              color: newTag.color,
+              user_id: user.id,
+              workspace_id: currentWorkspace.id,
+            })
+            .select()
+            .single();
+
+          if (tagError) throw tagError;
+          tagId = createdTag.id;
+        }
+
+        // Link the tag to the lead (check if link already exists)
+        const { data: existingLink } = await supabase
+          .from("lead_tags")
+          .select("id")
+          .eq("lead_id", lead.id)
+          .eq("tag_id", tagId)
+          .single();
+
+        if (!existingLink) {
+          const { error: linkError } = await supabase
+            .from("lead_tags")
+            .insert({
+              lead_id: lead.id,
+              tag_id: tagId,
+            });
+
+          if (linkError) throw linkError;
+        }
       }
 
       // Invalidate tags query to ensure tag filter dropdown is up-to-date
@@ -413,107 +367,26 @@ export function EditLeadDialog({
                 </TabsList>
 
                 {/* Contact Info Tab Content */}
-                <TabsContent value="contact" className="space-y-4 pt-1 mt-0">
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="firstName"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          First name
-                        </Label>
-                        <Input
-                          id="firstName"
-                          name="firstName"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          required
-                          className="h-11 text-base"
-                          placeholder="John"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="lastName"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Last name
-                        </Label>
-                        <Input
-                          id="lastName"
-                          name="lastName"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          className="h-11 text-base"
-                          placeholder="Doe"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="email"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Email
-                        </Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="h-11 text-base"
-                          placeholder="john@example.com"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="phone"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Phone <span className="text-red-500">*</span>
-                        </Label>
-                        <PhoneInput
-                          id="phone"
-                          name="phone"
-                          value={phone}
-                          onChange={setPhone}
-                          required
-                          className="[&>div]:!h-11 [&>div]:!text-base"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Pipeline Selector */}
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="pipeline"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Pipeline (optional)
-                      </Label>
-                      <Select
-                        value={selectedPipelineId}
-                        onValueChange={setSelectedPipelineId}
-                      >
-                        <SelectTrigger className="h-11 text-base">
-                          <SelectValue placeholder="Select pipeline" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No Pipeline</SelectItem>
-                          {pipelines.map((pipeline) => (
-                            <SelectItem key={pipeline.id} value={pipeline.id}>
-                              {pipeline.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Pipeline selection is optional
-                      </p>
+                <TabsContent value="contact" className="pt-1 mt-0">
+                  <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                    <div className="relative">
+                      <ScrollArea className="h-[280px]">
+                        <div className="p-3 pt-0">
+                          <div className="pt-4">
+                            <ContactInfoForm
+                              phone={phone}
+                              onPhoneChange={setPhone}
+                              firstName={firstName}
+                              onFirstNameChange={setFirstName}
+                              lastName={lastName}
+                              onLastNameChange={setLastName}
+                              email={email}
+                              onEmailChange={setEmail}
+                              required={true}
+                            />
+                          </div>
+                        </div>
+                      </ScrollArea>
                     </div>
                   </div>
                 </TabsContent>
@@ -521,71 +394,21 @@ export function EditLeadDialog({
                 {/* Variables Tab Content */}
                 <TabsContent value="variables" className="pt-1 mt-0">
                   <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                    <div className="relative p-4">
-                      <div className="mb-4">
-                        <h3 className="text-sm font-medium mb-2">
-                          Add New Variable
-                        </h3>
-                        <div className="grid grid-cols-5 gap-2">
-                          <div className="col-span-2">
-                            <Input
-                              placeholder="Variable name"
-                              value={newVariableName}
-                              onChange={(e) =>
-                                setNewVariableName(e.target.value)
+                    <div className="relative">
+                      <ScrollArea className="h-[280px]">
+                        <div className="p-3 pt-0">
+                          <div className="pt-4">
+                            <CustomVariables
+                              variables={variables}
+                              onAddVariable={(variable) =>
+                                setVariables([...variables, variable])
+                              }
+                              onRemoveVariable={(index) =>
+                                setVariables(variables.filter((_, i) => i !== index))
                               }
                             />
                           </div>
-                          <div className="col-span-2">
-                            <Input
-                              placeholder="Value"
-                              value={newVariableValue}
-                              onChange={(e) =>
-                                setNewVariableValue(e.target.value)
-                              }
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            onClick={handleAddVariable}
-                            variant="secondary"
-                            className="col-span-1"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
                         </div>
-                      </div>
-
-                      <ScrollArea className="h-[200px] pr-4">
-                        {variables.length === 0 ? (
-                          <div className="text-center p-4 text-muted-foreground">
-                            No variables yet. Add one above.
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {variables.map((variable, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between border p-2 rounded-md"
-                              >
-                                <div className="flex-1">
-                                  <p className="font-medium">{variable.name}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {variable.value || "(empty)"}
-                                  </p>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveVariable(index)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </ScrollArea>
                     </div>
                   </div>
@@ -594,54 +417,22 @@ export function EditLeadDialog({
                 {/* Tags Tab Content */}
                 <TabsContent value="tags" className="pt-1 mt-0">
                   <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                    <div className="relative p-4">
-                      <div className="mb-4">
-                        <h3 className="text-sm font-medium mb-2">Add Tag</h3>
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Enter tag name"
-                            value={newTagName}
-                            onChange={(e) => setNewTagName(e.target.value)}
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            onClick={handleAddTag}
-                            variant="secondary"
-                          >
-                            <Plus className="h-4 w-4 mr-1" />
-                            Add
-                          </Button>
+                    <div className="relative">
+                      <ScrollArea className="h-[280px]">
+                        <div className="p-3 pt-0">
+                          <div className="pt-4">
+                            {lead && (
+                              <TagsManager
+                                leadId={lead.id}
+                                tags={tags as Tag[]}
+                                existingTags={existingTags as Tag[]}
+                                isNewLead={true}
+                                onAddTagForNewLead={handleAddTag}
+                                onRemoveTagForNewLead={handleRemoveTag}
+                              />
+                            )}
+                          </div>
                         </div>
-                      </div>
-
-                      <ScrollArea className="h-[200px] pr-4">
-                        {tags.length === 0 ? (
-                          <div className="text-center p-4 text-muted-foreground">
-                            No tags yet. Add one above.
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap gap-2">
-                            {tags.map((tag) => (
-                              <Badge
-                                key={tag.id}
-                                variant="outline"
-                                className="px-2 py-1 flex items-center gap-1"
-                              >
-                                <TagIcon className="h-3 w-3" />
-                                {tag.name}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveTag(tag.id)}
-                                  className="h-4 w-4 p-0 ml-1"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
                       </ScrollArea>
                     </div>
                   </div>

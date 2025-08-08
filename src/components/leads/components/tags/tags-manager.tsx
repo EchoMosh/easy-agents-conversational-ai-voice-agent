@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -13,15 +14,22 @@ import { TagBadge } from "./tag-badge";
 import { Tag } from "@/types/tag-types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { EmptyState } from "./empty-state";
 import { useWorkspace } from "@/context/workspace-context";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TagsManagerProps {
   leadId: string;
   tags: Tag[];
+  existingTags: Tag[];
   isNewLead?: boolean;
-  onAddTagForNewLead?: (name: string) => void;
+  onAddTagForNewLead?: (name:string) => void;
   onRemoveTagForNewLead?: (id: string) => void;
 }
 
@@ -35,15 +43,21 @@ const MAX_TAG_LENGTH = 25;
 export function TagsManager({
   leadId,
   tags,
+  existingTags,
   isNewLead = false,
   onAddTagForNewLead,
   onRemoveTagForNewLead,
 }: TagsManagerProps) {
   const [isAddingTag, setIsAddingTag] = useState(false);
-  const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [tagInputValue, setTagInputValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+
+  useEffect(() => {
+    console.log("DEBUG_TAGS_MANAGER - tags prop:", tags.map((t) => t.name));
+    console.log("DEBUG_TAGS_MANAGER - existingTags prop:", existingTags.map((t) => t.name));
+  }, [tags, existingTags]);
 
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -78,8 +92,10 @@ export function TagsManager({
     setIsSubmitting(true);
 
     try {
-      if (isNewLead && onAddTagForNewLead) {
+      // Handle both new and existing leads consistently
+      if (onAddTagForNewLead) {
         onAddTagForNewLead(trimmedName);
+        setTagInputValue(''); // Ensure input is cleared
         setIsAddingTag(false);
         setIsSubmitting(false);
         return;
@@ -106,7 +122,7 @@ export function TagsManager({
 
       if (tagError) throw tagError;
 
-      const { data: existingTags, error: checkError } = await supabase
+      const { data: existingTagsData, error: checkError } = await supabase
         .from("lead_tags")
         .select("tag_id")
         .eq("lead_id", leadId)
@@ -114,7 +130,7 @@ export function TagsManager({
 
       if (checkError) throw checkError;
 
-      if (existingTags && existingTags.length > 0) {
+      if (existingTagsData && existingTagsData.length > 0) {
         toast.error("This tag is already associated with this lead");
         return;
       }
@@ -137,61 +153,13 @@ export function TagsManager({
     }
   };
 
-  const handleUpdateTag = async (data: CreateTagData) => {
-    if (!editingTag || isSubmitting) return;
-
-    const trimmedName = data.name.trim();
-
-    if (!trimmedName) {
-      toast.error("Tag name cannot be empty");
-      return;
-    }
-
-    if (trimmedName.length > MAX_TAG_LENGTH) {
-      toast.error(`Tag name must be ${MAX_TAG_LENGTH} characters or less`);
-      return;
-    }
-
-    const isDuplicate = tags.some(
-      (tag) =>
-        tag.name.toLowerCase() === trimmedName.toLowerCase() &&
-        tag.id !== editingTag.id
-    );
-
-    if (isDuplicate) {
-      toast.error("This tag already exists for this lead");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase
-        .from("tags")
-        .update({
-          name: trimmedName,
-        })
-        .eq("id", editingTag.id);
-
-      if (error) throw error;
-
-      toast.success("Tag updated successfully");
-      setEditingTag(null);
-      invalidateQueries();
-    } catch (error: any) {
-      console.error("Error updating tag:", error);
-      toast.error(error.message || "Failed to update tag");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleDeleteTag = async (tagId: string) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
-      if (isNewLead && onRemoveTagForNewLead) {
+      if (onRemoveTagForNewLead) {
         onRemoveTagForNewLead(tagId);
         setIsSubmitting(false);
         return;
@@ -219,28 +187,107 @@ export function TagsManager({
     setIsAddingTag(true);
   };
 
+  const handleSelectExistingTag = async (tag: Tag) => {
+    if (onAddTagForNewLead) {
+      onAddTagForNewLead(tag.name);
+      return;
+    }
+
+    try {
+      const { data: existingTagLinks, error: checkError } = await supabase
+        .from("lead_tags")
+        .select("tag_id")
+        .eq("lead_id", leadId)
+        .eq("tag_id", tag.id);
+
+      if (checkError) throw checkError;
+
+      if (existingTagLinks && existingTagLinks.length > 0) {
+        toast.error("This tag is already associated with this lead");
+        return;
+      }
+
+      const { error: linkError } = await supabase.from("lead_tags").insert({
+        lead_id: leadId,
+        tag_id: tag.id,
+      });
+
+      if (linkError) throw linkError;
+
+      toast.success("Tag added successfully");
+      invalidateQueries();
+    } catch (error: any) {
+      console.error("Error adding existing tag:", error);
+      toast.error(error.message || "Failed to add tag");
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <h3 className="text-base font-medium text-gray-800">Lead Tags</h3>
-        <Dialog open={isAddingTag} onOpenChange={setIsAddingTag}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 px-4">
-              <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
-              Add Tag
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add Tag</DialogTitle>
-            </DialogHeader>
-            <TagForm
-              onSubmit={handleCreateTag}
-              isSubmitting={isSubmitting}
-              maxLength={MAX_TAG_LENGTH}
-            />
-          </DialogContent>
-        </Dialog>
+      </div>
+      <div className="mb-3">
+        <div className="relative flex gap-2">
+          <Input
+            placeholder="Enter tag name"
+            value={tagInputValue}
+            onChange={(e) => {
+              const value = e.target.value;
+              setTagInputValue(value);
+              if (value) {
+                setIsAddingTag(true);
+              } else {
+                setIsAddingTag(false);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && e.currentTarget.value) {
+                console.log("DEBUG_TAGS_MANAGER - tags before create:", tags.map(t => t.name));
+                console.log("DEBUG_TAGS_MANAGER - input value:", tagInputValue);
+                handleCreateTag({ name: e.currentTarget.value });
+                console.log("DEBUG_TAGS_MANAGER - tags after create call:", tags.map(t => t.name));
+                setTagInputValue("");
+                setIsAddingTag(false);
+                e.preventDefault();
+              }
+            }}
+            className="h-9 text-sm border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors flex-1"
+          />
+          <Button
+            type="button"
+            onClick={() => {
+              if (tagInputValue.trim()) {
+                handleCreateTag({ name: tagInputValue.trim() });
+                setTagInputValue("");
+                setIsAddingTag(false);
+              }
+            }}
+            disabled={!tagInputValue.trim() || isSubmitting}
+            className="h-9 px-3 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Add
+          </Button>
+          {isAddingTag && existingTags.length > 0 && (
+            <div className="absolute top-10 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-sm max-h-60 overflow-auto z-50">
+              {existingTags
+                .filter(tag => !tags.some(t => t.id === tag.id) && tag.name.toLowerCase().includes(tagInputValue.toLowerCase()))
+                .map((tag) => (
+                  <div
+                    key={tag.id}
+                    className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    onClick={() => {
+                      handleSelectExistingTag(tag);
+                      setTagInputValue('');
+                      setIsAddingTag(false);
+                    }}
+                  >
+                    {tag.name}
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {tags.length > 0 ? (
@@ -249,7 +296,6 @@ export function TagsManager({
             <TagBadge
               key={tag.id}
               tag={tag}
-              onEdit={() => setEditingTag(tag)}
               onDelete={() => handleDeleteTag(tag.id)}
             />
           ))}
@@ -258,24 +304,6 @@ export function TagsManager({
         <EmptyState onAddClick={openAddTagDialog} />
       )}
 
-      <Dialog
-        open={!!editingTag}
-        onOpenChange={(open) => !open && setEditingTag(null)}
-      >
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Tag</DialogTitle>
-          </DialogHeader>
-          {editingTag && (
-            <TagForm
-              defaultValues={editingTag}
-              onSubmit={handleUpdateTag}
-              isSubmitting={isSubmitting}
-              maxLength={MAX_TAG_LENGTH}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

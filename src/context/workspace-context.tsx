@@ -55,18 +55,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("workspaceRedirectAttempt");
   }, []);
 
-  // Handle navigation to onboarding if no workspaces
-  useEffect(() => {
-    if (workspaceQuery.workspaces && workspaceQuery.workspaces.length === 0 && session && workspaceQuery.hasLoadedWorkspaceOnce) {
-      const redirectAttempt = localStorage.getItem("workspaceRedirectAttempt");
-      const now = Date.now();
-
-      if (!redirectAttempt || now - parseInt(redirectAttempt) > 30000) {
-        localStorage.setItem("workspaceRedirectAttempt", now.toString());
-        navigate("/onboarding");
-      }
-    }
-  }, [workspaceQuery.workspaces, session, navigate, workspaceQuery.hasLoadedWorkspaceOnce]);
+  // Remove the redirect logic here since it's handled by the dashboard layout
+  // This prevents the infinite redirect loop
 
   // Clear cache when session ends
   useEffect(() => {

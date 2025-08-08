@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -16,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileUploader } from "@/components/leads/components/bulk-import/file-uploader";
 import { ColumnMapper } from "@/components/leads/components/bulk-import/column-mapper";
-import { TagSelector } from "@/components/leads/components/bulk-import/tag-selector";
 import { useImport } from "@/context/import-context";
 
 interface BulkImportDialogProps {
@@ -59,9 +57,8 @@ export function BulkImportDialog({
   onSuccess,
 }: BulkImportDialogProps) {
   const [step, setStep] = useState<
-    "upload" | "mapping" | "tagging" | "importing"
+    "upload" | "mapping" | "importing"
   >("upload");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
   const [fileName, setFileName] = useState<string>("");
@@ -87,7 +84,6 @@ export function BulkImportDialog({
         setFileContent("");
         setFileName("");
         setColumnMapping({});
-        setSelectedTags([]);
       }, 300);
     }
   };
@@ -106,8 +102,6 @@ export function BulkImportDialog({
       setFileContent("");
       setFileName("");
       setColumnMapping({});
-    } else if (step === "tagging") {
-      setStep("mapping");
     }
   };
 
@@ -126,50 +120,32 @@ export function BulkImportDialog({
         ? fileContent.split(/\r?\n/).length - 1
         : fileContent.split(/\r?\n/).length;
 
-      // Process rows in batches for progress reporting
-      const rows = fileContent.split(/\r?\n/).filter(row => row.trim());
-      const dataRows = hasHeaders ? rows.slice(1) : rows;
-      const totalLeads = dataRows.length;
-      const batchSize = 25;
-      let processedCount = 0;
+      // Process the entire file at once to avoid issues with batching and headers
+      const result = await processAndImportLeads(
+        fileContent,
+        columnMapping,
+        hasHeaders,
+        {
+          removeDuplicates,
+          tags: [], // No tags since we removed the tagging feature
+          workspaceId: currentWorkspace.id,
+          userId: sessionData.session.user.id,
+        }
+      );
 
-      // Create batches
-      let batches = [];
-      for (let i = 0; i < dataRows.length; i += batchSize) {
-        batches.push(dataRows.slice(i, i + batchSize));
-      }
-
-      for (const batch of batches) {
-        const batchContent = hasHeaders ? [rows[0], ...batch].join('\n') : batch.join('\n');
-        
-        const result = await processAndImportLeads(
-          batchContent,
-          columnMapping,
-          hasHeaders,
-          {
-            removeDuplicates,
-            tags: selectedTags,
-            workspaceId: currentWorkspace.id,
-            userId: sessionData.session.user.id,
-          }
-        );
-
-        processedCount += batch.length;
-        
-        // Update job status with progress
-        updateImportJobStatus(jobId, {
-          processed: processedCount,
-        });
-        
-        // Small delay to prevent overwhelming the database
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      // Update job status with final count
+      updateImportJobStatus(jobId, {
+        processed: result.imported,
+      });
 
       // Import completed successfully
       updateImportJobStatus(jobId, {
         status: "completed",
         endTime: new Date(),
       });
+
+      // Add a small delay to ensure database operations are complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Explicitly trigger a refetch of leads
       onSuccess();
@@ -187,8 +163,7 @@ export function BulkImportDialog({
 
   const handleNext = async () => {
     if (step === "mapping") {
-      setStep("tagging");
-    } else if (step === "tagging") {
+      // Skip tagging step and go directly to importing
       setStep("importing");
       setIsLoading(true);
       setImportError(null);
@@ -267,7 +242,6 @@ export function BulkImportDialog({
             <DialogTitle className="text-xl font-medium text-gray-800">
               {step === "upload" && "Import Leads"}
               {step === "mapping" && "Match the columns in your file"}
-              {step === "tagging" && "Add Tags to Leads"}
               {step === "importing" && "Importing Leads"}
             </DialogTitle>
           </DialogHeader>
@@ -299,21 +273,6 @@ export function BulkImportDialog({
                   setRemoveDuplicates={setRemoveDuplicates}
                   columnMapping={columnMapping}
                   setColumnMapping={setColumnMapping}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                />
-              )}
-
-              {step === "tagging" && (
-                <TagSelector
-                  fileName={fileName}
-                  leadCount={
-                    hasHeaders
-                      ? fileContent.split(/\r?\n/).length - 1
-                      : fileContent.split(/\r?\n/).length
-                  }
-                  selectedTags={selectedTags}
-                  setSelectedTags={setSelectedTags}
                   onNext={handleNext}
                   onBack={handleBack}
                 />

@@ -79,58 +79,53 @@ export function CustomVariables({
   return (
     <div className="pt-4">
       <TabsContent value="variables" className="mt-0" hidden={activeTab !== "variables"}>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="text-base font-medium text-gray-800">Variables</h3>
-          <Dialog open={isAddingVariable} onOpenChange={setIsAddingVariable}>
-            <DialogTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="h-9 px-4 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors text-gray-800">
-                <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Add Variable
+        </div>
+        <div className="mb-3 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Input 
+                placeholder="Variable name" 
+                value={newVariable.name} 
+                onChange={e => setNewVariable(prev => ({ ...prev, name: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newVariable.name && newVariable.value) {
+                    e.preventDefault();
+                    handleAddVariable();
+                  }
+                }}
+                className="h-9 text-sm border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
+              />
+              {newVariable.name.includes(' ') && (
+                <p className="text-xs text-amber-600">
+                  Will be saved as: {newVariable.name.replace(/\s+/g, '_')}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Input 
+                placeholder="Value" 
+                value={newVariable.value} 
+                onChange={e => setNewVariable(prev => ({ ...prev, value: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newVariable.name && newVariable.value) {
+                    e.preventDefault();
+                    handleAddVariable();
+                  }
+                }}
+                className="h-9 text-sm border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
+              />
+              <Button 
+                type="button" 
+                onClick={handleAddVariable} 
+                disabled={!newVariable.name || !newVariable.value} 
+                className="h-9 px-3 text-white"
+              >
+                Add
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] p-6 bg-white border border-gray-200 z-[102]">
-              <DialogHeader className="mb-4">
-                <DialogTitle className="text-xl text-gray-800">Add Variable</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="variableName" className="text-sm font-medium text-gray-700">Variable name</Label>
-                  <Input 
-                    id="variableName" 
-                    placeholder="e.g., Source (spaces will be converted to underscores)" 
-                    value={newVariable.name} 
-                    onChange={e => setNewVariable(prev => ({ ...prev, name: e.target.value }))}
-                    className="h-10 text-base border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
-                  />
-                  {newVariable.name.includes(' ') && (
-                    <p className="text-xs text-amber-600">
-                      Will be saved as: {newVariable.name.replace(/\s+/g, '_')}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="variableValue" className="text-sm font-medium text-gray-700">Value</Label>
-                  <Input 
-                    id="variableValue" 
-                    placeholder="e.g., Website" 
-                    value={newVariable.value} 
-                    onChange={e => setNewVariable(prev => ({ ...prev, value: e.target.value }))}
-                    className="h-10 text-base border border-gray-300 bg-white hover:bg-gray-50 focus-visible:ring-1 transition-colors" 
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end mt-6">
-                <Button 
-                  type="button" 
-                  onClick={handleAddVariable} 
-                  disabled={!newVariable.name || !newVariable.value} 
-                  className="px-6 text-white"
-                >
-                  Add Variable
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+            </div>
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">

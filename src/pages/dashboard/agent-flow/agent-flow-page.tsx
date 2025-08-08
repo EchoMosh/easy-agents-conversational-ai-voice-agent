@@ -11,6 +11,7 @@ import { useMermaidChart } from "./hooks/use-mermaid-chart";
 import { useFlowManagement } from "./hooks/use-flow-management";
 import { MermaidChartPreview } from "./components/mermaid-chart-preview";
 import { Header } from "@/components/flow/agent-flow/header";
+import AIBuilderBar from "@/components/agents/flow/ai-builder-bar";
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
@@ -125,6 +126,9 @@ export default function AgentFlowPage() {
             onOpenChange={setShowTraining}
           />
         )}
+
+        <AIBuilderBar />
+
       </div>
     </DragProvider>
   );

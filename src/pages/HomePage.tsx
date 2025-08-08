@@ -47,9 +47,267 @@ const HomePage = () => {
 
   const nodeTypeToMessage: Record<string, string> = {
     startNode: "Initializing Start Point...",
-    greetingNode: "Crafting Initial Greeting...",
+    greetingNode: "Crafting Conversation Step...",
     endNode: "Defining Conversation End...",
     default: "Processing Flow Step..."
+  };
+
+  // Build a longer receptionist demo flow with better spacing and only 2 outcomes
+  const buildReceptionistFlow = (
+    _prompt: string,
+    _callType: string,
+    _callObjective: string = "appointment",
+    _language: string = "english-us"
+  ) => {
+    const ts = Date.now();
+
+    // Start node
+    const startNode: Node = {
+      id: `startNode-${ts}`,
+      type: "startNode",
+      position: { x: 50, y: 300 },
+      data: {
+        firstMessage:
+          "<p>Thank you for calling Acme Dental. I'm Ava, your AI assistant. How can I help you today?</p>",
+      },
+      draggable: true,
+    };
+
+    // First greeting - Main menu with 2 outcomes
+    const mainMenuNode: Node = {
+      id: `greetingNode-main-${ts}`,
+      type: "greetingNode",
+      position: { x: 400, y: 300 },
+      data: {
+        greeting:
+          "<p>I can help you with:</p><p>• Booking appointments and managing your schedule<br/>• General information about our clinic</p><p>What would you like to do?</p>",
+        outcomes: [
+          "I need to book or manage an appointment",
+          "I have questions about the clinic",
+        ],
+        actions: [],
+      },
+      draggable: true,
+    };
+
+    // Appointment branch - gather info
+    const appointmentInfoNode: Node = {
+      id: `greetingNode-appt-info-${ts}`,
+      type: "greetingNode",
+      position: { x: 750, y: 200 },
+      data: {
+        greeting:
+          "<p>Perfect! I'll help you with your appointment.</p><p>Are you a new patient or an existing patient?</p>",
+        outcomes: [
+          "I'm a new patient",
+          "I'm an existing patient",
+        ],
+        actions: [],
+      },
+      draggable: true,
+    };
+
+    // New patient flow
+    const newPatientNode: Node = {
+      id: `greetingNode-new-patient-${ts}`,
+      type: "greetingNode",
+      position: { x: 1100, y: 100 },
+      data: {
+        greeting:
+          "<p>Welcome to Acme Dental! For new patients, we have appointments available this week.</p><p>May I have your full name and preferred date for your first visit?</p>",
+        outcomes: [],
+        actions: [],
+      },
+      draggable: true,
+    };
+
+    // Existing patient flow
+    const existingPatientNode: Node = {
+      id: `greetingNode-existing-patient-${ts}`,
+      type: "greetingNode",
+      position: { x: 1100, y: 300 },
+      data: {
+        greeting:
+          "<p>Welcome back! I can help you reschedule or book a new appointment.</p><p>Could you provide your name and what type of appointment you need?</p>",
+        outcomes: [],
+        actions: [],
+      },
+      draggable: true,
+    };
+
+    // Clinic info branch
+    const clinicInfoNode: Node = {
+      id: `greetingNode-clinic-info-${ts}`,
+      type: "greetingNode",
+      position: { x: 750, y: 400 },
+      data: {
+        greeting:
+          "<p>I'd be happy to help! What would you like to know?</p><p>• Our hours and location<br/>• Services we offer<br/>• Insurance and payment options</p>",
+        outcomes: [
+          "Hours and location",
+          "Services and payment",
+        ],
+        actions: [],
+      },
+      draggable: true,
+    };
+
+    // Hours and location info
+    const hoursLocationNode: Node = {
+      id: `greetingNode-hours-${ts}`,
+      type: "greetingNode",
+      position: { x: 1100, y: 500 },
+      data: {
+        greeting:
+          "<p>We're open Monday-Friday 8am-6pm, Saturday 9am-2pm.</p><p>Located at 123 Main Street, Suite 200. Free parking is available behind the building.</p><p>Would you like me to text you directions?</p>",
+        outcomes: [],
+        actions: [],
+      },
+      draggable: true,
+    };
+
+    // Services info
+    const servicesNode: Node = {
+      id: `greetingNode-services-${ts}`,
+      type: "greetingNode",
+      position: { x: 1100, y: 700 },
+      data: {
+        greeting:
+          "<p>We offer comprehensive dental services including cleanings, fillings, crowns, and cosmetic dentistry.</p><p>We accept most major insurance plans and offer flexible payment options.</p><p>Would you like to schedule a consultation?</p>",
+        outcomes: [],
+        actions: [],
+      },
+      draggable: true,
+    };
+
+    // Confirmation node before end
+    const confirmationNode: Node = {
+      id: `greetingNode-confirm-${ts}`,
+      type: "greetingNode",
+      position: { x: 1450, y: 400 },
+      data: {
+        greeting:
+          "<p>Great! I've noted your information. A member of our team will contact you within 24 hours to confirm your appointment.</p><p>Is there anything else I can help you with today?</p>",
+        outcomes: [],
+        actions: [],
+      },
+      draggable: true,
+    };
+
+    // End node
+    const endNode: Node = {
+      id: `endNode-${ts}`,
+      type: "endNode",
+      position: { x: 1800, y: 400 },
+      data: {
+        message:
+          "<p>Thank you for calling Acme Dental. Have a wonderful day!</p>",
+      },
+      draggable: true,
+    };
+
+    // Edges
+    const edges: Edge[] = [
+      {
+        id: `edge-start-main-${ts}`,
+        source: startNode.id,
+        target: mainMenuNode.id,
+        type: "default",
+      },
+      // Main menu outcomes
+      {
+        id: `edge-main-appt-${ts}`,
+        source: mainMenuNode.id,
+        sourceHandle: "outcome-0",
+        target: appointmentInfoNode.id,
+        type: "default",
+      },
+      {
+        id: `edge-main-info-${ts}`,
+        source: mainMenuNode.id,
+        sourceHandle: "outcome-1",
+        target: clinicInfoNode.id,
+        type: "default",
+      },
+      // Appointment branch
+      {
+        id: `edge-appt-new-${ts}`,
+        source: appointmentInfoNode.id,
+        sourceHandle: "outcome-0",
+        target: newPatientNode.id,
+        type: "default",
+      },
+      {
+        id: `edge-appt-existing-${ts}`,
+        source: appointmentInfoNode.id,
+        sourceHandle: "outcome-1",
+        target: existingPatientNode.id,
+        type: "default",
+      },
+      // Clinic info branch
+      {
+        id: `edge-info-hours-${ts}`,
+        source: clinicInfoNode.id,
+        sourceHandle: "outcome-0",
+        target: hoursLocationNode.id,
+        type: "default",
+      },
+      {
+        id: `edge-info-services-${ts}`,
+        source: clinicInfoNode.id,
+        sourceHandle: "outcome-1",
+        target: servicesNode.id,
+        type: "default",
+      },
+      // All paths lead to confirmation
+      {
+        id: `edge-new-confirm-${ts}`,
+        source: newPatientNode.id,
+        target: confirmationNode.id,
+        type: "default",
+      },
+      {
+        id: `edge-existing-confirm-${ts}`,
+        source: existingPatientNode.id,
+        target: confirmationNode.id,
+        type: "default",
+      },
+      {
+        id: `edge-hours-confirm-${ts}`,
+        source: hoursLocationNode.id,
+        target: confirmationNode.id,
+        type: "default",
+      },
+      {
+        id: `edge-services-confirm-${ts}`,
+        source: servicesNode.id,
+        target: confirmationNode.id,
+        type: "default",
+      },
+      // Confirmation to end
+      {
+        id: `edge-confirm-end-${ts}`,
+        source: confirmationNode.id,
+        target: endNode.id,
+        type: "default",
+      },
+    ];
+
+    return {
+      nodes: [
+        startNode,
+        mainMenuNode,
+        appointmentInfoNode,
+        newPatientNode,
+        existingPatientNode,
+        clinicInfoNode,
+        hoursLocationNode,
+        servicesNode,
+        confirmationNode,
+        endNode,
+      ],
+      edges,
+    };
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -127,92 +385,23 @@ const HomePage = () => {
       }
 
 
-      try {
-        const response = await fetch('https://moshi.app.n8n.cloud/webhook/new-flow', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
+      // Build and show a local receptionist demo flow (no webhook)
+      const flow = buildReceptionistFlow(
+        promptForWebhook,
+        callType,
+        callObjective || "custom",
+        language || "english-us"
+      );
+      const aiContent = {
+        agentInfo: { name: "AI Receptionist" },
+        flow,
+      };
 
-        if (!response.ok) {
-          throw new Error(`Webhook failed with status: ${response.status}`);
-        }
+      // Small delay to simulate "thinking" before progressive animation begins
+      await new Promise((r) => setTimeout(r, 600));
 
-        let responseData = await response.json();
-        console.log("Webhook response:", responseData);
-
-        // Check if we have a direct object or an array of objects
-        if (Array.isArray(responseData)) {
-          responseData = responseData[0];
-        }
-
-        // Handle the response structure correctly
-        let aiContent;
-        if (responseData.message?.content) {
-          aiContent = responseData.message.content;
-        } else if (responseData.content) {
-          aiContent = responseData.content;
-        } else {
-          // Direct structure
-          aiContent = responseData;
-        }
-
-        console.log("Extracted AI content:", aiContent);
-
-        // Verify we have the required data
-        if (!aiContent || !aiContent.agentInfo || !aiContent.flow) {
-          console.error("Invalid data structure from webhook:", responseData);
-          setLoadingMessage("Error: Received invalid data from AI. Wait for webhook to finish processing...");
-          
-          // Let's introduce a delay to wait for complete webhook processing
-          setTimeout(async () => {
-            try {
-              // Try fetching the data again after a delay
-              const retryResponse = await fetch('https://moshi.app.n8n.cloud/webhook/new-flow', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-              });
-              
-              if (!retryResponse.ok) {
-                throw new Error(`Retry failed with status: ${retryResponse.status}`);
-              }
-              
-              const retryData = await retryResponse.json();
-              console.log("Retry webhook response:", retryData);
-              
-              // Try to extract the content again
-              let retryContent;
-              if (Array.isArray(retryData)) {
-                retryContent = retryData[0]?.message?.content || retryData[0];
-              } else {
-                retryContent = retryData.message?.content || retryData;
-              }
-              
-              if (!retryContent || !retryContent.agentInfo || !retryContent.flow) {
-                throw new Error("Invalid retry data structure");
-              }
-              
-              processFlow(retryContent);
-            } catch (retryError) {
-              console.error("Retry error:", retryError);
-              setLoadingMessage("Error: Could not generate AI script after retry.");
-              setIsLoadingFlow(false);
-            }
-          }, 5000); // Wait 5 seconds before retrying
-          
-          return;
-        }
-        
-        // Process the flow data
-        processFlow(aiContent);
-
-      } catch (error) {
-        console.error("Error calling webhook:", error);
-        setLoadingMessage("Error: Could not generate AI script.");
-        setIsLoadingFlow(false);
-      }
+      // Process the flow data
+      processFlow(aiContent);
     }
   };
 
@@ -252,7 +441,7 @@ const HomePage = () => {
           setIsLoadingFlow(false);
           setLoadingMessage("Error: Flow definition issue.");
         }
-      }, 750);
+      }, 500); // Faster animation for more nodes
 
       return () => {
         console.log(`Step ${loadingStep}: Clearing timer`);
@@ -339,10 +528,10 @@ const HomePage = () => {
                   <Flow
                     nodes={displayedNodes}
                     edges={displayedEdges}
-                    onNodesChange={() => {}}
-                    onEdgesChange={() => {}}
-                    creationMode="stable"
+                    onNodesChange={(updated) => { /* noop in demo */ }}
+                    onEdgesChange={(updated) => { /* noop in demo */ }}
                     focusNodeId={lastAddedNodeId}
+                    showDemoCursor={true}
                   />
                 )}
               </ReactFlowProvider>

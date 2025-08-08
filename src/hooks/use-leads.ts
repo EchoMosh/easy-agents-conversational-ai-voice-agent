@@ -310,9 +310,10 @@ export function useLeads(initialPipelineId?: string) {
       const threshold = 1000;
       
       // Log the scroll position for debugging
-      console.log(
-        `📜 Scroll position: ${scrollPosition}, Document height: ${documentHeight}, Difference: ${documentHeight - scrollPosition}`
-      );
+      // Commented out to reduce console noise during debugging
+      // console.log(
+      //   `📜 Scroll position: ${scrollPosition}, Document height: ${documentHeight}, Difference: ${documentHeight - scrollPosition}`
+      // );
       
       // Check if we're approaching the bottom and not already fetching
       if (scrollPosition + threshold >= documentHeight && !isLeadsFetching && hasMoreLeads) {

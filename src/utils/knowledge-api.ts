@@ -2,6 +2,29 @@
 import { supabase } from '@/integrations/supabase/client';
 import { KnowledgeDocument } from '@/types/supabase-extended';
 
+// Helper function to call Supabase Edge Functions
+async function callSupabaseFunction(functionName: string, body: any) {
+  const { data, error } = await supabase.functions.invoke(functionName, {
+    body
+  });
+  
+  if (error) throw error;
+  return data;
+}
+
+// Helper function to extract text content from files
+async function extractTextFromFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result as string;
+      resolve(text);
+    };
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+
 export async function fetchDocuments() {
   const { data, error } = await supabase
     .from('knowledge_documents')
@@ -23,6 +46,45 @@ export async function uploadDocument(file: File, metadata: { title: string; desc
 
   if (uploadError) throw uploadError;
 
+  let trieveDatasetId = null;
+
+  try {
+    // Create Trieve dataset for this document
+    const trieveResponse = await callSupabaseFunction('create-trieve-dataset', {
+      name: metadata.title || file.name,
+      description: metadata.description || `Knowledge document: ${metadata.title || file.name}`
+    });
+    
+    trieveDatasetId = trieveResponse.dataset_id;
+
+    // Extract text content and upload to Trieve
+    let textContent = '';
+    if (file.type === 'text/plain' || file.type === 'text/csv') {
+      textContent = await extractTextFromFile(file);
+    } else {
+      // For other file types, use the file name and description as content
+      textContent = `${metadata.title || file.name}\n${metadata.description || ''}`;
+    }
+
+    // Upload content to Trieve
+    await callSupabaseFunction('upload-to-trieve', {
+      dataset_id: trieveDatasetId,
+      chunk_data: {
+        chunk_html: textContent,
+        metadata: {
+          title: metadata.title || file.name,
+          description: metadata.description,
+          file_type: file.type,
+          file_size: file.size
+        }
+      }
+    });
+
+  } catch (trieveError) {
+    console.warn('Trieve integration failed, continuing without it:', trieveError);
+    // Continue without Trieve integration if it fails
+  }
+
   // Save document metadata
   const { data, error: dbError } = await supabase
     .from('knowledge_documents')
@@ -32,6 +94,7 @@ export async function uploadDocument(file: File, metadata: { title: string; desc
       file_path: filePath,
       file_type: file.type,
       file_size: file.size,
+      trieve_dataset_id: trieveDatasetId,
       user_id: (await supabase.auth.getUser()).data.user?.id
     })
     .select()
@@ -77,6 +140,36 @@ export async function uploadTextDocument(content: string, metadata: { title: str
 
   if (uploadError) throw uploadError;
 
+  let trieveDatasetId = null;
+
+  try {
+    // Create Trieve dataset for this document
+    const trieveResponse = await callSupabaseFunction('create-trieve-dataset', {
+      name: metadata.title,
+      description: metadata.description || `Text document: ${metadata.title}`
+    });
+    
+    trieveDatasetId = trieveResponse.dataset_id;
+
+    // Upload content to Trieve
+    await callSupabaseFunction('upload-to-trieve', {
+      dataset_id: trieveDatasetId,
+      chunk_data: {
+        chunk_html: content,
+        metadata: {
+          title: metadata.title,
+          description: metadata.description,
+          file_type: 'text/plain',
+          file_size: textBlob.size
+        }
+      }
+    });
+
+  } catch (trieveError) {
+    console.warn('Trieve integration failed, continuing without it:', trieveError);
+    // Continue without Trieve integration if it fails
+  }
+
   // Save document metadata
   const { data, error: dbError } = await supabase
     .from('knowledge_documents')
@@ -86,6 +179,7 @@ export async function uploadTextDocument(content: string, metadata: { title: str
       file_path: filePath,
       file_type: 'text/plain',
       file_size: textBlob.size,
+      trieve_dataset_id: trieveDatasetId,
       user_id: user?.id
     })
     .select()
