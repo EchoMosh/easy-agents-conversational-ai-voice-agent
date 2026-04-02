@@ -1,11 +1,37 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.1";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE, PATCH',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE, PATCH",
 };
+
+// Active VAPI built-in voices (retired voices like Kylie, Lily, Harry, Paige, Spencer will be rejected)
+const ACTIVE_VAPI_VOICES = new Set([
+  "Elliot",
+  "Clara",
+  "Godfrey",
+  "Layla",
+  "Sid",
+  "Gustavo",
+  "Rohan",
+  "Savannah",
+  "Nico",
+  "Kai",
+  "Emma",
+  "Sagar",
+  "Neil",
+  "Naina",
+  "Leah",
+  "Tara",
+  "Jess",
+  "Leo",
+  "Dan",
+  "Mia",
+  "Zac",
+  "Zoe",
+]);
 
 interface UpdateVapiAgentRequest {
   agent_id: string;
@@ -20,54 +46,55 @@ interface UpdateVapiAgentRequest {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const { 
-      agent_id, 
-      v_agent_id, 
-      voice_id, 
-      language, 
+    const {
+      agent_id,
+      v_agent_id,
+      voice_id,
+      language,
       first_message,
       mermaid_chart,
       max_duration_seconds,
       background_sound,
-      knowledge_base_id
-    } = await req.json() as UpdateVapiAgentRequest;
+      knowledge_base_id,
+    } = (await req.json()) as UpdateVapiAgentRequest;
 
-    console.log('Request payload:', { agent_id, v_agent_id, voice_id, language, first_message });
-    
+    console.log("Request payload:", {
+      agent_id,
+      v_agent_id,
+      voice_id,
+      language,
+      first_message,
+    });
+
     if (!v_agent_id) {
-      console.error('No Vapi agent ID provided in request');
+      console.error("No Vapi agent ID provided in request");
       return new Response(
-        JSON.stringify({ 
-          error: 'No Vapi agent ID provided',
-          message: 'v_agent_id is required to update the assistant'
+        JSON.stringify({
+          error: "No Vapi agent ID provided",
+          message: "v_agent_id is required to update the assistant",
         }),
-        { 
+        {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     // Get the current timestamp for dynamic prompt generation
-    const now = new Date().toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
+    const now = new Date().toLocaleString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
       hour12: true,
-      timeZoneName: 'short'
+      timeZoneName: "short",
     });
 
     // Construct the system prompt based on the provided template
@@ -101,132 +128,182 @@ The following is a flowchart written in Mermaid. It is a visual representation o
 
 ${mermaid_chart}`;
 
-    // Prepare the Vapi update payload based on the provided structure
+    // Build model tools array (knowledge base uses query tool pattern)
+    const modelTools = knowledge_base_id
+      ? [
+          {
+            type: "query",
+            function: {
+              name: "knowledge-search",
+              description:
+                "Search the knowledge base for relevant information to answer the caller's questions.",
+            },
+            knowledgeBases: [
+              {
+                provider: "trieve",
+                id: knowledge_base_id,
+              },
+            ],
+          },
+        ]
+      : undefined;
+
+    // Prepare the Vapi update payload with optimized call quality settings
     const vapiPayload = {
       transcriber: {
         provider: "deepgram",
-        language: language
+        model: "nova-2",
+        language: language,
+        smartFormat: true,
       },
       voice: {
-        provider: "11labs",
-        voiceId: voice_id
+        provider: "vapi",
+        voiceId: ACTIVE_VAPI_VOICES.has(voice_id) ? voice_id : "Elliot",
+        chunkPlan: {
+          enabled: true,
+          minCharacters: 30,
+          punctuationBoundaries: [".", "!", "?", ","],
+        },
       },
-      firstMessage: first_message || `Hello! This is an AI assistant. How can I help you today?`,
+      firstMessage:
+        first_message ||
+        `Hello! This is an AI assistant. How can I help you today?`,
       voicemailDetection: {
-        provider: "google"
+        provider: "google",
       },
-      backgroundSound: background_sound === "off" ? "off" : (background_sound || "office"),
-      maxDurationSeconds: max_duration_seconds || 3000,
+      startSpeakingPlan: {
+        waitSeconds: 0.4,
+        smartEndpointingEnabled: true,
+        transcriptionEndpointingPlan: {
+          onPunctuationSeconds: 0.1,
+          onNoPunctuationSeconds: 0.8,
+          onNumberSeconds: 0.4,
+        },
+      },
+      stopSpeakingPlan: {
+        numWords: 2,
+        voiceSeconds: 0.2,
+        backoffSeconds: 1.0,
+      },
+      backgroundDenoisingEnabled: true,
+      backgroundSound:
+        background_sound === "off" ? "off" : background_sound || "office",
+      silenceTimeoutSeconds: 30,
+      maxDurationSeconds: max_duration_seconds || 600,
       model: {
         provider: "groq",
-        model: "llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.3,
+        maxTokens: 250,
         messages: [
           {
             role: "system",
-            content: systemPrompt
-          }
+            content: systemPrompt,
+          },
         ],
-        ...(knowledge_base_id && { knowledgeBaseId: knowledge_base_id })
-      }
+        ...(modelTools && { tools: modelTools }),
+      },
     };
 
     // Get Vapi API key from environment
-    const vapiApiKey = Deno.env.get('VAPI_API_KEY');
+    const vapiApiKey = Deno.env.get("VAPI_API_KEY");
     if (!vapiApiKey) {
-      console.error('VAPI_API_KEY environment variable not found');
+      console.error("VAPI_API_KEY environment variable not found");
       return new Response(
-        JSON.stringify({ 
-          error: 'Vapi API key not configured',
-          message: 'VAPI_API_KEY environment variable is missing'
+        JSON.stringify({
+          error: "Vapi API key not configured",
+          message: "VAPI_API_KEY environment variable is missing",
         }),
-        { 
+        {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
-    console.log(`Making PATCH request to: https://api.vapi.ai/assistant/${v_agent_id}`);
-    console.log('Vapi payload:', JSON.stringify(vapiPayload, null, 2));
+    console.log(
+      `Making PATCH request to: https://api.vapi.ai/assistant/${v_agent_id}`,
+    );
+    console.log("Vapi payload:", JSON.stringify(vapiPayload, null, 2));
 
-    // Try to update the assistant first
-    let vapiResponse = await fetch(`https://api.vapi.ai/assistant/${v_agent_id}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${vapiApiKey}`,
-        'Content-Type': 'application/json',
+    const vapiResponse = await fetch(
+      `https://api.vapi.ai/assistant/${v_agent_id}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${vapiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(vapiPayload),
       },
-      body: JSON.stringify(vapiPayload),
-    });
+    );
 
-    console.log('Vapi response status:', vapiResponse.status);
+    console.log("Vapi response status:", vapiResponse.status);
 
     // If assistant not found (404), return error
     if (vapiResponse.status === 404) {
-      console.error('Assistant not found in Vapi:', v_agent_id);
-      
+      console.error("Assistant not found in Vapi:", v_agent_id);
+
       return new Response(
-        JSON.stringify({ 
-          error: 'Vapi assistant not found',
+        JSON.stringify({
+          error: "Vapi assistant not found",
           message: `The Vapi assistant with ID ${v_agent_id} does not exist. Please ensure the agent has been properly created in Vapi.`,
           v_agent_id: v_agent_id,
-          status: 404
-        }),
-        { 
           status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
-    
+
     // If other error occurred during update
     if (!vapiResponse.ok) {
       const errorText = await vapiResponse.text();
-      console.error('Vapi API error response:', errorText);
-      console.error('Vapi API status:', vapiResponse.status);
-      
+      console.error("Vapi API error response:", errorText);
+      console.error("Vapi API status:", vapiResponse.status);
+
       let parsedError;
       try {
         parsedError = JSON.parse(errorText);
       } catch {
         parsedError = { message: errorText };
       }
-      
+
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to update Vapi agent',
+        JSON.stringify({
+          error: "Failed to update Vapi agent",
           message: parsedError.message || errorText,
           details: parsedError,
+          success: false,
           status: vapiResponse.status,
-          v_agent_id: v_agent_id
+          v_agent_id: v_agent_id,
         }),
-        { 
+        {
           status: vapiResponse.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     const vapiData = await vapiResponse.json();
-    
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
-        data: vapiData 
+        data: vapiData,
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      },
     );
   } catch (error) {
-    console.error('Error updating Vapi agent:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    console.error("Error updating Vapi agent:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

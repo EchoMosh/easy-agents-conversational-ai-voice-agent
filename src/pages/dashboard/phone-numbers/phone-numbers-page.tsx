@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/context/workspace-context";
 import { Button } from "@/components/ui/button";
-import { Plus, Phone, Loader2 } from "lucide-react";
+import { Plus, Phone, Loader2, AlertCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -34,69 +34,96 @@ type PhoneNumber = Tables<"phone_numbers"> & {
   outbound_agent?: Pick<Tables<"agents">, "id" | "name" | "v_agent_id"> | null;
 };
 
+type Agent = Pick<Tables<"agents">, "id" | "name" | "role">;
+
 export const PhoneNumbersPage = () => {
-  const { workspaceId } = useParams();
   const { currentWorkspace } = useWorkspace();
+  const workspaceId = currentWorkspace?.id;
   const { toast } = useToast();
   const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [releaseDialog, setReleaseDialog] = useState<{
     open: boolean;
     phoneNumber?: PhoneNumber;
   }>({ open: false });
 
-  useEffect(() => {
-    if (workspaceId) {
-      fetchPhoneNumbers();
+  const fetchData = useCallback(async () => {
+    if (!workspaceId) {
+      setLoading(false);
+      return;
     }
-  }, [workspaceId]);
 
-  const fetchPhoneNumbers = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      const { data, error } = await supabase
-        .from("phone_numbers")
-        .select(`
-          *,
-          inbound_agent:agents!phone_numbers_inbound_agent_id_fkey(
-            id,
-            name,
-            v_agent_id
-          ),
-          outbound_agent:agents!phone_numbers_outbound_agent_id_fkey(
-            id,
-            name,
-            v_agent_id
+      // Fetch phone numbers and agents in parallel
+      const [phoneResult, agentsResult] = await Promise.all([
+        supabase
+          .from("phone_numbers")
+          .select(
+            `
+            *,
+            inbound_agent:agents!phone_numbers_inbound_agent_id_fkey(
+              id,
+              name,
+              v_agent_id
+            ),
+            outbound_agent:agents!phone_numbers_outbound_agent_id_fkey(
+              id,
+              name,
+              v_agent_id
+            )
+          `,
           )
-        `)
-        .eq("workspace_id", workspaceId)
-        .neq("status", "released")
-        .order("created_at", { ascending: false });
+          .eq("workspace_id", workspaceId)
+          .neq("status", "released")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("agents")
+          .select("id, name, role")
+          .eq("workspace_id", workspaceId)
+          .eq("is_active", true)
+          .order("name"),
+      ]);
 
-      if (error) throw error;
-      setPhoneNumbers(data || []);
-    } catch (error) {
-      console.error("Error fetching phone numbers:", error);
+      if (phoneResult.error) throw phoneResult.error;
+      if (agentsResult.error) throw agentsResult.error;
+
+      setPhoneNumbers(phoneResult.data || []);
+      setAgents(agentsResult.data || []);
+    } catch (err) {
+      console.error("Error fetching phone numbers data:", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to load phone numbers";
+      setError(message);
       toast({
         title: "Error",
-        description: "Failed to load phone numbers",
+        description: message,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [workspaceId, toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleUpdateAgents = async (
     phoneNumberId: string,
     type: "inbound" | "outbound",
-    agentId: string | null
+    agentId: string | null,
   ) => {
     try {
       const { data: authData } = await supabase.auth.getSession();
       if (!authData.session) return;
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         phoneNumberId,
       };
 
@@ -106,12 +133,15 @@ export const PhoneNumbersPage = () => {
         updateData.outboundAgentId = agentId;
       }
 
-      const response = await supabase.functions.invoke("update-phone-number-agents", {
-        body: updateData,
-        headers: {
-          Authorization: `Bearer ${authData.session.access_token}`,
+      const response = await supabase.functions.invoke(
+        "update-phone-number-agents",
+        {
+          body: updateData,
+          headers: {
+            Authorization: `Bearer ${authData.session.access_token}`,
+          },
         },
-      });
+      );
 
       if (response.error) throw response.error;
 
@@ -120,9 +150,9 @@ export const PhoneNumbersPage = () => {
         description: `${type === "inbound" ? "Inbound" : "Outbound"} agent updated`,
       });
 
-      await fetchPhoneNumbers();
-    } catch (error) {
-      console.error("Error updating agent:", error);
+      await fetchData();
+    } catch (err) {
+      console.error("Error updating agent:", err);
       toast({
         title: "Error",
         description: "Failed to update agent assignment",
@@ -153,9 +183,9 @@ export const PhoneNumbersPage = () => {
       });
 
       setReleaseDialog({ open: false });
-      await fetchPhoneNumbers();
-    } catch (error) {
-      console.error("Error releasing number:", error);
+      await fetchData();
+    } catch (err) {
+      console.error("Error releasing number:", err);
       toast({
         title: "Error",
         description: "Failed to release phone number",
@@ -168,6 +198,18 @@ export const PhoneNumbersPage = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <p className="text-muted-foreground">{error}</p>
+        <Button variant="outline" onClick={fetchData}>
+          Try Again
+        </Button>
       </div>
     );
   }
@@ -215,11 +257,15 @@ export const PhoneNumbersPage = () => {
               phoneNumbers.map((phoneNumber) => (
                 <TableRow key={phoneNumber.id}>
                   <TableCell className="font-medium">
-                    {formatPhoneNumber(phoneNumber.twilio_phone_number)}
+                    {phoneNumber.twilio_phone_number ? (
+                      formatPhoneNumber(phoneNumber.twilio_phone_number)
+                    ) : (
+                      <span className="text-muted-foreground text-sm">
+                        Virtual (outbound only)
+                      </span>
+                    )}
                   </TableCell>
-                  <TableCell>
-                    {phoneNumber.friendly_name || "-"}
-                  </TableCell>
+                  <TableCell>{phoneNumber.friendly_name || "-"}</TableCell>
                   <TableCell>
                     <PhoneNumberAgentSelector
                       workspaceId={workspaceId!}
@@ -228,6 +274,7 @@ export const PhoneNumbersPage = () => {
                         handleUpdateAgents(phoneNumber.id, "inbound", agentId)
                       }
                       placeholder="Select inbound agent"
+                      agents={agents}
                     />
                   </TableCell>
                   <TableCell>
@@ -238,12 +285,15 @@ export const PhoneNumbersPage = () => {
                         handleUpdateAgents(phoneNumber.id, "outbound", agentId)
                       }
                       placeholder="Select outbound agent"
+                      agents={agents}
                     />
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        phoneNumber.status === "active" ? "default" : "secondary"
+                        phoneNumber.status === "active"
+                          ? "default"
+                          : "secondary"
                       }
                     >
                       {phoneNumber.status}
@@ -273,7 +323,7 @@ export const PhoneNumbersPage = () => {
         workspaceId={workspaceId!}
         onSuccess={() => {
           setAddDialogOpen(false);
-          fetchPhoneNumbers();
+          fetchData();
         }}
       />
 
@@ -288,7 +338,9 @@ export const PhoneNumbersPage = () => {
               Are you sure you want to release{" "}
               <strong>
                 {releaseDialog.phoneNumber &&
-                  formatPhoneNumber(releaseDialog.phoneNumber.twilio_phone_number)}
+                  formatPhoneNumber(
+                    releaseDialog.phoneNumber.twilio_phone_number,
+                  )}
               </strong>
               ? This action cannot be undone and the number will no longer be
               available for your agents.

@@ -1,5 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Loader, PanelLeft, MoreVertical, Rocket, History, Copy } from "lucide-react"; 
+import {
+  ArrowLeft,
+  Settings,
+  Loader,
+  PanelLeft,
+  MoreVertical,
+  Rocket,
+  History,
+  Copy,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,11 +50,13 @@ interface HeaderProps {
 }
 
 export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
+  const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState(true); // Default to true for visual consistency during dev if needed
   const [showTrainingPopup, setShowTrainingPopup] = useState(false);
   const [showVoiceCallDialog, setShowVoiceCallDialog] = useState(false);
   const [showCallOptions, setShowCallOptions] = useState(false);
-  const [showTestAgentDialog, setShowTestAgentDialog] = useState<boolean>(false);
+  const [showTestAgentDialog, setShowTestAgentDialog] =
+    useState<boolean>(false);
   const [showLaunchAgentDialog, setShowLaunchAgentDialog] = useState(false);
   const [showCallLogsModal, setShowCallLogsModal] = useState(false); // Added state for call logs modal
   const [showSettingsModal, setShowSettingsModal] = useState(false); // Added state for settings modal
@@ -66,7 +78,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
     const greetingNodes = flowData.nodes.filter(
       (node: FlowNode) =>
-        node.type === "greetingNode" || node.type === "speakNode"
+        node.type === "greetingNode" || node.type === "speakNode",
     );
 
     if (greetingNodes.length === 0) {
@@ -156,7 +168,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
       if (agentError) {
         throw new Error(
-          `Failed to fetch complete agent data: ${agentError.message}`
+          `Failed to fetch complete agent data: ${agentError.message}`,
         );
       }
 
@@ -224,7 +236,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -244,13 +256,13 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         console.error("Error parsing webhook response:", parseError);
         console.error("Raw response text:", responseText);
         throw new Error(
-          "Failed to get a valid response from the webhook. The agent might not have been updated correctly."
+          "Failed to get a valid response from the webhook. The agent might not have been updated correctly.",
         );
       }
 
       if (!data) {
         throw new Error(
-          "No data returned from webhook. The agent might not have been updated correctly."
+          "No data returned from webhook. The agent might not have been updated correctly.",
         );
       }
 
@@ -286,7 +298,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
       {/* Modern elevated header with soft shadow */}
       <div className="relative h-auto min-h-16 w-full bg-white dark:bg-slate-900 flex items-center px-6 py-3 z-50 border-b border-gray-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-        <div className="flex-1 flex items-center gap-3.5"> 
+        <div className="flex-1 flex items-center gap-3.5">
           <Button
             variant="ghost"
             size="icon"
@@ -307,7 +319,7 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
                       <div
                         className={`w-3 h-3 rounded-full flex-shrink-0 ${
                           isConnected ? "bg-emerald-500" : "bg-red-500"
-                        } ring-2 ring-white dark:ring-slate-900`} 
+                        } ring-2 ring-white dark:ring-slate-900`}
                       />
                     </div>
                   </TooltipTrigger>
@@ -341,16 +353,16 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
 
         {/* Right-aligned action buttons with visual hierarchy */}
         <div className="flex items-center gap-3 ml-auto">
-          <TestAgentButton 
+          <TestAgentButton
             onClick={() => {
               console.log("Test Agent button clicked");
               setShowTestAgentDialog(true);
-            }} 
+            }}
           />
-          
+
           <Button
             variant="default"
-            className="rounded-full px-4 py-2 h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow transition-all" 
+            className="rounded-full px-4 py-2 h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow transition-all"
             onClick={() => setShowLaunchAgentDialog(true)}
           >
             <Rocket className="h-3.5 w-3.5 mr-1.5" />
@@ -368,7 +380,10 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
                 <span className="sr-only">More options</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[180px] p-1.5 rounded-lg border-slate-200 dark:border-slate-700 shadow-lg">
+            <DropdownMenuContent
+              align="end"
+              className="min-w-[180px] p-1.5 rounded-lg border-slate-200 dark:border-slate-700 shadow-lg"
+            >
               <DropdownMenuItem
                 className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 onSelect={(e) => {
@@ -377,33 +392,52 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
                 }}
               >
                 <Settings className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" />
-                <span className="text-slate-700 dark:text-slate-300">Settings</span>
+                <span className="text-slate-700 dark:text-slate-300">
+                  Settings
+                </span>
               </DropdownMenuItem>
-              
-              <DropdownMenuItem 
+
+              <DropdownMenuItem
                 className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 onSelect={() => {
-                  console.log("View analytics requested");
+                  navigate("/dashboard/transcriptions");
                 }}
               >
-                <svg className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M3 3v18h18"></path>
                   <path d="M18 17V9"></path>
                   <path d="M13 17V5"></path>
                   <path d="M8 17v-3"></path>
                 </svg>
-                <span className="text-slate-700 dark:text-slate-300">View Analytics</span>
+                <span className="text-slate-700 dark:text-slate-300">
+                  View Analytics
+                </span>
               </DropdownMenuItem>
-              
-              <DropdownMenuItem 
+
+              <DropdownMenuItem
                 className="flex items-center px-3 py-2 text-sm rounded-md cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 onSelect={() => {
-                  console.log("View conversation history (call logs) requested");
+                  console.log(
+                    "View conversation history (call logs) requested",
+                  );
                   setShowCallLogsModal(true); // Open the call logs modal
                 }}
               >
                 <History className="mr-2.5 h-4 w-4 text-slate-600 dark:text-slate-400" />
-                <span className="text-slate-700 dark:text-slate-300">Call Logs</span>
+                <span className="text-slate-700 dark:text-slate-300">
+                  Call Logs
+                </span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -429,13 +463,13 @@ export function Header({ agent, onBack, onUpdateSettings }: HeaderProps) {
         onOpenChange={setShowCallOptions}
         agent={agent}
       />
-      
+
       <TestAgentDialog
         open={showTestAgentDialog}
         onOpenChange={setShowTestAgentDialog}
         agent={agent}
       />
-      
+
       <LaunchAgentDialog
         open={showLaunchAgentDialog}
         onOpenChange={setShowLaunchAgentDialog}

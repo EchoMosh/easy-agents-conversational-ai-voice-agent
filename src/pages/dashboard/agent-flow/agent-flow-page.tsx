@@ -11,7 +11,6 @@ import { useMermaidChart } from "./hooks/use-mermaid-chart";
 import { useFlowManagement } from "./hooks/use-flow-management";
 import { MermaidChartPreview } from "./components/mermaid-chart-preview";
 import { Header } from "@/components/flow/agent-flow/header";
-import AIBuilderBar from "@/components/agents/flow/ai-builder-bar";
 
 export default function AgentFlowPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,7 +35,7 @@ export default function AgentFlowPage() {
   // Set document title
   useDocumentTitle(
     agent ? `${agent.name || "Agent"} | Flow Editor` : "Agent Flow Editor",
-    [agent?.name]
+    [agent?.name],
   );
 
   // Effect for agent data logging (moved up, but its original position was fine too)
@@ -88,8 +87,10 @@ export default function AgentFlowPage() {
   // Main component render
   return (
     <DragProvider>
-      <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-hidden"
-           style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div
+        className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-hidden"
+        style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
+      >
         {agent && (
           <Header
             agent={agent}
@@ -126,9 +127,6 @@ export default function AgentFlowPage() {
             onOpenChange={setShowTraining}
           />
         )}
-
-        <AIBuilderBar />
-
       </div>
     </DragProvider>
   );

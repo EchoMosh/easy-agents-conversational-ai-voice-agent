@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
-import { Info } from "lucide-react";
+import { Info, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseCSV } from "@/utils/csv-parser";
 import {
   Select,
   SelectContent,
@@ -30,10 +29,38 @@ const FIELD_OPTIONS = [
   { value: "last_name", label: "Last Name", required: false },
   { value: "email", label: "Email", required: false },
   { value: "phone", label: "Phone", required: true },
-  { value: "company", label: "Company", required: false },
-  { value: "job_title", label: "Position", required: false },
-  { value: "custom", label: "Custom", required: false },
+  { value: "custom", label: "Skip (don't import)", required: false },
 ];
+
+function RadioOption({
+  selected,
+  onClick,
+  label,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <div
+      className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
+        selected
+          ? "bg-primary/10 border border-primary/20"
+          : "bg-muted/50 hover:bg-muted border border-transparent"
+      }`}
+      onClick={onClick}
+    >
+      <div
+        className={`w-4 h-4 rounded-full mr-3 flex items-center justify-center ${
+          selected ? "bg-primary" : "border-2 border-muted-foreground/30"
+        }`}
+      >
+        {selected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+      </div>
+      <span className="text-sm font-medium text-foreground">{label}</span>
+    </div>
+  );
+}
 
 export function ColumnMapper({
   fileContent,
@@ -56,26 +83,21 @@ export function ColumnMapper({
     if (!fileContent) return;
 
     try {
-      const rows = fileContent.split(/\r?\n/).filter((row) => row.trim());
-      const parsedData = rows.map((row) => {
-        const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-        return matches.map((value) =>
-          value.startsWith('"') && value.endsWith('"')
-            ? value.slice(1, -1)
-            : value
-        );
-      });
+      const parsed = parseCSV(fileContent, hasHeaders);
 
-      if (parsedData.length === 0) throw new Error("No data found in file");
+      if (parsed.headers.length === 0) throw new Error("No data found in file");
 
-      const headerRow = hasHeaders
-        ? parsedData[0]
-        : parsedData[0].map((_, i) => `Column ${i + 1}`);
-      const dataRows = hasHeaders
-        ? parsedData.slice(1, 6)
-        : parsedData.slice(0, 5);
+      const headerRow = parsed.headers;
+      const dataRows = parsed.dataRows.slice(0, 5);
 
-      if (Object.keys(columnMapping).length === 0) {
+      // Rebuild mapping if empty or if headers changed (e.g. hasHeaders toggled)
+      const existingKeys = Object.keys(columnMapping);
+      const headersChanged =
+        existingKeys.length === 0 ||
+        existingKeys.length !== headerRow.length ||
+        existingKeys.some((k) => !headerRow.includes(k));
+
+      if (headersChanged) {
         const initialMapping: Record<string, string> = {};
         headerRow.forEach((header) => {
           const headerLower = header.toLowerCase().trim();
@@ -94,17 +116,6 @@ export function ColumnMapper({
             headerLower.includes("mobile")
           ) {
             initialMapping[header] = "phone";
-          } else if (
-            headerLower.includes("company") ||
-            headerLower.includes("business")
-          ) {
-            initialMapping[header] = "company";
-          } else if (
-            headerLower.includes("position") ||
-            headerLower.includes("title") ||
-            headerLower.includes("job")
-          ) {
-            initialMapping[header] = "job_title";
           } else {
             initialMapping[header] = "custom";
           }
@@ -116,6 +127,11 @@ export function ColumnMapper({
       setCsvData(dataRows);
     } catch (error) {
       console.error("Error parsing CSV:", error);
+      setHeaders([]);
+      setCsvData([]);
+      setValidationErrors([
+        "Unable to parse your file. Please ensure it is a valid CSV file and try again.",
+      ]);
     }
   }, [fileContent, hasHeaders]);
 
@@ -123,9 +139,12 @@ export function ColumnMapper({
     const errors: string[] = [];
 
     FIELD_OPTIONS.forEach((field) => {
-      if (field.required && !Object.values(columnMapping).includes(field.value)) {
+      if (
+        field.required &&
+        !Object.values(columnMapping).includes(field.value)
+      ) {
         errors.push(
-          `"${field.label}" is required but not mapped to any column`
+          `"${field.label}" is required but not mapped to any column`,
         );
       }
     });
@@ -136,7 +155,7 @@ export function ColumnMapper({
 
   const handleColumnMappingChange = (
     columnHeader: string,
-    fieldValue: string
+    fieldValue: string,
   ) => {
     setColumnMapping({
       ...columnMapping,
@@ -147,50 +166,37 @@ export function ColumnMapper({
   const displayFileName =
     fileName.length > 40 ? fileName.substring(0, 37) + "..." : fileName;
 
-  const getFieldLabel = (value: string) => {
-    const field = FIELD_OPTIONS.find((f) => f.value === value);
-    return field ? field.label : "Custom";
-  };
-
   return (
     <ScrollArea className="h-full">
       <div className="flex flex-col p-6">
-        <div className="flex-shrink-0 mb-3">
-          <div className="text-center text-sm text-gray-500">
-            <span className="text-xs uppercase tracking-wider font-medium">
-              File:
-            </span>{" "}
-            {displayFileName}
+        {/* File name badge */}
+        <div className="flex-shrink-0 mb-4">
+          <div className="text-center">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+              {displayFileName}
+            </span>
           </div>
         </div>
 
-        <div
-          className="flex-shrink-0 border border-gray-100 rounded-xl shadow-sm bg-white relative"
-          style={{ height: "240px" }}
-        >
-          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-200/80 rounded-full z-20 pointer-events-none flex items-center justify-center shadow-sm">
-            <div className="text-gray-600 font-bold">❮</div>
-          </div>
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-200/80 rounded-full z-20 pointer-events-none flex items-center justify-center shadow-sm">
-            <div className="text-gray-600 font-bold">❯</div>
-          </div>
-
+        {/* Data preview table */}
+        <div className="flex-shrink-0 border border-border rounded-xl overflow-hidden bg-card">
           <div
-            className="absolute inset-0 overflow-x-auto overflow-y-auto scrollbar-thin"
-            style={{
-              WebkitOverflowScrolling: "touch",
-              msOverflowStyle: "auto",
-              scrollbarWidth: "thin",
-            }}
+            className="overflow-x-auto overflow-y-auto"
+            style={{ maxHeight: "240px" }}
           >
-            <div style={{ minWidth: Math.max(headers.length * 140, 500) + "px" }}>
+            <div
+              style={{
+                minWidth: Math.max(headers.length * 150, 500) + "px",
+              }}
+            >
+              {/* Column headers */}
               <div className="sticky top-0 z-20">
-                <div className="flex bg-gray-50">
+                <div className="flex bg-muted/50">
                   {headers.map((header, index) => (
                     <div
                       key={index}
-                      className="py-2 px-3 text-left font-medium text-gray-600 whitespace-nowrap flex-shrink-0 border-b"
-                      style={{ width: "140px", minWidth: "140px" }}
+                      className="py-2.5 px-3 text-left font-medium text-foreground text-xs whitespace-nowrap flex-shrink-0 border-b border-border"
+                      style={{ width: "150px", minWidth: "150px" }}
                       title={header}
                     >
                       <div className="truncate">{header}</div>
@@ -198,12 +204,13 @@ export function ColumnMapper({
                   ))}
                 </div>
 
-                <div className="flex bg-gray-50/80 backdrop-blur-sm border-b">
+                {/* Column mapping selects */}
+                <div className="flex bg-muted/30 border-b border-border">
                   {headers.map((header, index) => (
                     <div
                       key={index}
-                      className="py-2 px-3 flex-shrink-0"
-                      style={{ width: "140px", minWidth: "140px" }}
+                      className="py-2 px-2 flex-shrink-0"
+                      style={{ width: "150px", minWidth: "150px" }}
                     >
                       <Select
                         value={columnMapping[header] || "custom"}
@@ -211,25 +218,19 @@ export function ColumnMapper({
                           handleColumnMappingChange(header, value)
                         }
                       >
-                        <SelectTrigger className="w-full h-7 text-xs bg-white border-gray-200 shadow-sm hover:bg-gray-50 focus:ring-1 focus:ring-gray-50 px-2">
-                          <SelectValue
-                            placeholder="Select field"
-                            className="truncate"
-                          />
+                        <SelectTrigger className="w-full h-8 text-xs">
+                          <SelectValue placeholder="Select field" />
                         </SelectTrigger>
-                        <SelectContent
-                          position="item-aligned"
-                          className="z-[9999]"
-                        >
+                        <SelectContent position="item-aligned">
                           {FIELD_OPTIONS.map((option) => (
                             <SelectItem
                               key={option.value}
                               value={option.value}
                               className="text-xs"
                             >
-                              {option.label}{" "}
+                              {option.label}
                               {option.required && (
-                                <span className="text-red-500 ml-1">*</span>
+                                <span className="text-destructive ml-1">*</span>
                               )}
                             </SelectItem>
                           ))}
@@ -240,22 +241,27 @@ export function ColumnMapper({
                 </div>
               </div>
 
+              {/* Data rows */}
               {csvData.slice(0, 4).map((row, rowIndex) => (
                 <div
                   key={rowIndex}
                   className={`flex ${
-                    rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                    rowIndex % 2 === 0 ? "bg-card" : "bg-muted/20"
                   }`}
                 >
                   {row.map((cell, cellIndex) => (
                     <div
                       key={cellIndex}
-                      className="py-2 px-3 text-gray-700 text-xs leading-5 flex-shrink-0"
-                      style={{ width: "140px", minWidth: "140px" }}
+                      className="py-2 px-3 text-muted-foreground text-xs leading-5 flex-shrink-0"
+                      style={{ width: "150px", minWidth: "150px" }}
                       title={cell}
                     >
                       <div className="truncate">
-                        {cell || <span className="text-gray-400 italic">—</span>}
+                        {cell || (
+                          <span className="text-muted-foreground/50 italic">
+                            --
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -263,140 +269,63 @@ export function ColumnMapper({
               ))}
             </div>
           </div>
-
-          <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden pointer-events-none">
-            <div
-              className="h-full bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-400 animate-pulse-x"
-              style={{ width: "200%", left: "-50%" }}
-            ></div>
-          </div>
         </div>
 
-        <div className="text-center text-xs text-gray-400 mt-1 mb-2">
+        <p className="text-center text-xs text-muted-foreground mt-2 mb-4">
           Showing preview of {csvData.length} rows
-        </div>
+        </p>
 
+        {/* Options */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">
+          <div className="bg-card rounded-xl p-4 border border-border">
+            <h3 className="text-sm font-medium text-foreground mb-3">
               File Structure
             </h3>
-
             <div className="space-y-2">
-              <div
-                className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                  hasHeaders
-                    ? "bg-indigo-50 border-indigo-100 border"
-                    : "bg-gray-50 hover:bg-gray-100 border border-gray-100"
-                }`}
+              <RadioOption
+                selected={hasHeaders}
                 onClick={() => setHasHeaders(true)}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full mr-3 flex items-center justify-center ${
-                    hasHeaders ? "bg-indigo-600" : "border border-gray-300"
-                  }`}
-                >
-                  {hasHeaders && (
-                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                  )}
-                </div>
-                <span className="text-sm font-medium">
-                  First row contains labels
-                </span>
-              </div>
-
-              <div
-                className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                  !hasHeaders
-                    ? "bg-indigo-50 border-indigo-100 border"
-                    : "bg-gray-50 hover:bg-gray-100 border border-gray-100"
-                }`}
+                label="First row contains labels"
+              />
+              <RadioOption
+                selected={!hasHeaders}
                 onClick={() => setHasHeaders(false)}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full mr-3 flex items-center justify-center ${
-                    !hasHeaders ? "bg-indigo-600" : "border border-gray-300"
-                  }`}
-                >
-                  {!hasHeaders && (
-                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                  )}
-                </div>
-                <span className="text-sm font-medium">
-                  First row contains data
-                </span>
-              </div>
+                label="First row contains data"
+              />
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">
+          <div className="bg-card rounded-xl p-4 border border-border">
+            <h3 className="text-sm font-medium text-foreground mb-3">
               Duplicate Handling
             </h3>
-
             <div className="space-y-2">
-              <div
-                className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                  removeDuplicates
-                    ? "bg-indigo-50 border-indigo-100 border"
-                    : "bg-gray-50 hover:bg-gray-100 border border-gray-100"
-                }`}
+              <RadioOption
+                selected={removeDuplicates}
                 onClick={() => setRemoveDuplicates(true)}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full mr-3 flex items-center justify-center ${
-                    removeDuplicates
-                      ? "bg-indigo-600"
-                      : "border border-gray-300"
-                  }`}
-                >
-                  {removeDuplicates && (
-                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                  )}
-                </div>
-                <span className="text-sm font-medium">
-                  Remove duplicate phone numbers
-                </span>
-              </div>
-
-              <div
-                className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                  !removeDuplicates
-                    ? "bg-indigo-50 border-indigo-100 border"
-                    : "bg-gray-50 hover:bg-gray-100 border border-gray-100"
-                }`}
+                label="Remove duplicate phone numbers"
+              />
+              <RadioOption
+                selected={!removeDuplicates}
                 onClick={() => setRemoveDuplicates(false)}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full mr-3 flex items-center justify-center ${
-                    !removeDuplicates
-                      ? "bg-indigo-600"
-                      : "border border-gray-300"
-                  }`}
-                >
-                  {!removeDuplicates && (
-                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                  )}
-                </div>
-                <span className="text-sm font-medium">
-                  Keep duplicate phone numbers
-                </span>
-              </div>
+                label="Keep duplicate phone numbers"
+              />
             </div>
           </div>
         </div>
 
+        {/* Validation errors */}
         {validationErrors.length > 0 && (
-          <div className="rounded-md bg-red-50 px-3 py-2 border border-red-100 shadow-sm mb-3">
-            <div className="flex">
-              <Info className="h-4 w-4 text-red-400 mt-0.5" />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-red-800">
+          <div className="rounded-lg bg-destructive/10 px-4 py-3 border border-destructive/20 mb-4">
+            <div className="flex gap-2">
+              <Info className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-destructive">
                   Please map the required fields
                 </p>
-                <ul className="mt-1 text-xs text-red-700 space-y-1">
+                <ul className="mt-1 text-xs text-destructive/80 space-y-0.5">
                   {validationErrors.map((error, index) => (
-                    <li key={index}>• {error}</li>
+                    <li key={index}>{error}</li>
                   ))}
                 </ul>
               </div>
@@ -404,27 +333,16 @@ export function ColumnMapper({
           </div>
         )}
 
-        <div className="pt-2 border-t mt-4">
-          <div className="flex justify-between">
-            <button
-              onClick={onBack}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-              Back to Upload
-            </button>
+        {/* Footer actions */}
+        <div className="pt-4 border-t border-border flex justify-between">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
 
-            <button
-              onClick={onNext}
-              disabled={!isValid}
-              className={`px-6 py-2 text-sm font-medium text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                isValid
-                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:ring-indigo-500"
-                  : "bg-gray-300 cursor-not-allowed"
-              }`}
-            >
-              Next Step
-            </button>
-          </div>
+          <Button onClick={onNext} disabled={!isValid}>
+            Import Leads
+          </Button>
         </div>
       </div>
     </ScrollArea>

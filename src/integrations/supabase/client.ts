@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
 // Using your actual Supabase project
-const SUPABASE_URL = "https://ahpmmgnkksrbpthniptg.supabase.co";
+const SUPABASE_URL = "https://uonkwurvaeicfmhfctkq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Import the supabase client like this:
@@ -14,7 +14,7 @@ export const supabase = createClient<Database>(
   SUPABASE_PUBLISHABLE_KEY,
 );
 // Expose Supabase client to browser console
-;(window as any).supabase = supabase;
+(window as any).supabase = supabase;
 
 // Helper for getting the current workspace ID
 export const getCurrentWorkspaceId = async (): Promise<string | null> => {

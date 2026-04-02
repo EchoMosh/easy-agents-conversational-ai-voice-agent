@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Upload, FileText, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface FileUploaderProps {
   onFileSelect: (file: File, content: string) => void;
@@ -22,33 +23,28 @@ export function FileUploader({ onFileSelect, isLoading }: FileUploaderProps) {
   }, []);
 
   const validateFile = (file: File) => {
-    console.log("Validating file:", file.name, file.type, file.size);
-    const validExtensions = ["csv", "xlsx", "xls", "txt"];
+    const validExtensions = ["csv", "txt"];
     const fileExtension = file.name.split(".").pop()?.toLowerCase();
 
     if (!fileExtension || !validExtensions.includes(fileExtension)) {
-      console.error("Invalid file extension:", fileExtension);
       return {
         valid: false,
-        message: "Please upload a CSV, Excel, or Text file.",
+        message: "Please upload a CSV or Text file.",
       };
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      console.error("File too large:", file.size);
       return {
         valid: false,
         message: "File is too large. Maximum size is 10MB.",
       };
     }
 
-    console.log("File validation passed");
     return { valid: true };
   };
 
   const processFile = useCallback(
     (file: File) => {
-      console.log("Processing file:", file.name);
       const validation = validateFile(file);
       if (!validation.valid) {
         setError(validation.message);
@@ -59,20 +55,21 @@ export function FileUploader({ onFileSelect, isLoading }: FileUploaderProps) {
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        console.log("File read successfully");
         const content = e.target?.result as string;
-        console.log("File content length:", content.length);
-        console.log("Calling onFileSelect callback");
+        if (!content || !content.trim()) {
+          setError(
+            "The file appears to be empty. Please select a file with data.",
+          );
+          return;
+        }
         onFileSelect(file, content);
       };
-      reader.onerror = (e) => {
-        console.error("Error reading file:", e);
+      reader.onerror = () => {
         setError("Failed to read file. Please try again.");
       };
-      console.log("Starting to read file as text");
       reader.readAsText(file);
     },
-    [onFileSelect]
+    [onFileSelect],
   );
 
   const handleDrop = useCallback(
@@ -80,106 +77,57 @@ export function FileUploader({ onFileSelect, isLoading }: FileUploaderProps) {
       e.preventDefault();
       e.stopPropagation();
       setDragActive(false);
-      console.log("File dropped");
 
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        console.log("Processing dropped file");
         processFile(e.dataTransfer.files[0]);
-      } else {
-        console.error("No files found in drop event");
       }
     },
-    [processFile]
+    [processFile],
   );
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      console.log("File input change event triggered");
       if (e.target.files && e.target.files.length > 0) {
-        console.log("Files selected:", e.target.files.length);
         processFile(e.target.files[0]);
-      } else {
-        console.error("No files selected or file input event without files");
       }
     },
-    [processFile]
+    [processFile],
   );
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Select File button clicked");
-
-    // Create and trigger a temporary file input
-    // This is a workaround for browsers that might have issues with programmatically clicking hidden inputs
-    try {
-      console.log("Creating temporary file input");
-      const tempFileInput = document.createElement("input");
-      tempFileInput.type = "file";
-      tempFileInput.accept = ".csv,.xlsx,.xls,.txt";
-      tempFileInput.style.display = "none";
-      tempFileInput.onchange = (event) => {
-        console.log("Temporary file input change event");
-        const target = event.target as HTMLInputElement;
-        if (target.files && target.files.length > 0) {
-          console.log("File selected via temporary input");
-          processFile(target.files[0]);
-          // Clean up
-          document.body.removeChild(tempFileInput);
-        }
-      };
-      document.body.appendChild(tempFileInput);
-      console.log("Triggering click on temporary file input");
-      tempFileInput.click();
-    } catch (error) {
-      console.error("Error with temporary file input:", error);
-      // Fall back to original method
-      if (fileInputRef.current) {
-        console.log("Falling back to original method");
-        fileInputRef.current.click();
-      }
-    }
+    fileInputRef.current?.click();
   };
 
   const downloadTemplate = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Download template button clicked");
 
-    // Template CSV content
     const csvContent =
-      "First Name,Last Name,Email,Phone,Company,Position\n" +
-      "John,Doe,john.doe@example.com,123-456-7890,Acme Inc,CEO\n" +
-      "Jane,Smith,jane.smith@example.com,098-765-4321,XYZ Corp,CTO";
+      "First Name,Last Name,Email,Phone\n" +
+      "John,Doe,john.doe@example.com,123-456-7890\n" +
+      "Jane,Smith,jane.smith@example.com,098-765-4321";
 
-    // Create a Blob with the CSV content
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-
-    // Create a download link
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.href = url;
     link.setAttribute("download", "leads_template.csv");
-
-    // Trigger the download
     document.body.appendChild(link);
     link.click();
-
-    // Clean up
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    console.log("Template download completed");
   };
 
   return (
-    <div className="space-y-4">
+    <div className="p-6 flex flex-col items-center justify-center h-full">
       <div
-        className={`border-2 transition-all duration-200 ease-in-out rounded-xl p-10 text-center 
-          ${
-            dragActive
-              ? "border-indigo-400 bg-indigo-50"
-              : "border-dashed border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-          }`}
+        className={`w-full border-2 transition-all duration-200 ease-in-out rounded-xl p-10 text-center ${
+          dragActive
+            ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30"
+            : "border-dashed border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+        }`}
         onDragEnter={handleDrag}
         onDragOver={handleDrag}
         onDragLeave={handleDrag}
@@ -188,67 +136,45 @@ export function FileUploader({ onFileSelect, isLoading }: FileUploaderProps) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".csv,.xlsx,.xls,.txt"
+          accept=".csv,.txt"
           onChange={handleFileChange}
-          style={{
-            position: "absolute",
-            width: "1px",
-            height: "1px",
-            padding: "0",
-            margin: "-1px",
-            overflow: "hidden",
-            clip: "rect(0,0,0,0)",
-            border: "0",
-          }}
-          onClick={(e) => console.log("File input clicked", e)}
+          className="sr-only"
         />
 
-        <div className="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
-          <FileText className="h-8 w-8 text-indigo-600" />
+        <div className="mx-auto w-16 h-16 bg-indigo-50 dark:bg-indigo-950/40 rounded-full flex items-center justify-center mb-4">
+          <FileText className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
         </div>
 
-        <h3 className="text-lg font-medium text-gray-900 mb-1">
+        <h3 className="text-lg font-medium text-foreground mb-1">
           Drag and drop your file here
         </h3>
 
-        <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-          Upload your spreadsheet to import leads. We support CSV, Excel and
-          plain text files.
+        <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+          Upload your spreadsheet to import leads. We support CSV and plain text
+          files.
         </p>
 
-        <button
-          onClick={handleButtonClick}
-          disabled={isLoading}
-          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm 
-            ${
-              isLoading
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            }`}
-        >
+        <Button onClick={handleButtonClick} disabled={isLoading}>
           <Upload className="h-4 w-4 mr-2" />
           {isLoading ? "Uploading..." : "Select File"}
-        </button>
+        </Button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-100 rounded-md p-3 text-sm text-red-800">
+        <div className="w-full mt-4 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 rounded-md p-3 text-sm text-red-800 dark:text-red-300">
           {error}
         </div>
       )}
 
-      <div className="flex flex-col items-center mt-4">
-        <button
-          onClick={downloadTemplate}
-          className="inline-flex items-center text-xs font-medium text-indigo-600 hover:text-indigo-800"
-        >
-          <Download className="h-3 w-3 mr-1" />
+      <div className="flex flex-col items-center mt-6 gap-3">
+        <Button variant="link" size="sm" onClick={downloadTemplate}>
+          <Download className="h-3.5 w-3.5 mr-1.5" />
           Download template CSV
-        </button>
+        </Button>
 
-        <p className="text-xs text-gray-500 text-center mt-6 max-w-md">
-          Make sure your spreadsheet includes columns for First Name, Last Name,
-          and Email to import leads successfully.
+        <p className="text-xs text-muted-foreground text-center max-w-md">
+          Your file needs at least First Name and Phone columns. Email and Last
+          Name are optional.
         </p>
       </div>
     </div>

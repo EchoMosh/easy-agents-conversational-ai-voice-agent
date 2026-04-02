@@ -393,20 +393,20 @@ export function AgentSettings({
           });
           
           if (response.error) {
-            console.error('Failed to update Vapi agent:', response.error);
+            console.error('Failed to update voice agent:', response.error);
             toast({
               title: "Warning",
-              description: "Agent settings saved but Vapi update failed. The agent may not reflect all changes.",
+              description: "Agent settings saved but voice service update failed. The agent may not reflect all changes.",
               variant: "destructive",
             });
           } else {
-            console.log('Vapi agent updated successfully');
+            console.log('Voice agent updated successfully');
           }
         } catch (vapiError) {
-          console.error('Error updating Vapi agent:', vapiError);
+          console.error('Error updating voice agent:', vapiError);
           toast({
             title: "Warning",
-            description: "Agent settings saved but Vapi update failed. The agent may not reflect all changes.",
+            description: "Agent settings saved but voice service update failed. The agent may not reflect all changes.",
             variant: "destructive",
           });
         }
@@ -535,7 +535,7 @@ export function AgentSettings({
       
       toast({
         title: "Success",
-        description: `Uploaded ${uploadedFiles.length} file(s) to Vapi`,
+        description: `Uploaded ${uploadedFiles.length} file(s) successfully`,
       });
     } catch (error) {
       console.error('Error uploading files:', error);
@@ -860,7 +860,7 @@ export function AgentSettings({
                 {/* Vapi Knowledge Base */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium text-foreground">Vapi Knowledge Base</Label>
+                    <Label className="text-sm font-medium text-foreground">Knowledge Base</Label>
                     {vapiKnowledgeBaseId && (
                       <Badge variant="outline" className="text-xs">
                         Knowledge Base Active

@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 interface CreateVapiAgentRequest {
@@ -12,41 +13,88 @@ interface CreateVapiAgentRequest {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { agentName, role, language } = await req.json() as CreateVapiAgentRequest;
+    const { agentName, role, language } =
+      (await req.json()) as CreateVapiAgentRequest;
 
-    const vapiApiKey = Deno.env.get('VAPI_API_KEY');
-    if (!vapiApiKey) {
-      throw new Error('VAPI_API_KEY is not set in environment variables');
+    if (!agentName || !agentName.trim()) {
+      return new Response(JSON.stringify({ error: "agentName is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!role || !role.trim()) {
+      return new Response(JSON.stringify({ error: "role is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const response = await fetch('https://api.vapi.ai/assistant', {
-      method: 'POST',
+    const vapiApiKey = Deno.env.get("VAPI_API_KEY");
+    if (!vapiApiKey) {
+      throw new Error("VAPI_API_KEY is not set in environment variables");
+    }
+
+    const response = await fetch("https://api.vapi.ai/assistant", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${vapiApiKey}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${vapiApiKey}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         name: agentName,
+        transcriber: {
+          provider: "deepgram",
+          model: "nova-2",
+          language: language || "en",
+          smartFormat: true,
+        },
         model: {
-          provider: 'openai',
-          model: 'gpt-3.5-turbo',
+          provider: "groq",
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.3,
+          maxTokens: 250,
           messages: [
             {
-              role: 'system',
+              role: "system",
               content: `You are a ${role}.`,
             },
           ],
         },
         voice: {
-          provider: '11labs',
-          voiceId: '21m00Tcm4TlvDq8ikWAM', // Default voice
+          provider: "vapi",
+          voiceId: "Elliot",
+          chunkPlan: {
+            enabled: true,
+            minCharacters: 30,
+            punctuationBoundaries: [".", "!", "?", ","],
+          },
         },
-        language: language || 'en',
+        startSpeakingPlan: {
+          waitSeconds: 0.4,
+          smartEndpointingEnabled: true,
+          transcriptionEndpointingPlan: {
+            onPunctuationSeconds: 0.1,
+            onNoPunctuationSeconds: 0.8,
+            onNumberSeconds: 0.4,
+          },
+        },
+        stopSpeakingPlan: {
+          numWords: 2,
+          voiceSeconds: 0.2,
+          backoffSeconds: 1.0,
+        },
+        backgroundDenoisingEnabled: true,
+        backgroundSound: "office",
+        silenceTimeoutSeconds: 30,
+        maxDurationSeconds: 600,
+        voicemailDetection: {
+          provider: "google",
+        },
       }),
     });
 
@@ -58,20 +106,16 @@ serve(async (req) => {
     const responseData = await response.json();
     const vAgentId = responseData.id;
 
-    return new Response(
-      JSON.stringify({ v_agent_id: vAgentId }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
-    );
+    return new Response(JSON.stringify({ v_agent_id: vAgentId }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    console.error("Error creating Vapi agent:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

@@ -27,7 +27,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [creationStatus, setCreationStatus] = useState<string | null>(null);
   const [vAgentId, setVAgentId] = useState<string | null>(null);
-  const [selectedPhoneNumberId, setSelectedPhoneNumberId] = useState<string | null>(null);
+  const [selectedPhoneNumberId, setSelectedPhoneNumberId] = useState<
+    string | null
+  >(null);
   const [newAgent, setNewAgent] = useState<{
     name: string;
     role: Agent["role"];
@@ -93,7 +95,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Invalid workspace. Please refresh the page and try again.",
+        description:
+          "Invalid workspace. Please refresh the page and try again.",
       });
       setIsCreating(false);
       return;
@@ -104,26 +107,27 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
     try {
       // Step 1: Create AI agent first
       setCreationStatus("Creating AI agent...");
-      console.log("Creating AI agent with name:", newAgent.name);
+      console.log("Creating voice agent with name:", newAgent.name);
 
-      const { data: vapiData, error: vapiError } = await supabase.functions.invoke('create-vapi-agent', {
-        body: {
-          agentName: newAgent.name,
-          role: newAgent.role,
-          language: "en"
-        }
-      });
+      const { data: vapiData, error: vapiError } =
+        await supabase.functions.invoke("create-vapi-agent", {
+          body: {
+            agentName: newAgent.name,
+            role: newAgent.role,
+            language: "en",
+          },
+        });
 
       if (vapiError) {
-        throw new Error(`Failed to create Vapi agent: ${vapiError.message}`);
+        throw new Error(`Failed to create voice agent: ${vapiError.message}`);
       }
 
       createdVAgentId = vapiData?.v_agent_id;
       if (!createdVAgentId) {
-        throw new Error('No v_agent_id returned from create-vapi-agent function');
+        throw new Error("No agent ID returned from create-agent function");
       }
 
-      console.log("Vapi agent created with ID:", createdVAgentId);
+      console.log("Voice agent created with ID:", createdVAgentId);
 
       // Step 2: Create database record
       setCreationStatus("Creating agent in database...");
@@ -150,14 +154,14 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       if (agentError) {
         console.error("Error creating agent in database:", agentError);
         throw new Error(
-          `Failed to create agent in database: ${agentError.message}`
+          `Failed to create agent in database: ${agentError.message}`,
         );
       }
 
       // Step 3: If a phone number was selected, assign it
       if (selectedPhoneNumberId) {
         setCreationStatus("Assigning phone number...");
-        
+
         const { error: phoneError } = await supabase
           .from("phone_numbers")
           .update({ inbound_agent_id: agentData.id })
@@ -178,25 +182,28 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
       toast({
         title: "Success",
-        description: "Agent created successfully. Redirecting to flow editor...",
+        description:
+          "Agent created successfully. Redirecting to flow editor...",
       });
 
       await onSuccess(agentData.id);
       navigate(`/dashboard/agents/flow/${agentData.id}`, { replace: true });
-
     } catch (error) {
       console.error("Error creating agent:", error);
-      
-      // If we created a Vapi agent but failed to create the database record,
-      // we should ideally clean up the Vapi agent, but for now we'll just log it
+
+      // If we created a voice agent but failed to create the database record,
+      // we should ideally clean up the voice agent, but for now we'll just log it
       if (createdVAgentId) {
-        console.warn("Vapi agent created but database record failed. Vapi agent ID:", createdVAgentId);
+        console.warn(
+          "Voice agent created but database record failed. Agent ID:",
+          createdVAgentId,
+        );
       }
 
       setError(
         typeof error === "object" && error !== null && "message" in error
           ? String(error.message)
-          : "Failed to create agent"
+          : "Failed to create agent",
       );
 
       toast({

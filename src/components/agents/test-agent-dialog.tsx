@@ -7,21 +7,31 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Headphones, RefreshCw, AlertTriangle } from "lucide-react";
+import {
+  MessageSquare,
+  Headphones,
+  RefreshCw,
+  AlertTriangle,
+} from "lucide-react";
 import { Agent } from "@/types/agent";
 import { AgentTrainingPopup } from "@/components/agents/training/agent-training-popup";
 import { AgentVoiceCall } from "@/components/agents/voice-call/agent-voice-call";
 import { supabase } from "@/integrations/supabase/client";
 
-const LAURA_VOICE_ID = "uYXf8XasLslADfZ2MB4u";
+const DEFAULT_VOICE_ID = "Elliot";
 
 // Placeholder for actual Supabase update function (copied from AgentVoiceCall)
-const updateSupabaseAgentVoiceId = async (agentId: string, newVoiceId: string) => {
-  console.log(`Attempting to update Supabase for agent ${agentId} with voice_id ${newVoiceId}`);
+const updateSupabaseAgentVoiceId = async (
+  agentId: string,
+  newVoiceId: string,
+) => {
+  console.log(
+    `Attempting to update Supabase for agent ${agentId} with voice_id ${newVoiceId}`,
+  );
   const { error } = await supabase
-    .from('agents')
+    .from("agents")
     .update({ voice_id: newVoiceId })
-    .eq('id', agentId);
+    .eq("id", agentId);
 
   if (error) {
     console.error("Supabase update error:", error);
@@ -54,91 +64,138 @@ export function TestAgentDialog({
     try {
       // Fetch fresh agent data from Supabase to ensure we have the latest updates
       const { data: freshAgentData, error: fetchError } = await supabase
-        .from('agents')
-        .select('*')
-        .eq('id', agent.id)
+        .from("agents")
+        .select("*")
+        .eq("id", agent.id)
         .single();
-      
+
       if (fetchError) {
         console.error("Failed to fetch fresh agent data:", fetchError);
         throw new Error(`Failed to fetch agent data: ${fetchError.message}`);
       }
-      
-      let currentAgentData = freshAgentData || JSON.parse(JSON.stringify(agent)); // Use fresh data or fallback to prop
-      let voiceIdForPayload = currentAgentData.voice_id || LAURA_VOICE_ID; // Default to Laura's voice
+
+      let currentAgentData =
+        freshAgentData || JSON.parse(JSON.stringify(agent)); // Use fresh data or fallback to prop
+      let voiceIdForPayload = currentAgentData.voice_id || DEFAULT_VOICE_ID; // Default to Elliot
 
       if (currentAgentData.voice_character === "Laura") {
-        console.log("Laura's voice selected. Attempting to update Supabase with ID:", LAURA_VOICE_ID);
+        console.log(
+          "Laura's voice selected. Attempting to update Supabase with ID:",
+          DEFAULT_VOICE_ID,
+        );
         try {
-          await updateSupabaseAgentVoiceId(currentAgentData.id, LAURA_VOICE_ID);
-          console.log("Supabase update for Laura's voice ID presumed successful.");
-          voiceIdForPayload = LAURA_VOICE_ID;
-          currentAgentData.voice_id = LAURA_VOICE_ID;
+          await updateSupabaseAgentVoiceId(
+            currentAgentData.id,
+            DEFAULT_VOICE_ID,
+          );
+          console.log(
+            "Supabase update for Laura's voice ID presumed successful.",
+          );
+          voiceIdForPayload = DEFAULT_VOICE_ID;
+          currentAgentData.voice_id = DEFAULT_VOICE_ID;
         } catch (supabaseError) {
-          console.error("Failed to update Laura's voice ID in Supabase:", supabaseError);
+          console.error(
+            "Failed to update Laura's voice ID in Supabase:",
+            supabaseError,
+          );
         }
       }
 
       // Ensure we always have a valid voice ID
       if (!voiceIdForPayload) {
-        voiceIdForPayload = LAURA_VOICE_ID;
-        console.log("No voice ID found, defaulting to Laura's voice:", LAURA_VOICE_ID);
+        voiceIdForPayload = DEFAULT_VOICE_ID;
+        console.log(
+          "No voice ID found, defaulting to Laura's voice:",
+          DEFAULT_VOICE_ID,
+        );
       }
 
-      console.log("Final voiceIdForPayload:", voiceIdForPayload, "Type:", typeof voiceIdForPayload);
+      console.log(
+        "Final voiceIdForPayload:",
+        voiceIdForPayload,
+        "Type:",
+        typeof voiceIdForPayload,
+      );
 
-      const vapiId = currentAgentData.v_agent_id || currentAgentData.elevenlabs_agent_id || null;
-      
-      console.log("TestAgentDialog: vapiId found:", vapiId);
-      
+      const vapiId =
+        currentAgentData.v_agent_id ||
+        currentAgentData.elevenlabs_agent_id ||
+        null;
+
+      console.log("TestAgentDialog: assistant ID found:", vapiId);
+
       // If no vapiId exists, we cannot proceed
       if (!vapiId) {
-        console.error("TestAgentDialog: No vapiId found for agent");
-        throw new Error("No Vapi assistant ID found. Please ensure the agent has been properly created in Vapi.");
+        console.error("TestAgentDialog: No assistant ID found for agent");
+        throw new Error(
+          "No voice assistant ID found. Please ensure the agent has been properly created.",
+        );
       }
 
       // Ensure firstMessageNode is defined and cleaned
-      const rawFirstMessage = typeof agent.flow === 'string'
-        ? JSON.parse(agent.flow)?.nodes?.find(node => node.type === 'startNode')?.data?.firstMessage
-        : agent.flow?.nodes?.find(node => node.type === 'startNode')?.data?.firstMessage
-      || "Hi there! I'm here to help you today.";
-      
-      const cleanedFirstMessage = rawFirstMessage.replace(/<[^>]*>?/gm, '');
+      const defaultFirstMessage = "Hi there! I'm here to help you today.";
+      let rawFirstMessage = defaultFirstMessage;
+      try {
+        const flowData =
+          typeof agent.flow === "string" ? JSON.parse(agent.flow) : agent.flow;
+        rawFirstMessage =
+          flowData?.nodes?.find((node: any) => node.type === "startNode")?.data
+            ?.firstMessage || defaultFirstMessage;
+      } catch (parseError) {
+        console.error("Failed to parse agent flow data:", parseError);
+      }
+
+      const cleanedFirstMessage = rawFirstMessage.replace(/<[^>]*>?/gm, "");
 
       // Get mermaid chart from agent data
       const mermaidChart = currentAgentData.mermaid_chart || "";
-      
+
       // Use Supabase Edge Function instead of direct API calls
-      const { data, error } = await supabase.functions.invoke('update-vapi-agent', {
-        body: {
-          agent_id: currentAgentData.id,
-          v_agent_id: vapiId,
-          voice_id: voiceIdForPayload,
-          language: currentAgentData.language || "en",
-          first_message: cleanedFirstMessage,
-          mermaid_chart: mermaidChart,
-          max_duration_seconds: currentAgentData.maxDurationSeconds || 600,
-          background_sound: currentAgentData.background_sound === "off" ? "off" : (currentAgentData.background_sound || "office")
-        }
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "update-vapi-agent",
+        {
+          body: {
+            agent_id: currentAgentData.id,
+            v_agent_id: vapiId,
+            voice_id: voiceIdForPayload,
+            language: currentAgentData.language || "en",
+            first_message: cleanedFirstMessage,
+            mermaid_chart: mermaidChart,
+            max_duration_seconds: currentAgentData.maxDurationSeconds || 600,
+            background_sound:
+              currentAgentData.background_sound === "off"
+                ? "off"
+                : currentAgentData.background_sound || "office",
+            knowledge_base_id: currentAgentData.vapi_knowledge_base_id,
+          },
+        },
+      );
 
       if (error) {
-        console.error("TestAgentDialog: Error from update-vapi-agent function:", error);
+        console.error(
+          "TestAgentDialog: Error from update-agent function:",
+          error,
+        );
         throw new Error(`Failed to update agent: ${error.message}`);
       }
 
-      console.log("TestAgentDialog: Agent updated successfully via edge function");
+      console.log(
+        "TestAgentDialog: Agent updated successfully via edge function",
+      );
       setIsUpdatingAgent(false);
       return true;
     } catch (error) {
       console.error("TestAgentDialog: Error updating agent:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error during agent update.';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Unknown error during agent update.";
       setUpdateError(`Failed to update agent: ${errorMessage}`);
       setIsUpdatingAgent(false);
       return false;
     }
   };
-  
+
   useEffect(() => {
     const handleReopenDialog = (event: Event) => {
       const customEvent = event as CustomEvent;
@@ -146,12 +203,12 @@ export function TestAgentDialog({
         onOpenChange(true); // This will trigger the other useEffect for 'open'
       }
     };
-    document.addEventListener('reopen-test-dialog', handleReopenDialog);
+    document.addEventListener("reopen-test-dialog", handleReopenDialog);
     return () => {
-      document.removeEventListener('reopen-test-dialog', handleReopenDialog);
+      document.removeEventListener("reopen-test-dialog", handleReopenDialog);
     };
   }, [agent.id, onOpenChange]);
-  
+
   useEffect(() => {
     setDialogOpen(open);
     if (open) {
@@ -159,7 +216,7 @@ export function TestAgentDialog({
       const timeoutId = setTimeout(() => {
         sendAgentDataToWebhookInternal();
       }, 500); // 500ms delay to allow settings updates to complete
-      
+
       return () => clearTimeout(timeoutId);
     } else {
       // Reset states when dialog is closed externally or by onOpenChange(false)
@@ -187,24 +244,27 @@ export function TestAgentDialog({
     handleDialogOpenChange(false);
   };
 
-  const firstMessageNode = 
-    typeof agent.flow === 'string'
-      ? JSON.parse(agent.flow)?.nodes?.find(node => node.type === 'startNode')?.data?.firstMessage
-      : agent.flow?.nodes?.find(node => node.type === 'startNode')?.data?.firstMessage
-    || "Hi there! I'm here to help you today.";
+  const firstMessageNode =
+    typeof agent.flow === "string"
+      ? JSON.parse(agent.flow)?.nodes?.find((node) => node.type === "startNode")
+          ?.data?.firstMessage
+      : agent.flow?.nodes?.find((node) => node.type === "startNode")?.data
+          ?.firstMessage || "Hi there! I'm here to help you today.";
 
   return (
     <>
       <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700/60 shadow-xl">
           <DialogHeader className="p-6 pb-4 border-b border-gray-100 dark:border-gray-800">
-            <DialogTitle className="text-xl font-semibold">Test Agent</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Test Agent
+            </DialogTitle>
             <DialogDescription className="text-gray-500 dark:text-gray-400 min-h-[20px]">
-              {isUpdatingAgent 
-                ? "Preparing your agent..." 
-                : updateError 
-                ? "Agent update failed" 
-                : `Choose how you want to interact with ${agent.name}`}
+              {isUpdatingAgent
+                ? "Preparing your agent..."
+                : updateError
+                  ? "Agent update failed"
+                  : `Choose how you want to interact with ${agent.name}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -212,15 +272,27 @@ export function TestAgentDialog({
             {isUpdatingAgent ? (
               <div className="flex flex-col items-center justify-center text-center">
                 <RefreshCw className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
-                <p className="text-md font-medium text-gray-700 dark:text-gray-300">Updating Agent</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Please wait a moment.</p>
+                <p className="text-md font-medium text-gray-700 dark:text-gray-300">
+                  Updating Agent
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Please wait a moment.
+                </p>
               </div>
             ) : updateError ? (
               <div className="flex flex-col items-center justify-center text-center">
                 <AlertTriangle className="h-10 w-10 text-red-500 mb-3" />
-                <p className="text-md font-medium text-red-600 dark:text-red-400">Update Failed</p>
-                <p className="text-sm text-red-500 dark:text-red-400 mb-4 max-w-xs truncate">{updateError}</p>
-                <Button onClick={sendAgentDataToWebhookInternal} variant="outline" size="sm">
+                <p className="text-md font-medium text-red-600 dark:text-red-400">
+                  Update Failed
+                </p>
+                <p className="text-sm text-red-500 dark:text-red-400 mb-4 max-w-xs truncate">
+                  {updateError}
+                </p>
+                <Button
+                  onClick={sendAgentDataToWebhookInternal}
+                  variant="outline"
+                  size="sm"
+                >
                   Try Again
                 </Button>
               </div>

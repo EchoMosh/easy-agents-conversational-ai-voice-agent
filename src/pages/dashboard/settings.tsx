@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { TwilioIntegrationSettings } from "@/components/settings/twilio-integration-settings";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -43,9 +44,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-3xl font-bold">Settings</h1>
         </div>
-        <p className="text-muted-foreground">
-          Manage your account preferences
-        </p>
+        <p className="text-muted-foreground">Manage your account preferences</p>
       </div>
 
       <div className="flex flex-col gap-8">
@@ -65,7 +64,8 @@ export default function SettingsPage() {
                           <div>
                             <h3 className="text-lg font-medium">Theme</h3>
                             <p className="text-sm text-muted-foreground mt-1">
-                              Choose between light and dark mode for your workspace
+                              Choose between light and dark mode for your
+                              workspace
                             </p>
                           </div>
 
@@ -76,6 +76,8 @@ export default function SettingsPage() {
                       </CardContent>
                     </Card>
                   </div>
+
+                  <TwilioIntegrationSettings />
 
                   <div className="pb-4">
                     <h3 className="text-lg font-medium mb-4">Logout</h3>

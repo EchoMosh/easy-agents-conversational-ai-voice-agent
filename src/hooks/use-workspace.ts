@@ -29,9 +29,16 @@ export function useWorkspace() {
     const { data, error } = await supabase
       .from("workspaces")
       .select("*")
-      .in("id", memberData.map((m) => m.workspace_id));
+      .in(
+        "id",
+        memberData.map((m) => m.workspace_id),
+      );
     if (error) throw error;
-    return data.map((w) => ({ id: w.id, name: w.name, icon: w.icon || "building" }));
+    return data.map((w) => ({
+      id: w.id,
+      name: w.name,
+      icon: w.icon || "building",
+    }));
   };
 
   const workspacesQuery = useQuery({
@@ -53,84 +60,100 @@ export function useWorkspace() {
       return workspace;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workspaces", session?.user.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["workspaces", session?.user.id],
+      });
     },
   });
 
   const createDefaultWorkspace = useMutation({
     mutationFn: async (params: CreateParams = {}): Promise<Workspace> => {
       // Force refresh the active session
-      const { data: { session: refreshedSession }, error: sessionError } = await supabase.auth.refreshSession();
-      
+      const {
+        data: { session: refreshedSession },
+        error: sessionError,
+      } = await supabase.auth.refreshSession();
+
       if (sessionError) {
         console.error("Session refresh error:", sessionError);
         throw new Error("Failed to refresh session");
       }
-      
+
       if (!refreshedSession) {
         throw new Error("No valid session found after refresh");
       }
-      
-      console.log("Active session refreshed, user ID:", refreshedSession.user.id);
-      
+
+      console.log(
+        "Active session refreshed, user ID:",
+        refreshedSession.user.id,
+      );
+
       const workspaceName = params.name || "My Workspace";
-      
+
       // DEBUG: Check Supabase auth context before workspace insert
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
       console.log("=== AUTH DEBUG ===");
       console.log("Auth user object:", user);
       console.log("User ID:", user?.id);
       console.log("Auth error (if any):", userError);
       console.log("==================");
-      
+
       // Now perform the INSERT with a refreshed session context
       const { data, error } = await supabase
         .from("workspaces")
         .insert({
           name: workspaceName,
           icon: params.icon || "building",
+          owner_id: refreshedSession.user.id,
         } as any)
         .select()
         .single();
-        
+
       if (error) {
         console.error("Workspace creation error:", error);
         throw error;
       }
-      
+
       console.log("Workspace created successfully:", data);
-      
+
       // Add the user as a member of the new workspace
+      // The DB trigger add_workspace_owner_member may have already added them,
+      // so ignore duplicate key errors (409/23505)
       const { error: memberError } = await supabase
         .from("workspace_members")
         .insert({
           workspace_id: data.id,
-          user_id: refreshedSession.user.id, // Use refreshed session
-          role: "owner"
+          user_id: refreshedSession.user.id,
+          role: "owner",
         });
-        
-      if (memberError) {
+
+      if (memberError && memberError.code !== "23505") {
         console.error("Failed to add user as workspace member:", memberError);
         throw memberError;
       }
-      
+
       // Update user's current workspace
       await supabase
         .from("profiles")
         .update({ current_workspace_id: data.id })
         .eq("id", refreshedSession.user.id); // Use refreshed session
-      
+
       const workspace = {
         id: data.id,
         name: data.name,
         icon: data.icon || "building",
       };
-      
+
       localStorage.setItem("cachedWorkspace", JSON.stringify(workspace));
       return workspace;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workspaces", session?.user.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["workspaces", session?.user.id],
+      });
     },
   });
 
@@ -147,7 +170,9 @@ export function useWorkspace() {
   }, [workspacesQuery.data]);
 
   const refreshWorkspaces = () =>
-    queryClient.invalidateQueries({ queryKey: ["workspaces", session?.user.id] });
+    queryClient.invalidateQueries({
+      queryKey: ["workspaces", session?.user.id],
+    });
 
   return {
     currentWorkspace,

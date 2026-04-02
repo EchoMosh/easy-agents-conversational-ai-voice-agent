@@ -6,6 +6,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import {
   AreaChart,
   Area,
   BarChart,
@@ -13,390 +19,388 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  FunnelChart,
-  Funnel,
-  Cell,
-  LabelList,
 } from "recharts";
 import {
-  ChevronUp,
+  TrendingUp,
+  TrendingDown,
   Users,
-  ArrowUpRight,
-  BarChart2,
-  LineChart,
+  Bot,
+  MessageSquare,
+  Target,
+  BarChart3,
+  Activity,
 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Sample data for charts
+// --- Data ---
+
 const activityData = [
-  { name: "Mon", value: 12 },
-  { name: "Tue", value: 18 },
-  { name: "Wed", value: 15 },
-  { name: "Thu", value: 20 },
-  { name: "Fri", value: 25 },
-  { name: "Sat", value: 8 },
-  { name: "Sun", value: 10 },
+  { day: "Mon", conversations: 12 },
+  { day: "Tue", conversations: 18 },
+  { day: "Wed", conversations: 15 },
+  { day: "Thu", conversations: 20 },
+  { day: "Fri", conversations: 25 },
+  { day: "Sat", conversations: 8 },
+  { day: "Sun", conversations: 10 },
 ];
 
 const leadData = [
-  { name: "Jan", leads: 165 },
-  { name: "Feb", leads: 180 },
-  { name: "Mar", leads: 220 },
-  { name: "Apr", leads: 250 },
-  { name: "May", leads: 300 },
-  { name: "Jun", leads: 290 },
+  { month: "Jan", leads: 165 },
+  { month: "Feb", leads: 180 },
+  { month: "Mar", leads: 220 },
+  { month: "Apr", leads: 250 },
+  { month: "May", leads: 300 },
+  { month: "Jun", leads: 290 },
 ];
 
-const conversionData = [
-  { name: "Leads", value: 100, fill: "#0088FE" },
-  { name: "Qualified", value: 80, fill: "#00C49F" },
-  { name: "Meetings", value: 50, fill: "#FFBB28" },
-  { name: "Proposals", value: 30, fill: "#FF8042" },
-  { name: "Converted", value: 20, fill: "#8884d8" },
+const funnelStages = [
+  { label: "Leads", value: 1248, percentage: 100 },
+  { label: "Qualified", value: 998, percentage: 80 },
+  { label: "Meetings", value: 624, percentage: 50 },
+  { label: "Proposals", value: 374, percentage: 30 },
+  { label: "Converted", value: 249, percentage: 20 },
 ];
 
-export default function DashboardPage() {
-  const [chartType, setChartType] = useState<"bar" | "area">("bar");
+// --- Chart Configs ---
+
+const leadChartConfig = {
+  leads: {
+    label: "Leads",
+    theme: {
+      light: "hsl(var(--primary))",
+      dark: "hsl(var(--primary))",
+    },
+  },
+} satisfies ChartConfig;
+
+const activityChartConfig = {
+  conversations: {
+    label: "Conversations",
+    theme: {
+      light: "hsl(var(--primary))",
+      dark: "hsl(var(--primary))",
+    },
+  },
+} satisfies ChartConfig;
+
+// --- Metric card data ---
+
+interface MetricCardData {
+  title: string;
+  value: string;
+  change: string;
+  trending: "up" | "down";
+  icon: React.ElementType;
+}
+
+const metrics: MetricCardData[] = [
+  {
+    title: "Total Leads",
+    value: "1,248",
+    change: "+18.2%",
+    trending: "up",
+    icon: Users,
+  },
+  {
+    title: "Active Agents",
+    value: "12",
+    change: "+2 new",
+    trending: "up",
+    icon: Bot,
+  },
+  {
+    title: "Conversations",
+    value: "432",
+    change: "+57 today",
+    trending: "up",
+    icon: MessageSquare,
+  },
+  {
+    title: "Conversion Rate",
+    value: "24.3%",
+    change: "+5.2%",
+    trending: "up",
+    icon: Target,
+  },
+];
+
+// --- Components ---
+
+function MetricCard({ metric }: { metric: MetricCardData }) {
+  const Icon = metric.icon;
+  const TrendIcon = metric.trending === "up" ? TrendingUp : TrendingDown;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="mb-10">
-        <p className="text-slate-500">Overview of your performance metrics</p>
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-muted-foreground">
+            {metric.title}
+          </span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+            <Icon className="h-4 w-4 text-muted-foreground" />
+          </div>
+        </div>
+        <div className="mt-3">
+          <span className="text-2xl font-semibold tracking-tight text-foreground">
+            {metric.value}
+          </span>
+        </div>
+        <div className="mt-1 flex items-center gap-1.5">
+          <TrendIcon
+            className={`h-3.5 w-3.5 ${
+              metric.trending === "up" ? "text-emerald-500" : "text-destructive"
+            }`}
+          />
+          <span
+            className={`text-xs font-medium ${
+              metric.trending === "up" ? "text-emerald-500" : "text-destructive"
+            }`}
+          >
+            {metric.change}
+          </span>
+          <span className="text-xs text-muted-foreground">vs last period</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FunnelStage({
+  stage,
+  index,
+}: {
+  stage: (typeof funnelStages)[number];
+  index: number;
+}) {
+  // Progressively reduce opacity for each stage to create visual depth
+  const opacityClass = [
+    "bg-primary",
+    "bg-primary/80",
+    "bg-primary/60",
+    "bg-primary/40",
+    "bg-primary/25",
+  ][index];
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-20 shrink-0 text-xs text-muted-foreground text-right">
+        {stage.label}
+      </span>
+      <div className="flex-1 h-7 rounded bg-muted overflow-hidden">
+        <div
+          className={`h-full rounded transition-all ${opacityClass}`}
+          style={{ width: `${stage.percentage}%` }}
+        />
+      </div>
+      <span className="w-14 shrink-0 text-xs font-medium tabular-nums text-foreground text-right">
+        {stage.value.toLocaleString()}
+      </span>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const [chartView, setChartView] = useState<"bar" | "area">("area");
+
+  return (
+    <div className="space-y-6">
+      {/* Metric Cards */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric) => (
+          <MetricCard key={metric.title} metric={metric} />
+        ))}
       </div>
 
-      <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
-        {/* Simplified Metric Cards */}
-        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-500">
-                  Total Leads
-                </span>
-                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
-                  <ChevronUp className="h-3 w-3 text-emerald-500" />
-                </div>
-              </div>
-              <div className="flex items-end justify-between">
-                <h3 className="text-2xl font-medium text-slate-900">1,248</h3>
-                <div className="flex items-center text-xs text-emerald-500">
-                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
-                  18.2%
-                </div>
-              </div>
+      {/* Charts Row */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-5">
+        {/* Lead Acquisition - spans 3 of 5 columns */}
+        <Card className="lg:col-span-3">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div className="space-y-0.5">
+              <CardTitle className="text-sm font-medium">
+                Lead Acquisition
+              </CardTitle>
+              <CardDescription>Monthly lead volume</CardDescription>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-500">
-                  Active Agents
-                </span>
-                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
-                  <ChevronUp className="h-3 w-3 text-emerald-500" />
-                </div>
-              </div>
-              <div className="flex items-end justify-between">
-                <h3 className="text-2xl font-medium text-slate-900">12</h3>
-                <div className="flex items-center text-xs text-emerald-500">
-                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
-                  +2 new
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-500">
-                  Conversations
-                </span>
-                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
-                  <ChevronUp className="h-3 w-3 text-emerald-500" />
-                </div>
-              </div>
-              <div className="flex items-end justify-between">
-                <h3 className="text-2xl font-medium text-slate-900">432</h3>
-                <div className="flex items-center text-xs text-emerald-500">
-                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
-                  +57 today
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-500">
-                  Conversion Rate
-                </span>
-                <div className="h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center">
-                  <ChevronUp className="h-3 w-3 text-emerald-500" />
-                </div>
-              </div>
-              <div className="flex items-end justify-between">
-                <h3 className="text-2xl font-medium text-slate-900">24.3%</h3>
-                <div className="flex items-center text-xs text-emerald-500">
-                  <ArrowUpRight className="h-3 w-3 mr-0.5" />
-                  5.2%
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Lead Acquisition Chart - With Toggle */}
-        <Card className="col-span-2 bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
-          <CardHeader className="pb-2 pt-6 px-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-slate-900 text-base font-medium">
-                  Lead Acquisition
-                </CardTitle>
-                <CardDescription className="text-slate-500 text-xs">
-                  Monthly trends
-                </CardDescription>
-              </div>
-              <div className="flex space-x-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`px-2 py-1 h-8 ${
-                    chartType === "bar" ? "bg-slate-100" : ""
-                  }`}
-                  onClick={() => setChartType("bar")}
-                >
-                  <BarChart2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`px-2 py-1 h-8 ${
-                    chartType === "area" ? "bg-slate-100" : ""
-                  }`}
-                  onClick={() => setChartType("area")}
-                >
-                  <LineChart className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <Tabs
+              value={chartView}
+              onValueChange={(v) => setChartView(v as "bar" | "area")}
+            >
+              <TabsList className="h-8">
+                <TabsTrigger value="area" className="h-6 px-2.5 text-xs">
+                  <Activity className="mr-1.5 h-3 w-3" />
+                  Area
+                </TabsTrigger>
+                <TabsTrigger value="bar" className="h-6 px-2.5 text-xs">
+                  <BarChart3 className="mr-1.5 h-3 w-3" />
+                  Bar
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
-          <CardContent className="p-6 pt-4">
-            <ResponsiveContainer width="100%" height={280}>
-              {chartType === "area" ? (
+          <CardContent>
+            <ChartContainer
+              config={leadChartConfig}
+              className="h-[260px] w-full"
+            >
+              {chartView === "area" ? (
                 <AreaChart
                   data={leadData}
-                  margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                  margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
                 >
                   <defs>
-                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f1f5f9" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#f1f5f9" stopOpacity={0} />
+                    <linearGradient
+                      id="leadGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="hsl(var(--primary))"
+                        stopOpacity={0.2}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="hsl(var(--primary))"
+                        stopOpacity={0}
+                      />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    className="stroke-border/50"
+                  />
                   <XAxis
-                    dataKey="name"
-                    tick={{ fill: "#94a3b8", fontSize: 12 }}
-                    axisLine={{ stroke: "#f1f5f9" }}
+                    dataKey="month"
                     tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 12 }}
+                    className="fill-muted-foreground"
                   />
                   <YAxis
-                    tick={{ fill: "#94a3b8", fontSize: 12 }}
-                    axisLine={false}
                     tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 12 }}
+                    className="fill-muted-foreground"
                   />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "none",
-                      borderRadius: "8px",
-                      boxShadow: "0 1px 3px 0 rgba(0,0,0,0.1)",
-                    }}
-                    labelStyle={{
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: "#333",
-                    }}
-                    itemStyle={{
-                      fontSize: 12,
-                      color: "#666",
-                      padding: "2px 0",
-                    }}
-                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
                   <Area
                     type="monotone"
                     dataKey="leads"
-                    stroke="#0f172a"
-                    strokeWidth={1.5}
-                    fillOpacity={1}
-                    fill="url(#colorLeads)"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    fill="url(#leadGradient)"
                   />
                 </AreaChart>
               ) : (
                 <BarChart
                   data={leadData}
-                  margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                  margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#f8fafc"
                     vertical={false}
+                    className="stroke-border/50"
                   />
                   <XAxis
-                    dataKey="name"
-                    tick={{ fill: "#94a3b8", fontSize: 12 }}
-                    axisLine={{ stroke: "#f1f5f9" }}
+                    dataKey="month"
                     tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 12 }}
+                    className="fill-muted-foreground"
                   />
                   <YAxis
-                    tick={{ fill: "#94a3b8", fontSize: 12 }}
-                    axisLine={false}
                     tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 12 }}
+                    className="fill-muted-foreground"
                   />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "none",
-                      borderRadius: "8px",
-                      boxShadow: "0 1px 3px 0 rgba(0,0,0,0.1)",
-                    }}
-                    labelStyle={{
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: "#333",
-                    }}
-                    itemStyle={{
-                      fontSize: 12,
-                      color: "#666",
-                      padding: "2px 0",
-                    }}
-                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar
                     dataKey="leads"
-                    fill="#0f172a"
+                    fill="hsl(var(--primary))"
                     radius={[4, 4, 0, 0]}
-                    barSize={30}
+                    maxBarSize={40}
                   />
                 </BarChart>
               )}
-            </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
 
-        {/* Funnel Chart - Replacing Pie Chart */}
-        <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
-          <CardHeader className="pb-2 pt-6 px-6">
-            <CardTitle className="text-slate-900 text-base font-medium">
-              Conversion Status
+        {/* Conversion Funnel - spans 2 of 5 columns */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Conversion Funnel
             </CardTitle>
-            <CardDescription className="text-slate-500 text-xs">
-              Sales funnel overview
-            </CardDescription>
+            <CardDescription>Lead to customer pipeline</CardDescription>
           </CardHeader>
-          <CardContent className="p-6 pt-2">
-            <ResponsiveContainer width="100%" height={250}>
-              <FunnelChart>
-                <Tooltip
-                  formatter={(value, name) => [`${value}`, name]}
-                  contentStyle={{
-                    backgroundColor: "#fff",
-                    border: "none",
-                    borderRadius: "8px",
-                    boxShadow: "0 1px 3px 0 rgba(0,0,0,0.1)",
-                  }}
-                  labelStyle={{ fontSize: 12, fontWeight: 500, color: "#333" }}
-                  itemStyle={{ fontSize: 12, color: "#666", padding: "2px 0" }}
-                />
-                <Funnel dataKey="value" data={conversionData} isAnimationActive>
-                  <LabelList
-                    position="right"
-                    fill="#666"
-                    stroke="none"
-                    dataKey="name"
-                    fontSize={10}
-                  />
-                  {conversionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Funnel>
-              </FunnelChart>
-            </ResponsiveContainer>
+          <CardContent>
+            <div className="space-y-3 pt-2">
+              {funnelStages.map((stage, i) => (
+                <FunnelStage key={stage.label} stage={stage} index={i} />
+              ))}
+            </div>
+            <div className="mt-4 flex items-center gap-1.5 border-t border-border pt-3">
+              <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-xs text-muted-foreground">
+                <span className="font-medium text-emerald-500">20%</span>{" "}
+                overall conversion rate
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Bar Chart - Weekly Activity */}
-      <Card className="bg-white shadow-none border border-slate-100 overflow-hidden rounded-xl">
-        <CardHeader className="pb-2 pt-6 px-6">
-          <CardTitle className="text-slate-900 text-base font-medium">
-            Weekly Activity
-          </CardTitle>
-          <CardDescription className="text-slate-500 text-xs">
-            Last 7 days
-          </CardDescription>
+      {/* Weekly Activity */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Weekly Activity</CardTitle>
+          <CardDescription>Conversations over the last 7 days</CardDescription>
         </CardHeader>
-        <CardContent className="p-6 pt-4">
-          <ResponsiveContainer width="100%" height={240}>
+        <CardContent>
+          <ChartContainer
+            config={activityChartConfig}
+            className="h-[200px] w-full"
+          >
             <BarChart
               data={activityData}
-              margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+              margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#f8fafc"
                 vertical={false}
+                className="stroke-border/50"
               />
               <XAxis
-                dataKey="name"
-                tick={{ fill: "#94a3b8", fontSize: 12 }}
-                axisLine={{ stroke: "#f1f5f9" }}
+                dataKey="day"
                 tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 12 }}
+                className="fill-muted-foreground"
               />
               <YAxis
-                tick={{ fill: "#94a3b8", fontSize: 12 }}
-                axisLine={false}
                 tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 12 }}
+                className="fill-muted-foreground"
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#fff",
-                  border: "none",
-                  borderRadius: "8px",
-                  boxShadow: "0 1px 3px 0 rgba(0,0,0,0.1)",
-                }}
-                labelStyle={{ fontSize: 12, fontWeight: 500, color: "#333" }}
-                itemStyle={{ fontSize: 12, color: "#666", padding: "2px 0" }}
-              />
+              <ChartTooltip content={<ChartTooltipContent />} />
               <Bar
-                dataKey="value"
-                fill="#f1f5f9"
+                dataKey="conversations"
+                fill="hsl(var(--primary))"
                 radius={[4, 4, 0, 0]}
-                barSize={30}
-              >
-                {activityData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={index === 4 ? "#0f172a" : "#f1f5f9"}
-                  />
-                ))}
-              </Bar>
+                maxBarSize={40}
+                opacity={0.85}
+              />
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </CardContent>
       </Card>
     </div>

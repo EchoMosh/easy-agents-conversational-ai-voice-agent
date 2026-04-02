@@ -125,7 +125,7 @@ const AuthPage = () => {
 
       {/* Auth Card - Placed as the content within the background */}
       <div className="relative z-20 mx-auto w-full max-w-[350px] space-y-6 flex flex-col items-center">
-        <div className="text-3xl font-bold tracking-tight mb-8 text-center text-white">EasyAgents.ai</div>
+        <div className="text-3xl font-bold tracking-tight mb-8 text-center text-white">Ready Ride</div>
         <Card className="w-full border shadow-none bg-background/80 backdrop-blur-sm dark:bg-neutral-800 dark:border dark:border-neutral-700">
           <CardHeader>
             <CardTitle>{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>

@@ -10,12 +10,16 @@ import {
 import { Bot } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
+type Agent = Pick<Tables<"agents">, "id" | "name" | "role">;
+
 interface PhoneNumberAgentSelectorProps {
   workspaceId: string;
   selectedAgentId: string | null;
   onAgentChange: (agentId: string | null) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** Pass a shared agents list to avoid duplicate queries */
+  agents?: Agent[];
 }
 
 export const PhoneNumberAgentSelector = ({
@@ -24,13 +28,21 @@ export const PhoneNumberAgentSelector = ({
   onAgentChange,
   placeholder = "Select an agent",
   disabled = false,
+  agents: externalAgents,
 }: PhoneNumberAgentSelectorProps) => {
-  const [agents, setAgents] = useState<Pick<Tables<"agents">, "id" | "name" | "role">[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [internalAgents, setInternalAgents] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(!externalAgents);
+
+  const agents = externalAgents ?? internalAgents;
 
   useEffect(() => {
+    // Skip fetching if agents are provided externally
+    if (externalAgents) {
+      setLoading(false);
+      return;
+    }
     fetchAgents();
-  }, [workspaceId]);
+  }, [workspaceId, externalAgents]);
 
   const fetchAgents = async () => {
     try {
@@ -42,7 +54,7 @@ export const PhoneNumberAgentSelector = ({
         .order("name");
 
       if (error) throw error;
-      setAgents(data || []);
+      setInternalAgents(data || []);
     } catch (error) {
       console.error("Error fetching agents:", error);
     } finally {
@@ -64,7 +76,8 @@ export const PhoneNumberAgentSelector = ({
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
               <span>
-                {agents.find((a) => a.id === selectedAgentId)?.name || "Unknown Agent"}
+                {agents.find((a) => a.id === selectedAgentId)?.name ||
+                  "Unknown Agent"}
               </span>
             </div>
           )}
@@ -81,7 +94,9 @@ export const PhoneNumberAgentSelector = ({
               <div>
                 <div className="font-medium">{agent.name}</div>
                 <div className="text-xs text-muted-foreground">
-                  {agent.role.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                  {agent.role
+                    .replace(/_/g, " ")
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
                 </div>
               </div>
             </div>

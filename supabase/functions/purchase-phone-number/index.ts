@@ -2,285 +2,297 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.1";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE, PATCH',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE, PATCH",
 };
 
-interface PurchaseNumberRequest {
-  phoneNumber: string;
+function ok(data: unknown) {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+interface PurchaseRequest {
   workspaceId: string;
+  mode: "vapi" | "twilio";
+  phoneNumber?: string; // For twilio mode - the number to purchase
   friendlyName?: string;
   inboundAgentId?: string;
   outboundAgentId?: string;
+  areaCode?: string;
+  country?: string;
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Initialize Supabase client
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    // Get the authorization header
-    const authHeader = req.headers.get('authorization');
+    const authHeader = req.headers.get("authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return ok({ error: "Missing authorization header", success: false });
     }
 
-    // Verify the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid authorization' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return ok({ error: "Invalid authorization", success: false });
     }
 
-    // Parse request body
-    const { 
-      phoneNumber, 
-      workspaceId, 
-      friendlyName, 
-      inboundAgentId, 
-      outboundAgentId 
-    } = await req.json() as PurchaseNumberRequest;
+    const body = (await req.json()) as PurchaseRequest;
+    const {
+      workspaceId,
+      mode = "vapi",
+      phoneNumber: requestedNumber,
+      friendlyName,
+      inboundAgentId,
+      outboundAgentId,
+      areaCode,
+      country,
+    } = body;
 
-    // Validate required fields
-    if (!phoneNumber || !workspaceId) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: phoneNumber and workspaceId' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+    if (!workspaceId) {
+      return ok({
+        error: "Missing required field: workspaceId",
+        success: false,
+      });
     }
 
-    // Verify user has admin access to this workspace
+    // Verify user has owner/admin access
     const { data: membership, error: membershipError } = await supabase
-      .from('workspace_members')
-      .select('id, role')
-      .eq('workspace_id', workspaceId)
-      .eq('user_id', user.id)
+      .from("workspace_members")
+      .select("id, role")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", user.id)
       .single();
 
-    if (membershipError || !membership || membership.role !== 'admin') {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Only workspace admins can purchase phone numbers' }),
-        { 
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+    if (
+      membershipError ||
+      !membership ||
+      !["admin", "owner"].includes(membership.role)
+    ) {
+      return ok({
+        error: "Unauthorized: Only workspace owners can purchase phone numbers",
+        success: false,
+      });
     }
 
-    // Get credentials from environment
-    const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const vapiApiKey = Deno.env.get('VAPI_API_KEY');
-
-    if (!twilioAccountSid || !twilioAuthToken || !vapiApiKey) {
-      console.error('Missing required credentials');
-      return new Response(
-        JSON.stringify({ error: 'Service not properly configured' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+    const vapiApiKey = Deno.env.get("VAPI_API_KEY");
+    if (!vapiApiKey) {
+      return ok({
+        error: "Voice service not properly configured",
+        success: false,
+      });
     }
 
-    // Step 1: Purchase the phone number from Twilio
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers.json`;
-    
-    const twilioResponse = await fetch(twilioUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        PhoneNumber: phoneNumber,
-        FriendlyName: friendlyName || `Number for ${workspaceId}`,
-        VoiceUrl: `https://api.vapi.ai/webhook/twilio/${twilioAccountSid}`, // VAPI webhook URL
-        VoiceMethod: 'POST',
-        VoiceFallbackUrl: `https://api.vapi.ai/webhook/twilio/${twilioAccountSid}/fallback`,
-        VoiceFallbackMethod: 'POST',
-        StatusCallbackUrl: `https://api.vapi.ai/webhook/twilio/${twilioAccountSid}/status`,
-        StatusCallbackMethod: 'POST',
-      }),
-    });
-
-    if (!twilioResponse.ok) {
-      const errorText = await twilioResponse.text();
-      console.error('Twilio purchase error:', errorText);
-      
-      // Handle specific error cases
-      if (twilioResponse.status === 400 && errorText.includes('already purchased')) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Phone number already purchased',
-            message: 'This phone number has already been purchased'
-          }),
-          { 
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
+    // Get assistant ID for inbound agent
+    let assistantId: string | null = null;
+    if (inboundAgentId) {
+      const { data: agent } = await supabase
+        .from("agents")
+        .select("v_agent_id")
+        .eq("id", inboundAgentId)
+        .single();
+      if (agent?.v_agent_id) {
+        assistantId = agent.v_agent_id;
       }
-      
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to purchase phone number',
-          message: 'Unable to purchase this phone number. It may no longer be available.'
-        }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
     }
 
-    const twilioData = await twilioResponse.json();
-    const twilioSid = twilioData.sid;
-    
-    // Extract area code from phone number
-    const areaCode = phoneNumber.substring(2, 5); // Extract from +1AAANNNXXXX
+    let finalPhoneNumber = "";
+    let vapiPhoneNumberId = "";
+    let twilioSid = "";
+    let monthlyCost = 0;
+    let countryCode = country || "US";
 
-    // Step 2: Create phone number in VAPI
-    let vapiPhoneNumberId = null;
-    
-    try {
-      // If an inbound agent is specified, get its VAPI ID
-      let assistantId = null;
-      if (inboundAgentId) {
-        const { data: agent, error: agentError } = await supabase
-          .from('agents')
-          .select('v_agent_id')
-          .eq('id', inboundAgentId)
-          .single();
-        
-        if (!agentError && agent?.v_agent_id) {
-          assistantId = agent.v_agent_id;
-        }
+    if (mode === "twilio") {
+      // ---- TWILIO MODE: Buy number via user's Twilio, then import to VAPI ----
+
+      // Get workspace's Twilio credentials
+      const { data: integration } = await supabase
+        .from("workspace_integrations")
+        .select("account_sid, auth_token, is_connected")
+        .eq("workspace_id", workspaceId)
+        .eq("provider", "twilio")
+        .single();
+
+      if (
+        !integration?.is_connected ||
+        !integration.account_sid ||
+        !integration.auth_token
+      ) {
+        return ok({
+          error: "Twilio account not connected. Go to Settings to connect.",
+          success: false,
+        });
       }
 
-      const vapiPayload = {
+      const { account_sid, auth_token } = integration;
+
+      if (!requestedNumber) {
+        return ok({
+          error: "Phone number is required for purchase",
+          success: false,
+        });
+      }
+
+      // Step 1: Purchase on Twilio
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${account_sid}/IncomingPhoneNumbers.json`;
+      const twilioBody = new URLSearchParams({
+        PhoneNumber: requestedNumber,
+        ...(friendlyName && { FriendlyName: friendlyName }),
+      });
+
+      const twilioResponse = await fetch(twilioUrl, {
+        method: "POST",
+        headers: {
+          Authorization: "Basic " + btoa(`${account_sid}:${auth_token}`),
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: twilioBody.toString(),
+      });
+
+      if (!twilioResponse.ok) {
+        const errorText = await twilioResponse.text();
+        let message = "Failed to purchase number";
+        try {
+          const errorJson = JSON.parse(errorText);
+          message = errorJson.message || message;
+        } catch {}
+        return ok({ error: message, success: false });
+      }
+
+      const twilioData = await twilioResponse.json();
+      finalPhoneNumber = twilioData.phone_number;
+      twilioSid = twilioData.sid;
+      monthlyCost = 1.15;
+      countryCode =
+        requestedNumber.startsWith("+1") && requestedNumber.length === 12
+          ? requestedNumber.substring(1, 2) === "1"
+            ? "US"
+            : "CA"
+          : "US";
+
+      // Step 2: Import into voice service
+      const importPayload: Record<string, unknown> = {
         provider: "twilio",
-        number: phoneNumber,
-        twilioAccountSid: twilioAccountSid,
-        twilioAuthToken: twilioAuthToken,
-        name: friendlyName || `Phone ${phoneNumber}`,
-        ...(assistantId && { assistantId })
+        number: finalPhoneNumber,
+        twilioAccountSid: account_sid,
+        twilioAuthToken: auth_token,
+        name: friendlyName || finalPhoneNumber,
+        ...(assistantId && { assistantId }),
       };
 
-      const vapiResponse = await fetch('https://api.vapi.ai/phone-number', {
-        method: 'POST',
+      const importResponse = await fetch("https://api.vapi.ai/phone-number", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${vapiApiKey}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${vapiApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(importPayload),
+      });
+
+      if (importResponse.ok) {
+        const importData = await importResponse.json();
+        vapiPhoneNumberId = importData.id || "";
+      } else {
+        console.error(
+          "Failed to import number to voice service, continuing anyway",
+        );
+      }
+    } else {
+      // ---- VAPI MODE: Free virtual number ----
+      const vapiPayload: Record<string, unknown> = {
+        provider: "vapi",
+        name: friendlyName || `Workspace ${workspaceId}`,
+        ...(assistantId && { assistantId }),
+        ...(areaCode && { numberDesiredAreaCode: areaCode }),
+      };
+
+      const vapiResponse = await fetch("https://api.vapi.ai/phone-number", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${vapiApiKey}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(vapiPayload),
       });
 
-      if (vapiResponse.ok) {
-        const vapiData = await vapiResponse.json();
-        vapiPhoneNumberId = vapiData.id;
-      } else {
-        console.error('VAPI phone number creation failed:', await vapiResponse.text());
-        // Continue even if VAPI creation fails - we can retry later
+      if (!vapiResponse.ok) {
+        const errorText = await vapiResponse.text();
+        let parsedError = "Failed to provision number";
+        try {
+          const errorJson = JSON.parse(errorText);
+          parsedError = errorJson.message || parsedError;
+        } catch {}
+        return ok({ error: parsedError, success: false });
       }
-    } catch (vapiError) {
-      console.error('VAPI error:', vapiError);
-      // Continue even if VAPI creation fails
+
+      const vapiData = await vapiResponse.json();
+      finalPhoneNumber = vapiData.number || "";
+      vapiPhoneNumberId = vapiData.id;
+      monthlyCost = 0;
     }
 
-    // Step 3: Save to database
+    // Extract area code
+    const extractedAreaCode =
+      finalPhoneNumber.startsWith("+1") && finalPhoneNumber.length >= 5
+        ? finalPhoneNumber.substring(2, 5)
+        : areaCode || null;
+
+    // Save to database
     const { data: phoneNumberRecord, error: dbError } = await supabase
-      .from('phone_numbers')
+      .from("phone_numbers")
       .insert({
         workspace_id: workspaceId,
-        twilio_phone_number: phoneNumber,
-        twilio_sid: twilioSid,
+        twilio_phone_number: finalPhoneNumber || null,
+        twilio_sid: twilioSid || vapiPhoneNumberId || null,
         friendly_name: friendlyName || null,
-        capabilities: {
-          voice: true,
-          sms: twilioData.capabilities?.sms || false,
-          mms: twilioData.capabilities?.mms || false,
-        },
-        area_code: areaCode,
-        country_code: 'US',
-        monthly_cost: 1.00,
-        status: 'active',
+        capabilities: { voice: true, sms: mode === "twilio", mms: false },
+        area_code: extractedAreaCode,
+        country_code: countryCode,
+        monthly_cost: monthlyCost,
+        status: "active",
         inbound_agent_id: inboundAgentId || null,
         outbound_agent_id: outboundAgentId || null,
-        vapi_phone_number_id: vapiPhoneNumberId,
+        vapi_phone_number_id: vapiPhoneNumberId || null,
       })
       .select()
       .single();
 
     if (dbError) {
-      console.error('Database error:', dbError);
-      // Try to release the number from Twilio if DB save fails
-      try {
-        await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers/${twilioSid}.json`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-          },
-        });
-      } catch (releaseError) {
-        console.error('Failed to release number after DB error:', releaseError);
+      console.error("Database error:", dbError);
+      // Cleanup: delete from VAPI if DB save fails
+      if (vapiPhoneNumberId) {
+        try {
+          await fetch(`https://api.vapi.ai/phone-number/${vapiPhoneNumberId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${vapiApiKey}` },
+          });
+        } catch {}
       }
-      
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to save phone number',
-          message: 'The phone number was purchased but could not be saved. Please contact support.'
-        }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return ok({
+        error: "Failed to save phone number: " + dbError.message,
+        success: false,
+      });
     }
 
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        data: phoneNumberRecord
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
-    );
+    return ok({ success: true, data: phoneNumberRecord });
   } catch (error) {
-    console.error('Error purchasing phone number:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        message: error.message 
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    console.error("Error purchasing phone number:", error);
+    return ok({
+      error: error.message || "Internal server error",
+      success: false,
+    });
   }
 });

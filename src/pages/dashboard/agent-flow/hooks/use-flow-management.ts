@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FlowData, FlowNode, FlowEdge, Agent } from "@/types/agent-types";
@@ -67,13 +67,16 @@ export function useFlowManagement(
         );
         const flowData =
           typeof agent.flow === "string" ? JSON.parse(agent.flow) : agent.flow;
-        
+
         console.log("[AgentFlowPage] Parsed flow data:", flowData);
         setFlowState(flowData as FlowData);
 
         let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
         mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
-        console.log("[AgentFlowPage] Generated Mermaid Chart:", mermaidChartStr);
+        console.log(
+          "[AgentFlowPage] Generated Mermaid Chart:",
+          mermaidChartStr,
+        );
         setMermaidChart(mermaidChartStr);
       } catch (error) {
         console.error("[AgentFlowPage] Error processing flow data:", error);
@@ -81,103 +84,70 @@ export function useFlowManagement(
         setMermaidChart("graph TD\n  Error[Error processing flow]");
       }
     } else {
-      console.log("[AgentFlowPage] No flow data available, setting empty state");
+      console.log(
+        "[AgentFlowPage] No flow data available, setting empty state",
+      );
       setFlowState({ nodes: [], edges: [] });
       setMermaidChart("graph TD\n  EmptyFlow[Empty Flow]");
     }
   }, [agent, generateMermaidFromFlow, sanitizeMermaidChart, setMermaidChart]);
 
-  const handleNodesChange = useCallback(
-    (newNodes: Node[]) => {
-      if (!agent) {
-        console.log(
-          "[AgentFlowPage] handleNodesChange: No agent data available",
-        );
-        return;
-      }
-      try {
-        console.log("[AgentFlowPage] Nodes changed, nodes to save:", newNodes);
-
-        const clonedNodes = JSON.parse(JSON.stringify(newNodes));
-
-        setFlowState((prevState) => {
-          const newState = {
-            nodes: clonedNodes,
-            edges: prevState.edges || [],
-          };
-          return newState;
-        });
-
-        const flowData: FlowData = {
-          nodes: clonedNodes,
-          edges: flowState.edges || [],
-        };
-
-        console.log("[AgentFlowPage] Saving updated flow data with new nodes");
+  // Debounce save: only persist to DB after dragging stops
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSave = useCallback(
+    (flowData: FlowData) => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
         saveFlowMutation.mutate(flowData);
-
-        // Generate updated mermaid chart
         let mermaidChartStr = generateMermaidFromFlow(flowData);
         mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
         setMermaidChart(mermaidChartStr);
-      } catch (error) {
-        console.error("[AgentFlowPage] Error updating nodes:", error);
-      }
+      }, 300);
     },
     [
-      agent,
       saveFlowMutation,
-      flowState,
       generateMermaidFromFlow,
       sanitizeMermaidChart,
       setMermaidChart,
     ],
   );
 
+  const handleNodesChange = useCallback(
+    (newNodes: Node[]) => {
+      if (!agent) return;
+      try {
+        setFlowState((prevState) => {
+          const newState = {
+            nodes: newNodes,
+            edges: prevState.edges || [],
+          };
+          debouncedSave(newState);
+          return newState;
+        });
+      } catch (error) {
+        console.error("[AgentFlowPage] Error updating nodes:", error);
+      }
+    },
+    [agent, debouncedSave],
+  );
+
   const handleEdgesChange = useCallback(
     (newEdges: Edge[]) => {
-      if (!agent) {
-        console.log(
-          "[AgentFlowPage] handleEdgesChange: No agent data available",
-        );
-        return;
-      }
+      if (!agent) return;
       try {
-        console.log("[AgentFlowPage] Edges changed, edges to save:", newEdges);
-
-        const clonedEdges = JSON.parse(JSON.stringify(newEdges));
-
         setFlowState((prevState) => {
           const newState = {
             nodes: prevState.nodes || [],
-            edges: clonedEdges,
+            edges: newEdges,
           };
+          debouncedSave(newState);
           return newState;
         });
-
-        const flowData: FlowData = {
-          nodes: flowState.nodes || [],
-          edges: clonedEdges,
-        };
-
-        console.log("[AgentFlowPage] Saving updated flow data with new edges");
-        saveFlowMutation.mutate(flowData);
-
-        let mermaidChartStr = generateMermaidFromFlow(flowData);
-        mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
-        setMermaidChart(mermaidChartStr);
       } catch (error) {
         console.error("[AgentFlowPage] Error updating edges:", error);
       }
     },
-    [
-      agent,
-      saveFlowMutation,
-      flowState,
-      generateMermaidFromFlow,
-      sanitizeMermaidChart,
-      setMermaidChart,
-    ],
+    [agent, debouncedSave],
   );
 
   const handleNodeDeletion = useCallback(

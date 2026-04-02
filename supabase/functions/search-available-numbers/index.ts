@@ -2,196 +2,127 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.1";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE, PATCH',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE, PATCH",
 };
 
-interface SearchNumbersRequest {
-  workspaceId: string;
-  areaCode?: string;
-  country?: string;
-  limit?: number;
-}
-
-interface AvailableNumber {
-  phoneNumber: string;
-  friendlyName: string;
-  capabilities: {
-    voice: boolean;
-    sms: boolean;
-    mms: boolean;
-  };
-  monthlyPrice: number;
-  areaCode: string;
-  locality?: string;
-  region?: string;
+function ok(data: unknown) {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Initialize Supabase client
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    // Get the authorization header
-    const authHeader = req.headers.get('authorization');
+    const authHeader = req.headers.get("authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return ok({ error: "Missing authorization header", success: false });
     }
 
-    // Verify the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid authorization' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return ok({ error: "Invalid authorization", success: false });
     }
 
-    // Parse request body
-    const { workspaceId, areaCode, country = 'US', limit = 20 } = await req.json() as SearchNumbersRequest;
+    const { workspaceId, country, areaCode, limit } = await req.json();
 
-    // Verify user has access to this workspace
+    if (!workspaceId) {
+      return ok({ error: "Missing workspaceId", success: false });
+    }
+
+    // Verify workspace access
     const { data: membership, error: membershipError } = await supabase
-      .from('workspace_members')
-      .select('id, role')
-      .eq('workspace_id', workspaceId)
-      .eq('user_id', user.id)
+      .from("workspace_members")
+      .select("id, role")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", user.id)
       .single();
 
     if (membershipError || !membership) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: You do not have access to this workspace' }),
-        { 
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return ok({ error: "Unauthorized", success: false });
     }
 
-    // Get Twilio credentials from environment
-    const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+    // Get workspace's Twilio credentials
+    const { data: integration } = await supabase
+      .from("workspace_integrations")
+      .select("account_sid, auth_token, is_connected")
+      .eq("workspace_id", workspaceId)
+      .eq("provider", "twilio")
+      .single();
 
-    if (!twilioAccountSid || !twilioAuthToken) {
-      console.error('Missing Twilio credentials');
-      return new Response(
-        JSON.stringify({ error: 'Phone number service not configured' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+    if (
+      !integration ||
+      !integration.is_connected ||
+      !integration.account_sid ||
+      !integration.auth_token
+    ) {
+      return ok({
+        error:
+          "Twilio account not connected. Go to Settings to connect your Twilio account.",
+        success: false,
+      });
     }
 
-    // Build Twilio API URL for searching available phone numbers
-    const twilioBaseUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/AvailablePhoneNumbers/${country}/Local.json`;
-    const params = new URLSearchParams({
-      PageSize: limit.toString(),
-      VoiceEnabled: 'true',
-    });
+    const { account_sid, auth_token } = integration;
+    const searchCountry = country || "US";
+    const searchLimit = Math.min(limit || 20, 20);
 
-    // Add area code filter if provided
+    // Build Twilio search URL
+    let url = `https://api.twilio.com/2010-04-01/Accounts/${account_sid}/AvailablePhoneNumbers/${searchCountry}/Local.json?PageSize=${searchLimit}`;
     if (areaCode) {
-      params.append('AreaCode', areaCode);
+      url += `&AreaCode=${areaCode}`;
     }
 
-    const twilioUrl = `${twilioBaseUrl}?${params.toString()}`;
-
-    // Make request to Twilio API
-    const twilioResponse = await fetch(twilioUrl, {
-      method: 'GET',
+    const twilioResponse = await fetch(url, {
       headers: {
-        'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-        'Content-Type': 'application/json',
+        Authorization: "Basic " + btoa(`${account_sid}:${auth_token}`),
       },
     });
 
     if (!twilioResponse.ok) {
       const errorText = await twilioResponse.text();
-      console.error('Twilio API error:', errorText);
-      
-      // Handle specific error cases
-      if (twilioResponse.status === 400 && errorText.includes('area code')) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Invalid area code',
-            message: 'The area code you provided is not valid or has no available numbers'
-          }),
-          { 
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to search phone numbers',
-          message: 'Unable to retrieve available phone numbers at this time'
-        }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      console.error("Twilio search error:", errorText);
+      let message = "Failed to search for available numbers";
+      try {
+        const errorJson = JSON.parse(errorText);
+        message = errorJson.message || message;
+      } catch {}
+      return ok({ error: message, success: false });
     }
 
     const twilioData = await twilioResponse.json();
-    
-    // Format the response
-    const availableNumbers: AvailableNumber[] = twilioData.available_phone_numbers.map((number: any) => ({
-      phoneNumber: number.phone_number,
-      friendlyName: number.friendly_name,
-      capabilities: {
-        voice: number.capabilities.voice || false,
-        sms: number.capabilities.sms || false,
-        mms: number.capabilities.mms || false,
-      },
-      monthlyPrice: 1.00, // Platform absorbs the cost
-      areaCode: number.phone_number.substring(2, 5), // Extract area code from +1AAANNNXXXX
-      locality: number.locality,
-      region: number.region,
-    }));
+    const numbers = (twilioData.available_phone_numbers || []).map(
+      (num: any) => ({
+        phoneNumber: num.phone_number,
+        friendlyName: num.friendly_name,
+        locality: num.locality || "",
+        region: num.region || "",
+        capabilities: {
+          voice: num.capabilities?.voice ?? true,
+          sms: num.capabilities?.SMS ?? false,
+          mms: num.capabilities?.MMS ?? false,
+        },
+      }),
+    );
 
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        numbers: availableNumbers,
-        count: availableNumbers.length
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
-    );
+    return ok({ success: true, numbers, count: numbers.length });
   } catch (error) {
-    console.error('Error searching available numbers:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        message: error.message 
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    console.error("Error searching numbers:", error);
+    return ok({ error: error.message, success: false });
   }
 });

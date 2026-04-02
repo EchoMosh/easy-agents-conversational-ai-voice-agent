@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { memo, useMemo } from "react";
 
 interface ButtonEdgeProps {
   id: string;
@@ -13,54 +12,46 @@ interface ButtonEdgeProps {
   markerEnd?: string;
 }
 
-export const ButtonEdge = ({ 
-  id, 
-  sourceX, 
-  sourceY, 
-  targetX, 
-  targetY, 
-  sourcePosition, 
-  targetPosition, 
+const ButtonEdgeComponent = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
   style = {},
-  markerEnd 
+  markerEnd,
 }: ButtonEdgeProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  
-  const edgePathStyle = {
-    ...style,
-    strokeWidth: isHovered ? 4 : 3,
-    stroke: isHovered ? '#64748b' : '#94a3b8',
-    strokeDasharray: '8 4',
-    animation: 'dashdraw 0.8s linear infinite',
-    transition: 'all 0.2s ease',
-  };
+  const edgePath = useMemo(() => {
+    const dx = Math.abs(targetX - sourceX) * 0.5;
+    return `M ${sourceX} ${sourceY} C ${sourceX + dx} ${sourceY}, ${targetX - dx} ${targetY}, ${targetX} ${targetY}`;
+  }, [sourceX, sourceY, targetX, targetY]);
 
-  const dx = Math.abs(targetX - sourceX) * 0.5;
-  const edgePath = `M ${sourceX} ${sourceY} C ${sourceX + dx} ${sourceY}, ${targetX - dx} ${targetY}, ${targetX} ${targetY}`;
-  
   return (
     <>
       <path
         d={edgePath}
         style={{
           strokeWidth: 25,
-          stroke: 'transparent',
-          fill: 'none',
-          cursor: 'pointer',
+          stroke: "transparent",
+          fill: "none",
+          cursor: "pointer",
         }}
         className="edge-hit-area"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       />
       <path
         id={id}
         className="react-flow__edge-path"
         d={edgePath}
-        style={edgePathStyle}
+        style={{
+          ...style,
+          strokeWidth: 3,
+          stroke: "#94a3b8",
+          strokeDasharray: "8 4",
+        }}
         markerEnd={markerEnd}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       />
     </>
   );
 };
+
+export const ButtonEdge = memo(ButtonEdgeComponent);
