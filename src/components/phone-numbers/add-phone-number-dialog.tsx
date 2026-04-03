@@ -367,7 +367,7 @@ export const AddPhoneNumberDialog = ({
           </div>
         )}
 
-        {/* MODE: VAPI Free Virtual Number */}
+        {/* MODE: Free Virtual Number */}
         {mode === "vapi" && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">

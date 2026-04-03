@@ -857,7 +857,7 @@ export function AgentSettings({
             <section className="space-y-4 animate-in fade-in duration-200">
               
               <div className="space-y-4">
-                {/* Vapi Knowledge Base */}
+                {/* Knowledge Base */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium text-foreground">Knowledge Base</Label>
