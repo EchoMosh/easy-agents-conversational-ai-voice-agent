@@ -87,7 +87,9 @@ export function LlmTab({ settings, onChange }: LlmTabProps) {
                         variant="outline"
                         className="text-[10px] px-1.5 py-0 text-muted-foreground"
                       >
-                        {model.contextWindow}
+                        {model.contextWindow >= 1000
+                          ? `${Math.round(model.contextWindow / 1000)}k`
+                          : model.contextWindow}
                       </Badge>
                     )}
                   </span>

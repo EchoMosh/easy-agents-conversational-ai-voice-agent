@@ -234,7 +234,7 @@ export function AgentSettings({
       ) : (
         <>
           {/* Tab bar */}
-          <div className="flex gap-1 border-b border-border/50 mb-4 -mx-1 px-1 overflow-x-auto">
+          <div className="flex gap-1 border-b border-border/50 mb-6 -mx-1 px-1 overflow-x-auto">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -243,7 +243,7 @@ export function AgentSettings({
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap",
+                    "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap",
                     isActive
                       ? "text-primary border-b-2 border-primary"
                       : "text-muted-foreground hover:text-foreground",
@@ -257,7 +257,7 @@ export function AgentSettings({
           </div>
 
           {/* Tab content */}
-          <div className="min-h-[300px] max-h-[50vh] overflow-y-auto pr-1">
+          <div className="min-h-[320px] max-h-[55vh] overflow-y-auto pr-1 pb-2">
             {activeTab === "voice" && (
               <VoiceTab settings={settings} onChange={handleChange} />
             )}

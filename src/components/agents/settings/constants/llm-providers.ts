@@ -14,7 +14,7 @@ export interface LLMProvider {
 export const LLM_PROVIDERS: LLMProvider[] = [
   {
     id: "groq",
-    name: "Groq",
+    name: "Groq (Fast)",
     models: [
       {
         id: "llama-3.3-70b-versatile",
@@ -23,12 +23,12 @@ export const LLM_PROVIDERS: LLMProvider[] = [
       },
       {
         id: "llama-3.1-8b-instant",
-        name: "Llama 3.1 8B",
+        name: "Llama 3.1 8B (Fastest)",
         contextWindow: 128000,
       },
       { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B", contextWindow: 32768 },
     ],
-    requiresApiKey: true,
+    requiresApiKey: false,
   },
   {
     id: "openai",
