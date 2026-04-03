@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import LoadingScreen from "@/components/loading-screen";
 import { useWorkspace } from "@/context/workspace-context";
 import { ImportProvider } from "@/context/import-context";
@@ -14,23 +12,7 @@ import { useApiLoading } from "@/hooks/use-api-loading";
 // Or if the Suspense fallback for Outlet was the primary use.
 // For now, let's keep it in case we want a generic content area skeleton.
 
-// Import all dashboard page components
-import DashboardPage from "@/pages/dashboard/dashboard";
-import CalendarPage from "@/pages/dashboard/calendar";
-import AgentsPage from "@/pages/dashboard/agents";
-import AgentFlowPage from "@/pages/dashboard/agent-flow";
-import LeadsPage from "@/pages/dashboard/leads";
-import LeadScraperPage from "@/pages/dashboard/lead-scraper";
-import PipelinesPage from "@/pages/dashboard/pipelines";
-import SettingsPage from "@/pages/dashboard/settings";
-import ProfilePage from "@/pages/dashboard/profile";
-import ChatsPage from "@/pages/dashboard/chats";
-import { ChatPage } from "@/pages/dashboard/chat";
-import KnowledgePage from "@/pages/dashboard/knowledge";
-import TranscriptionsPage from "@/pages/dashboard/transcriptions-page";
-import AutomationsPage from "@/pages/dashboard/automations";
-import ActivitiesPage from "@/pages/dashboard/activities";
-// Note: NotFound page might be handled by App.tsx's catch-all route
+// Note: Page components are imported in App.tsx where routes are defined
 
 function DashboardLayout() {
   const {
@@ -133,8 +115,6 @@ function DashboardLayout() {
               <Outlet />
             </div>
           </main>
-          <Toaster />
-          <SonnerToaster position="bottom-right" />
         </div>
       </SidebarProvider>
     </ImportProvider>

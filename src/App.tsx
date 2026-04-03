@@ -18,17 +18,9 @@ import AgentFlowPage from "./pages/dashboard/agent-flow";
 import LeadsPage from "@/pages/dashboard/leads";
 import PipelinesPage from "@/pages/dashboard/pipelines";
 import SettingsPage from "@/pages/dashboard/settings";
-import ProfilePage from "@/pages/dashboard/profile";
-import ChatsPage from "@/pages/dashboard/chats";
-import { ChatPage } from "@/pages/dashboard/chat";
 import KnowledgePage from "@/pages/dashboard/knowledge";
 import TranscriptionsPage from "@/pages/dashboard/transcriptions-page";
 import { PhoneNumbersPage } from "@/pages/dashboard/phone-numbers/phone-numbers-page";
-import AutomationsPage from "@/pages/dashboard/automations";
-import ActivitiesPage from "@/pages/dashboard/activities";
-import DashboardPage from "@/pages/dashboard/dashboard";
-import CalendarPage from "@/pages/dashboard/calendar";
-import LeadScraperPage from "@/pages/dashboard/lead-scraper";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -67,38 +59,32 @@ function AppContent() {
         <Route element={<ProtectedRoute />}>
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route path="/dashboard/overview" element={<DashboardPage />} />
-            <Route path="/dashboard/calendar" element={<CalendarPage />} />
+            <Route index element={<AgentsPage />} />
             <Route path="/dashboard/agents" element={<AgentsPage />} />
             <Route
               path="/dashboard/agents/flow/:id"
               element={<AgentFlowPage />}
             />
             <Route path="/dashboard/leads" element={<LeadsPage />} />
-            <Route
-              path="/dashboard/lead-scraper"
-              element={<LeadScraperPage />}
-            />
             <Route path="/dashboard/pipelines" element={<PipelinesPage />} />
             <Route path="/dashboard/settings" element={<SettingsPage />} />
-            <Route path="/dashboard/profile" element={<ProfilePage />} />
-            <Route path="/dashboard/chats" element={<ChatsPage />} />
-            <Route path="/dashboard/chats/:id" element={<ChatPage />} />
             <Route path="/dashboard/knowledge" element={<KnowledgePage />} />
-            <Route path="/dashboard/transcriptions" element={<TranscriptionsPage />} />
+            <Route
+              path="/dashboard/transcriptions"
+              element={<TranscriptionsPage />}
+            />
             <Route
               path="/dashboard/phone-numbers"
               element={
-                <React.Suspense fallback={<LoadingScreen message="Loading phone numbers..." />}>
+                <React.Suspense
+                  fallback={
+                    <LoadingScreen message="Loading phone numbers..." />
+                  }
+                >
                   <PhoneNumbersPage />
                 </React.Suspense>
               }
             />
-            <Route
-              path="/dashboard/automations"
-              element={<AutomationsPage />}
-            />
-            <Route path="/dashboard/activities" element={<ActivitiesPage />} />
           </Route>
         </Route>
 
