@@ -204,12 +204,7 @@ serve(async (req) => {
       finalPhoneNumber = twilioData.phone_number;
       twilioSid = twilioData.sid;
       monthlyCost = 1.15;
-      countryCode =
-        requestedNumber.startsWith("+1") && requestedNumber.length === 12
-          ? requestedNumber.substring(1, 2) === "1"
-            ? "US"
-            : "CA"
-          : "US";
+      countryCode = country || "US";
 
       // Step 2: Import into voice service
       const importPayload: Record<string, unknown> = {
@@ -234,9 +229,30 @@ serve(async (req) => {
         const importData = await importResponse.json();
         vapiPhoneNumberId = importData.id || "";
       } else {
-        console.error(
-          "Failed to import number to voice service, continuing anyway",
-        );
+        const importError = await importResponse.text();
+        console.error("Failed to import number to voice service:", importError);
+        // Release the Twilio number since VAPI import failed
+        try {
+          await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${account_sid}/IncomingPhoneNumbers/${twilioSid}.json`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: "Basic " + btoa(`${account_sid}:${auth_token}`),
+              },
+            },
+          );
+        } catch (releaseErr) {
+          console.error(
+            "Failed to release Twilio number after VAPI import failure:",
+            releaseErr,
+          );
+        }
+        return ok({
+          error:
+            "Phone number purchased on Twilio but failed to connect to voice service. The Twilio number has been released. Please try again.",
+          success: false,
+        });
       }
     } else {
       // ---- VAPI MODE: Free virtual number ----
@@ -314,6 +330,38 @@ serve(async (req) => {
           console.error(
             "Failed to cleanup VAPI phone number after DB failure, possible orphaned resource:",
             vapiPhoneNumberId,
+            cleanupError,
+          );
+        }
+      }
+      // Cleanup: release Twilio number if DB save fails
+      if (twilioSid && mode === "twilio") {
+        try {
+          const integration = await supabase
+            .from("workspace_integrations")
+            .select("account_sid, auth_token")
+            .eq("workspace_id", workspaceId)
+            .eq("provider", "twilio")
+            .single();
+          if (integration.data) {
+            await fetch(
+              `https://api.twilio.com/2010-04-01/Accounts/${integration.data.account_sid}/IncomingPhoneNumbers/${twilioSid}.json`,
+              {
+                method: "DELETE",
+                headers: {
+                  Authorization:
+                    "Basic " +
+                    btoa(
+                      `${integration.data.account_sid}:${integration.data.auth_token}`,
+                    ),
+                },
+              },
+            );
+          }
+        } catch (cleanupError) {
+          console.error(
+            "Failed to release Twilio number after DB failure, possible orphaned resource:",
+            twilioSid,
             cleanupError,
           );
         }
