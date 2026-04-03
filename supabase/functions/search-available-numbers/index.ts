@@ -28,7 +28,16 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
-      return ok({ error: "Missing authorization header", success: false });
+      return new Response(
+        JSON.stringify({
+          error: "Missing authorization header",
+          success: false,
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const {
@@ -36,13 +45,25 @@ serve(async (req) => {
       error: authError,
     } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authError || !user) {
-      return ok({ error: "Invalid authorization", success: false });
+      return new Response(
+        JSON.stringify({ error: "Invalid authorization", success: false }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const { workspaceId, country, areaCode, limit } = await req.json();
 
     if (!workspaceId) {
-      return ok({ error: "Missing workspaceId", success: false });
+      return new Response(
+        JSON.stringify({ error: "Missing workspaceId", success: false }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Verify workspace access
@@ -54,7 +75,13 @@ serve(async (req) => {
       .single();
 
     if (membershipError || !membership) {
-      return ok({ error: "Unauthorized", success: false });
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", success: false }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Get workspace's Twilio credentials

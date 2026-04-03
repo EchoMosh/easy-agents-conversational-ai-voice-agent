@@ -39,7 +39,16 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
-      return ok({ error: "Missing authorization header", success: false });
+      return new Response(
+        JSON.stringify({
+          error: "Missing authorization header",
+          success: false,
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const {
@@ -47,7 +56,13 @@ serve(async (req) => {
       error: authError,
     } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authError || !user) {
-      return ok({ error: "Invalid authorization", success: false });
+      return new Response(
+        JSON.stringify({ error: "Invalid authorization", success: false }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const body = (await req.json()) as PurchaseRequest;
@@ -63,10 +78,16 @@ serve(async (req) => {
     } = body;
 
     if (!workspaceId) {
-      return ok({
-        error: "Missing required field: workspaceId",
-        success: false,
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Missing required field: workspaceId",
+          success: false,
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Verify user has owner/admin access
@@ -82,10 +103,17 @@ serve(async (req) => {
       !membership ||
       !["admin", "owner"].includes(membership.role)
     ) {
-      return ok({
-        error: "Unauthorized: Only workspace owners can purchase phone numbers",
-        success: false,
-      });
+      return new Response(
+        JSON.stringify({
+          error:
+            "Unauthorized: Only workspace owners can purchase phone numbers",
+          success: false,
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const vapiApiKey = Deno.env.get("VAPI_API_KEY");
