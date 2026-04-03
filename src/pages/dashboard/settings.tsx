@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { TwilioIntegrationSettings } from "@/components/settings/twilio-integration-settings";
+import { IntegrationsSettings } from "@/components/settings/integrations-settings";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ export default function SettingsPage() {
                     </Card>
                   </div>
 
-                  <TwilioIntegrationSettings />
+                  <IntegrationsSettings />
 
                   <div className="pb-4">
                     <h3 className="text-lg font-medium mb-4">Logout</h3>

@@ -168,140 +168,133 @@ export function TwilioIntegrationSettings() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Integrations</h2>
-        <Card>
-          <CardContent className="pt-6 flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="bg-card/50">
+        <CardContent className="pt-6 flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Integrations</h2>
-
-      <Card>
-        <CardContent className="pt-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Phone className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-lg font-medium">Twilio</h3>
-                <p className="text-sm text-muted-foreground">
-                  Connect your Twilio account to purchase phone numbers
-                </p>
-              </div>
+    <Card className="bg-card/50">
+      <CardContent className="pt-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Phone className="h-5 w-5 text-primary" />
             </div>
-            <Badge variant={isConnected ? "default" : "secondary"}>
-              {isConnected ? "Connected" : "Not Connected"}
-            </Badge>
+            <div>
+              <h3 className="text-lg font-medium">Twilio</h3>
+              <p className="text-sm text-muted-foreground">
+                Connect your Twilio account to purchase phone numbers
+              </p>
+            </div>
           </div>
+          <Badge variant={isConnected ? "default" : "secondary"}>
+            {isConnected ? "Connected" : "Not Connected"}
+          </Badge>
+        </div>
 
-          {isConnected ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
-                <Plug className="h-4 w-4 shrink-0" />
-                <p className="text-sm">
-                  Your Twilio account is connected. You can purchase phone
-                  numbers from the Phone Numbers page.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Account SID</Label>
-                <Input value={accountSid} disabled className="font-mono" />
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  variant="destructive"
-                  onClick={handleDisconnect}
-                  disabled={disconnecting}
-                >
-                  {disconnecting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Disconnecting...
-                    </>
-                  ) : (
-                    <>
-                      <Unplug className="h-4 w-4 mr-2" />
-                      Disconnect
-                    </>
-                  )}
-                </Button>
-              </div>
+        {isConnected ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
+              <Plug className="h-4 w-4 shrink-0" />
+              <p className="text-sm">
+                Your Twilio account is connected. You can purchase phone numbers
+                from the Phone Numbers page.
+              </p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="twilio-sid">Account SID</Label>
+
+            <div className="space-y-2">
+              <Label>Account SID</Label>
+              <Input value={accountSid} disabled className="font-mono" />
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                variant="destructive"
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+              >
+                {disconnecting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Disconnecting...
+                  </>
+                ) : (
+                  <>
+                    <Unplug className="h-4 w-4 mr-2" />
+                    Disconnect
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="twilio-sid">Account SID</Label>
+              <Input
+                id="twilio-sid"
+                placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                value={accountSid}
+                onChange={(e) => setAccountSid(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="twilio-token">Auth Token</Label>
+              <div className="relative">
                 <Input
-                  id="twilio-sid"
-                  placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  value={accountSid}
-                  onChange={(e) => setAccountSid(e.target.value)}
-                  className="font-mono"
+                  id="twilio-token"
+                  type={showToken ? "text" : "password"}
+                  placeholder="Your Twilio Auth Token"
+                  value={authToken}
+                  onChange={(e) => setAuthToken(e.target.value)}
+                  className="font-mono pr-10"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="twilio-token">Auth Token</Label>
-                <div className="relative">
-                  <Input
-                    id="twilio-token"
-                    type={showToken ? "text" : "password"}
-                    placeholder="Your Twilio Auth Token"
-                    value={authToken}
-                    onChange={(e) => setAuthToken(e.target.value)}
-                    className="font-mono pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                    onClick={() => setShowToken(!showToken)}
-                  >
-                    {showToken ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Find these in your Twilio Console under Account Info
-                </p>
-              </div>
-
-              <div className="flex justify-end">
                 <Button
-                  onClick={handleConnect}
-                  disabled={saving || !accountSid.trim() || !authToken.trim()}
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowToken(!showToken)}
                 >
-                  {saving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Verifying...
-                    </>
+                  {showToken ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <>
-                      <Plug className="h-4 w-4 mr-2" />
-                      Connect
-                    </>
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Find these in your Twilio Console under Account Info
+              </p>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+
+            <div className="flex justify-end">
+              <Button
+                onClick={handleConnect}
+                disabled={saving || !accountSid.trim() || !authToken.trim()}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <Plug className="h-4 w-4 mr-2" />
+                    Connect
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
