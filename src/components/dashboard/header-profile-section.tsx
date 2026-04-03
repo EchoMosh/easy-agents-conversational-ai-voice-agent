@@ -113,16 +113,19 @@ export function HeaderProfileSection() {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem onSelect={() => navigate("/dashboard/settings")}>
-              <User className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => navigate("/dashboard/settings")}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={async () => {
+              const { supabase } =
+                await import("@/integrations/supabase/client");
+              await supabase.auth.signOut();
+              navigate("/login");
+            }}
+          >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
           </DropdownMenuItem>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -53,7 +52,9 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {user.name?.[0]?.toUpperCase() || "?"}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 min-w-0 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
@@ -72,7 +73,9 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {user.name?.[0]?.toUpperCase() || "?"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 min-w-0 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
@@ -82,34 +85,20 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles className="mr-2 h-4 w-4 text-primary" />
-                Upgrade to Pro
+              <DropdownMenuItem onClick={() => navigate("/dashboard/settings")}>
+                <Settings className="mr-2 h-4 w-4 text-primary" />
+                Settings
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => navigate("/dashboard/settings?tab=workspace")}
-              >
-                <Building className="mr-2 h-4 w-4 text-primary" />
-                Workspace Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BadgeCheck className="mr-2 h-4 w-4 text-primary" />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard className="mr-2 h-4 w-4 text-primary" />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell className="mr-2 h-4 w-4 text-primary" />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={async () => {
+                const { supabase } =
+                  await import("@/integrations/supabase/client");
+                await supabase.auth.signOut();
+                navigate("/login");
+              }}
+            >
               <LogOut className="mr-2 h-4 w-4 text-primary" />
               Log out
             </DropdownMenuItem>

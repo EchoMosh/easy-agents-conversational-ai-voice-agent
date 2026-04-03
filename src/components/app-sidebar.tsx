@@ -15,6 +15,7 @@ import {
   PieChart,
   Map,
   Phone,
+  Columns3,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -34,8 +35,8 @@ import {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
-  const [username, setUsername] = useState<string>("Meng To");
-  const [email, setEmail] = useState<string>("ui@designer.com");
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
 
   // Get workspace data from context
@@ -68,6 +69,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Agents",
       url: "/dashboard/agents",
       icon: Bot,
+    },
+    {
+      title: "Pipelines",
+      url: "/dashboard/pipelines",
+      icon: Columns3,
     },
     {
       title: "Phone Numbers",
