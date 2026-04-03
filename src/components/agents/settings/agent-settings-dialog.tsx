@@ -175,7 +175,9 @@ export function AgentSettings({
           model: settings.llmModel,
           temperature: settings.llmTemperature,
           maxTokens: settings.llmMaxTokens,
-          knowledgeBaseId: settings.knowledgeBaseId,
+          ...(settings.knowledgeBaseId && {
+            knowledgeBaseId: settings.knowledgeBaseId,
+          }),
         },
       };
 
@@ -184,23 +186,29 @@ export function AgentSettings({
         .update(updates)
         .eq("id", agentId);
 
-      if (error) throw error;
-
-      // Call the parent's onUpdateSettings for backward compat
-      await onUpdateSettings({
-        voiceId: settings.voiceId,
-        language: settings.language,
-        maxDurationSeconds: settings.maxDurationSeconds,
-      });
+      if (error) {
+        console.error("Supabase save error:", error);
+        throw error;
+      }
 
       setOriginalSettings(settings);
       toast({ title: "Settings saved" });
       setOpen(false);
+
+      // Call the parent's onUpdateSettings in background (syncs to voice service)
+      onUpdateSettings({
+        voiceId: settings.voiceId,
+        language: settings.language,
+        maxDurationSeconds: settings.maxDurationSeconds,
+      }).catch((err) => {
+        console.error("Voice service sync failed (settings saved to DB):", err);
+      });
     } catch (err) {
-      console.error("Failed to save settings:", err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error("Failed to save settings:", errorMsg, err);
       toast({
         title: "Error",
-        description: "Failed to save settings",
+        description: `Failed to save settings: ${errorMsg}`,
         variant: "destructive",
       });
     } finally {
