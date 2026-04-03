@@ -1,4 +1,3 @@
-
 import { supabase, withWorkspace } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/context/workspace-context";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
@@ -23,10 +22,14 @@ export function usePipelineMutations() {
   const updateColumnTitle = async (
     pipeline: Pipeline,
     columnId: string,
-    title: string
+    title: string,
   ) => {
     try {
-      // Find the column and update its title
+      // Find the old title before renaming
+      const oldColumn = pipeline.columns.find((col) => col.id === columnId);
+      const oldTitle = oldColumn?.title;
+
+      // Update the column title
       const updatedColumns = pipeline.columns.map((column) => {
         if (column.id === columnId) {
           return { ...column, title };
@@ -35,10 +38,10 @@ export function usePipelineMutations() {
       });
 
       // Convert columns to Json for Supabase
-      const columnsJson = updatedColumns.map(col => ({
+      const columnsJson = updatedColumns.map((col) => ({
         id: col.id,
         title: col.title,
-        color: col.color
+        color: col.color,
       })) as Json;
 
       // Update the pipeline with the new columns
@@ -48,6 +51,22 @@ export function usePipelineMutations() {
         .eq("id", pipeline.id);
 
       if (error) throw error;
+
+      // Migrate leads from old status to new status
+      if (oldTitle && oldTitle !== title) {
+        const { error: leadsError } = await supabase
+          .from("leads")
+          .update({ status: title })
+          .eq("pipeline_id", pipeline.id)
+          .eq("status", oldTitle);
+
+        if (leadsError) {
+          console.error(
+            "Failed to migrate lead statuses after column rename:",
+            leadsError,
+          );
+        }
+      }
 
       // Return the updated pipeline
       return {
@@ -73,10 +92,7 @@ export function usePipelineMutations() {
       }
 
       // Delete the pipeline
-      const { error } = await supabase
-        .from("pipelines")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("pipelines").delete().eq("id", id);
 
       if (error) throw error;
     } catch (error) {
@@ -92,12 +108,13 @@ export function usePipelineMutations() {
       }
 
       // Get the current user
-      const { data: authData, error: authError } = await supabase.auth.getSession();
-      
+      const { data: authData, error: authError } =
+        await supabase.auth.getSession();
+
       if (authError || !authData.session) {
         throw new Error("Authentication required to create pipeline");
       }
-      
+
       const userId = authData.session.user.id;
 
       // Convert columns to Json for Supabase
@@ -118,7 +135,7 @@ export function usePipelineMutations() {
           name,
           workspace_id: workspaceId,
           user_id: userId,
-          columns: columnsJson
+          columns: columnsJson,
         })
         .select()
         .single();

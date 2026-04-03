@@ -103,11 +103,9 @@ const TranscriptModal: React.FC<TranscriptModalProps> = ({
             headers: { Authorization: `Bearer ${vapiApiKey}` },
           });
           if (!response.ok) {
-            const errorData = await response
-              .json()
-              .catch(() => ({
-                message: `HTTP error! status: ${response.status}`,
-              }));
+            const errorData = await response.json().catch(() => ({
+              message: `HTTP error! status: ${response.status}`,
+            }));
             throw new Error(
               errorData.message ||
                 `Failed to fetch transcript details: ${response.statusText}`,
@@ -298,27 +296,18 @@ const TranscriptModal: React.FC<TranscriptModalProps> = ({
 
       let isAgent = false;
 
-      // Method 1: Role check
-      if (msg.role?.toLowerCase() === "assistant") {
+      // Determine speaker from role, fall back to alternating
+      if (
+        msg.role?.toLowerCase() === "assistant" ||
+        msg.role?.toLowerCase() === "bot"
+      ) {
         isAgent = true;
-      }
-
-      // Method 2: Messages on odd/even indices (fallback)
-      // In a conversation, they usually alternate
-      if (i % 2 === 0) {
-        isAgent = true;
-      }
-
-      // Method 3: Customer check (most reliable)
-      // If the message is from the customer, it's a human message
-      const isFromCustomer = msg.role?.toLowerCase() === "user";
-      if (isFromCustomer) {
+      } else if (msg.role?.toLowerCase() === "user") {
         isAgent = false;
+      } else {
+        // Fallback to alternating if role is missing
+        isAgent = i % 2 === 0;
       }
-
-      // Force alternating for clarity based on position in array
-      // This is for demonstration if all else fails
-      isAgent = i % 2 === 0;
 
       return (
         <div

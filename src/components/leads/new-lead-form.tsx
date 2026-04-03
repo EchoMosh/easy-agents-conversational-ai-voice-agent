@@ -167,6 +167,8 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
 
       if (tags.length > 0) {
         for (const tag of tags) {
+          let tagId = tag.id;
+
           if (tag.id.startsWith("temp-")) {
             const { data: newTag, error: newTagError } = await supabase
               .from("tags")
@@ -180,16 +182,15 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
               .single();
 
             if (newTagError) throw newTagError;
-
-            const { error: linkError } = await supabase
-              .from("lead_tags")
-              .insert({
-                lead_id: leadData.id,
-                tag_id: newTag.id,
-              });
-
-            if (linkError) throw linkError;
+            tagId = newTag.id;
           }
+
+          const { error: linkError } = await supabase.from("lead_tags").insert({
+            lead_id: leadData.id,
+            tag_id: tagId,
+          });
+
+          if (linkError) throw linkError;
         }
       }
 
