@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWorkspace } from "@/context/workspace-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mic, Brain, Cpu, Zap, Phone } from "lucide-react";
+import { Loader2, Brain, Cpu, Zap, Phone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApiKeyIntegrationCard } from "./api-key-integration-card";
 import { TwilioIntegrationSettings } from "./twilio-integration-settings";
@@ -14,16 +14,6 @@ interface Integration {
 }
 
 const PROVIDERS = [
-  {
-    provider: "vapi",
-    name: "VAPI",
-    description: "Voice AI platform for building and deploying phone agents",
-    icon: Mic,
-    iconColor: "text-violet-500",
-    placeholder: "vapi_xxxxxxxxxxxxxxxx",
-    helpText: "Find your API key at dashboard.vapi.ai under Account settings",
-    docsUrl: "https://docs.vapi.ai",
-  },
   {
     provider: "elevenlabs",
     name: "ElevenLabs",
