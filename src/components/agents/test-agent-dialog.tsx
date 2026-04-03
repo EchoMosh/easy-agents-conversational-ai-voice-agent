@@ -244,12 +244,17 @@ export function TestAgentDialog({
     handleDialogOpenChange(false);
   };
 
-  const firstMessageNode =
-    typeof agent.flow === "string"
-      ? JSON.parse(agent.flow)?.nodes?.find((node) => node.type === "startNode")
-          ?.data?.firstMessage
-      : agent.flow?.nodes?.find((node) => node.type === "startNode")?.data
-          ?.firstMessage || "Hi there! I'm here to help you today.";
+  let firstMessageNode: string | undefined;
+  try {
+    const flow =
+      typeof agent.flow === "string" ? JSON.parse(agent.flow) : agent.flow;
+    firstMessageNode =
+      flow?.nodes?.find((node: any) => node.type === "startNode")?.data
+        ?.firstMessage || "Hi there! I'm here to help you today.";
+  } catch {
+    console.error("Failed to parse agent flow for first message");
+    firstMessageNode = "Hi there! I'm here to help you today.";
+  }
 
   return (
     <>
