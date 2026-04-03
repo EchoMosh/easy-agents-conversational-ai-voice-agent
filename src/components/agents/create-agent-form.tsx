@@ -141,7 +141,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           role: newAgent.role,
           user_id: session.user.id,
           workspace_id: currentWorkspace.id,
-          flow: JSON.stringify(flow),
+          flow: flow,
           is_active: true,
           objective: "answer_calls",
           interaction_type: ["inbound"],

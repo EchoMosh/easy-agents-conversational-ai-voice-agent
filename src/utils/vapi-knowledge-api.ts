@@ -127,7 +127,6 @@ export async function updateAgentKnowledgeBase(
     .update({
       vapi_knowledge_base_id: knowledgeBaseId,
       vapi_file_ids: fileIds,
-      updated_at: new Date().toISOString(),
     } as any)
     .eq("id", agentId);
 
@@ -182,7 +181,6 @@ export async function createKnowledgeBaseFromDocuments(
     .update({
       vapi_knowledge_base_id: knowledgeBase.id,
       trieve_dataset_id: primaryTrieveDatasetId,
-      updated_at: new Date().toISOString(),
     } as any)
     .eq("id", agentId);
 

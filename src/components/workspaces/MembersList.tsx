@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WorkspaceMember {
   id: string;
@@ -20,17 +20,20 @@ export function MembersList({ workspaceId }: { workspaceId: string }) {
 
   const fetchMembers = async () => {
     const { data, error } = await supabase
-      .from('workspace_members')
-      .select(`
+      .from("workspace_members")
+      .select(
+        `
         id,
         user_id,
         role,
         profiles:user_id (
           email,
-          full_name
+          first_name,
+          last_name
         )
-      `)
-      .eq('workspace_id', workspaceId);
+      `,
+      )
+      .eq("workspace_id", workspaceId);
 
     if (data) setMembers(data as unknown as WorkspaceMember[]);
   };
@@ -38,9 +41,9 @@ export function MembersList({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="members-list">
       <h3>Team Members</h3>
-      {members.map(member => (
+      {members.map((member) => (
         <div key={member.id} className="member-item p-2 border-b">
-          <span>{member.profiles?.email || 'Unknown Email'}</span>
+          <span>{member.profiles?.email || "Unknown Email"}</span>
           <span className="text-sm text-gray-500 ml-2">({member.role})</span>
         </div>
       ))}
