@@ -212,20 +212,19 @@ export function EditLeadDialog({
 
       if (leadError) throw leadError;
 
-      // Handle variables updates
+      // Handle variables updates - always delete existing first
+      const { error: deleteVarsError } = await supabase
+        .from("lead_variables")
+        .delete()
+        .eq("lead_id", lead.id);
+
+      if (deleteVarsError) {
+        console.error("Failed to delete lead variables:", deleteVarsError);
+        throw deleteVarsError;
+      }
+
       if (variables.length > 0) {
-        // First, delete all existing variables
-        const { error: deleteVarsError } = await supabase
-          .from("lead_variables")
-          .delete()
-          .eq("lead_id", lead.id);
-
-        if (deleteVarsError) {
-          console.error("Failed to delete lead variables:", deleteVarsError);
-          throw deleteVarsError;
-        }
-
-        // Then insert new ones
+        // Insert new ones
         const { error: variablesError } = await supabase
           .from("lead_variables")
           .insert(

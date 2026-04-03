@@ -71,7 +71,7 @@ export function PipelineStages({
     // Look for a lead that's being dragged currently
     const draggedLead = leads.find((lead) => {
       const draggedEl = document.querySelector(
-        `[data-draggable-id="${lead.id}"]`
+        `[data-draggable-id="${lead.id}"]`,
       );
       return draggedEl && draggedEl.getAttribute("aria-pressed") === "true";
     });
@@ -81,18 +81,6 @@ export function PipelineStages({
     }
   }, [previewColumnId, leads]);
 
-  // Check if we have a valid pipeline before proceeding
-  if (!selectedPipeline) {
-    console.warn("No pipeline selected");
-    return (
-      <div className="flex items-center justify-center h-64 w-full">
-        <p className="text-muted-foreground">
-          No pipeline selected yet. Please select a pipeline to view its stages.
-        </p>
-      </div>
-    );
-  }
-
   // Ensure unique columns in the pipeline every time it changes
   useEffect(() => {
     if (!selectedPipeline) return;
@@ -100,14 +88,14 @@ export function PipelineStages({
     // Deduplicate columns by ID
     const uniqueColumnsMap = new Map();
     selectedPipeline.columns.forEach((col) =>
-      uniqueColumnsMap.set(col.id, col)
+      uniqueColumnsMap.set(col.id, col),
     );
     const uniqueColumns = Array.from(uniqueColumnsMap.values());
 
     // Check if cleanup is needed
     if (uniqueColumns.length !== selectedPipeline.columns.length) {
       console.warn(
-        `Fixing duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.length}`
+        `Fixing duplicate columns in pipeline ${selectedPipeline.name}. Original: ${selectedPipeline.columns.length}, Unique: ${uniqueColumns.length}`,
       );
 
       // Create a cleaned version of the pipeline with unique columns
@@ -126,7 +114,7 @@ export function PipelineStages({
   // Helper function to save deduplicated columns to the database
   const saveDedupedColumnsToDatabase = async (
     pipelineId: string,
-    uniqueColumns: PipelineColumn[]
+    uniqueColumns: PipelineColumn[],
   ) => {
     try {
       const columnsForDb = uniqueColumns.map((col) => ({
@@ -151,7 +139,7 @@ export function PipelineStages({
   };
 
   const handleDeleteStageClick = async (
-    column: PipelineColumn
+    column: PipelineColumn,
   ): Promise<void> => {
     if (!column || !cleanedPipeline) {
       console.error("Invalid deletion: missing column or pipeline", {
@@ -164,7 +152,7 @@ export function PipelineStages({
 
     try {
       console.log(
-        `PipelineStages: Attempting to delete stage "${column.title}" (${column.id})`
+        `PipelineStages: Attempting to delete stage "${column.title}" (${column.id})`,
       );
 
       // Check if this is the last stage
@@ -176,10 +164,10 @@ export function PipelineStages({
 
       // Get only the leads for this pipeline
       const pipelineLeads = leads.filter(
-        (lead) => lead.pipeline_id === cleanedPipeline.id
+        (lead) => lead.pipeline_id === cleanedPipeline.id,
       );
       console.log(
-        `Found ${pipelineLeads.length} leads in pipeline ${cleanedPipeline.id}`
+        `Found ${pipelineLeads.length} leads in pipeline ${cleanedPipeline.id}`,
       );
 
       // Check if there are leads in this stage
@@ -187,7 +175,7 @@ export function PipelineStages({
         (lead) =>
           lead.status &&
           column.title &&
-          lead.status.toLowerCase() === column.title.toLowerCase()
+          lead.status.toLowerCase() === column.title.toLowerCase(),
       );
 
       if (leadsInStage.length > 0) {
@@ -200,10 +188,10 @@ export function PipelineStages({
         cleanedPipeline.id,
         column,
         cleanedPipeline.columns,
-        pipelineLeads
+        pipelineLeads,
       );
       console.log(
-        `PipelineStages: Stage "${column.title}" deleted successfully`
+        `PipelineStages: Stage "${column.title}" deleted successfully`,
       );
 
       // Toast confirmation
@@ -214,7 +202,7 @@ export function PipelineStages({
       toast.error(
         `Failed to delete stage: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
       throw error; // Re-throw to let the dialog component handle display
     }

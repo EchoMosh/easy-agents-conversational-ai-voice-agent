@@ -47,6 +47,7 @@ const TranscriptionsPage: React.FC = () => {
   const [calls, setCalls] = useState<VoiceCall[]>([]);
   const [filteredCalls, setFilteredCalls] = useState<VoiceCall[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [isAgentsLoading, setIsAgentsLoading] = useState(true);
   const [selectedAgentFilter, setSelectedAgentFilter] = useState<string | null>(
     null,
   );
@@ -100,6 +101,8 @@ const TranscriptionsPage: React.FC = () => {
               : `Exception while fetching agents: ${e.message}`,
           );
           setAgents([]);
+        } finally {
+          setIsAgentsLoading(false);
         }
       } else if (currentWorkspace && !supabase) {
         console.warn("Supabase client not available. Cannot fetch agents.");
@@ -361,45 +364,51 @@ const TranscriptionsPage: React.FC = () => {
 
       {/* Call list */}
       <ScrollArea className="h-[calc(100vh-280px)]">
-        {isLoading && !error && <CallListSkeleton />}
+        {(isLoading || isAgentsLoading) && !error && <CallListSkeleton />}
 
-        {error && !isLoading && (
+        {error && !isLoading && !isAgentsLoading && (
           <div className="text-center p-10 text-destructive text-sm">
             {error}
           </div>
         )}
 
-        {!isLoading && !error && filteredCalls.length > 0 && (
-          <CallList
-            calls={filteredCalls}
-            agents={agents}
-            onViewTranscript={handleViewTranscript}
-          />
-        )}
+        {!isLoading &&
+          !isAgentsLoading &&
+          !error &&
+          filteredCalls.length > 0 && (
+            <CallList
+              calls={filteredCalls}
+              agents={agents}
+              onViewTranscript={handleViewTranscript}
+            />
+          )}
 
-        {!isLoading && !error && filteredCalls.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <FileText className="h-10 w-10 text-muted-foreground/40 mb-3" />
-            <h3 className="text-base font-medium text-foreground">
-              No transcripts found
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-              {hasActiveFilters
-                ? "No calls match your current filters. Try adjusting the agent or date range."
-                : "There are no call transcriptions for this workspace yet."}
-            </p>
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4"
-                onClick={clearFilters}
-              >
-                Clear filters
-              </Button>
-            )}
-          </div>
-        )}
+        {!isLoading &&
+          !isAgentsLoading &&
+          !error &&
+          filteredCalls.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <FileText className="h-10 w-10 text-muted-foreground/40 mb-3" />
+              <h3 className="text-base font-medium text-foreground">
+                No transcripts found
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                {hasActiveFilters
+                  ? "No calls match your current filters. Try adjusting the agent or date range."
+                  : "There are no call transcriptions for this workspace yet."}
+              </p>
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={clearFilters}
+                >
+                  Clear filters
+                </Button>
+              )}
+            </div>
+          )}
       </ScrollArea>
 
       {isTranscriptModalOpen && selectedCallIdForTranscript && vapiApiKey && (
