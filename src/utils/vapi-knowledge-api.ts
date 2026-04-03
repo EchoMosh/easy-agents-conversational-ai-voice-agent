@@ -73,19 +73,33 @@ export async function uploadToTrieve(
   datasetId: string,
   files: Array<{ name: string; content: string; type: string }>,
 ): Promise<any> {
-  const { data, error } = await supabase.functions.invoke("upload-to-trieve", {
-    body: {
-      dataset_id: datasetId,
-      files,
-    },
-  });
+  const results = [];
+  for (const file of files) {
+    const { data, error } = await supabase.functions.invoke(
+      "upload-to-trieve",
+      {
+        body: {
+          dataset_id: datasetId,
+          chunk_data: {
+            chunk_html: file.content,
+            metadata: {
+              title: file.name,
+              file_type: file.type,
+              file_size: file.content.length,
+            },
+          },
+        },
+      },
+    );
 
-  if (error) throw error;
-  if (!data.success && data.status !== 207) {
-    throw new Error(data.error || "Failed to upload files to Trieve");
+    if (error) throw error;
+    if (!data.success) {
+      throw new Error(data.error || `Failed to upload ${file.name} to Trieve`);
+    }
+    results.push(data);
   }
 
-  return data;
+  return { success: true, results };
 }
 
 export async function createVapiKnowledgeBase(
