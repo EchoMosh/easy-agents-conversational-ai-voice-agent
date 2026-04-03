@@ -22,7 +22,6 @@ import TranscriptionsPage from "@/pages/dashboard/transcriptions-page";
 import { PhoneNumbersPage } from "@/pages/dashboard/phone-numbers/phone-numbers-page";
 import ProtectedRoute from "@/components/auth/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Content component to handle loading states
 function AppContent() {

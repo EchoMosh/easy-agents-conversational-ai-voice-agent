@@ -7,12 +7,6 @@ import { ImportProvider } from "@/context/import-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import DashboardHeader from "@/components/dashboard/page";
 import { useAppLoading, LoadingPriority } from "@/context/app-loading-context";
-import { useApiLoading } from "@/hooks/use-api-loading";
-// Skeleton import might not be needed here if pages handle their own full-page skeletons
-// Or if the Suspense fallback for Outlet was the primary use.
-// For now, let's keep it in case we want a generic content area skeleton.
-
-// Note: Page components are imported in App.tsx where routes are defined
 
 function DashboardLayout() {
   const {
