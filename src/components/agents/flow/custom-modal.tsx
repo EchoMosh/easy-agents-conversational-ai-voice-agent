@@ -110,7 +110,7 @@ export function CustomModal({
         )}
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className="overflow-y-auto max-h-[calc(90vh-120px)] px-6 py-5">
           {children}
         </div>
       </div>
@@ -127,7 +127,9 @@ export function CustomModalFooter({
   className?: string;
 }) {
   return (
-    <div className={`px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-800/30 ${className}`}>
+    <div
+      className={`px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-800/30 ${className}`}
+    >
       {children}
     </div>
   );

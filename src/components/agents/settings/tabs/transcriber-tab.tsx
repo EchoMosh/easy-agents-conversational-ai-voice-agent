@@ -35,7 +35,7 @@ export function TranscriberTab({ settings, onChange }: TranscriberTabProps) {
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       {/* Transcriber Provider */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">Transcriber Provider</Label>

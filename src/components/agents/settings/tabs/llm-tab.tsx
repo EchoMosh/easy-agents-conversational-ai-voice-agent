@@ -35,7 +35,7 @@ export function LlmTab({ settings, onChange }: LlmTabProps) {
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       {/* LLM Provider */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">LLM Provider</Label>
