@@ -492,7 +492,7 @@ export function AgentVoiceCall({
 
       if (!assistantId) {
         throw new Error(
-          "No valid assistant ID found. Please make sure the agent has a v_agent_id field.",
+          "No valid assistant ID found. Please make sure the agent has been properly created.",
         );
       }
 
@@ -988,8 +988,7 @@ export function AgentVoiceCall({
                   browser console (F12) for detailed error logs.
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-500">
-                  Make sure you've created an assistant in the voice service
-                  dashboard and are using its ID.
+                  Make sure your agent has been properly set up before testing.
                 </p>
               </div>
             </div>

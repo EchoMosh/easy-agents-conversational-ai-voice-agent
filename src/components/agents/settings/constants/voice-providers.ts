@@ -27,7 +27,7 @@ export interface VoiceProvider {
 export const VOICE_PROVIDERS: VoiceProvider[] = [
   {
     id: "vapi",
-    name: "VAPI (Built-in)",
+    name: "Built-in (Free)",
     requiresApiKey: false,
     models: [{ id: "default", name: "Default", latency: "low" }],
     voices: [
