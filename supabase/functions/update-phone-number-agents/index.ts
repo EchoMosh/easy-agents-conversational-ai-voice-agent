@@ -135,7 +135,7 @@ serve(async (req) => {
         if (phoneNumber.vapi_phone_number_id && inboundAgent.v_agent_id) {
           try {
             const vapiResponse = await fetch(
-              `https://api.vapi.ai/phone-number/${phoneNumber.vapi_phone_number_id}`,
+              `https://api.vapi.ai/phone-numbers/${phoneNumber.vapi_phone_number_id}`,
               {
                 method: "PATCH",
                 headers: {
@@ -161,7 +161,7 @@ serve(async (req) => {
         if (phoneNumber.vapi_phone_number_id) {
           try {
             const vapiResponse = await fetch(
-              `https://api.vapi.ai/phone-number/${phoneNumber.vapi_phone_number_id}`,
+              `https://api.vapi.ai/phone-numbers/${phoneNumber.vapi_phone_number_id}`,
               {
                 method: "PATCH",
                 headers: {

@@ -221,7 +221,7 @@ serve(async (req) => {
         ...(assistantId && { assistantId }),
       };
 
-      const importResponse = await fetch("https://api.vapi.ai/phone-number", {
+      const importResponse = await fetch("https://api.vapi.ai/phone-numbers", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${vapiApiKey}`,
@@ -247,7 +247,7 @@ serve(async (req) => {
         ...(areaCode && { numberDesiredAreaCode: areaCode }),
       };
 
-      const vapiResponse = await fetch("https://api.vapi.ai/phone-number", {
+      const vapiResponse = await fetch("https://api.vapi.ai/phone-numbers", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${vapiApiKey}`,
@@ -303,10 +303,13 @@ serve(async (req) => {
       // Cleanup: delete from VAPI if DB save fails
       if (vapiPhoneNumberId) {
         try {
-          await fetch(`https://api.vapi.ai/phone-number/${vapiPhoneNumberId}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${vapiApiKey}` },
-          });
+          await fetch(
+            `https://api.vapi.ai/phone-numbers/${vapiPhoneNumberId}`,
+            {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${vapiApiKey}` },
+            },
+          );
         } catch (cleanupError) {
           console.error(
             "Failed to cleanup VAPI phone number after DB failure, possible orphaned resource:",

@@ -123,7 +123,7 @@ serve(async (req) => {
     if (vapiId) {
       try {
         const vapiResponse = await fetch(
-          `https://api.vapi.ai/phone-number/${vapiId}`,
+          `https://api.vapi.ai/phone-numbers/${vapiId}`,
           {
             method: "DELETE",
             headers: {
