@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,18 +12,18 @@ export function usePipelineData(selectedLead: Lead | undefined) {
     queryKey: ["pipeline", selectedLead?.pipeline_id],
     queryFn: async () => {
       if (!selectedLead?.pipeline_id) return null;
-      
+
       const { data, error } = await supabase
         .from("pipelines")
         .select("*")
         .eq("id", selectedLead.pipeline_id)
         .single();
-        
+
       if (error) {
         console.error("Error fetching pipeline:", error);
         return null;
       }
-      
+
       return data ? convertJsonToPipeline(data) : null;
     },
     enabled: !!selectedLead?.pipeline_id,
@@ -35,7 +34,7 @@ export function usePipelineData(selectedLead: Lead | undefined) {
       if (!selectedLead || !pipeline) return;
 
       const firstStage = pipeline.columns[0]?.title;
-      if (!firstStage || selectedLead.status === firstStage) return;
+      if (!firstStage || selectedLead.status) return;
 
       const { error } = await supabase
         .from("leads")

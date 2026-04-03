@@ -28,7 +28,7 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
   const [email, setEmail] = useState(lead.email || "");
   const [phone, setPhone] = useState(lead.phone || "");
   const [status, setStatus] = useState(lead.status);
-  
+
   // State for adding new variables
   const [newVariableName, setNewVariableName] = useState("");
   const [newVariableValue, setNewVariableValue] = useState("");
@@ -62,7 +62,9 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
     }
   };
 
-  const [firstName, lastName] = name.split(" ");
+  const parts = name.split(" ");
+  const firstName = parts[0] || "";
+  const lastName = parts.slice(1).join(" ") || "";
 
   const handleAddNewVariable = async () => {
     if (!newVariableName.trim()) {
@@ -86,7 +88,7 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
       toast.success(`Variable "${newVar.name}" added`);
       setNewVariableName("");
       setNewVariableValue("");
-      queryClient.invalidateQueries({ queryKey: ['leadVariables'] });
+      queryClient.invalidateQueries({ queryKey: ["leadVariables"] });
       onSuccess(); // To refresh the variables list in the parent/dialog
     } catch (error) {
       console.error("Error adding variable:", error);
@@ -107,7 +109,7 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
       if (error) throw error;
 
       toast.success("Variable deleted");
-      queryClient.invalidateQueries({ queryKey: ['leadVariables'] });
+      queryClient.invalidateQueries({ queryKey: ["leadVariables"] });
       onSuccess(); // To refresh the variables list
     } catch (error) {
       console.error("Error deleting variable:", error);
@@ -120,27 +122,39 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
       <div className="space-y-6">
         {/* Contact Information Section */}
         <div>
-          <Label className="text-xl font-semibold mb-6 block">Contact Information</Label>
+          <Label className="text-xl font-semibold mb-6 block">
+            Contact Information
+          </Label>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium text-muted-foreground">First name</Label>
-                <Input 
-                  id="firstName" 
+                <Label
+                  htmlFor="firstName"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  First name
+                </Label>
+                <Input
+                  id="firstName"
                   value={firstName}
                   onChange={(e) => setName(`${e.target.value} ${lastName}`)}
-                  required 
+                  required
                   className="h-11 text-base border border-border/50 bg-background/50 hover:bg-background/80 focus-visible:ring-1 transition-colors"
                   placeholder="John"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium text-muted-foreground">Last name</Label>
-                <Input 
-                  id="lastName" 
+                <Label
+                  htmlFor="lastName"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  Last name
+                </Label>
+                <Input
+                  id="lastName"
                   value={lastName}
                   onChange={(e) => setName(`${firstName} ${e.target.value}`)}
-                  required 
+                  required
                   className="h-11 text-base border border-border/50 bg-background/50 hover:bg-background/80 focus-visible:ring-1 transition-colors"
                   placeholder="Doe"
                 />
@@ -149,7 +163,12 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email</Label>
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -160,7 +179,12 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone</Label>
+                <Label
+                  htmlFor="phone"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  Phone
+                </Label>
                 <PhoneInput
                   id="phone"
                   value={phone}
@@ -171,8 +195,16 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status" className="text-sm font-medium text-muted-foreground">Status</Label>
-              <Select value={status} onValueChange={(value: Lead['status']) => setStatus(value)}>
+              <Label
+                htmlFor="status"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Status
+              </Label>
+              <Select
+                value={status}
+                onValueChange={(value: Lead["status"]) => setStatus(value)}
+              >
                 <SelectTrigger className="h-11 text-base border border-border/50 bg-background/50 hover:bg-background/80 focus-visible:ring-1 transition-colors">
                   <SelectValue />
                 </SelectTrigger>
@@ -190,37 +222,45 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
 
         {/* Custom Variables Section */}
         <div>
-          <Label className="text-xl font-semibold mb-4 block">Custom Variables</Label>
-          
+          <Label className="text-xl font-semibold mb-4 block">
+            Custom Variables
+          </Label>
+
           {/* Add New Variable Form */}
           <div className="mb-6 p-4 border border-border/50 rounded-lg bg-background/30">
-            <Label className="text-sm font-medium text-muted-foreground mb-2 block">Add New Variable</Label>
+            <Label className="text-sm font-medium text-muted-foreground mb-2 block">
+              Add New Variable
+            </Label>
             <div className="flex items-center gap-3">
-              <Input 
-                placeholder="Variable name (e.g., Fav_Car)" 
+              <Input
+                placeholder="Variable name (e.g., Fav_Car)"
                 value={newVariableName}
                 onChange={(e) => setNewVariableName(e.target.value)}
                 className="h-10 text-sm flex-1"
               />
-              <Input 
-                placeholder="Value (e.g., Honda Civic)" 
+              <Input
+                placeholder="Value (e.g., Honda Civic)"
                 value={newVariableValue}
                 onChange={(e) => setNewVariableValue(e.target.value)}
                 className="h-10 text-sm flex-1"
               />
-              <Button 
-                type="button" 
-                size="icon" 
+              <Button
+                type="button"
+                size="icon"
                 className="h-10 w-10 bg-primary/90 hover:bg-primary"
                 onClick={handleAddNewVariable}
                 disabled={isAddingVariable || !newVariableName.trim()}
               >
-                {isAddingVariable ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-5 w-5" />}
+                {isAddingVariable ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-5 w-5" />
+                )}
               </Button>
             </div>
           </div>
 
-          <LeadVariables 
+          <LeadVariables
             leadId={lead.id}
             variables={lead.variables || []} // This should be dynamically updated
             onVariablesUpdated={onSuccess} // This will be called by LeadVariables on edit, and by this form on add/delete
@@ -230,8 +270,8 @@ export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
         </div>
       </div>
 
-      <Button 
-        type="submit" 
+      <Button
+        type="submit"
         disabled={isLoading}
         className="w-full h-11 text-base bg-primary/90 hover:bg-primary transition-all duration-200"
       >

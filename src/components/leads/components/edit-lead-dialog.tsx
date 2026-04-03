@@ -307,7 +307,7 @@ export function EditLeadDialog({
           .select("id")
           .eq("name", newTag.name)
           .eq("workspace_id", currentWorkspace.id)
-          .single();
+          .maybeSingle();
 
         let tagId: string;
 
@@ -337,7 +337,7 @@ export function EditLeadDialog({
           .select("id")
           .eq("lead_id", lead.id)
           .eq("tag_id", tagId)
-          .single();
+          .maybeSingle();
 
         if (!existingLink) {
           const { error: linkError } = await supabase.from("lead_tags").insert({
