@@ -24,19 +24,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // Register auth loading as HIGH priority
-  useRegisterLoadingState("authentication", isAuthLoading, LoadingPriority.HIGH);
+  useRegisterLoadingState(
+    "authentication",
+    isAuthLoading,
+    LoadingPriority.HIGH,
+  );
 
   useEffect(() => {
     let mounted = true;
 
     const getInitialSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (!mounted) return;
-      if (error) {
-        console.error("Auth session error:", error);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (!mounted) return;
+        if (error) {
+          console.error("Auth session error:", error);
+          setSession(null);
+          setIsAuthLoading(false);
+          return;
+        }
+        setSession(data.session);
+        setIsAuthLoading(false);
+      } catch (err) {
+        console.error("Failed to get auth session:", err);
+        if (!mounted) return;
+        setSession(null);
+        setIsAuthLoading(false);
       }
-      setSession(data.session);
-      setIsAuthLoading(false);
     };
 
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -44,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (mounted) {
           setSession(session);
         }
-      }
+      },
     );
 
     if (!session) {

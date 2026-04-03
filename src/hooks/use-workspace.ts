@@ -159,7 +159,18 @@ export function useWorkspace() {
 
   const currentWorkspace = useMemo(() => {
     const cached = localStorage.getItem("cachedWorkspace");
-    const fromCache = cached ? (JSON.parse(cached) as Workspace) : null;
+    let fromCache: Workspace | null = null;
+    if (cached) {
+      try {
+        fromCache = JSON.parse(cached) as Workspace;
+      } catch (err) {
+        console.error(
+          "Failed to parse cachedWorkspace from localStorage:",
+          err,
+        );
+        localStorage.removeItem("cachedWorkspace");
+      }
+    }
     if (workspacesQuery.data && workspacesQuery.data.length > 0) {
       return (
         workspacesQuery.data.find((w) => w.id === fromCache?.id) ||

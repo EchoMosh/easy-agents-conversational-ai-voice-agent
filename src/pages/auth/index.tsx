@@ -1,11 +1,17 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
@@ -24,8 +30,8 @@ const AuthPage = () => {
   const { session } = useAuth();
 
   useEffect(() => {
-    const mode = searchParams.get('mode');
-    setIsSignUp(mode === 'signup');
+    const mode = searchParams.get("mode");
+    setIsSignUp(mode === "signup");
 
     setAuthError(null);
 
@@ -36,7 +42,7 @@ const AuthPage = () => {
 
   const handleToggleMode = () => {
     setAuthError(null); // Clear errors on mode switch
-    navigate(`/auth?mode=${isSignUp ? 'login' : 'signup'}`, { replace: true });
+    navigate(`/auth?mode=${isSignUp ? "login" : "signup"}`, { replace: true });
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -64,7 +70,7 @@ const AuthPage = () => {
             title: "Account created!",
             description: "Let's set up your workspace.",
           });
-          navigate('/onboarding');
+          navigate("/onboarding");
         }
       } else {
         // Sign in flow
@@ -72,19 +78,23 @@ const AuthPage = () => {
           email,
           password,
         });
-        
+
         if (error) throw error;
 
         if (data.user) {
           console.log("Login successful, checking profile");
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', data.user.id)
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("onboarding_completed")
+            .eq("id", data.user.id)
             .maybeSingle();
 
+          if (profileError) {
+            console.error("Profile query error:", profileError);
+          }
+
           console.log("Profile check:", profile);
-          
+
           if (profile?.onboarding_completed) {
             navigate("/dashboard/agents");
           } else {
@@ -93,7 +103,7 @@ const AuthPage = () => {
         }
       }
     } catch (error: any) {
-      console.error('Auth error:', error);
+      console.error("Auth error:", error);
       setAuthError(error.message || "An error occurred during authentication");
       toast({
         variant: "destructive",
@@ -117,7 +127,7 @@ const AuthPage = () => {
       />
       {/* Radial gradient for the container to give a faded look */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-black"></div>
-      
+
       {/* Theme Toggle remains in its original position, adjusted for new parent */}
       <div className="absolute right-4 top-4 md:right-8 md:top-8 z-30">
         <ThemeToggle />
@@ -125,10 +135,14 @@ const AuthPage = () => {
 
       {/* Auth Card - Placed as the content within the background */}
       <div className="relative z-20 mx-auto w-full max-w-[350px] space-y-6 flex flex-col items-center">
-        <div className="text-3xl font-bold tracking-tight mb-8 text-center text-white">Ready Ride</div>
+        <div className="text-3xl font-bold tracking-tight mb-8 text-center text-white">
+          Ready Ride
+        </div>
         <Card className="w-full border shadow-none bg-background/80 backdrop-blur-sm dark:bg-neutral-800 dark:border dark:border-neutral-700">
           <CardHeader>
-            <CardTitle>{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
+            <CardTitle>
+              {isSignUp ? "Create Account" : "Welcome Back"}
+            </CardTitle>
             <CardDescription>
               {isSignUp
                 ? "Enter your email below to create your account"
@@ -151,7 +165,7 @@ const AuthPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-white/80 dark:bg-neutral-700 dark:border dark:border-neutral-600" 
+                  className="bg-white/80 dark:bg-neutral-700 dark:border dark:border-neutral-600"
                 />
               </div>
               <div className="space-y-2">
@@ -176,7 +190,9 @@ const AuthPage = () => {
                 type="button"
                 onClick={handleToggleMode}
               >
-                {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
+                {isSignUp
+                  ? "Already have an account? Sign In"
+                  : "Don't have an account? Sign Up"}
               </Button>
             </CardFooter>
           </form>

@@ -140,7 +140,14 @@ export function DashboardSettings() {
   useEffect(() => {
     const savedSettings = localStorage.getItem("dashboard-settings");
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+      try {
+        setSettings(JSON.parse(savedSettings));
+      } catch (err) {
+        console.error(
+          "Failed to parse dashboard-settings from localStorage:",
+          err,
+        );
+      }
     }
   }, []);
 

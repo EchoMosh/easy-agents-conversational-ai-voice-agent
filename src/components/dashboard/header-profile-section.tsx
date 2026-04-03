@@ -38,11 +38,15 @@ export function HeaderProfileSection() {
         setEmail(userEmail);
         const name = userEmail.split("@")[0];
 
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("avatar_url, first_name, last_name")
           .eq("id", session.user.id)
           .single();
+
+        if (profileError) {
+          console.error("Profile query error:", profileError);
+        }
 
         if (profile) {
           setUsername(profile.first_name || name);
