@@ -228,6 +228,7 @@ export function BulkCallView({
                 ? lead.phone
                 : `+${lead.phone}`,
               customer_name: lead.name || undefined,
+              language: agent.language || undefined,
             },
           },
         );

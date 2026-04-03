@@ -113,9 +113,14 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       return;
     }
 
-    // Validate phone number uniqueness
+    // Normalize phone to E.164 format for validation and storage
+    const normalizedPhone = phone.trim().startsWith("+")
+      ? phone.trim()
+      : `+${phone.trim()}`;
+
+    // Validate phone number uniqueness using normalized phone
     const isPhoneValid = await validatePhoneUniqueness(
-      phone,
+      normalizedPhone,
       currentWorkspace.id,
     );
     if (!isPhoneValid) {
@@ -135,16 +140,33 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         throw new Error("No authenticated user found");
       }
 
+      // Get the default pipeline for this workspace (oldest = auto-created)
+      const { data: defaultPipeline } = await supabase
+        .from("pipelines")
+        .select("id")
+        .eq("workspace_id", currentWorkspace.id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      // Normalize phone to E.164 format (ensure + prefix)
+      const normalizedPhone = phone
+        ? phone.startsWith("+")
+          ? phone
+          : `+${phone}`
+        : null;
+
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .insert([
           {
             name: `${firstName} ${lastName}`.trim(),
             email: email || null,
-            phone: phone || null,
+            phone: normalizedPhone,
             user_id: user.id,
             status: "new",
             workspace_id: currentWorkspace.id,
+            pipeline_id: defaultPipeline?.id || null,
           },
         ])
         .select()

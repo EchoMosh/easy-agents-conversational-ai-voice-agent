@@ -12,6 +12,7 @@ interface InitiateCallRequest {
   vapi_phone_number_id: string;
   customer_number: string;
   customer_name?: string;
+  language?: string;
 }
 
 serve(async (req) => {
@@ -57,8 +58,13 @@ serve(async (req) => {
       });
     }
 
-    const { v_agent_id, vapi_phone_number_id, customer_number, customer_name } =
-      (await req.json()) as InitiateCallRequest;
+    const {
+      v_agent_id,
+      vapi_phone_number_id,
+      customer_number,
+      customer_name,
+      language,
+    } = (await req.json()) as InitiateCallRequest;
 
     if (!v_agent_id) {
       return new Response(JSON.stringify({ error: "v_agent_id is required" }), {
@@ -102,7 +108,7 @@ serve(async (req) => {
         transcriber: {
           provider: "talkscriber",
           model: "whisper",
-          language: "en",
+          language: language || "en",
         },
       },
       phoneNumberId: vapi_phone_number_id,

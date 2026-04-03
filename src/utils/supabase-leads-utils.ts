@@ -21,6 +21,17 @@ interface ImportOptions {
 }
 
 /**
+ * Normalize a phone number to E.164 format (+ prefix, digits only)
+ */
+function normalizePhone(phone: string | undefined | null): string {
+  if (!phone) return "";
+  const trimmed = phone.trim();
+  const digits = trimmed.replace(/[^\d]/g, "");
+  if (!digits) return "";
+  return `+${digits}`;
+}
+
+/**
  * Import leads from CSV data
  * @param leads Array of lead data objects
  * @param options Import options
@@ -34,6 +45,15 @@ export async function importLeads(leads: LeadData[], options: ImportOptions) {
     if (!leads || !Array.isArray(leads) || leads.length === 0) {
       throw new Error("No valid leads to import");
     }
+
+    // Get the default pipeline for this workspace (oldest = auto-created)
+    const { data: defaultPipeline } = await supabase
+      .from("pipelines")
+      .select("id")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
 
     // Check for required fields - only first name and phone are required
     const invalidLeads = leads.filter((lead) => {
@@ -49,10 +69,10 @@ export async function importLeads(leads: LeadData[], options: ImportOptions) {
       );
     }
 
-    // Remove duplicates within the CSV file based on phone number (since phone is now required)
+    // Remove duplicates within the CSV file based on normalized phone number
     const uniquePhones = new Set();
     let leadsToImport = leads.filter((lead) => {
-      const phone = lead.phone?.trim();
+      const phone = normalizePhone(lead.phone);
       if (!phone) return false; // Don't import leads without phone
 
       if (uniquePhones.has(phone)) {
@@ -65,7 +85,7 @@ export async function importLeads(leads: LeadData[], options: ImportOptions) {
     // Check for existing leads in database only if removing duplicates is enabled
     if (removeDuplicates) {
       const phones = leadsToImport
-        .map((lead) => lead.phone?.trim())
+        .map((lead) => normalizePhone(lead.phone))
         .filter((phone) => phone);
 
       if (phones.length > 0) {
@@ -86,7 +106,7 @@ export async function importLeads(leads: LeadData[], options: ImportOptions) {
             existingLeads.map((lead) => lead.phone),
           );
           leadsToImport = leadsToImport.filter(
-            (lead) => !existingPhones.has(lead.phone),
+            (lead) => !existingPhones.has(normalizePhone(lead.phone)),
           );
         }
       }
@@ -115,12 +135,13 @@ export async function importLeads(leads: LeadData[], options: ImportOptions) {
         id: uuidv4(),
         name,
         email: lead.email || null, // Email is now optional
-        phone: lead.phone, // Phone is required
+        phone: normalizePhone(lead.phone) || lead.phone, // Phone is required, normalized to E.164
         workspace_id: workspaceId,
         user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         status: "new",
+        pipeline_id: defaultPipeline?.id || null,
       };
 
       // Remove fields that aren't in the leads table to prevent insertion errors

@@ -309,6 +309,9 @@ export function AgentSettings({
   const [vapiAgentId, setVapiAgentId] = React.useState<string | null>(null);
   const [firstMessage, setFirstMessage] = React.useState<string>("");
   const [mermaidChart, setMermaidChart] = React.useState<string>("");
+  const [loadedAgentData, setLoadedAgentData] = React.useState<Agent | null>(
+    null,
+  );
 
   // Vapi Knowledge Base states
   const [uploadedFiles, setUploadedFiles] = React.useState<
@@ -394,6 +397,7 @@ export function AgentSettings({
 
           if (data) {
             const agentData = data as unknown as Agent;
+            setLoadedAgentData(agentData);
 
             if (agentData.voice_id) {
               const isValidVoice = BUILT_IN_VOICES.some(
@@ -534,8 +538,9 @@ export function AgentSettings({
                   firstMessage ||
                   `Hello! This is an AI assistant. How can I help you today?`,
                 mermaid_chart: mermaidChart || "",
-                max_duration_seconds: agentData?.max_duration_seconds || 600,
-                background_sound: agentData?.background_sound || "office",
+                max_duration_seconds:
+                  loadedAgentData?.max_duration_seconds || 600,
+                background_sound: loadedAgentData?.background_sound || "office",
                 knowledge_base_id: vapiKnowledgeBaseId,
               },
             },

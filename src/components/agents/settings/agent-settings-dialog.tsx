@@ -70,6 +70,17 @@ export function AgentSettings({
     React.useState<AgentSettingsState>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [agentMeta, setAgentMeta] = React.useState<{
+    v_agent_id: string | null;
+    first_message: string;
+    mermaid_chart: string;
+    vapi_knowledge_base_id: string | null;
+  }>({
+    v_agent_id: null,
+    first_message: "",
+    mermaid_chart: "",
+    vapi_knowledge_base_id: null,
+  });
   const { toast } = useToast();
 
   const handleChange = React.useCallback(
@@ -125,6 +136,26 @@ export function AgentSettings({
           knowledgeBaseId: (data.vapi_knowledge_base_id as string) || null,
           language: (data.language as string) || "en",
         };
+
+        // Extract first_message from flow data
+        let firstMessage = "";
+        try {
+          const flowData =
+            typeof data.flow === "string" ? JSON.parse(data.flow) : data.flow;
+          firstMessage =
+            flowData?.nodes?.find((node: any) => node.type === "startNode")
+              ?.data?.firstMessage || "";
+        } catch (parseErr) {
+          console.error("Failed to parse flow for first_message:", parseErr);
+        }
+
+        setAgentMeta({
+          v_agent_id: (data.v_agent_id as string) || null,
+          first_message: firstMessage.replace(/<[^>]*>?/gm, ""),
+          mermaid_chart: (data.mermaid_chart as string) || "",
+          vapi_knowledge_base_id:
+            (data.vapi_knowledge_base_id as string) || null,
+        });
 
         setSettings(loaded);
         setOriginalSettings(loaded);
@@ -192,7 +223,7 @@ export function AgentSettings({
       toast({ title: "Settings saved" });
       setOpen(false);
 
-      // Call the parent's onUpdateSettings in background (syncs to voice service)
+      // Call the parent's onUpdateSettings in background (syncs basic fields to DB)
       onUpdateSettings({
         voiceId: settings.voiceId,
         language: settings.language,
@@ -200,6 +231,52 @@ export function AgentSettings({
       }).catch((err) => {
         console.error("Voice service sync failed (settings saved to DB):", err);
       });
+
+      // Sync full settings to VAPI in background (only if agent has been pushed to VAPI)
+      if (agentMeta.v_agent_id) {
+        supabase.functions
+          .invoke("update-vapi-agent", {
+            body: {
+              agent_id: agentId,
+              v_agent_id: agentMeta.v_agent_id,
+              voice_id: settings.voiceId,
+              language: settings.language,
+              first_message:
+                agentMeta.first_message ||
+                "Hello! This is an AI assistant. How can I help you today?",
+              mermaid_chart: agentMeta.mermaid_chart,
+              max_duration_seconds: settings.maxDurationSeconds,
+              background_sound: settings.backgroundSound,
+              knowledge_base_id: agentMeta.vapi_knowledge_base_id,
+              voice_provider: settings.voiceProvider,
+              voice_model: settings.voiceModel,
+              voice_speed: settings.voiceSpeed,
+              voice_stability: settings.voiceStability,
+              voice_similarity_boost: settings.voiceSimilarityBoost,
+              voice_emotion: settings.voiceEmotions,
+              transcriber_provider: settings.transcriberProvider,
+              transcriber_model: settings.transcriberModel,
+              llm_provider: settings.llmProvider,
+              llm_model: settings.llmModel,
+              llm_temperature: settings.llmTemperature,
+              llm_max_tokens: settings.llmMaxTokens,
+              background_denoising_enabled: settings.backgroundDenoisingEnabled,
+              silence_timeout_seconds: settings.silenceTimeoutSeconds,
+              start_speaking_wait_seconds: settings.startSpeakingWaitSeconds,
+              smart_endpointing_enabled: settings.smartEndpointingEnabled,
+              on_punctuation_seconds: settings.onPunctuationSeconds,
+              on_no_punctuation_seconds: settings.onNoPunctuationSeconds,
+              on_number_seconds: settings.onNumberSeconds,
+              stop_speaking_num_words: settings.stopSpeakingNumWords,
+              stop_speaking_voice_seconds: settings.stopSpeakingVoiceSeconds,
+              stop_speaking_backoff_seconds:
+                settings.stopSpeakingBackoffSeconds,
+            },
+          })
+          .catch((err) => {
+            console.error("VAPI sync failed (settings saved to DB):", err);
+          });
+      }
     } catch (err) {
       const errorMsg =
         err instanceof Error

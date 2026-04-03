@@ -157,6 +157,7 @@ export function SingleCallView({
             vapi_phone_number_id: selectedPhoneId,
             customer_number: customerPhone,
             customer_name: customerName.trim() || undefined,
+            language: agent.language || undefined,
           },
         },
       );
