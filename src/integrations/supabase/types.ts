@@ -669,6 +669,8 @@ export type Database = {
           provider: string;
           account_sid: string | null;
           auth_token: string | null;
+          api_key: string | null;
+          display_name: string | null;
           is_connected: boolean;
           created_at: string;
           updated_at: string;
@@ -679,6 +681,8 @@ export type Database = {
           provider?: string;
           account_sid?: string | null;
           auth_token?: string | null;
+          api_key?: string | null;
+          display_name?: string | null;
           is_connected?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -689,6 +693,8 @@ export type Database = {
           provider?: string;
           account_sid?: string | null;
           auth_token?: string | null;
+          api_key?: string | null;
+          display_name?: string | null;
           is_connected?: boolean;
           created_at?: string;
           updated_at?: string;

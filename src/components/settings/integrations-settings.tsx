@@ -90,7 +90,7 @@ export function IntegrationsSettings() {
           api_key: apiKey,
           is_connected: true,
           updated_at: new Date().toISOString(),
-        } as any,
+        },
         { onConflict: "workspace_id,provider" },
       );
 
