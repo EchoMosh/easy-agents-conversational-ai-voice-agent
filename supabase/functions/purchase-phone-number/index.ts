@@ -307,7 +307,13 @@ serve(async (req) => {
             method: "DELETE",
             headers: { Authorization: `Bearer ${vapiApiKey}` },
           });
-        } catch {}
+        } catch (cleanupError) {
+          console.error(
+            "Failed to cleanup VAPI phone number after DB failure, possible orphaned resource:",
+            vapiPhoneNumberId,
+            cleanupError,
+          );
+        }
       }
       return ok({
         error: "Failed to save phone number: " + dbError.message,
