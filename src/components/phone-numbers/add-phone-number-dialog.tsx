@@ -26,6 +26,9 @@ import {
   Search,
   Settings,
   ArrowLeft,
+  Plug,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { PhoneNumberAgentSelector } from "./phone-number-agent-selector";
 
@@ -53,10 +56,16 @@ export const AddPhoneNumberDialog = ({
   const { toast } = useToast();
   const [twilioConnected, setTwilioConnected] = useState<boolean | null>(null);
   const [mode, setMode] = useState<
-    "select" | "vapi" | "twilio-search" | "twilio-configure"
+    "select" | "vapi" | "twilio-connect" | "twilio-search" | "twilio-configure"
   >("select");
   const [purchasing, setPurchasing] = useState(false);
   const [searching, setSearching] = useState(false);
+
+  // Twilio connect fields
+  const [twilioSid, setTwilioSid] = useState("");
+  const [twilioToken, setTwilioToken] = useState("");
+  const [showToken, setShowToken] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
   // Shared fields
   const [friendlyName, setFriendlyName] = useState("");
@@ -76,7 +85,7 @@ export const AddPhoneNumberDialog = ({
     null,
   );
 
-  // Check Twilio connection on open
+  // Check Twilio connection on open — always start at select screen
   useEffect(() => {
     if (open && workspaceId) {
       supabase
@@ -86,10 +95,8 @@ export const AddPhoneNumberDialog = ({
         .eq("provider", "twilio")
         .maybeSingle()
         .then(({ data }) => {
-          const connected = data?.is_connected === true;
-          setTwilioConnected(connected);
-          // If Twilio connected, go straight to search. Otherwise show VAPI mode.
-          setMode(connected ? "twilio-search" : "vapi");
+          setTwilioConnected(data?.is_connected === true);
+          setMode("select");
         });
     }
   }, [open, workspaceId]);
@@ -103,7 +110,74 @@ export const AddPhoneNumberDialog = ({
     setSearchAreaCode("");
     setAvailableNumbers([]);
     setSelectedNumber(null);
+    setTwilioSid("");
+    setTwilioToken("");
+    setShowToken(false);
     setMode("select");
+  };
+
+  const handleTwilioConnect = async () => {
+    if (!twilioSid.trim() || !twilioToken.trim()) {
+      toast({
+        title: "Missing credentials",
+        description: "Please enter both Account SID and Auth Token.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setConnecting(true);
+    try {
+      const verifyResponse = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${twilioSid.trim()}.json`,
+        {
+          headers: {
+            Authorization:
+              "Basic " + btoa(`${twilioSid.trim()}:${twilioToken.trim()}`),
+          },
+        },
+      );
+
+      if (!verifyResponse.ok) {
+        toast({
+          title: "Invalid credentials",
+          description:
+            "Could not verify your Twilio credentials. Check your Account SID and Auth Token.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase.from("workspace_integrations").upsert(
+        {
+          workspace_id: workspaceId,
+          provider: "twilio",
+          account_sid: twilioSid.trim(),
+          auth_token: twilioToken.trim(),
+          is_connected: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "workspace_id,provider" },
+      );
+
+      if (error) {
+        console.error("Failed to save Twilio integration:", error);
+        throw error;
+      }
+
+      setTwilioConnected(true);
+      toast({ title: "Connected", description: "Twilio account connected." });
+      setMode("twilio-search");
+    } catch (err) {
+      console.error("Error connecting Twilio:", err);
+      toast({
+        title: "Error",
+        description: "Failed to connect Twilio account.",
+        variant: "destructive",
+      });
+    } finally {
+      setConnecting(false);
+    }
   };
 
   const handleSearch = async () => {
@@ -226,12 +300,193 @@ export const AddPhoneNumberDialog = ({
         <DialogHeader>
           <DialogTitle>Add Phone Number</DialogTitle>
           <DialogDescription>
-            {mode === "twilio-search" && "Search and purchase a phone number"}
+            {mode === "select" && "Choose the type of phone number to add"}
+            {mode === "vapi" && "Add a free virtual number"}
+            {mode === "twilio-connect" &&
+              "Connect Twilio to purchase real numbers"}
+            {mode === "twilio-search" && "Search and purchase a real number"}
             {mode === "twilio-configure" && "Configure your new number"}
-            {mode === "vapi" && "Get a free virtual phone number"}
-            {mode === "select" && "Choose how to add a phone number"}
           </DialogDescription>
         </DialogHeader>
+
+        {/* MODE: Select — two clear options */}
+        {mode === "select" && (
+          <div className="space-y-3 pt-2">
+            <button
+              onClick={() => setMode("vapi")}
+              className="w-full flex items-start gap-4 p-4 rounded-xl border border-border/50 hover:border-primary/30 hover:bg-accent/50 transition-all text-left group"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Phone className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="font-medium">Virtual Number</div>
+                <div className="text-sm text-muted-foreground mt-0.5">
+                  Free US number for outbound calls. Provisioned instantly.
+                </div>
+                <Badge variant="secondary" className="mt-2 text-xs">
+                  Free
+                </Badge>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                if (twilioConnected) {
+                  setMode("twilio-search");
+                } else {
+                  setMode("twilio-connect");
+                }
+              }}
+              className="w-full flex items-start gap-4 p-4 rounded-xl border border-border/50 hover:border-primary/30 hover:bg-accent/50 transition-all text-left group"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Settings className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="font-medium">Real Number</div>
+                <div className="text-sm text-muted-foreground mt-0.5">
+                  Purchase a real phone number via Twilio with custom area codes
+                  (US, Canada, UK).
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="text-xs">
+                    ~$1.15/mo
+                  </Badge>
+                  {twilioConnected === false && (
+                    <Badge
+                      variant="outline"
+                      className="text-xs text-muted-foreground"
+                    >
+                      Requires Twilio
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* MODE: VAPI Free Virtual Number */}
+        {mode === "vapi" && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
+              <Phone className="h-5 w-5 text-primary" />
+              <div className="text-sm">
+                A free virtual number will be provisioned instantly (outbound
+                only, US area codes).
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-2">
+              <Button variant="outline" onClick={() => setMode("select")}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <Button
+                onClick={() => handlePurchase("vapi")}
+                disabled={purchasing}
+              >
+                {purchasing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Provisioning...
+                  </>
+                ) : (
+                  <>
+                    Add Free Number
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* MODE: Twilio Connect — inline setup */}
+        {mode === "twilio-connect" && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
+              <Plug className="h-5 w-5 text-primary" />
+              <div className="text-sm">
+                Enter your Twilio credentials to get started. You can find them
+                in your{" "}
+                <a
+                  href="https://console.twilio.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline underline-offset-2"
+                >
+                  Twilio Console
+                </a>{" "}
+                under Account Info.
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="twilio-sid">Account SID</Label>
+              <Input
+                id="twilio-sid"
+                placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                value={twilioSid}
+                onChange={(e) => setTwilioSid(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="twilio-token">Auth Token</Label>
+              <div className="relative">
+                <Input
+                  id="twilio-token"
+                  type={showToken ? "text" : "password"}
+                  placeholder="Your Twilio Auth Token"
+                  value={twilioToken}
+                  onChange={(e) => setTwilioToken(e.target.value)}
+                  className="font-mono pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowToken(!showToken)}
+                >
+                  {showToken ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={() => setMode("select")}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <Button
+                onClick={handleTwilioConnect}
+                disabled={
+                  connecting || !twilioSid.trim() || !twilioToken.trim()
+                }
+              >
+                {connecting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <Plug className="h-4 w-4 mr-2" />
+                    Connect & Continue
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* MODE: Twilio Search */}
         {mode === "twilio-search" && (
@@ -309,14 +564,10 @@ export const AddPhoneNumberDialog = ({
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setMode("vapi")}
-                className="text-muted-foreground"
-              >
-                Or get a free virtual number instead
+            <div className="flex justify-start pt-2">
+              <Button variant="outline" onClick={() => setMode("select")}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
               </Button>
             </div>
           </div>
@@ -325,8 +576,8 @@ export const AddPhoneNumberDialog = ({
         {/* MODE: Twilio Configure (after selecting a number) */}
         {mode === "twilio-configure" && selectedNumber && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
-              <Phone className="h-5 w-5" />
+            <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
+              <Phone className="h-5 w-5 text-primary" />
               <div>
                 <div className="font-medium font-mono">
                   {formatPhoneDisplay(selectedNumber.phoneNumber)}
@@ -393,87 +644,6 @@ export const AddPhoneNumberDialog = ({
                 ) : (
                   <>
                     Purchase Number
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* MODE: VAPI Free Number */}
-        {mode === "vapi" && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
-              <Phone className="h-5 w-5" />
-              <div className="text-sm">
-                A free virtual number will be provisioned (outbound only, US
-                area codes).
-              </div>
-            </div>
-
-            {twilioConnected && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setMode("twilio-search")}
-                className="text-muted-foreground w-full"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to number search
-              </Button>
-            )}
-
-            {!twilioConnected && (
-              <div className="p-3 border rounded-lg text-sm text-muted-foreground">
-                <div className="flex items-center gap-2 mb-1">
-                  <Settings className="h-4 w-4" />
-                  <span className="font-medium text-foreground">
-                    Want real phone numbers?
-                  </span>
-                </div>
-                Connect your Twilio account in Settings to purchase real numbers
-                with custom area codes (US, Canada, UK).
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="friendlyName">Friendly Name (Optional)</Label>
-              <Input
-                id="friendlyName"
-                placeholder="e.g., Main Support Line"
-                value={friendlyName}
-                onChange={(e) => setFriendlyName(e.target.value)}
-                maxLength={40}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="areaCode">Preferred Area Code (Optional)</Label>
-              <Input
-                id="areaCode"
-                placeholder="e.g., 415, 212 (US only)"
-                value={areaCode}
-                onChange={(e) =>
-                  setAreaCode(e.target.value.replace(/\D/g, "").slice(0, 3))
-                }
-                maxLength={3}
-              />
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <Button
-                onClick={() => handlePurchase("vapi")}
-                disabled={purchasing}
-              >
-                {purchasing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Provisioning...
-                  </>
-                ) : (
-                  <>
-                    Add Free Number
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 )}

@@ -72,7 +72,7 @@ export default function DashboardHeader() {
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between px-4 border-b border-border">
+    <header className="flex h-14 shrink-0 items-center justify-between px-4 border-b border-border/50 bg-background/60 backdrop-blur-xl">
       <div className="flex items-center gap-2">
         {/* <SidebarTrigger className="-ml-1" /> // Removed to hide the toggle icon */}
         <Separator orientation="vertical" className="mr-2 h-4" />

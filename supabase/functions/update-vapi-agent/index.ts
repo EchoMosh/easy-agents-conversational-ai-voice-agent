@@ -43,6 +43,30 @@ interface UpdateVapiAgentRequest {
   max_duration_seconds: number;
   background_sound: string;
   knowledge_base_id?: string;
+  // Extended config (from new settings)
+  voice_provider?: string;
+  voice_model?: string;
+  voice_speed?: number;
+  voice_stability?: number;
+  voice_similarity_boost?: number;
+  voice_emotion?: string[];
+  voice_style_prompt?: string;
+  transcriber_provider?: string;
+  transcriber_model?: string;
+  llm_provider?: string;
+  llm_model?: string;
+  llm_temperature?: number;
+  llm_max_tokens?: number;
+  background_denoising_enabled?: boolean;
+  silence_timeout_seconds?: number;
+  start_speaking_wait_seconds?: number;
+  smart_endpointing_enabled?: boolean;
+  on_punctuation_seconds?: number;
+  on_no_punctuation_seconds?: number;
+  on_number_seconds?: number;
+  stop_speaking_num_words?: number;
+  stop_speaking_voice_seconds?: number;
+  stop_speaking_backoff_seconds?: number;
 }
 
 serve(async (req) => {
@@ -51,6 +75,7 @@ serve(async (req) => {
   }
 
   try {
+    const body = (await req.json()) as UpdateVapiAgentRequest;
     const {
       agent_id,
       v_agent_id,
@@ -61,7 +86,29 @@ serve(async (req) => {
       max_duration_seconds,
       background_sound,
       knowledge_base_id,
-    } = (await req.json()) as UpdateVapiAgentRequest;
+      voice_provider,
+      voice_model,
+      voice_speed,
+      voice_stability,
+      voice_similarity_boost,
+      voice_emotion,
+      transcriber_provider,
+      transcriber_model,
+      llm_provider,
+      llm_model,
+      llm_temperature,
+      llm_max_tokens,
+      background_denoising_enabled,
+      silence_timeout_seconds,
+      start_speaking_wait_seconds,
+      smart_endpointing_enabled,
+      on_punctuation_seconds,
+      on_no_punctuation_seconds,
+      on_number_seconds,
+      stop_speaking_num_words,
+      stop_speaking_voice_seconds,
+      stop_speaking_backoff_seconds,
+    } = body;
 
     console.log("Request payload:", {
       agent_id,
@@ -128,43 +175,52 @@ The following is a flowchart written in Mermaid. It is a visual representation o
 
 ${mermaid_chart}`;
 
-    // Build model tools array (knowledge base uses query tool pattern)
-    const modelTools = knowledge_base_id
-      ? [
-          {
-            type: "query",
-            function: {
-              name: "knowledge-search",
-              description:
-                "Search the knowledge base for relevant information to answer the caller's questions.",
-            },
-            knowledgeBases: [
-              {
-                provider: "trieve",
-                id: knowledge_base_id,
-              },
-            ],
-          },
-        ]
-      : undefined;
+    // Build dynamic voice payload based on provider
+    const effectiveVoiceProvider = voice_provider || "vapi";
+    const effectiveVoiceId =
+      effectiveVoiceProvider === "vapi"
+        ? ACTIVE_VAPI_VOICES.has(voice_id)
+          ? voice_id
+          : "Elliot"
+        : voice_id;
+
+    const voicePayload: Record<string, unknown> = {
+      provider: effectiveVoiceProvider,
+      voiceId: effectiveVoiceId,
+      chunkPlan: {
+        enabled: true,
+        minCharacters: 30,
+        punctuationBoundaries: [".", "!", "?", ","],
+      },
+    };
+    if (voice_model) voicePayload.model = voice_model;
+    if (effectiveVoiceProvider === "elevenlabs") {
+      if (voice_stability !== undefined)
+        voicePayload.stability = voice_stability;
+      if (voice_similarity_boost !== undefined)
+        voicePayload.similarityBoost = voice_similarity_boost;
+    }
+    if (
+      voice_speed !== undefined &&
+      ["cartesia", "playht", "openai"].includes(effectiveVoiceProvider)
+    ) {
+      voicePayload.speed = voice_speed;
+    }
+    if (
+      voice_emotion?.length &&
+      ["cartesia", "playht"].includes(effectiveVoiceProvider)
+    ) {
+      voicePayload.emotion = voice_emotion;
+    }
 
     // Prepare the Vapi update payload with optimized call quality settings
     const vapiPayload = {
       transcriber: {
-        provider: "deepgram",
-        model: "nova-2",
-        language: language,
-        smartFormat: true,
+        provider: transcriber_provider || "talkscriber",
+        model: transcriber_model || "whisper",
+        language: language || "en",
       },
-      voice: {
-        provider: "vapi",
-        voiceId: ACTIVE_VAPI_VOICES.has(voice_id) ? voice_id : "Elliot",
-        chunkPlan: {
-          enabled: true,
-          minCharacters: 30,
-          punctuationBoundaries: [".", "!", "?", ","],
-        },
-      },
+      voice: voicePayload,
       firstMessage:
         first_message ||
         `Hello! This is an AI assistant. How can I help you today?`,
@@ -172,36 +228,36 @@ ${mermaid_chart}`;
         provider: "google",
       },
       startSpeakingPlan: {
-        waitSeconds: 0.4,
-        smartEndpointingEnabled: true,
+        waitSeconds: start_speaking_wait_seconds ?? 0.4,
+        smartEndpointingEnabled: smart_endpointing_enabled ?? true,
         transcriptionEndpointingPlan: {
-          onPunctuationSeconds: 0.1,
-          onNoPunctuationSeconds: 0.8,
-          onNumberSeconds: 0.4,
+          onPunctuationSeconds: on_punctuation_seconds ?? 0.1,
+          onNoPunctuationSeconds: on_no_punctuation_seconds ?? 0.8,
+          onNumberSeconds: on_number_seconds ?? 0.4,
         },
       },
       stopSpeakingPlan: {
-        numWords: 2,
-        voiceSeconds: 0.2,
-        backoffSeconds: 1.0,
+        numWords: stop_speaking_num_words ?? 2,
+        voiceSeconds: stop_speaking_voice_seconds ?? 0.2,
+        backoffSeconds: stop_speaking_backoff_seconds ?? 1.0,
       },
-      backgroundDenoisingEnabled: true,
+      backgroundDenoisingEnabled: background_denoising_enabled ?? true,
       backgroundSound:
         background_sound === "off" ? "off" : background_sound || "office",
-      silenceTimeoutSeconds: 30,
+      silenceTimeoutSeconds: silence_timeout_seconds ?? 30,
       maxDurationSeconds: max_duration_seconds || 600,
       model: {
-        provider: "groq",
-        model: "llama-3.3-70b-versatile",
-        temperature: 0.3,
-        maxTokens: 250,
+        provider: llm_provider || "groq",
+        model: llm_model || "llama-3.3-70b-versatile",
+        temperature: llm_temperature ?? 0.3,
+        maxTokens: llm_max_tokens ?? 250,
         messages: [
           {
             role: "system",
             content: systemPrompt,
           },
         ],
-        ...(modelTools && { tools: modelTools }),
+        ...(knowledge_base_id && { knowledgeBaseId: knowledge_base_id }),
       },
     };
 

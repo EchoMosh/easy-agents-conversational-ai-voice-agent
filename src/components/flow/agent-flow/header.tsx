@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
-import { AgentSettings } from "@/components/agents/flow/agent-settings";
+import { AgentSettings } from "@/components/agents/settings/agent-settings-dialog";
 import { Agent } from "@/types/agent";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";

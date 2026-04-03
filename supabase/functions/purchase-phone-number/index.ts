@@ -214,7 +214,7 @@ serve(async (req) => {
       // ---- VAPI MODE: Free virtual number ----
       const vapiPayload: Record<string, unknown> = {
         provider: "vapi",
-        name: friendlyName || `Workspace ${workspaceId}`,
+        name: friendlyName || `Line ${workspaceId.slice(0, 8)}`,
         ...(assistantId && { assistantId }),
         ...(areaCode && { numberDesiredAreaCode: areaCode }),
       };

@@ -1,13 +1,30 @@
-import { Handle, Position, useReactFlow } from '@xyflow/react';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { useState, useEffect, useContext } from 'react';
-import { PlayCircle, Zap, MessageCirclePlus, Plus, Pencil, X as CloseIcon, AlertTriangle, PhoneIncoming, Facebook, Edit3 as DraftIcon } from 'lucide-react';
-import { NodeUpdateContext } from '@/components/flow/agent-flow/node-update-context';
-import { GreetingInput } from './greeting/greeting-input';
-import { NodeAction } from '@/types/agent-types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { Handle, Position, useReactFlow } from "@xyflow/react";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect, useContext } from "react";
+import {
+  PlayCircle,
+  Zap,
+  MessageCirclePlus,
+  Plus,
+  Pencil,
+  X as CloseIcon,
+  AlertTriangle,
+  PhoneIncoming,
+  Facebook,
+  Edit3 as DraftIcon,
+} from "lucide-react";
+import { NodeUpdateContext } from "@/components/flow/agent-flow/node-update-context";
+import { GreetingInput } from "./greeting/greeting-input";
+import { NodeAction } from "@/types/agent-types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -15,11 +32,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 
 const DUMMY_PHONE_NUMBERS = [
@@ -33,54 +50,55 @@ type StartNodeData = {
   firstMessage: string;
   outcomes?: string[];
   actions?: NodeAction[];
-  speakerInitiative?: 'agent' | 'human';
+  speakerInitiative?: "agent" | "human";
   triggerType?: string;
   triggerConfig?: {
     phoneNumber?: string;
   };
 };
 
-export function StartNode({
-  data,
-  id
-}: {
-  data: StartNodeData;
-  id: string;
-}) {
+export function StartNode({ data, id }: { data: StartNodeData; id: string }) {
   const { updateNodeData } = useContext(NodeUpdateContext);
-  const initialMessage = typeof data.firstMessage === 'string' ? data.firstMessage : '<p></p>';
+  const initialMessage =
+    typeof data.firstMessage === "string" ? data.firstMessage : "<p></p>";
   const [firstMessage, setFirstMessage] = useState(initialMessage);
-  const [speakerInitiative, setSpeakerInitiative] = useState<'agent' | 'human'>(
-    data.speakerInitiative || 'agent'
+  const [speakerInitiative, setSpeakerInitiative] = useState<"agent" | "human">(
+    data.speakerInitiative || "agent",
   );
-  
+
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
-  const [newOutcome, setNewOutcome] = useState('');
+  const [newOutcome, setNewOutcome] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [outcomes, setOutcomes] = useState(data.outcomes || []);
-  
+
   const [actions, setActions] = useState<NodeAction[]>(data.actions || []);
-  const [triggerType, setTriggerType] = useState<string | undefined>(data.triggerType);
-  const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<string | undefined>(data.triggerConfig?.phoneNumber);
+  const [triggerType, setTriggerType] = useState<string | undefined>(
+    data.triggerType,
+  );
+  const [selectedPhoneNumber, setSelectedPhoneNumber] = useState<
+    string | undefined
+  >(data.triggerConfig?.phoneNumber);
   const [isEditingTrigger, setIsEditingTrigger] = useState(false);
 
   const { getEdges, setEdges } = useReactFlow();
 
   useEffect(() => {
     const currentPhoneNumberInConfig = data.triggerConfig?.phoneNumber;
-    const hasDataChanged = 
+    const hasDataChanged =
       firstMessage !== data.firstMessage ||
       speakerInitiative !== data.speakerInitiative ||
       triggerType !== data.triggerType ||
-      (triggerType === 'phone_call' && selectedPhoneNumber !== currentPhoneNumberInConfig) ||
-      (triggerType !== 'phone_call' && currentPhoneNumberInConfig !== undefined); // Ensure config is cleared if not phone_call
+      (triggerType === "phone_call" &&
+        selectedPhoneNumber !== currentPhoneNumberInConfig) ||
+      (triggerType !== "phone_call" &&
+        currentPhoneNumberInConfig !== undefined); // Ensure config is cleared if not phone_call
 
     if (hasDataChanged) {
       const newTriggerConfig = { ...data.triggerConfig };
-      if (triggerType === 'phone_call') {
+      if (triggerType === "phone_call") {
         newTriggerConfig.phoneNumber = selectedPhoneNumber;
       } else {
-        delete newTriggerConfig.phoneNumber; 
+        delete newTriggerConfig.phoneNumber;
       }
 
       updateNodeData(id, {
@@ -91,23 +109,37 @@ export function StartNode({
         triggerConfig: newTriggerConfig,
       });
     }
-  }, [firstMessage, speakerInitiative, triggerType, selectedPhoneNumber, data, id, updateNodeData]);
+  }, [
+    firstMessage,
+    speakerInitiative,
+    triggerType,
+    selectedPhoneNumber,
+    data,
+    id,
+    updateNodeData,
+  ]);
 
   useEffect(() => {
     setOutcomes(data.outcomes || []);
-    setActions(data.actions || []); 
+    setActions(data.actions || []);
     if (data.speakerInitiative) {
       setSpeakerInitiative(data.speakerInitiative);
     }
     if (data.triggerType) {
       setTriggerType(data.triggerType);
     }
-    if (data.triggerType === 'phone_call' && data.triggerConfig?.phoneNumber) {
+    if (data.triggerType === "phone_call" && data.triggerConfig?.phoneNumber) {
       setSelectedPhoneNumber(data.triggerConfig.phoneNumber);
-    } else if (data.triggerType !== 'phone_call') { 
+    } else if (data.triggerType !== "phone_call") {
       setSelectedPhoneNumber(undefined);
     }
-  }, [data.outcomes, data.actions, data.speakerInitiative, data.triggerType, data.triggerConfig]);
+  }, [
+    data.outcomes,
+    data.actions,
+    data.speakerInitiative,
+    data.triggerType,
+    data.triggerConfig,
+  ]);
 
   const handleFirstMessageChange = (value: string) => {
     setFirstMessage(value);
@@ -117,22 +149,38 @@ export function StartNode({
     if (outcomes.length >= 5 || !newOutcome.trim()) return;
     if (outcomes.length === 0) {
       const currentEdges = getEdges();
-      const defaultEdge = currentEdges.find(edge => edge.source === id && edge.sourceHandle === 'default');
+      const defaultEdge = currentEdges.find(
+        (edge) => edge.source === id && edge.sourceHandle === "default",
+      );
       if (defaultEdge) {
         setEdges((eds) => eds.filter((edge) => edge.id !== defaultEdge.id));
       }
     }
     const newOutcomesArray = [...outcomes, newOutcome];
     setOutcomes(newOutcomesArray);
-    updateNodeData(id, { ...data, firstMessage, outcomes: newOutcomesArray, actions, triggerType, triggerConfig: data.triggerConfig });
-    setNewOutcome('');
+    updateNodeData(id, {
+      ...data,
+      firstMessage,
+      outcomes: newOutcomesArray,
+      actions,
+      triggerType,
+      triggerConfig: data.triggerConfig,
+    });
+    setNewOutcome("");
     setShowOutcomeDialog(false);
   };
 
   const removeOutcome = (index: number) => {
     const newOutcomesArray = outcomes.filter((_, i) => i !== index);
     setOutcomes(newOutcomesArray);
-    updateNodeData(id, { ...data, firstMessage, outcomes: newOutcomesArray, actions, triggerType, triggerConfig: data.triggerConfig });
+    updateNodeData(id, {
+      ...data,
+      firstMessage,
+      outcomes: newOutcomesArray,
+      actions,
+      triggerType,
+      triggerConfig: data.triggerConfig,
+    });
   };
 
   const startEditingOutcome = (index: number) => {
@@ -146,56 +194,73 @@ export function StartNode({
     const updatedOutcomesArray = [...outcomes];
     updatedOutcomesArray[editingIndex] = newOutcome;
     setOutcomes(updatedOutcomesArray);
-    updateNodeData(id, { ...data, firstMessage, outcomes: updatedOutcomesArray, actions, triggerType, triggerConfig: data.triggerConfig });
+    updateNodeData(id, {
+      ...data,
+      firstMessage,
+      outcomes: updatedOutcomesArray,
+      actions,
+      triggerType,
+      triggerConfig: data.triggerConfig,
+    });
     setEditingIndex(null);
-    setNewOutcome('');
+    setNewOutcome("");
     setShowOutcomeDialog(false);
   };
 
   const cancelEditOutcome = () => {
     setShowOutcomeDialog(false);
     setEditingIndex(null);
-    setNewOutcome('');
+    setNewOutcome("");
   };
 
   const openNewOutcomeDialog = () => {
     setEditingIndex(null);
-    setNewOutcome('');
+    setNewOutcome("");
     setShowOutcomeDialog(true);
   };
-  
-  const handleOutcomeDialogKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+
+  const handleOutcomeDialogKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Enter") {
       e.preventDefault();
-      if (editingIndex !== null) saveEditOutcome(); else addOutcome();
+      if (editingIndex !== null) saveEditOutcome();
+      else addOutcome();
     }
   };
 
   const openTriggerDialog = () => {
-    setIsEditingTrigger(!isEditingTrigger); 
+    setIsEditingTrigger(!isEditingTrigger);
   };
 
   const handleSelectTriggerType = (newTriggerType: string) => {
     setTriggerType(newTriggerType);
     let newPhoneNumber = selectedPhoneNumber;
 
-    if (newTriggerType === 'manual') {
-      newPhoneNumber = undefined; 
-      setIsEditingTrigger(false); 
-    } else if (newTriggerType !== 'phone_call') {
-      newPhoneNumber = undefined; 
-      setIsEditingTrigger(false); 
-    } else { 
-      setIsEditingTrigger(true); 
+    if (newTriggerType === "manual") {
+      newPhoneNumber = undefined;
+      setIsEditingTrigger(false);
+    } else if (newTriggerType !== "phone_call") {
+      newPhoneNumber = undefined;
+      setIsEditingTrigger(false);
+    } else {
+      setIsEditingTrigger(true);
     }
     setSelectedPhoneNumber(newPhoneNumber);
-    updateNodeData(id, { ...data, triggerType: newTriggerType, triggerConfig: { ...data.triggerConfig, phoneNumber: newPhoneNumber } });
+    updateNodeData(id, {
+      ...data,
+      triggerType: newTriggerType,
+      triggerConfig: { ...data.triggerConfig, phoneNumber: newPhoneNumber },
+    });
   };
 
   const handlePhoneNumberSelect = (phoneNumberValue: string) => {
     setSelectedPhoneNumber(phoneNumberValue);
-    updateNodeData(id, { ...data, triggerConfig: { ...data.triggerConfig, phoneNumber: phoneNumberValue } });
-    setIsEditingTrigger(false); 
+    updateNodeData(id, {
+      ...data,
+      triggerConfig: { ...data.triggerConfig, phoneNumber: phoneNumberValue },
+    });
+    setIsEditingTrigger(false);
   };
 
   return (
@@ -211,19 +276,21 @@ export function StartNode({
                   <PlayCircle className="h-4 w-4" />
                 </span>
               </span>
-              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-500">Start</span>
+              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-500">
+                Start
+              </span>
             </div>
             {triggerType && (
               <div className="text-xs text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-md flex items-center gap-1 max-w-[180px] truncate">
                 <Zap className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">
-                  {triggerType === 'phone_call' 
-                    ? (selectedPhoneNumber || 'Incoming Call') 
-                    : triggerType === 'facebook_lead' 
-                      ? 'Facebook Lead' 
-                      : triggerType === 'manual'
-                        ? 'Draft' 
-                        : 'Set Trigger'}
+                  {triggerType === "phone_call"
+                    ? selectedPhoneNumber || "Incoming Call"
+                    : triggerType === "facebook_lead"
+                      ? "Facebook Lead"
+                      : triggerType === "manual"
+                        ? "Draft"
+                        : "Set Trigger"}
                 </span>
               </div>
             )}
@@ -237,41 +304,58 @@ export function StartNode({
               onChange={handleFirstMessageChange}
             />
           </div>
-          
-        {isEditingTrigger && (
-          <div className="mt-4 pt-4 border-t border-purple-200/30 dark:border-purple-800/30 animate-fade-in">
-            <Label className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3 block">
-              This AI will automatically run when...
-            </Label>
-            <div className="space-y-2">
-              <Tooltip>
+
+          {isEditingTrigger && (
+            <div className="mt-4 pt-4 border-t border-purple-200/30 dark:border-purple-800/30 animate-fade-in">
+              <Label className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3 block">
+                This AI will automatically run when...
+              </Label>
+              <div className="space-y-2">
+                <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant={triggerType === 'phone_call' ? 'default' : 'outline'}
+                      variant={
+                        triggerType === "phone_call" ? "default" : "outline"
+                      }
                       size="sm"
                       className={`w-full justify-start gap-2 text-sm h-auto py-2 px-3 transition-all mb-1
-                                  ${triggerType === 'phone_call' 
-                                    ? 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white border-purple-600 dark:border-purple-500' 
-                                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                      onClick={() => handleSelectTriggerType('phone_call')}
+                                  ${
+                                    triggerType === "phone_call"
+                                      ? "bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white border-purple-600 dark:border-purple-500"
+                                      : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  }`}
+                      onClick={() => handleSelectTriggerType("phone_call")}
                     >
-                      <PhoneIncoming className={`h-4 w-4 ${triggerType === 'phone_call' ? 'text-white dark:text-white' : 'text-sky-500'}`} />
+                      <PhoneIncoming
+                        className={`h-4 w-4 ${triggerType === "phone_call" ? "text-white dark:text-white" : "text-sky-500"}`}
+                      />
                       <span>Someone calls a specific number</span>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="right" align="start" className="max-w-xs">
+                  <TooltipContent
+                    side="right"
+                    align="start"
+                    className="max-w-xs"
+                  >
                     <p>AI starts when a chosen phone number receives a call.</p>
                   </TooltipContent>
                 </Tooltip>
-                {triggerType === 'phone_call' && (
+                {triggerType === "phone_call" && (
                   <div className="pl-1 pr-1 mt-1 mb-2 animate-fade-in">
-                    <Select onValueChange={handlePhoneNumberSelect} value={selectedPhoneNumber || ""}>
+                    <Select
+                      onValueChange={handlePhoneNumberSelect}
+                      value={selectedPhoneNumber || ""}
+                    >
                       <SelectTrigger className="w-full h-9 text-xs bg-white/80 dark:bg-gray-800/70 border-gray-300 dark:border-gray-600 focus:ring-purple-500 dark:focus:ring-purple-400">
                         <SelectValue placeholder="Select a phone number..." />
                       </SelectTrigger>
                       <SelectContent className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md">
-                        {DUMMY_PHONE_NUMBERS.map(num => (
-                          <SelectItem key={num} value={num} className="text-xs focus:bg-purple-100 dark:focus:bg-purple-800/50">
+                        {DUMMY_PHONE_NUMBERS.map((num) => (
+                          <SelectItem
+                            key={num}
+                            value={num}
+                            className="text-xs focus:bg-purple-100 dark:focus:bg-purple-800/50"
+                          >
                             {num}
                           </SelectItem>
                         ))}
@@ -282,39 +366,62 @@ export function StartNode({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant={triggerType === 'facebook_lead' ? 'default' : 'outline'}
+                      variant={
+                        triggerType === "facebook_lead" ? "default" : "outline"
+                      }
                       size="sm"
                       className={`w-full justify-start gap-2 text-sm h-auto py-2 px-3 transition-all
-                                  ${triggerType === 'facebook_lead' 
-                                    ? 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white border-purple-600 dark:border-purple-500' 
-                                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                      onClick={() => handleSelectTriggerType('facebook_lead')}
+                                  ${
+                                    triggerType === "facebook_lead"
+                                      ? "bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600 dark:text-white border-purple-600 dark:border-purple-500"
+                                      : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  }`}
+                      onClick={() => handleSelectTriggerType("facebook_lead")}
                     >
-                      <Facebook className={`h-4 w-4 ${triggerType === 'facebook_lead' ? 'text-white dark:text-white' : 'text-blue-600'}`} />
+                      <Facebook
+                        className={`h-4 w-4 ${triggerType === "facebook_lead" ? "text-white dark:text-white" : "text-blue-600"}`}
+                      />
                       <span>A new lead comes in from Facebook</span>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="right" align="start" className="max-w-xs">
-                    <p>AI starts when a new lead is captured from Facebook Ads.</p>
+                  <TooltipContent
+                    side="right"
+                    align="start"
+                    className="max-w-xs"
+                  >
+                    <p>
+                      AI starts when a new lead is captured from Facebook Ads.
+                    </p>
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant={triggerType === 'manual' ? 'default' : 'outline'}
+                      variant={triggerType === "manual" ? "default" : "outline"}
                       size="sm"
                       className={`w-full justify-start gap-2 text-sm h-auto py-2 px-3 transition-all
-                                  ${triggerType === 'manual' 
-                                    ? 'bg-slate-600 hover:bg-slate-700 text-white dark:bg-slate-500 dark:hover:bg-slate-600 dark:text-white border-slate-600 dark:border-slate-500' 
-                                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                      onClick={() => handleSelectTriggerType('manual')}
+                                  ${
+                                    triggerType === "manual"
+                                      ? "bg-slate-600 hover:bg-slate-700 text-white dark:bg-slate-500 dark:hover:bg-slate-600 dark:text-white border-slate-600 dark:border-slate-500"
+                                      : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  }`}
+                      onClick={() => handleSelectTriggerType("manual")}
                     >
-                      <DraftIcon className={`h-4 w-4 ${triggerType === 'manual' ? 'text-white dark:text-white' : 'text-slate-500'}`} />
+                      <DraftIcon
+                        className={`h-4 w-4 ${triggerType === "manual" ? "text-white dark:text-white" : "text-slate-500"}`}
+                      />
                       <span>Don't run automatically</span>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="right" align="start" className="max-w-xs">
-                    <p>AI only starts when you test or run it manually. It won't activate on its own.</p>
+                  <TooltipContent
+                    side="right"
+                    align="start"
+                    className="max-w-xs"
+                  >
+                    <p>
+                      AI only starts when you test or run it manually. It won't
+                      activate on its own.
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -327,9 +434,16 @@ export function StartNode({
                 <Label className="text-xs font-medium text-purple-600/75 dark:text-purple-300/75">
                   Outcomes ({outcomes.length}/5)
                 </Label>
-                {outcomes.length < 5 && <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/50 rounded-lg" onClick={openNewOutcomeDialog}>
+                {outcomes.length < 5 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/50 rounded-lg"
+                    onClick={openNewOutcomeDialog}
+                  >
                     <Plus className="h-4 w-4" />
-                  </Button>}
+                  </Button>
+                )}
               </div>
               <div className="space-y-2">
                 {outcomes.map((outcome, index) => (
@@ -339,14 +453,29 @@ export function StartNode({
                         <div className="truncate">{outcome}</div>
                       </div>
                       <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/50 rounded-lg" onClick={() => startEditingOutcome(index)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/50 rounded-lg"
+                          onClick={() => startEditingOutcome(index)}
+                        >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg" onClick={() => removeOutcome(index)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 bg-white/80 dark:bg-gray-900/80 shadow-sm hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg"
+                          onClick={() => removeOutcome(index)}
+                        >
                           <CloseIcon className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                      <Handle type="source" position={Position.Right} id={`outcome-${index}`} className="!w-2 !h-4 !bg-purple-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-purple-500" />
+                      <Handle
+                        type="source"
+                        position={Position.Right}
+                        id={`outcome-${index}`}
+                        className="!w-2 !h-4 !bg-purple-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-purple-500"
+                      />
                     </div>
                   </div>
                 ))}
@@ -354,114 +483,53 @@ export function StartNode({
             </div>
           )}
         </div>
-        
-        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Button
-            onClick={openTriggerDialog}
-            className="flex items-center justify-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 transition-colors shadow-md rounded-full border border-purple-200/50 dark:border-purple-800/50 my-[9px]"
-          >
-            <Zap className="h-3 w-3 text-purple-600/80 dark:text-purple-400/80" />
-            <span className="text-xs font-medium text-purple-600/80 dark:text-purple-400/80">
-              {isEditingTrigger ? 'Close Trigger' : 'Trigger'}
-            </span>
-          </Button>
-          <Button
-            onClick={openNewOutcomeDialog}
-            className="flex items-center justify-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors shadow-md rounded-full border border-indigo-200/50 dark:border-indigo-800/50 my-[9px]"
-          >
-            <MessageCirclePlus className="h-3 w-3 text-indigo-600/80 dark:text-indigo-400/80" />
-            <span className="text-xs font-medium text-indigo-600/80 dark:text-indigo-400/80">
-              Add Outcome
-            </span>
-          </Button>
-        </div>
+
+        {/* Removed Trigger and Add Outcome buttons from below the start node */}
 
         {(!outcomes || outcomes.length === 0) && (
-          <Handle type="source" position={Position.Right} id="default" className="!w-2 !h-4 !bg-purple-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-purple-500" />
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="default"
+            className="!w-2 !h-4 !bg-purple-400 rounded-sm border-none !right-[-8px] transition-all duration-300 hover:!bg-purple-500"
+          />
         )}
-        
+
         <Dialog open={showOutcomeDialog} onOpenChange={setShowOutcomeDialog}>
-          <DialogContent className="sm:max-w-[800px] p-0 gap-0 border-0 shadow-xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-800">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">{editingIndex !== null ? 'Edit Outcome' : 'Add New Outcome'}</DialogTitle>
-                <DialogDescription className="text-gray-500 dark:text-gray-400 mt-2 text-base">
-                  Create specific outcomes that represent different user response paths
-                </DialogDescription>
-              </DialogHeader>
+          <DialogContent className="sm:max-w-[450px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingIndex !== null ? "Edit Outcome" : "Add Outcome"}
+              </DialogTitle>
+              <DialogDescription>
+                What might the caller say at this point?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 pt-2">
+              <Input
+                value={newOutcome}
+                onChange={(e) => setNewOutcome(e.target.value)}
+                placeholder="e.g., I'd like to learn about pricing"
+                onKeyDown={handleOutcomeDialogKeyDown}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                Use specific responses, not generic ones like "Yes" or "No".
+              </p>
             </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="flex items-start gap-3 rounded-lg border border-amber-100 dark:border-amber-900/30 bg-gradient-to-r from-amber-50/70 to-amber-50/30 dark:from-amber-900/10 dark:to-amber-900/5 p-4 animate-fade-in">
-                <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <h4 className="font-medium text-amber-800 dark:text-amber-400 text-sm">Avoid creating multiple similar outcomes</h4>
-                  <p className="text-xs text-amber-700/80 dark:text-amber-300/70">
-                    Create only distinct outcomes even if your agent asks for multiple options. Focus on key decision points rather than every possible response.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-5 animate-[fade-in_0.4s_ease-out_0.2s] opacity-0 fill-mode-forwards">
-                <div className="rounded-xl border border-red-100 dark:border-red-900/30 bg-gradient-to-r from-red-50/70 to-red-50/30 dark:from-red-900/10 dark:to-red-900/5 p-4">
-                  <p className="font-medium text-red-600 dark:text-red-400 text-sm mb-2">Not recommended:</p>
-                  <ul className="space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-red-400 dark:bg-red-500 mt-1.5 flex-shrink-0"></div>
-                      <span>Generic responses ("Yes"/"No")</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-red-400 dark:bg-red-500 mt-1.5 flex-shrink-0"></div>
-                      <span>Very similar options ("I agree"/"I'm interested")</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-red-400 dark:bg-red-500 mt-1.5 flex-shrink-0"></div>
-                      <span>Too many specific variations</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="rounded-xl border border-green-100 dark:border-green-900/30 bg-gradient-to-r from-green-50/70 to-green-50/30 dark:from-green-900/10 dark:to-green-900/5 p-4">
-                  <p className="font-medium text-green-600 dark:text-green-400 text-sm mb-2">Recommended:</p>
-                  <ul className="space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-400 dark:bg-green-500 mt-1.5 flex-shrink-0"></div>
-                      <span>"I'd like to learn about pricing options"</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-400 dark:bg-green-500 mt-1.5 flex-shrink-0"></div>
-                      <span>"I'm interested in the sedan model"</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-400 dark:bg-green-500 mt-1.5 flex-shrink-0"></div>
-                      <span>"I want to speak with a representative"</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              
-              <div className="animate-[fade-in_0.4s_ease-out_0.3s] opacity-0 fill-mode-forwards">
-                <Label htmlFor="outcome-input" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                  Outcome
-                </Label>
-                <Input 
-                  id="outcome-input"
-                  value={newOutcome} 
-                  onChange={e => setNewOutcome(e.target.value)} 
-                  placeholder="Enter a detailed user response..." 
-                  className="text-base border-gray-200 dark:border-gray-700 h-12 px-4 rounded-lg focus-visible:ring-purple-500"
-                  onKeyDown={handleOutcomeDialogKeyDown}
-                  autoFocus
-                />
-              </div>
-            </div>
-            <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20 animate-[fade-in_0.3s_ease-out_0.4s] opacity-0 fill-mode-forwards">
-              <Button variant="outline" onClick={cancelEditOutcome} className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg px-5">Cancel</Button>
-              <Button 
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white transition-all duration-200 shadow-md hover:shadow-lg rounded-lg px-5" 
-                onClick={() => editingIndex !== null ? saveEditOutcome() : addOutcome()}
-                disabled={!newOutcome.trim() || newOutcome.trim().length < 3} // Min length 3 for outcome
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={cancelEditOutcome}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() =>
+                  editingIndex !== null ? saveEditOutcome() : addOutcome()
+                }
+                disabled={!newOutcome.trim() || newOutcome.trim().length < 3}
               >
-                {editingIndex !== null ? 'Save Changes' : 'Add Outcome'}
+                {editingIndex !== null ? "Save" : "Add"}
               </Button>
             </div>
           </DialogContent>

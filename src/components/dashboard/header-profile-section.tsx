@@ -32,7 +32,7 @@ export function HeaderProfileSection() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      
+
       if (session?.user) {
         const userEmail = session.user.email || "";
         setEmail(userEmail);
@@ -68,8 +68,8 @@ export function HeaderProfileSection() {
       {/* User profile dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm outline-none ring-0 bg-muted/50 hover:bg-accent hover:text-accent-foreground shadow-sm hover:shadow transition-all">
-            <Avatar className="h-8 w-8 rounded-full border-2 border-primary/20 bg-white">
+          <button className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm outline-none ring-0 bg-secondary/50 hover:bg-accent hover:text-accent-foreground transition-all duration-150">
+            <Avatar className="h-8 w-8 rounded-full border border-border/50">
               <AvatarImage src={avatarUrl} alt={username} />
               <AvatarFallback className="rounded-full">
                 <User className="h-4 w-4" />
@@ -77,10 +77,11 @@ export function HeaderProfileSection() {
             </Avatar>
             <div className="hidden md:block">
               <span className="font-medium">
-                {isLoading ? 
-                  <span className="inline-block w-16 h-4 bg-muted animate-pulse rounded"></span> : 
+                {isLoading ? (
+                  <span className="inline-block w-16 h-4 bg-muted animate-pulse rounded"></span>
+                ) : (
                   username
-                }
+                )}
               </span>
             </div>
             <ChevronDown className="h-4 w-4 opacity-70" />

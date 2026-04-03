@@ -25,9 +25,10 @@ import { Agent } from "@/types/agent";
 
 export interface WorkspacePhone {
   id: string;
-  twilio_phone_number: string;
+  twilio_phone_number: string | null;
   friendly_name: string | null;
   vapi_phone_number_id: string | null;
+  monthly_cost?: number;
 }
 
 interface ContactResult {
@@ -63,7 +64,13 @@ export function SingleCallView({
 
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const validPhones = phoneNumbers.filter((p) => p.vapi_phone_number_id);
+  // Only real (Twilio) phone numbers can make outbound calls — VAPI virtual numbers cannot
+  const validPhones = phoneNumbers.filter(
+    (p) => p.vapi_phone_number_id && p.twilio_phone_number,
+  );
+  const hasOnlyVirtualNumbers =
+    validPhones.length === 0 &&
+    phoneNumbers.some((p) => p.vapi_phone_number_id && !p.twilio_phone_number);
   const [selectedPhoneId, setSelectedPhoneId] = useState(
     validPhones.length === 1 ? (validPhones[0].vapi_phone_number_id ?? "") : "",
   );
@@ -155,14 +162,60 @@ export function SingleCallView({
       );
 
       if (error || !data?.success) {
-        const msg = error?.message || data?.error || "Failed to initiate call";
+        const msg =
+          error?.message ||
+          data?.error ||
+          data?.details?.message ||
+          "Failed to initiate call";
         setCallError(msg);
         setCallState("error");
         return;
       }
 
       setCallId(data.call_id);
-      setCallState("success");
+
+      // Poll call status to verify it actually connected
+      const vapiKey = import.meta.env.VITE_VAPI_PUBLIC_KEY;
+      if (data.call_id && vapiKey) {
+        let verified = false;
+        for (let i = 0; i < 6; i++) {
+          await new Promise((r) => setTimeout(r, 2000));
+          try {
+            const statusRes = await fetch(
+              `https://api.vapi.ai/call/${data.call_id}`,
+              { headers: { Authorization: `Bearer ${vapiKey}` } },
+            );
+            if (statusRes.ok) {
+              const callData = await statusRes.json();
+              if (callData.status === "ended" && callData.endedReason) {
+                const reason = callData.endedReason;
+                if (reason.includes("error") || reason.includes("failed")) {
+                  setCallError(`Call failed: ${reason.replace(/-/g, " ")}`);
+                  setCallState("error");
+                  return;
+                }
+              }
+              if (
+                callData.status === "in-progress" ||
+                callData.status === "ringing"
+              ) {
+                verified = true;
+                break;
+              }
+            }
+          } catch (pollErr) {
+            console.error("Error polling call status:", pollErr);
+          }
+        }
+        // If we polled 6 times and never saw in-progress, show as pending
+        if (!verified) {
+          setCallState("success"); // Show success but it might still be queued
+        } else {
+          setCallState("success");
+        }
+      } else {
+        setCallState("success");
+      }
     } catch (err) {
       setCallError(err instanceof Error ? err.message : "Unknown error");
       setCallState("error");
@@ -353,8 +406,9 @@ export function SingleCallView({
         </Label>
         {validPhones.length === 0 ? (
           <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-            No phone numbers configured for outbound calls. Add one in Phone
-            Numbers settings.
+            {hasOnlyVirtualNumbers
+              ? "Virtual numbers cannot make outbound calls. Connect Twilio in Settings to purchase a real number."
+              : "No phone numbers configured for outbound calls. Add one in Phone Numbers settings."}
           </p>
         ) : (
           <Select value={selectedPhoneId} onValueChange={setSelectedPhoneId}>

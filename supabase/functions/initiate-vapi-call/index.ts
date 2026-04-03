@@ -60,6 +60,13 @@ serve(async (req) => {
 
     const callPayload: Record<string, unknown> = {
       assistantId: v_agent_id,
+      assistantOverrides: {
+        transcriber: {
+          provider: "talkscriber",
+          model: "whisper",
+          language: "en",
+        },
+      },
       phoneNumberId: vapi_phone_number_id,
       customer: {
         number: customer_number,
@@ -82,13 +89,18 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error("VAPI call error:", responseData);
+      const vapiMessage =
+        responseData?.message ||
+        responseData?.error ||
+        "Failed to initiate call";
       return new Response(
         JSON.stringify({
-          error: "Failed to initiate call",
+          error: vapiMessage,
           details: responseData,
+          success: false,
         }),
         {
-          status: response.status,
+          status: 200, // Return 200 so the client can read the error message
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );

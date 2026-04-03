@@ -58,15 +58,23 @@ function DashboardLayout() {
     if (workspaces.length === 0) {
       const lastRedirect = sessionStorage.getItem("lastWorkspaceRedirect");
       const now = Date.now();
-      
+
       // Only redirect if we haven't redirected in the last 5 seconds
       if (!lastRedirect || now - parseInt(lastRedirect) > 5000) {
-        console.log("DashboardLayout: No workspaces found, redirecting to onboarding");
+        console.log(
+          "DashboardLayout: No workspaces found, redirecting to onboarding",
+        );
         sessionStorage.setItem("lastWorkspaceRedirect", now.toString());
         navigate("/onboarding", { replace: true });
       }
     }
-  }, [hasLoadedWorkspaceOnce, workspaceLoading, workspaces, navigate, location.pathname]);
+  }, [
+    hasLoadedWorkspaceOnce,
+    workspaceLoading,
+    workspaces,
+    navigate,
+    location.pathname,
+  ]);
 
   // Show loading screen while workspace is loading
   if (!hasLoadedWorkspaceOnce || workspaceLoading) {
@@ -80,11 +88,7 @@ function DashboardLayout() {
   // If no current workspace after loading is done, show a message
   // This handles edge cases where workspaces exist but none is current
   if (!currentWorkspace && workspaces.length > 0) {
-    return (
-      <LoadingScreen
-        message="Setting up your workspace..."
-      />
-    );
+    return <LoadingScreen message="Setting up your workspace..." />;
   }
 
   // If we're here with no workspace and no redirect happened, show error
@@ -106,8 +110,8 @@ function DashboardLayout() {
       </div>
     );
   }
-  
-  // For non-critical 'isAnyLoading' (e.g., background refetches after initial load), 
+
+  // For non-critical 'isAnyLoading' (e.g., background refetches after initial load),
   // we will render the layout and let child components show their skeletons.
   // The <Outlet />'s Suspense fallback will handle lazy-loaded page components.
   // Individual page components (LeadsPage, AgentsPage) will handle their own data loading skeletons.
@@ -115,13 +119,17 @@ function DashboardLayout() {
   return (
     <ImportProvider>
       <SidebarProvider defaultOpen={true}>
-        <div className="h-screen w-screen flex overflow-hidden bg-background relative">
+        <div className="h-screen w-screen flex overflow-hidden bg-background relative bg-gradient-to-br from-background via-background to-primary/[0.02]">
           {/* Hide sidebar on agent flow edit page */}
-          {!location.pathname.includes('/dashboard/agents/flow/') && <AppSidebar />}
+          {!location.pathname.includes("/dashboard/agents/flow/") && (
+            <AppSidebar />
+          )}
           <main className="flex-1 flex flex-col overflow-hidden">
             {/* Hide DashboardHeader on agent flow edit page */}
-            {!location.pathname.includes('/dashboard/agents/flow/') && <DashboardHeader />}
-            <div className="flex-1 overflow-auto p-4 md:p-6">
+            {!location.pathname.includes("/dashboard/agents/flow/") && (
+              <DashboardHeader />
+            )}
+            <div className="flex-1 overflow-auto p-4 md:p-6 bg-background/40">
               <Outlet />
             </div>
           </main>

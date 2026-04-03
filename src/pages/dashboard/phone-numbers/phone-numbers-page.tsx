@@ -143,7 +143,14 @@ export const PhoneNumbersPage = () => {
         },
       );
 
-      if (response.error) throw response.error;
+      if (response.error) {
+        const msg = response.data?.error || response.error.message;
+        throw new Error(msg || "Failed to update agent");
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
 
       toast({
         title: "Success",

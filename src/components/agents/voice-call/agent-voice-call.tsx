@@ -442,6 +442,19 @@ export function AgentVoiceCall({
             );
           }
         }
+      } else if (msg.type === "status-update") {
+        // Handle status updates (in-progress, ended, etc.)
+        if (msg.status === "ended" && msg.endedReason) {
+          const reason = msg.endedReason as string;
+          if (reason.includes("error") || reason.includes("failed")) {
+            const friendlyReason = reason
+              .replace(/-/g, " ")
+              .replace("pipeline ", "");
+            setErrorDetails(`Call ended: ${friendlyReason}`);
+            setCallStatus("error");
+            setIsCallActive(false);
+          }
+        }
       } else {
         console.warn(
           "Unhandled voice service message with unknown role:",
@@ -493,10 +506,15 @@ export function AgentVoiceCall({
         );
       }
 
-      // For demo purposes, we can use a simpler approach with just the assistant ID
-      // The configuration of the assistant would be done in the Vapi dashboard
-      // The first message is now handled by vapi.say() in the 'call-start' event.
-      await vapiRef.current.start(assistantId);
+      // Start call with assistant ID and override the transcriber
+      // to avoid pipeline-error-deepgram-transcriber-failed
+      await vapiRef.current.start(assistantId, {
+        transcriber: {
+          provider: "talkscriber",
+          model: "whisper",
+          language: "en",
+        },
+      });
     } catch (error) {
       console.error("Error starting call:", error);
       // Handle different error types more specifically
