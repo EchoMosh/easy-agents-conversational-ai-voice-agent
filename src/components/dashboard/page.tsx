@@ -30,24 +30,14 @@ export default function DashboardHeader() {
         return "Leads";
       case "pipelines":
         return "Pipelines";
-      case "chats":
-        return "Chats";
       case "knowledge":
         return "Knowledge Base";
       case "settings":
         return "Settings";
-      case "lead-scraper":
-        return "Lead Scraper";
-      case "activities":
-        return "Activities";
-      case "overview":
-        return "Dashboard";
-      case "calendar":
-        return "Calendar";
-      case "automations":
-        return "Automations";
-      case "profile":
-        return "Profile";
+      case "transcriptions":
+        return "Transcriptions";
+      case "phone-numbers":
+        return "Phone Numbers";
       default:
         // For paths like agents/flow/:id, use the parent path
         if (pathSegments.length > 1) {

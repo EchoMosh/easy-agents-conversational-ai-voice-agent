@@ -1,4 +1,3 @@
-
 import {
   Mail,
   Phone,
@@ -71,8 +70,8 @@ export function LeadDetailsDialog({
         type: activity.content.toLowerCase().includes("email")
           ? ("email" as const)
           : activity.content.toLowerCase().includes("status")
-          ? ("status" as const)
-          : ("sms" as const),
+            ? ("status" as const)
+            : ("sms" as const),
         content: activity.content,
         timestamp: activity.created_at,
       }));
@@ -100,7 +99,7 @@ export function LeadDetailsDialog({
 
   const handleViewProfile = () => {
     onClose();
-    navigate(`/dashboard/chats?leadId=${lead.id}`);
+    navigate(`/dashboard/leads`);
   };
 
   const handleRemoveLead = async () => {
@@ -182,7 +181,7 @@ export function LeadDetailsDialog({
                     <Badge
                       variant="outline"
                       className={`${findColumnColor(
-                        lead.status
+                        lead.status,
                       )} text-background px-2.5 py-0.5 text-xs rounded-full`}
                     >
                       {lead.status}
@@ -267,8 +266,8 @@ export function LeadDetailsDialog({
                           activity.type === "email"
                             ? "bg-blue-100 text-blue-600"
                             : activity.type === "status"
-                            ? "bg-indigo-100 text-indigo-600"
-                            : "bg-green-100 text-green-600"
+                              ? "bg-indigo-100 text-indigo-600"
+                              : "bg-green-100 text-green-600"
                         }`}
                       >
                         {getActivityIcon(activity.type)}
@@ -307,7 +306,7 @@ export function LeadDetailsDialog({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Badge 
+                      <Badge
                         className={`bg-${tag.color}-100 text-${tag.color}-800 border-${tag.color}-200`}
                       >
                         {tag.name}

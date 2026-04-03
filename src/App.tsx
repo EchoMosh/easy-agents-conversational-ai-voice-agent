@@ -1,7 +1,6 @@
 import React from "react";
 import { Routes, Route, useRoutes } from "react-router-dom";
 import routes from "tempo-routes";
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import {
   AppLoadingProvider,

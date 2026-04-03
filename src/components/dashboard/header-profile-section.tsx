@@ -112,9 +112,9 @@ export function HeaderProfileSection() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem onSelect={() => navigate("/dashboard/profile")}>
+            <DropdownMenuItem onSelect={() => navigate("/dashboard/settings")}>
               <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => navigate("/dashboard/settings")}>
               <Settings className="mr-2 h-4 w-4" />
