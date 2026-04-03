@@ -6,12 +6,9 @@ import {
   Settings2,
   BookOpen,
   Loader2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  CustomModal,
-  CustomModalFooter,
-} from "@/components/agents/flow/custom-modal";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -224,87 +221,108 @@ export function AgentSettings({
   const hasChanges =
     JSON.stringify(settings) !== JSON.stringify(originalSettings);
 
+  if (!isOpen) return null;
+
   return (
-    <CustomModal
-      open={isOpen}
-      onOpenChange={(v) => {
-        if (!v) handleCancel();
-        else setOpen(v);
-      }}
-      title="Agent Settings"
-      description="Configure voice, transcription, LLM, behavior, and knowledge"
-      className="max-w-2xl"
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={handleCancel}
     >
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div
+        className="relative flex flex-col bg-background rounded-2xl shadow-2xl border border-border/50 w-full max-w-2xl max-h-[90vh] mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header — fixed */}
+        <div className="shrink-0 px-6 py-4 border-b border-border/50 rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Agent Settings</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Configure voice, transcription, LLM, behavior, and knowledge
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCancel}
+              className="h-8 w-8 rounded-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      ) : (
-        <>
-          {/* Tab bar */}
-          <div className="flex gap-1 border-b border-border/50 mb-6 -mx-1 px-1 overflow-x-auto">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap",
-                    isActive
-                      ? "text-primary border-b-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
 
-          {/* Tab content */}
-          <div className="pb-4">
-            {activeTab === "voice" && (
-              <VoiceTab settings={settings} onChange={handleChange} />
-            )}
-            {activeTab === "transcriber" && (
-              <TranscriberTab settings={settings} onChange={handleChange} />
-            )}
-            {activeTab === "llm" && (
-              <LlmTab settings={settings} onChange={handleChange} />
-            )}
-            {activeTab === "behavior" && (
-              <BehaviorTab settings={settings} onChange={handleChange} />
-            )}
-            {activeTab === "knowledge" && (
-              <KnowledgeTab
-                settings={settings}
-                onChange={handleChange}
-                agentId={agentId}
-              />
-            )}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
+        ) : (
+          <>
+            {/* Tab bar — fixed */}
+            <div className="shrink-0 flex gap-1 border-b border-border/50 px-6 overflow-x-auto">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors whitespace-nowrap",
+                      isActive
+                        ? "text-primary border-b-2 border-primary"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-3 pt-4 mt-4 border-t border-border/50">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
+            {/* Tab content — scrollable */}
+            <div className="flex-1 overflow-y-auto min-h-0 px-6 py-5">
+              {activeTab === "voice" && (
+                <VoiceTab settings={settings} onChange={handleChange} />
               )}
-            </Button>
-          </div>
-        </>
-      )}
-    </CustomModal>
+              {activeTab === "transcriber" && (
+                <TranscriberTab settings={settings} onChange={handleChange} />
+              )}
+              {activeTab === "llm" && (
+                <LlmTab settings={settings} onChange={handleChange} />
+              )}
+              {activeTab === "behavior" && (
+                <BehaviorTab settings={settings} onChange={handleChange} />
+              )}
+              {activeTab === "knowledge" && (
+                <KnowledgeTab
+                  settings={settings}
+                  onChange={handleChange}
+                  agentId={agentId}
+                />
+              )}
+            </div>
+
+            {/* Footer — fixed at bottom */}
+            <div className="shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border/50 rounded-b-2xl">
+              <Button variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
