@@ -534,6 +534,8 @@ export function AgentSettings({
                   firstMessage ||
                   `Hello! This is an AI assistant. How can I help you today?`,
                 mermaid_chart: mermaidChart || "",
+                max_duration_seconds: agentData?.max_duration_seconds || 600,
+                background_sound: agentData?.background_sound || "office",
                 knowledge_base_id: vapiKnowledgeBaseId,
               },
             },
