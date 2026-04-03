@@ -13,29 +13,22 @@ export const supabase = createClient<Database>(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY,
 );
-// Expose Supabase client to browser console
-(window as any).supabase = supabase;
-
 // Helper for getting the current workspace ID
 export const getCurrentWorkspaceId = async (): Promise<string | null> => {
   try {
-    console.log("🔑 Getting current workspace ID");
     const {
       data: { session },
       error: authError,
     } = await supabase.auth.getSession();
 
     if (authError) {
-      console.error("❌ Auth error getting session:", authError);
+      console.error("Auth error getting session:", authError);
       return null;
     }
 
     if (!session?.user?.id) {
-      console.warn("⚠️ No user session available");
       return null;
     }
-
-    console.log("👤 User authenticated with ID:", session.user.id);
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
@@ -44,16 +37,14 @@ export const getCurrentWorkspaceId = async (): Promise<string | null> => {
       .single();
 
     if (profileError) {
-      console.error("❌ Error fetching user profile:", profileError);
+      console.error("Error fetching user profile:", profileError);
       return null;
     }
 
     if (!profile?.current_workspace_id) {
-      console.warn("⚠️ No workspace ID found in user profile");
       return null;
     }
 
-    console.log("🏢 Found workspace ID:", profile.current_workspace_id);
     return profile.current_workspace_id;
   } catch (error) {
     console.error("❌ Error getting current workspace:", error);

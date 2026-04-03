@@ -136,10 +136,6 @@ export const useOnboarding = () => {
         refreshedSession.user.id,
       );
 
-      // Log session data to check authentication context in client
-      console.log("Checking authentication context from client session...");
-      console.log("Session user data:", refreshedSession.user);
-
       // First update the user profile before creating workspace
       const { error: profileError } = await supabase
         .from("profiles")

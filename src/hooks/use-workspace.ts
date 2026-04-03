@@ -95,12 +95,6 @@ export function useWorkspace() {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
-      console.log("=== AUTH DEBUG ===");
-      console.log("Auth user object:", user);
-      console.log("User ID:", user?.id);
-      console.log("Auth error (if any):", userError);
-      console.log("==================");
-
       // Now perform the INSERT with a refreshed session context
       const { data, error } = await supabase
         .from("workspaces")
