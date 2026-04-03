@@ -75,14 +75,14 @@ export function CustomModal({
     >
       <div
         ref={modalRef}
-        className={`relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-hidden transition-all duration-200 ${
+        className={`relative flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[85vh] transition-all duration-200 ${
           open ? "scale-100 opacity-100" : "scale-95 opacity-0"
         } ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Header — fixed at top */}
         {(title || description) && (
-          <div className="px-6 py-4 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 border-b border-gray-200 dark:border-gray-700">
+          <div className="shrink-0 px-6 py-4 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 border-b border-gray-200 dark:border-gray-700 rounded-t-2xl">
             <div className="flex items-center justify-between">
               <div>
                 {title && (
@@ -109,8 +109,8 @@ export function CustomModal({
           </div>
         )}
 
-        {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-120px)] px-6 py-5">
+        {/* Content — scrollable */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 min-h-0">
           {children}
         </div>
       </div>

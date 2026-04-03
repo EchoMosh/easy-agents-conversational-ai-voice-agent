@@ -265,7 +265,7 @@ export function AgentSettings({
           </div>
 
           {/* Tab content */}
-          <div className="min-h-[320px] max-h-[55vh] overflow-y-auto pr-1 pb-2">
+          <div className="pb-4">
             {activeTab === "voice" && (
               <VoiceTab settings={settings} onChange={handleChange} />
             )}
