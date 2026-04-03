@@ -272,6 +272,7 @@ function PipelinesPage() {
       setIsDeleting(true);
       try {
         await handleDeletePipeline(selectedPipeline.id, targetPipelineId);
+        setSelectedPipeline(null);
         setShowDeleteDialog(false);
         toast.success("Pipeline deleted successfully");
       } catch (error) {

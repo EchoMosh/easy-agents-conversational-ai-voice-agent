@@ -294,20 +294,17 @@ export function useLeads(initialPipelineId?: string) {
   // Update accumulated leads whenever new data comes in
   useEffect(() => {
     if (page === 1) {
-      // Reset accumulated leads when we're back on page 1
       setAccumulatedLeads(leadsData.leads);
     } else if (leadsData.leads.length > 0) {
-      // Add new leads to the accumulated list, avoiding duplicates
-      const existingIds = new Set(accumulatedLeads.map((lead) => lead.id));
-      const newLeads = leadsData.leads.filter(
-        (lead) => !existingIds.has(lead.id),
-      );
-
-      if (newLeads.length > 0) {
-        setAccumulatedLeads((prev) => [...prev, ...newLeads]);
-      }
+      setAccumulatedLeads((prev) => {
+        const existingIds = new Set(prev.map((lead) => lead.id));
+        const newLeads = leadsData.leads.filter(
+          (lead) => !existingIds.has(lead.id),
+        );
+        return newLeads.length > 0 ? [...prev, ...newLeads] : prev;
+      });
     }
-  }, [leadsData.leads, page, accumulatedLeads]);
+  }, [leadsData.leads, page]);
 
   // Refresh all data
   const refreshLeads = async () => {

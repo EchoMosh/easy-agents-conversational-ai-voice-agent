@@ -82,7 +82,7 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
       }
 
       const tempTag: Tag = {
-        id: uuidv4(),
+        id: `temp-${uuidv4()}`,
         name,
         color: "gray",
         user_id: userData.user.id,
@@ -114,9 +114,14 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
     }
 
     // Validate phone number uniqueness
-    const isPhoneValid = await validatePhoneUniqueness(phone, currentWorkspace.id);
+    const isPhoneValid = await validatePhoneUniqueness(
+      phone,
+      currentWorkspace.id,
+    );
     if (!isPhoneValid) {
-      toast.error("This phone number is already associated with another lead in this workspace");
+      toast.error(
+        "This phone number is already associated with another lead in this workspace",
+      );
       return;
     }
 
@@ -155,14 +160,14 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
               lead_id: leadData.id,
               name: v.name,
               value: v.value,
-            }))
+            })),
           );
         if (variablesError) throw variablesError;
       }
 
       if (tags.length > 0) {
         for (const tag of tags) {
-          if (tag.id.includes("-")) {
+          if (tag.id.startsWith("temp-")) {
             const { data: newTag, error: newTagError } = await supabase
               .from("tags")
               .insert({

@@ -84,28 +84,37 @@ export function useAgentData(
   useEffect(() => {
     if (!id) return;
 
-    console.log("[AgentFlowPage] Setting up real-time subscription for agent:", id);
+    console.log(
+      "[AgentFlowPage] Setting up real-time subscription for agent:",
+      id,
+    );
 
     const channel = supabase
       .channel(`agent-flow-${id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'agents',
+          event: "UPDATE",
+          schema: "public",
+          table: "agents",
           filter: `id=eq.${id}`,
         },
         (payload) => {
           console.log("[AgentFlowPage] Real-time update received:", payload);
-          
+
           // Only refetch if the flow data actually changed
-          if (payload.new && payload.old && 
-              JSON.stringify(payload.new.flow) !== JSON.stringify(payload.old.flow)) {
-            console.log("[AgentFlowPage] Flow data changed, refetching agent data");
+          if (
+            payload.new &&
+            payload.old &&
+            JSON.stringify(payload.new.flow) !==
+              JSON.stringify(payload.old.flow)
+          ) {
+            console.log(
+              "[AgentFlowPage] Flow data changed, refetching agent data",
+            );
             refetch();
           }
-        }
+        },
       )
       .subscribe((status) => {
         console.log("[AgentFlowPage] Real-time subscription status:", status);
@@ -125,13 +134,15 @@ export function useAgentData(
   }) => {
     if (!id) return;
     console.log("[AgentFlowPage] Updating agent settings:", settings);
-  
+
     // Map to snake_case for Supabase
     const dbUpdates: { [key: string]: any } = {};
-    if (settings.voiceId) dbUpdates.voice_id = settings.voiceId;
-    if (settings.language) dbUpdates.language = settings.language;
-    if (settings.humorLevel) dbUpdates.humor_level = settings.humorLevel;
-    if (settings.maxDurationSeconds) dbUpdates.max_duration_seconds = settings.maxDurationSeconds;
+    if (settings.voiceId !== undefined) dbUpdates.voice_id = settings.voiceId;
+    if (settings.language !== undefined) dbUpdates.language = settings.language;
+    if (settings.humorLevel !== undefined)
+      dbUpdates.humor_level = settings.humorLevel;
+    if (settings.maxDurationSeconds !== undefined)
+      dbUpdates.max_duration_seconds = settings.maxDurationSeconds;
 
     const { error } = await supabase
       .from("agents")
