@@ -201,7 +201,10 @@ export function AgentSettings({
         console.error("Voice service sync failed (settings saved to DB):", err);
       });
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : (err as { message?: string })?.message || String(err);
       console.error("Failed to save settings:", errorMsg, err);
       toast({
         title: "Error",
