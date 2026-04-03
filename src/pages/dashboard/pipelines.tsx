@@ -15,6 +15,7 @@ import { DeletePipelineDialog } from "@/components/pipelines/delete-pipeline-dia
 import { usePipeline } from "@/hooks/use-pipeline";
 // Import hooks directly - no conditional usage
 import { defaultColumns } from "@/hooks/use-pipeline";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Completely rewritten with careful attention to hook rules
@@ -50,36 +51,85 @@ function PipelinesPage() {
     invalidateAndRefetch,
   } = usePipeline();
 
+  // Helper to persist columns array to the pipelines table
+  const persistColumns = useCallback(
+    async (pipelineId: string, columns: PipelineColumn[]) => {
+      const columnsForDb = columns.map((col) => ({
+        id: col.id,
+        title: col.title,
+        color: col.color,
+      }));
+
+      const { error } = await supabase
+        .from("pipelines")
+        .update({ columns: columnsForDb })
+        .eq("id", pipelineId);
+
+      if (error) throw error;
+    },
+    [],
+  );
+
   // Event handlers - defined unconditionally
   const handleAddStage = useCallback(
-    (newStage: PipelineColumn) => {
+    async (newStage: PipelineColumn) => {
       if (!selectedPipeline) return;
 
-      // Update the selected pipeline with the new column
+      const updatedColumns = [...(selectedPipeline.columns || []), newStage];
+
+      // Update local state first for instant UI feedback
       setSelectedPipeline((prev) => {
         if (!prev) return null;
         return {
           ...prev,
-          columns: [...(prev.columns || []), newStage],
+          columns: updatedColumns,
         };
       });
 
-      toast.success("New stage added");
+      try {
+        await persistColumns(selectedPipeline.id, updatedColumns);
+        toast.success("New stage added");
+      } catch (error) {
+        console.error("Error persisting new stage:", error);
+        // Revert local state on failure
+        setSelectedPipeline((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            columns: selectedPipeline.columns,
+          };
+        });
+        toast.error("Failed to save new stage");
+      }
     },
-    [selectedPipeline, setSelectedPipeline]
+    [selectedPipeline, setSelectedPipeline, persistColumns],
   );
 
   const handleReorderColumns = useCallback(
-    (newColumns: PipelineColumn[]) => {
+    async (newColumns: PipelineColumn[]) => {
       if (!selectedPipeline) return;
 
-      // Update the selected pipeline with the new columns
+      const previousColumns = selectedPipeline.columns;
+
+      // Update local state first for instant UI feedback
       setSelectedPipeline((prev) => {
         if (!prev) return null;
         return { ...prev, columns: newColumns };
       });
+
+      try {
+        await persistColumns(selectedPipeline.id, newColumns);
+      } catch (error) {
+        console.error("Error persisting column reorder:", error);
+        // Revert local state on failure
+        setSelectedPipeline((prev) => {
+          if (!prev) return null;
+          return { ...prev, columns: previousColumns };
+        });
+        toast.error("Failed to save column order");
+      }
     },
-    [selectedPipeline, setSelectedPipeline]
+    [selectedPipeline, setSelectedPipeline, persistColumns],
   );
 
   const handleDragOver = useCallback(
@@ -103,7 +153,7 @@ function PipelinesPage() {
         }
       }
     },
-    [selectedPipeline]
+    [selectedPipeline],
   );
 
   const handleDragEnd = useCallback(
@@ -114,17 +164,80 @@ function PipelinesPage() {
         return;
       }
 
-      // Rest of drag end functionality...
-      // Simplified for clarity in fixing the hook issue
+      const activeData = event.active?.data?.current;
+      const overData = event.over?.data?.current;
 
-      // Reset preview state
+      // Only handle lead/task moves here — column reordering is handled by KanbanBoard
+      if (activeData?.type === "Task" && activeData?.lead) {
+        const lead = activeData.lead as Lead;
+        const sourceColumnId = activeData.columnId as string;
+
+        // Determine the target column
+        let targetColumnId: string;
+        if (overData?.type === "Column") {
+          targetColumnId = String(event.over.id);
+        } else if (overData?.type === "Task" && overData?.columnId) {
+          targetColumnId = overData.columnId as string;
+        } else {
+          // No valid target — reset and bail
+          setPreviewColumnId(null);
+          setPreviewIndex(null);
+          return;
+        }
+
+        // Find the target column to get its title (leads use status = column title)
+        const targetColumn = selectedPipeline.columns.find(
+          (col) => col.id === targetColumnId,
+        );
+
+        if (!targetColumn) {
+          console.error("Target column not found:", targetColumnId);
+          setPreviewColumnId(null);
+          setPreviewIndex(null);
+          return;
+        }
+
+        // Skip if the lead is already in this column
+        if (sourceColumnId === targetColumnId) {
+          setPreviewColumnId(null);
+          setPreviewIndex(null);
+          return;
+        }
+
+        setIsUpdating(true);
+
+        try {
+          // Update the lead's status to match the target column title
+          const { error } = await supabase
+            .from("leads")
+            .update({ status: targetColumn.title })
+            .eq("id", lead.id);
+
+          if (error) throw error;
+
+          // Reset preview state and refetch to reflect the change
+          setPreviewColumnId(null);
+          setPreviewIndex(null);
+          await invalidateAndRefetch();
+        } catch (error) {
+          console.error("Error moving lead:", error);
+          toast.error("Failed to move lead");
+          setPreviewColumnId(null);
+          setPreviewIndex(null);
+          // Refetch to revert UI to actual DB state
+          await invalidateAndRefetch();
+        } finally {
+          setIsUpdating(false);
+        }
+
+        return;
+      }
+
+      // For non-task drags (columns), just reset preview state
       setPreviewColumnId(null);
       setPreviewIndex(null);
-
-      // Trigger refetch
-      invalidateAndRefetch();
     },
-    [selectedPipeline, isUpdating, invalidateAndRefetch]
+    [selectedPipeline, isUpdating, invalidateAndRefetch],
   );
 
   const resetDragState = useCallback(() => {
@@ -141,7 +254,7 @@ function PipelinesPage() {
       });
 
       const draggingElements = document.querySelectorAll(
-        '[data-dragging="true"]'
+        '[data-dragging="true"]',
       );
       draggingElements.forEach((el) => {
         if (el instanceof HTMLElement) {
@@ -168,7 +281,7 @@ function PipelinesPage() {
         setIsDeleting(false);
       }
     },
-    [selectedPipeline, handleDeletePipeline]
+    [selectedPipeline, handleDeletePipeline],
   );
 
   // Initialize selectedPipeline if needed
@@ -182,13 +295,13 @@ function PipelinesPage() {
 
     if (selectedPipelineId) {
       const pipelineToSelect = pipelines.find(
-        (p) => p.id === selectedPipelineId
+        (p) => p.id === selectedPipelineId,
       );
 
       if (pipelineToSelect) {
         console.log(
           "Setting selected pipeline from URL parameter:",
-          pipelineToSelect.name
+          pipelineToSelect.name,
         );
         setSelectedPipeline(pipelineToSelect);
         return;
@@ -223,7 +336,7 @@ function PipelinesPage() {
     const checkForStuckDrags = () => {
       try {
         const draggedElements = document.querySelectorAll(
-          '[aria-pressed="true"]'
+          '[aria-pressed="true"]',
         );
         const isStuck = draggedElements.length > 0 && !isUpdating;
 
@@ -245,13 +358,13 @@ function PipelinesPage() {
   // Derived data that doesn't affect hooks
   const otherPipelines = useMemo(
     () => pipelines?.filter((p) => p.id !== selectedPipeline?.id) || [],
-    [pipelines, selectedPipeline?.id]
+    [pipelines, selectedPipeline?.id],
   );
 
   const hasLeads = useMemo(
     () =>
       leads?.some((lead) => lead.pipeline_id === selectedPipeline?.id) || false,
-    [leads, selectedPipeline?.id]
+    [leads, selectedPipeline?.id],
   );
 
   const pipelineColumns = useMemo(
@@ -261,7 +374,7 @@ function PipelinesPage() {
         title: col.title,
         color: col.color || "bg-gray-500", // Default color if missing
       })) || defaultColumns,
-    [selectedPipeline]
+    [selectedPipeline],
   );
 
   // Event handlers (defined outside of render to prevent recreation)
@@ -286,7 +399,7 @@ function PipelinesPage() {
         invalidateAndRefetch();
       }, 100);
     },
-    [setSelectedPipeline, navigate, invalidateAndRefetch]
+    [setSelectedPipeline, navigate, invalidateAndRefetch],
   );
 
   // Render function - now clean with minimal logic
@@ -369,7 +482,7 @@ export default withErrorBoundary(PipelinesPage, {
       try {
         // Reset stuck elements
         const stuckElements = document.querySelectorAll(
-          '[aria-pressed="true"]'
+          '[aria-pressed="true"]',
         );
         stuckElements.forEach((el) => {
           if (el instanceof HTMLElement) {
@@ -379,7 +492,7 @@ export default withErrorBoundary(PipelinesPage, {
 
         // Clear any transforms
         const transformedElements = document.querySelectorAll(
-          '[style*="transform"]'
+          '[style*="transform"]',
         );
         transformedElements.forEach((el) => {
           if (el instanceof HTMLElement && el.hasAttribute("data-task-id")) {
