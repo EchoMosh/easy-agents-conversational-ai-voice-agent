@@ -77,7 +77,11 @@ export function EditLeadDialog({
       toast.error("Failed to load tags");
     } else {
       setExistingTags(data);
-      console.log("🐝 workspace existingTags count:", data.length, data.map(t => t.name));
+      console.log(
+        "🐝 workspace existingTags count:",
+        data.length,
+        data.map((t) => t.name),
+      );
     }
   };
 
@@ -88,22 +92,31 @@ export function EditLeadDialog({
       color: "gray",
     };
     setTags([...tags, newTag]);
-    console.log("🏷️ Added tag locally:", name, "Current tags:", [...tags, newTag].map(t => t.name));
+    console.log(
+      "🏷️ Added tag locally:",
+      name,
+      "Current tags:",
+      [...tags, newTag].map((t) => t.name),
+    );
   };
 
   const handleRemoveTag = (id: string) => {
-    setTags(tags.filter(tag => tag.id !== id));
-    console.log("🗑️ Removed tag locally:", id, "Remaining tags:", tags.filter(tag => tag.id !== id).map(t => t.name));
+    setTags(tags.filter((tag) => tag.id !== id));
+    console.log(
+      "🗑️ Removed tag locally:",
+      id,
+      "Remaining tags:",
+      tags.filter((tag) => tag.id !== id).map((t) => t.name),
+    );
   };
 
   // Set up form when a lead is selected for editing
   useEffect(() => {
     if (!isOpen || !lead) return;
 
-    console.clear(); 
     console.log("🚀 EditLeadDialog opened for lead:", lead.id);
     console.log("📥 Initial tags on lead:", lead.tags);
-    
+
     // Split name into first and last name
     const nameParts = lead.name.split(" ");
     setFirstName(nameParts[0] || "");
@@ -118,7 +131,7 @@ export function EditLeadDialog({
         lead.variables.map((v) => ({
           name: v.name,
           value: v.value || "",
-        }))
+        })),
       );
     } else {
       setVariables([]);
@@ -146,7 +159,7 @@ export function EditLeadDialog({
 
     // Reset active tab when opening
     setActiveTab("contact");
-    
+
     fetchAllTags();
   }, [isOpen, lead]);
 
@@ -160,9 +173,15 @@ export function EditLeadDialog({
 
     // Validate phone number uniqueness (excluding current lead)
     if (phone && phone.trim()) {
-      const isPhoneValid = await validatePhoneUniqueness(phone, currentWorkspace.id, lead.id);
+      const isPhoneValid = await validatePhoneUniqueness(
+        phone,
+        currentWorkspace.id,
+        lead.id,
+      );
       if (!isPhoneValid) {
-        toast.error("This phone number is already associated with another lead in this workspace");
+        toast.error(
+          "This phone number is already associated with another lead in this workspace",
+        );
         return;
       }
     }
@@ -196,7 +215,15 @@ export function EditLeadDialog({
       // Handle variables updates
       if (variables.length > 0) {
         // First, delete all existing variables
-        await supabase.from("lead_variables").delete().eq("lead_id", lead.id);
+        const { error: deleteVarsError } = await supabase
+          .from("lead_variables")
+          .delete()
+          .eq("lead_id", lead.id);
+
+        if (deleteVarsError) {
+          console.error("Failed to delete lead variables:", deleteVarsError);
+          throw deleteVarsError;
+        }
 
         // Then insert new ones
         const { error: variablesError } = await supabase
@@ -206,7 +233,7 @@ export function EditLeadDialog({
               lead_id: lead.id,
               name: v.name,
               value: v.value,
-            }))
+            })),
           );
 
         if (variablesError) throw variablesError;
@@ -214,32 +241,46 @@ export function EditLeadDialog({
 
       // Handle tags updates
       // Get current tags for the lead
-      const { data: currentLeadTags } = await supabase
+      const { data: currentLeadTags, error: fetchTagsError } = await supabase
         .from("lead_tags")
         .select("tag_id")
         .eq("lead_id", lead.id);
 
+      if (fetchTagsError) {
+        console.error("Failed to fetch current lead tags:", fetchTagsError);
+        throw fetchTagsError;
+      }
+
       const currentTagIds = currentLeadTags?.map((t) => t.tag_id) || [];
-      
+
       // Separate existing tags from new tags (with temp IDs)
-      const existingTagIds = tags.filter(t => !t.id.startsWith('temp-')).map(t => t.id);
-      const newTags = tags.filter(t => t.id.startsWith('temp-'));
+      const existingTagIds = tags
+        .filter((t) => !t.id.startsWith("temp-"))
+        .map((t) => t.id);
+      const newTags = tags.filter((t) => t.id.startsWith("temp-"));
 
       // Tags to remove - in currentTagIds but not in existingTagIds
       const tagsToRemove = currentTagIds.filter(
-        (id) => !existingTagIds.includes(id)
+        (id) => !existingTagIds.includes(id),
       );
 
       // Existing tags to add - in existingTagIds but not in currentTagIds
-      const existingTagsToAdd = existingTagIds.filter((id) => !currentTagIds.includes(id));
+      const existingTagsToAdd = existingTagIds.filter(
+        (id) => !currentTagIds.includes(id),
+      );
 
       // Remove tags
       if (tagsToRemove.length > 0) {
-        await supabase
+        const { error: removeTagsError } = await supabase
           .from("lead_tags")
           .delete()
           .eq("lead_id", lead.id)
           .in("tag_id", tagsToRemove);
+
+        if (removeTagsError) {
+          console.error("Failed to remove lead tags:", removeTagsError);
+          throw removeTagsError;
+        }
       }
 
       // Add existing tags
@@ -249,7 +290,14 @@ export function EditLeadDialog({
           tag_id: tagId,
         }));
 
-        await supabase.from("lead_tags").insert(tagsToInsert);
+        const { error: addTagsError } = await supabase
+          .from("lead_tags")
+          .insert(tagsToInsert);
+
+        if (addTagsError) {
+          console.error("Failed to add lead tags:", addTagsError);
+          throw addTagsError;
+        }
       }
 
       // Create and add new tags
@@ -293,12 +341,10 @@ export function EditLeadDialog({
           .single();
 
         if (!existingLink) {
-          const { error: linkError } = await supabase
-            .from("lead_tags")
-            .insert({
-              lead_id: lead.id,
-              tag_id: tagId,
-            });
+          const { error: linkError } = await supabase.from("lead_tags").insert({
+            lead_id: lead.id,
+            tag_id: tagId,
+          });
 
           if (linkError) throw linkError;
         }
@@ -404,7 +450,9 @@ export function EditLeadDialog({
                                 setVariables([...variables, variable])
                               }
                               onRemoveVariable={(index) =>
-                                setVariables(variables.filter((_, i) => i !== index))
+                                setVariables(
+                                  variables.filter((_, i) => i !== index),
+                                )
                               }
                             />
                           </div>

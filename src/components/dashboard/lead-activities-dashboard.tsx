@@ -85,7 +85,7 @@ export function LeadActivitiesDashboard() {
   // Count total activities
   const totalActivities = Object.values(filteredActivities).reduce(
     (count, activities) => count + activities.length,
-    0
+    0,
   );
 
   // Get most active lead
@@ -96,7 +96,7 @@ export function LeadActivitiesDashboard() {
       }
       return maxLead;
     },
-    { leadId: "", count: 0 }
+    { leadId: "", count: 0 },
   ).leadId;
 
   const mostActiveLead = leads?.find((lead) => lead.id === mostActiveLeadId);
@@ -113,7 +113,7 @@ export function LeadActivitiesDashboard() {
             ? new Date(activities[0].created_at)
             : new Date(0),
       };
-    }
+    },
   );
 
   // Sort leads by recent activity
@@ -287,7 +287,7 @@ export function LeadActivitiesDashboard() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-3 font-semibold">
-                    {mostActiveLead.name[0].toUpperCase()}
+                    {mostActiveLead.name?.[0]?.toUpperCase() || "?"}
                   </div>
                   <div>
                     <p className="font-medium">{mostActiveLead.name}</p>
@@ -362,8 +362,8 @@ export function LeadActivitiesDashboard() {
                     {Object.entries(
                       // Flatten all activities and group by date
                       groupActivitiesByDate(
-                        Object.values(filteredActivities).flat()
-                      )
+                        Object.values(filteredActivities).flat(),
+                      ),
                     ).map(([date, activities]) => (
                       <div key={date} className="relative">
                         <div className="sticky top-0 bg-background py-2 z-10">
@@ -384,7 +384,7 @@ export function LeadActivitiesDashboard() {
 
                           {activities.map((activity, i) => {
                             const lead = leads?.find(
-                              (l) => l.id === activity.lead_id
+                              (l) => l.id === activity.lead_id,
                             );
                             return (
                               <div
@@ -410,7 +410,7 @@ export function LeadActivitiesDashboard() {
                                     <span className="text-xs text-muted-foreground">
                                       {format(
                                         parseISO(activity.created_at),
-                                        "h:mm a"
+                                        "h:mm a",
                                       )}
                                     </span>
                                   </div>
@@ -485,7 +485,7 @@ export function LeadActivitiesDashboard() {
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base font-medium flex items-center">
                         <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-2 font-semibold">
-                          {lead?.name[0].toUpperCase()}
+                          {lead?.name?.[0]?.toUpperCase() || "?"}
                         </div>
                         {lead?.name}
                       </CardTitle>
@@ -513,7 +513,7 @@ export function LeadActivitiesDashboard() {
                               <p className="text-xs text-muted-foreground">
                                 {format(
                                   parseISO(activity.created_at),
-                                  "MMM d, yyyy 'at' h:mm a"
+                                  "MMM d, yyyy 'at' h:mm a",
                                 )}
                               </p>
                             </div>

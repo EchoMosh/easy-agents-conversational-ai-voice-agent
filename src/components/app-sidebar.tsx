@@ -37,7 +37,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [username, setUsername] = useState<string>("Meng To");
   const [email, setEmail] = useState<string>("ui@designer.com");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
-  
+
   // Get workspace data from context
   const { currentWorkspace, workspaces } = useWorkspace();
 
@@ -56,7 +56,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       plan: "Workspace",
     });
   }
-
 
   // Define app-specific menu items that match the dock navigation
   const appMenuItems = [
@@ -92,33 +91,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
-
   const generateRandomAvatar = () => {
     const seed = Math.random().toString(36).substring(7);
     return `https://api.dicebear.com/7.x/lorelei-neutral/svg?seed=${seed}&backgroundColor=999999&radius=50`;
   };
 
   const fetchProfile = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.user) {
-      const userEmail = session.user.email || "";
-      setEmail(userEmail);
-      const name = userEmail.split("@")[0];
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        const userEmail = session.user.email || "";
+        setEmail(userEmail);
+        const name = userEmail.split("@")[0];
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("avatar_url, first_name, last_name")
-        .eq("id", session.user.id)
-        .single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("avatar_url, first_name, last_name")
+          .eq("id", session.user.id)
+          .single();
 
-      if (profile) {
-        setUsername(profile.first_name || name);
-        setAvatarUrl(profile.avatar_url || generateRandomAvatar());
-      } else {
-        setAvatarUrl(generateRandomAvatar());
+        if (profile) {
+          setUsername(profile.first_name || name);
+          setAvatarUrl(profile.avatar_url || generateRandomAvatar());
+        } else {
+          setAvatarUrl(generateRandomAvatar());
+        }
       }
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
     }
   };
 
@@ -134,19 +136,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   return (
-    <Sidebar
-      collapsible="icon"
-      className=""
-      {...props}
-    >
+    <Sidebar collapsible="icon" className="" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={teams} />
       </SidebarHeader>
       <SidebarContent>
         <NavSimple items={appMenuItems} label="Platform" />
       </SidebarContent>
-      <SidebarFooter>
-      </SidebarFooter>
+      <SidebarFooter></SidebarFooter>
       {/* <SidebarRail /> Removed to prevent hover-to-expand */}
     </Sidebar>
   );

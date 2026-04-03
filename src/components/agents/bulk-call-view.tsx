@@ -74,10 +74,14 @@ async function fetchLeadIds(
   // If tag filters applied, get lead IDs from lead_tags first
   let tagFilteredIds: string[] | null = null;
   if (tagIds.length > 0) {
-    const { data: tagRows } = await supabase
+    const { data: tagRows, error: tagError } = await supabase
       .from("lead_tags")
       .select("lead_id")
       .in("tag_id", tagIds);
+    if (tagError) {
+      console.error("Failed to fetch lead_tags:", tagError);
+      return [];
+    }
     tagFilteredIds = [...new Set((tagRows || []).map((r) => r.lead_id))];
     if (tagFilteredIds.length === 0) return [];
   }
@@ -106,7 +110,11 @@ async function fetchLeadIds(
     query = query.gte("created_at", cutoff.toISOString());
   }
 
-  const { data } = await query;
+  const { data, error } = await query;
+  if (error) {
+    console.error("Failed to fetch leads:", error);
+    return [];
+  }
   return (data || []).map((r) => r.id);
 }
 

@@ -73,7 +73,7 @@ const AgentsPage = () => {
             if (flowData && (flowData.nodes || flowData.edges)) {
               console.log(
                 `Valid flow data found for agent ${agent.id}:`,
-                flowData
+                flowData,
               );
               return {
                 ...agent,
@@ -88,7 +88,7 @@ const AgentsPage = () => {
             ) {
               console.log(
                 `Nested flow data found for agent ${agent.id}:`,
-                flowData.flow
+                flowData.flow,
               );
               return {
                 ...agent,
@@ -154,11 +154,8 @@ const AgentsPage = () => {
   };
 
   const handleCreateSuccess = async (agentId: string) => {
-    queryClient.setQueryData(["agents", currentWorkspace?.id], (oldData: Agent[] | undefined) => {
-      if (!oldData) return [];
-      // This is a placeholder. In a real app, you'd fetch the new agent data
-      // and add it to the cache. For now, we'll just invalidate.
-      return oldData;
+    await queryClient.invalidateQueries({
+      queryKey: ["agents", currentWorkspace?.id],
     });
     setIsCreating(false);
     toast({
@@ -186,7 +183,7 @@ const AgentsPage = () => {
   const filteredAgents = agents.filter(
     (agent) =>
       agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      agent.role.toLowerCase().includes(searchQuery.toLowerCase())
+      agent.role.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Register the agents loading state with the central loading context

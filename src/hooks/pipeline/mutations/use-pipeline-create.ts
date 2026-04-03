@@ -1,12 +1,13 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useWorkspace } from "@/context/workspace-context";
 import { defaultColumns } from "@/hooks/use-pipeline";
 import { Pipeline } from "@/types/pipeline";
 import { toast } from "sonner";
 
 export function usePipelineCreate() {
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
 
   const createNewPipeline = async (name: string) => {
     const user = await supabase.auth.getUser();
@@ -17,8 +18,13 @@ export function usePipelineCreate() {
       return;
     }
 
+    if (!currentWorkspace?.id) {
+      toast.error("No workspace selected");
+      return;
+    }
+
     try {
-      const columnsJson = defaultColumns.map(col => ({
+      const columnsJson = defaultColumns.map((col) => ({
         id: col.id,
         title: col.title,
         color: col.color,
@@ -30,6 +36,7 @@ export function usePipelineCreate() {
           name,
           columns: columnsJson,
           user_id: userId,
+          workspace_id: currentWorkspace.id,
         })
         .select()
         .single();
@@ -37,10 +44,13 @@ export function usePipelineCreate() {
       if (error) throw error;
 
       // Immediately update the cache with the new pipeline
-      queryClient.setQueryData(["pipelines"], (old: Pipeline[] | undefined) => {
-        if (!old) return [data];
-        return [...old, data];
-      });
+      queryClient.setQueryData(
+        ["pipelines", currentWorkspace.id],
+        (old: Pipeline[] | undefined) => {
+          if (!old) return [data];
+          return [...old, data];
+        },
+      );
 
       toast.success("New pipeline has been created successfully");
     } catch (error) {
