@@ -1,12 +1,12 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Lead } from "@/pages/dashboard/leads";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
+import { cva } from "class-variance-authority";
 import "./kanban-styles.css";
 
 export interface Task {
@@ -32,6 +32,7 @@ interface TaskCardProps {
   isPreview?: boolean;
   onClick?: () => void;
   columnId: string;
+  columnColor?: string;
   index?: number;
 }
 
@@ -42,6 +43,7 @@ export function TaskCard({
   isPreview,
   onClick,
   columnId,
+  columnColor,
   index = 0,
 }: TaskCardProps) {
   // Use either the task from props or create one from the lead
@@ -129,47 +131,49 @@ export function TaskCard({
     ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-md"
     : "";
 
+  // Get the color as a CSS variable for the left border
+  const colorVar = columnColor
+    ? `var(--${columnColor.replace("bg-", "")})`
+    : undefined;
+
   return (
     <Card
       ref={setRefs}
-      style={style}
+      style={{
+        ...style,
+        borderLeftColor: colorVar,
+        borderLeftWidth: colorVar ? "2px" : undefined,
+      }}
       className={cn(
-        "bg-card border shadow-sm hover:shadow-md relative rounded-md task-card",
+        "bg-card border border-border/60 hover:border-border rounded-md task-card",
         isDragging ? "opacity-50 z-10 task-card-dragging" : "opacity-100",
         isOverlay ? "ring-2 ring-primary shadow-md z-50" : "",
         isPreview ? "task-card-preview" : "",
         previewStyles,
-        "cursor-grab active:cursor-grabbing"
+        "cursor-grab active:cursor-grabbing shadow-none hover:shadow-sm transition-shadow",
       )}
       onClick={onClick}
       data-task-id={taskData.id}
+      {...attributes}
+      {...listeners}
     >
-      <CardContent className="p-3 flex flex-col gap-2">
-        <div className="flex items-start justify-between">
-          <div className="font-medium text-sm">{taskData.content}</div>
-          <Button
-            variant="ghost"
-            {...attributes}
-            {...listeners}
-            className="p-1 text-primary/50 h-auto cursor-grab active:cursor-grabbing -mr-2 -mt-1"
-          >
-            <span className="sr-only">{`Move task: ${taskData.content}`}</span>
-            <GripVertical className="h-4 w-4" />
-          </Button>
+      <CardContent className="p-2.5 flex flex-col gap-1">
+        <div className="font-medium text-sm leading-snug">
+          {taskData.content}
         </div>
 
-        {lead && (
-          <div className="space-y-1">
+        {lead && (lead.email || lead.phone) && (
+          <div className="flex flex-col gap-0.5">
             {lead.email && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Mail className="h-3 w-3" />
-                <span className="truncate max-w-[200px]">{lead.email}</span>
+              <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Mail className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{lead.email}</span>
               </div>
             )}
 
             {lead.phone && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Phone className="h-3 w-3" />
+              <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Phone className="h-3 w-3 flex-shrink-0" />
                 <span>{lead.phone}</span>
               </div>
             )}
@@ -179,5 +183,3 @@ export function TaskCard({
     </Card>
   );
 }
-
-import { cva } from "class-variance-authority";

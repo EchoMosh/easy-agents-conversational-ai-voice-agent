@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Pipeline } from "@/types/pipeline";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface PipelineHeaderProps {
   pipelines: Pipeline[];
@@ -26,30 +25,34 @@ export function PipelineHeader({
   };
 
   return (
-    <div className="mb-8">
+    <div className="mb-4">
       {pipelines && pipelines.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {pipelines.map((pipeline) => (
-              <Badge
-                key={pipeline.id}
-                variant={selectedPipeline?.id === pipeline.id ? "default" : "secondary"}
-                className={`
-                  px-4 py-2 text-sm font-medium cursor-pointer rounded-full transition-all
-                  ${
-                    selectedPipeline?.id === pipeline.id
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "hover:bg-secondary/80"
-                  }
-                `}
-                onClick={() => handlePipelineClick(pipeline)}
-              >
-                {pipeline.name}
-              </Badge>
-            ))}
+        <div className="flex items-end justify-between gap-4">
+          <div className="flex items-center gap-1 border-b border-border">
+            {pipelines.map((pipeline) => {
+              const isSelected = selectedPipeline?.id === pipeline.id;
+              return (
+                <button
+                  key={pipeline.id}
+                  onClick={() => handlePipelineClick(pipeline)}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium transition-colors relative whitespace-nowrap",
+                    "hover:text-foreground focus-visible:outline-none",
+                    isSelected
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground/80",
+                  )}
+                >
+                  {pipeline.name}
+                  {isSelected && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t" />
+                  )}
+                </button>
+              );
+            })}
           </div>
-          <Button onClick={onCreatePipeline}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button size="sm" variant="outline" onClick={onCreatePipeline}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
             New Pipeline
           </Button>
         </div>
@@ -58,8 +61,8 @@ export function PipelineHeader({
           <p className="text-muted-foreground">
             Create your first pipeline to start managing leads.
           </p>
-          <Button onClick={onCreatePipeline}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button size="sm" onClick={onCreatePipeline}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
             New Pipeline
           </Button>
         </div>
