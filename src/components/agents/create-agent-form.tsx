@@ -155,13 +155,25 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           if (flowError) {
             console.error("Error generating flow from script:", flowError);
             toast({
-              title: "Warning",
-              description:
-                "Could not generate flow from script. Using default flow instead.",
-              variant: "default",
+              title: "Script Analysis Failed",
+              description: `Could not analyze script: ${flowError.message || "Unknown error"}. Using default flow.`,
+              variant: "destructive",
             });
           } else if (flowData?.flow) {
+            console.log("Generated flow from script:", flowData.flow);
             flow = flowData.flow;
+            toast({
+              title: "Script Analyzed",
+              description:
+                "Your conversation flow has been built from the script.",
+            });
+          } else {
+            console.error("No flow in response:", flowData);
+            toast({
+              title: "Script Analysis Failed",
+              description: "No flow returned. Using default flow.",
+              variant: "destructive",
+            });
           }
         } catch (flowGenError) {
           console.error("Error invoking generate-agent-flow:", flowGenError);
