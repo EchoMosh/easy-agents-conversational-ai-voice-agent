@@ -1,16 +1,16 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
+  rectIntersection,
   PointerSensor,
   useSensor,
   useSensors,
-  type DragStartEvent,
+  useDraggable,
+  useDroppable,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
-import { useDroppable } from "@dnd-kit/core";
-import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Pipeline, PipelineColumn } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
@@ -18,56 +18,60 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Phone, GripVertical, Plus, Trash2, Pencil } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Mail, Phone, Plus, Trash2, Pencil } from "lucide-react";
 
-// ---- Lead Card (Draggable) ----
-function LeadCard({
+// ---- Color map ----
+const COLOR_HEX: Record<string, string> = {
+  "bg-blue-500": "#3b82f6",
+  "bg-yellow-500": "#eab308",
+  "bg-green-500": "#22c55e",
+  "bg-purple-500": "#a855f7",
+  "bg-indigo-500": "#6366f1",
+  "bg-emerald-500": "#10b981",
+  "bg-red-500": "#ef4444",
+  "bg-orange-500": "#f97316",
+  "bg-pink-500": "#ec4899",
+  "bg-teal-500": "#14b8a6",
+  "bg-cyan-500": "#06b6d4",
+};
+function colorHex(c: string) {
+  return COLOR_HEX[c] || "#94a3b8";
+}
+
+// ========== DRAGGABLE CARD ==========
+function DraggableCard({
   lead,
-  columnColor,
+  color,
+  columnId,
   onClick,
-  isOverlay,
 }: {
   lead: Lead;
-  columnColor?: string;
-  onClick?: () => void;
-  isOverlay?: boolean;
+  color: string;
+  columnId: string;
+  onClick: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: lead.id,
-      data: { type: "lead", lead },
+      data: { lead, columnId },
     });
-
-  const style = transform
-    ? {
-        transform: CSS.Translate.toString(transform),
-        zIndex: isDragging ? 50 : undefined,
-      }
-    : undefined;
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        transform: transform ? CSS.Translate.toString(transform) : undefined,
+        opacity: isDragging ? 0.3 : 1,
+      }}
       {...listeners}
       {...attributes}
-      className={`${isDragging && !isOverlay ? "opacity-30" : ""}`}
     >
       <Card
         onClick={!isDragging ? onClick : undefined}
-        className={`p-2.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow border-l-[3px] ${
-          isOverlay ? "shadow-lg ring-2 ring-primary/20" : ""
-        }`}
-        style={{
-          borderLeftColor: columnColor || "var(--border)",
-        }}
+        className="p-2.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow border-l-[3px]"
+        style={{ borderLeftColor: color }}
       >
         <p className="font-medium text-sm truncate">{lead.name}</p>
         {lead.email && (
@@ -91,35 +95,59 @@ function LeadCard({
   );
 }
 
-// ---- Column (Droppable) ----
-function Column({
+// ========== STATIC OVERLAY CARD (for drag preview) ==========
+function OverlayCard({ lead, color }: { lead: Lead; color: string }) {
+  return (
+    <Card
+      className="p-2.5 shadow-lg ring-2 ring-primary/20 border-l-[3px] w-[250px]"
+      style={{ borderLeftColor: color }}
+    >
+      <p className="font-medium text-sm truncate">{lead.name}</p>
+      {lead.email && (
+        <div className="flex items-center gap-1.5 mt-1">
+          <Mail className="h-3 w-3 text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground truncate">
+            {lead.email}
+          </span>
+        </div>
+      )}
+      {lead.phone && (
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <Phone className="h-3 w-3 text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground truncate">
+            {lead.phone}
+          </span>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ========== DROPPABLE COLUMN ==========
+function DroppableColumn({
   column,
   leads,
   onLeadClick,
   onEditTitle,
-  onDeleteColumn,
+  onDelete,
   canDelete,
 }: {
   column: PipelineColumn;
   leads: Lead[];
   onLeadClick: (lead: Lead) => void;
-  onEditTitle: (columnId: string, title: string) => void;
-  onDeleteColumn: (column: PipelineColumn) => void;
+  onEditTitle: (id: string, title: string) => void;
+  onDelete: (col: PipelineColumn) => void;
   canDelete: boolean;
 }) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: `column-${column.id}`,
-    data: { type: "column", column },
-  });
-
+  const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(column.title);
+  const [editValue, setEditValue] = useState(column.title);
+  const hex = colorHex(column.color);
 
-  const colorHex = getColorHex(column.color);
-
-  const handleSaveTitle = () => {
-    if (editTitle.trim() && editTitle.trim() !== column.title) {
-      onEditTitle(column.id, editTitle.trim());
+  const saveTitle = () => {
+    const trimmed = editValue.trim();
+    if (trimmed && trimmed !== column.title) {
+      onEditTitle(column.id, trimmed);
     }
     setIsEditing(false);
   };
@@ -129,15 +157,15 @@ function Column({
       {/* Header */}
       <div
         className="rounded-t-lg px-3 py-2.5 flex items-center justify-between border border-b-0 bg-muted/40"
-        style={{ borderTopColor: colorHex, borderTopWidth: "3px" }}
+        style={{ borderTopColor: hex, borderTopWidth: "3px" }}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {isEditing ? (
             <Input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onBlur={handleSaveTitle}
-              onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={saveTitle}
+              onKeyDown={(e) => e.key === "Enter" && saveTitle()}
               className="h-7 text-sm font-semibold"
               autoFocus
             />
@@ -145,7 +173,7 @@ function Column({
             <span
               className="text-sm font-semibold truncate cursor-pointer hover:text-primary"
               onDoubleClick={() => {
-                setEditTitle(column.title);
+                setEditValue(column.title);
                 setIsEditing(true);
               }}
             >
@@ -165,7 +193,7 @@ function Column({
             size="icon"
             className="h-6 w-6 text-muted-foreground hover:text-foreground"
             onClick={() => {
-              setEditTitle(column.title);
+              setEditValue(column.title);
               setIsEditing(true);
             }}
           >
@@ -176,7 +204,7 @@ function Column({
               variant="ghost"
               size="icon"
               className="h-6 w-6 text-muted-foreground hover:text-destructive"
-              onClick={() => onDeleteColumn(column)}
+              onClick={() => onDelete(column)}
             >
               <Trash2 className="h-3 w-3" />
             </Button>
@@ -184,7 +212,7 @@ function Column({
         </div>
       </div>
 
-      {/* Droppable area */}
+      {/* Drop zone */}
       <div
         ref={setNodeRef}
         className={`flex-1 border border-t-0 rounded-b-lg p-2 space-y-2 overflow-y-auto transition-colors ${
@@ -192,22 +220,21 @@ function Column({
         }`}
       >
         {leads.map((lead) => (
-          <LeadCard
+          <DraggableCard
             key={lead.id}
             lead={lead}
-            columnColor={colorHex}
+            color={hex}
+            columnId={column.id}
             onClick={() => onLeadClick(lead)}
           />
         ))}
-
         {leads.length === 0 && !isOver && (
           <div className="flex items-center justify-center h-20 border border-dashed rounded-md text-muted-foreground/50">
             <span className="text-xs">Drop leads here</span>
           </div>
         )}
-
         {isOver && (
-          <div className="flex items-center justify-center h-12 border-2 border-dashed border-primary/40 rounded-md bg-primary/5">
+          <div className="h-12 border-2 border-dashed border-primary/40 rounded-md bg-primary/5 flex items-center justify-center">
             <span className="text-xs text-primary/60 font-medium">
               Drop here
             </span>
@@ -218,25 +245,7 @@ function Column({
   );
 }
 
-// ---- Color helper ----
-function getColorHex(color: string): string {
-  const map: Record<string, string> = {
-    "bg-blue-500": "#3b82f6",
-    "bg-yellow-500": "#eab308",
-    "bg-green-500": "#22c55e",
-    "bg-purple-500": "#a855f7",
-    "bg-indigo-500": "#6366f1",
-    "bg-emerald-500": "#10b981",
-    "bg-red-500": "#ef4444",
-    "bg-orange-500": "#f97316",
-    "bg-pink-500": "#ec4899",
-    "bg-teal-500": "#14b8a6",
-    "bg-cyan-500": "#06b6d4",
-  };
-  return map[color] || "#94a3b8";
-}
-
-// ---- Main Board ----
+// ========== MAIN BOARD ==========
 interface KanbanBoardProps {
   pipeline: Pipeline;
   leads: Lead[];
@@ -244,7 +253,7 @@ interface KanbanBoardProps {
   onEditColumnTitle: (columnId: string, title: string) => void;
   onDeleteStage: (column: PipelineColumn) => Promise<void>;
   onAddStage: (stage: PipelineColumn) => void;
-  onLeadMoved: () => void; // callback to refetch after DB update
+  onLeadMoved: () => void;
 }
 
 export function KanbanBoard({
@@ -256,143 +265,148 @@ export function KanbanBoard({
   onAddStage,
   onLeadMoved,
 }: KanbanBoardProps) {
-  const [activeLead, setActiveLead] = useState<Lead | null>(null);
-  const [optimisticMoves, setOptimisticMoves] = useState<
-    Record<string, string>
-  >({});
+  // LOCAL state: leads grouped by column title (the source of truth during drag)
+  const [columns, setColumns] = useState<Record<string, Lead[]>>({});
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
-  // Group leads by column (with optimistic overrides)
-  const leadsByColumn = useMemo(() => {
+  // Sync from props -> local state whenever leads or pipeline changes
+  useEffect(() => {
     const grouped: Record<string, Lead[]> = {};
     for (const col of pipeline.columns) {
-      grouped[col.id] = [];
+      grouped[col.title] = [];
     }
     for (const lead of leads) {
-      const effectiveStatus = optimisticMoves[lead.id] || lead.status;
+      const status = (lead.status || "").toLowerCase();
       const col = pipeline.columns.find(
-        (c) => c.title.toLowerCase() === (effectiveStatus || "").toLowerCase(),
+        (c) => c.title.toLowerCase() === status,
       );
       if (col) {
-        grouped[col.id] = grouped[col.id] || [];
-        grouped[col.id].push(lead);
+        grouped[col.title] = grouped[col.title] || [];
+        grouped[col.title].push(lead);
       }
     }
-    return grouped;
-  }, [leads, pipeline.columns, optimisticMoves]);
+    setColumns(grouped);
+  }, [leads, pipeline.columns]);
+
+  // Find which column title a lead is currently in
+  const findColumnTitle = useCallback(
+    (leadId: string): string | null => {
+      for (const [title, colLeads] of Object.entries(columns)) {
+        if (colLeads.some((l) => l.id === leadId)) return title;
+      }
+      return null;
+    },
+    [columns],
+  );
+
+  const activeLead = useMemo(() => {
+    if (!activeId) return null;
+    for (const colLeads of Object.values(columns)) {
+      const found = colLeads.find((l) => l.id === activeId);
+      if (found) return found;
+    }
+    return null;
+  }, [activeId, columns]);
+
+  const activeLeadColumn = useMemo(() => {
+    if (!activeId) return null;
+    return findColumnTitle(activeId);
+  }, [activeId, findColumnTitle]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    const lead = event.active.data.current?.lead as Lead | undefined;
-    if (lead) setActiveLead(lead);
+    setActiveId(String(event.active.id));
   }, []);
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
-      setActiveLead(null);
+      setActiveId(null);
 
       const { active, over } = event;
       if (!over) return;
 
-      const lead = active.data.current?.lead as Lead | undefined;
+      const leadId = String(active.id);
+      const sourceColumnTitle = findColumnTitle(leadId);
+      if (!sourceColumnTitle) return;
+
+      // The droppable ID is the column.id, we need the column title
+      const targetCol = pipeline.columns.find((c) => c.id === String(over.id));
+      // Also check if dropped on another lead's column
+      const overLeadColumn =
+        active.data.current?.columnId !== String(over.id)
+          ? findColumnTitle(String(over.id))
+          : null;
+
+      const targetColumnTitle = targetCol?.title || overLeadColumn;
+      if (!targetColumnTitle || targetColumnTitle === sourceColumnTitle) return;
+
+      // Find the actual lead object
+      const lead = columns[sourceColumnTitle]?.find((l) => l.id === leadId);
       if (!lead) return;
 
-      // Get target column
-      const overId = String(over.id);
-      let targetColumn: PipelineColumn | undefined;
+      // OPTIMISTIC: Move in local state immediately
+      setColumns((prev) => {
+        const newCols = { ...prev };
+        newCols[sourceColumnTitle] = prev[sourceColumnTitle].filter(
+          (l) => l.id !== leadId,
+        );
+        newCols[targetColumnTitle] = [
+          ...prev[targetColumnTitle],
+          { ...lead, status: targetColumnTitle },
+        ];
+        return newCols;
+      });
 
-      if (overId.startsWith("column-")) {
-        const colId = overId.replace("column-", "");
-        targetColumn = pipeline.columns.find((c) => c.id === colId);
-      } else {
-        // Dropped on another lead - find which column it's in
-        const overLead = leads.find((l) => l.id === overId);
-        if (overLead) {
-          const overStatus = optimisticMoves[overLead.id] || overLead.status;
-          targetColumn = pipeline.columns.find(
-            (c) => c.title.toLowerCase() === (overStatus || "").toLowerCase(),
-          );
-        }
-      }
-
-      if (!targetColumn) return;
-
-      // Skip if same column
-      const currentStatus = optimisticMoves[lead.id] || lead.status;
-      if (currentStatus?.toLowerCase() === targetColumn.title.toLowerCase()) {
-        return;
-      }
-
-      // Optimistic update - move instantly in UI
-      setOptimisticMoves((prev) => ({
-        ...prev,
-        [lead.id]: targetColumn!.title,
-      }));
-
-      // Persist to DB in background
+      // PERSIST to DB
       try {
         const { error } = await supabase
           .from("leads")
-          .update({ status: targetColumn.title })
-          .eq("id", lead.id);
+          .update({ status: targetColumnTitle })
+          .eq("id", leadId);
 
         if (error) throw error;
-
-        // Clear optimistic override and refetch
-        setOptimisticMoves((prev) => {
-          const next = { ...prev };
-          delete next[lead.id];
-          return next;
-        });
+        // Refetch in background to stay in sync
         onLeadMoved();
       } catch (err) {
         console.error("Failed to move lead:", err);
         toast.error("Failed to move lead");
-        // Revert optimistic update
-        setOptimisticMoves((prev) => {
-          const next = { ...prev };
-          delete next[lead.id];
-          return next;
+        // REVERT: put lead back
+        setColumns((prev) => {
+          const newCols = { ...prev };
+          newCols[targetColumnTitle] = prev[targetColumnTitle].filter(
+            (l) => l.id !== leadId,
+          );
+          newCols[sourceColumnTitle] = [...prev[sourceColumnTitle], lead];
+          return newCols;
         });
       }
     },
-    [leads, pipeline.columns, optimisticMoves, onLeadMoved],
+    [columns, pipeline.columns, findColumnTitle, onLeadMoved],
   );
-
-  const activeLeadColor = useMemo(() => {
-    if (!activeLead) return undefined;
-    const status = optimisticMoves[activeLead.id] || activeLead.status;
-    const col = pipeline.columns.find(
-      (c) => c.title.toLowerCase() === (status || "").toLowerCase(),
-    );
-    return col ? getColorHex(col.color) : undefined;
-  }, [activeLead, pipeline.columns, optimisticMoves]);
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={rectIntersection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-3 p-4 h-full overflow-x-auto">
         {pipeline.columns.map((column) => (
-          <Column
+          <DroppableColumn
             key={column.id}
             column={column}
-            leads={leadsByColumn[column.id] || []}
+            leads={columns[column.title] || []}
             onLeadClick={onLeadClick}
             onEditTitle={onEditColumnTitle}
-            onDeleteColumn={onDeleteStage}
+            onDelete={onDeleteStage}
             canDelete={pipeline.columns.length > 1}
           />
         ))}
 
-        {/* Add Stage */}
         <button
           onClick={() =>
             onAddStage({
@@ -410,7 +424,17 @@ export function KanbanBoard({
 
       <DragOverlay dropAnimation={null}>
         {activeLead && (
-          <LeadCard lead={activeLead} columnColor={activeLeadColor} isOverlay />
+          <OverlayCard
+            lead={activeLead}
+            color={
+              activeLeadColumn
+                ? colorHex(
+                    pipeline.columns.find((c) => c.title === activeLeadColumn)
+                      ?.color || "",
+                  )
+                : "#94a3b8"
+            }
+          />
         )}
       </DragOverlay>
     </DndContext>
