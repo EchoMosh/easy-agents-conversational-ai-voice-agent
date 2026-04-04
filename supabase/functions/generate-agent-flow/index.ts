@@ -60,9 +60,10 @@ Node types and their data fields:
   "id": "greetingNode-<number>",
   "type": "greetingNode",
   "position": { "x": <number>, "y": 250 },
-  "data": { "greeting": "<p>Script section content as HTML</p>", "outcomes": [], "actions": [] },
+  "data": { "greeting": "<p>What the agent says in this section</p>", "outcomes": ["Outcome A: description", "Outcome B: description", "Outcome C: description"], "actions": [] },
   "draggable": true
 }
+IMPORTANT: The "outcomes" field is an array of STRINGS representing the possible customer responses/paths at each conversation point. For example: ["Interested - proceed to next step", "Not interested - handle objection", "Has questions - provide more info", "Busy - schedule callback"]. Every greetingNode MUST have at least 2 outcomes. Extract outcomes from the script where indicated (e.g. "*** Client replies ***" sections, or branching paths like "if they say X, reply Y").
 
 3. endNode (exactly one) - The closing/transfer/goodbye message:
 {
