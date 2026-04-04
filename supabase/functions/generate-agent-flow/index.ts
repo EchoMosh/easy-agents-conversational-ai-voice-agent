@@ -288,6 +288,67 @@ ${scriptText}
       );
     }
 
+    // ---- SERVER-SIDE NORMALIZATION ----
+    // Ensure all nodes have required fields
+    flow.nodes = flow.nodes.map((node, i) => ({
+      ...node,
+      id: node.id || `${node.type}-${i}`,
+      position: node.position || { x: 100 + i * 400, y: 250 },
+      draggable: true,
+      data: {
+        ...node.data,
+        // Ensure greetingNodes have outcomes array
+        ...(node.type === "greetingNode" && {
+          outcomes: Array.isArray(node.data?.outcomes)
+            ? node.data.outcomes
+            : [],
+          actions: Array.isArray(node.data?.actions) ? node.data.actions : [],
+        }),
+      },
+    }));
+
+    // Normalize ALL edges to buttonEdge type with required properties
+    flow.edges = flow.edges.map((edge) => ({
+      ...edge,
+      type: "buttonEdge",
+      sourceHandle: edge.sourceHandle || "default",
+      animated: true,
+      style: { strokeWidth: 3, stroke: "#94a3b8" },
+    }));
+
+    // Verify all edges reference valid node IDs
+    const nodeIds = new Set(flow.nodes.map((n) => n.id));
+    flow.edges = flow.edges.filter((edge) => {
+      const valid = nodeIds.has(edge.source) && nodeIds.has(edge.target);
+      if (!valid) {
+        console.warn(
+          `Removing invalid edge ${edge.id}: source=${edge.source}, target=${edge.target}`,
+        );
+      }
+      return valid;
+    });
+
+    // If no valid edges remain, create sequential connections
+    if (flow.edges.length === 0 && flow.nodes.length > 1) {
+      console.log("No valid edges, creating sequential connections");
+      flow.edges = [];
+      for (let i = 0; i < flow.nodes.length - 1; i++) {
+        flow.edges.push({
+          id: `edge-${flow.nodes[i].id}-${flow.nodes[i + 1].id}`,
+          source: flow.nodes[i].id,
+          target: flow.nodes[i + 1].id,
+          type: "buttonEdge",
+          sourceHandle: "default",
+          animated: true,
+          style: { strokeWidth: 3, stroke: "#94a3b8" },
+        });
+      }
+    }
+
+    console.log(
+      `Flow validated: ${flow.nodes.length} nodes, ${flow.edges.length} edges`,
+    );
+
     return new Response(JSON.stringify({ success: true, flow }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
