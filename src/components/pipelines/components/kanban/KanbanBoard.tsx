@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -268,13 +268,19 @@ export function KanbanBoard({
   // LOCAL state: leads grouped by column title (the source of truth during drag)
   const [columns, setColumns] = useState<Record<string, Lead[]>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
+  const skipNextSync = useRef(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
   // Sync from props -> local state whenever leads or pipeline changes
+  // BUT skip sync right after an optimistic drag move (local state is already correct)
   useEffect(() => {
+    if (skipNextSync.current) {
+      skipNextSync.current = false;
+      return;
+    }
     const grouped: Record<string, Lead[]> = {};
     for (const col of pipeline.columns) {
       grouped[col.title] = [];
@@ -368,7 +374,8 @@ export function KanbanBoard({
           .eq("id", leadId);
 
         if (error) throw error;
-        // Refetch in background to stay in sync
+        // Skip the next useEffect sync since local state is already correct
+        skipNextSync.current = true;
         onLeadMoved();
       } catch (err) {
         console.error("Failed to move lead:", err);
