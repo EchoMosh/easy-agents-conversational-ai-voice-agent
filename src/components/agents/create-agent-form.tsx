@@ -173,7 +173,17 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
             });
           } else if (flowData?.flow) {
             console.log("Generated flow from script:", flowData.flow);
-            flow = flowData.flow;
+            // Normalize edges to use buttonEdge type (required by flow editor)
+            const generatedFlow = flowData.flow;
+            if (generatedFlow.edges) {
+              generatedFlow.edges = generatedFlow.edges.map((edge: any) => ({
+                ...edge,
+                type: "buttonEdge",
+                animated: true,
+                style: { strokeWidth: 3, stroke: "#94a3b8" },
+              }));
+            }
+            flow = generatedFlow;
             toast({
               title: "Script Analyzed",
               description:

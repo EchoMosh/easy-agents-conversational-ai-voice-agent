@@ -2,60 +2,64 @@ import { FlowData } from "@/types/agent";
 
 export const getDefaultFlow = (): FlowData => {
   const timestamp = Date.now();
-  
+
   // Create a start node
   const startNode = {
     id: `startNode-${timestamp}`,
-    type: 'startNode',
+    type: "startNode",
     position: { x: 100, y: 250 },
     data: {
-      firstMessage: '<p></p>' // Empty paragraph for Tiptap
+      firstMessage: "<p></p>", // Empty paragraph for Tiptap
     },
-    draggable: true
+    draggable: true,
   };
-  
+
   // Create a speak node (greeting node)
   const speakNode = {
     id: `greetingNode-${timestamp}`,
-    type: 'greetingNode',
+    type: "greetingNode",
     position: { x: 500, y: 250 },
-    data: { 
-      greeting: '<p></p>', // Empty paragraph for Tiptap
+    data: {
+      greeting: "<p></p>", // Empty paragraph for Tiptap
       outcomes: [],
-      actions: []
+      actions: [],
     },
-    draggable: true
+    draggable: true,
   };
-  
+
   // Create an end node
   const endNode = {
     id: `endNode-${timestamp}`,
-    type: 'endNode',
+    type: "endNode",
     position: { x: 900, y: 250 },
     data: {
-      message: '<p></p>' // Empty paragraph for Tiptap
+      message: "<p></p>", // Empty paragraph for Tiptap
     },
-    draggable: true
+    draggable: true,
   };
-  
+
   // Create edges to connect the nodes
   const edge1 = {
     id: `edge-start-speak-${timestamp}`,
     source: `startNode-${timestamp}`,
     target: `greetingNode-${timestamp}`,
-    type: 'default'
+    type: "buttonEdge",
+    animated: true,
+    style: { strokeWidth: 3, stroke: "#94a3b8" },
   };
-  
+
   const edge2 = {
     id: `edge-speak-end-${timestamp}`,
     source: `greetingNode-${timestamp}`,
     target: `endNode-${timestamp}`,
-    sourceHandle: 'default',
-    type: 'default'
+    sourceHandle: "default",
+    type: "buttonEdge",
+    animated: true,
+    style: { strokeWidth: 3, stroke: "#94a3b8" },
   };
 
   return {
     nodes: [startNode, speakNode, endNode],
-    edges: [edge1, edge2]
+    edges: [edge1, edge2],
   };
 };
