@@ -2,9 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
-import { PipelineSelect } from "./components/pipeline-select";
 import { ContactInfoForm } from "./components/contact-info-form";
 import { CustomVariables } from "./components/custom-variables";
 import { useWorkspace } from "@/context/workspace-context";
@@ -33,26 +30,8 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
   const [activeTab, setActiveTab] = useState("contact");
   const { currentWorkspace } = useWorkspace();
-
-  const { data: pipelines = [], refetch: refetchPipelines } = useQuery({
-    queryKey: ["pipelines", currentWorkspace?.id],
-    queryFn: async () => {
-      if (!currentWorkspace?.id) return [];
-
-      const { data, error } = await supabase
-        .from("pipelines")
-        .select("*")
-        .eq("workspace_id", currentWorkspace.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return (data || []).map(convertJsonToPipeline);
-    },
-    enabled: !!currentWorkspace?.id,
-  });
 
   useEffect(() => {
     const fetchAllTags = async () => {

@@ -161,7 +161,7 @@ export function TestAgentDialog({
             language: currentAgentData.language || "en",
             first_message: cleanedFirstMessage,
             mermaid_chart: mermaidChart,
-            max_duration_seconds: currentAgentData.maxDurationSeconds || 600,
+            max_duration_seconds: currentAgentData.max_duration_seconds || 600,
             background_sound:
               currentAgentData.background_sound === "off"
                 ? "off"

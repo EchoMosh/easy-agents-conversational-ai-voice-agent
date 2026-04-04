@@ -62,7 +62,20 @@ export function LaunchAgentDialog({
     setIsUpdatingAgent(true);
     setUpdateError(null);
     try {
-      let currentAgentData = JSON.parse(JSON.stringify(agent));
+      // Fetch fresh agent data from Supabase to ensure we have the latest updates
+      const { data: freshAgentData, error: fetchError } = await supabase
+        .from("agents")
+        .select("*")
+        .eq("id", agent.id)
+        .single();
+
+      if (fetchError) {
+        console.error("Failed to fetch fresh agent data:", fetchError);
+        throw new Error(`Failed to fetch agent data: ${fetchError.message}`);
+      }
+
+      let currentAgentData =
+        freshAgentData || JSON.parse(JSON.stringify(agent));
       let voiceIdForPayload = currentAgentData.voice_id || DEFAULT_VOICE_ID;
 
       if (currentAgentData.voice_character === "Laura") {
@@ -85,13 +98,15 @@ export function LaunchAgentDialog({
         voiceIdForPayload = DEFAULT_VOICE_ID;
       }
 
-      let vapiId =
+      const vapiId =
         currentAgentData.v_agent_id ||
         currentAgentData.elevenlabs_agent_id ||
         null;
 
       if (!vapiId) {
-        vapiId = `temp-${currentAgentData.id}`;
+        throw new Error(
+          "No voice assistant ID found. Please ensure the agent has been properly created.",
+        );
       }
 
       const defaultFirstMessage = "Hi there! I'm here to help you today.";
@@ -119,7 +134,7 @@ export function LaunchAgentDialog({
             language: currentAgentData.language || "en",
             first_message: cleanedFirstMessage,
             mermaid_chart: mermaidChart,
-            max_duration_seconds: currentAgentData.maxDurationSeconds || 600,
+            max_duration_seconds: currentAgentData.max_duration_seconds || 600,
             background_sound:
               currentAgentData.background_sound === "off"
                 ? "off"

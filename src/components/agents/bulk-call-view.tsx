@@ -131,7 +131,10 @@ export function BulkCallView({
   const [leadCount, setLeadCount] = useState(0);
   const [isFetchingCount, setIsFetchingCount] = useState(false);
 
-  const validPhones = phoneNumbers.filter((p) => p.vapi_phone_number_id);
+  // Only real (Twilio) phone numbers can make outbound calls — VAPI virtual numbers cannot
+  const validPhones = phoneNumbers.filter(
+    (p) => p.vapi_phone_number_id && p.twilio_phone_number,
+  );
   const [selectedPhoneId, setSelectedPhoneId] = useState(
     validPhones.length === 1 ? (validPhones[0].vapi_phone_number_id ?? "") : "",
   );
@@ -217,6 +220,10 @@ export function BulkCallView({
     let errors = 0;
     for (let i = 0; i < leads.length; i++) {
       const lead = leads[i] as LeadRecord;
+      if (!lead.phone) {
+        errors++;
+        continue;
+      }
       try {
         const { data, error: callError } = await supabase.functions.invoke(
           "initiate-vapi-call",
