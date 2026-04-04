@@ -1,4 +1,3 @@
-
 import { Json } from "@/integrations/supabase/types";
 
 export interface Pipeline {
@@ -17,19 +16,22 @@ export interface PipelineColumn {
   items?: any[]; // Making items optional for backward compatibility
 }
 
-export const convertJsonToPipeline = (data: { 
+export const convertJsonToPipeline = (data: {
   id: string;
   name: string;
   columns: Json;
   user_id: string;
   created_at: string;
   workspace_id?: string;
-}): Pipeline => ({
-  ...data,
-  columns: (data.columns as any[]).map(col => ({
-    id: col.id as string,
-    title: col.title as string,
-    color: col.color as string,
-    items: col.items as any[] || []
-  }))
-});
+}): Pipeline => {
+  const cols = (data.columns as any[]) || [];
+  return {
+    ...data,
+    columns: cols.map((col) => ({
+      id: col.id as string,
+      title: col.title as string,
+      color: col.color as string,
+      items: (col.items as any[]) || [],
+    })),
+  };
+};

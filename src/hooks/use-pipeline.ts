@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -20,7 +19,9 @@ export const defaultColumns: PipelineColumn[] = [
 
 export const usePipeline = () => {
   const { currentWorkspace } = useWorkspace();
-  const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
+  const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(
+    null,
+  );
   const [showNewPipelineDialog, setShowNewPipelineDialog] = useState(false);
   const queryClient = useQueryClient();
 
@@ -53,7 +54,7 @@ export const usePipeline = () => {
         toast.error("Failed to update pipeline name");
       }
     },
-    [selectedPipeline, updatePipelineName]
+    [selectedPipeline, updatePipelineName],
   );
 
   const handleEditColumnTitle = useCallback(
@@ -64,7 +65,7 @@ export const usePipeline = () => {
         const updatedPipeline = await updateColumnTitle(
           selectedPipeline,
           columnId,
-          title
+          title,
         );
         if (updatedPipeline) {
           setSelectedPipeline(updatedPipeline);
@@ -75,21 +76,20 @@ export const usePipeline = () => {
         toast.error("Failed to update column title");
       }
     },
-    [selectedPipeline, updateColumnTitle]
+    [selectedPipeline, updateColumnTitle],
   );
 
   const handleDeletePipeline = useCallback(
     async (id: string, targetPipelineId?: string) => {
       try {
         await deletePipelineMutation(id, targetPipelineId);
-        toast.success("Pipeline deleted");
         await invalidateAndRefetch();
       } catch (error) {
         console.error("Error deleting pipeline:", error);
-        toast.error("Failed to delete pipeline");
+        throw error;
       }
     },
-    [deletePipelineMutation, invalidateAndRefetch]
+    [deletePipelineMutation, invalidateAndRefetch],
   );
 
   const createNewPipeline = useCallback(
@@ -100,7 +100,10 @@ export const usePipeline = () => {
       }
 
       try {
-        const newPipeline = await createPipelineMutation(name, currentWorkspace.id);
+        const newPipeline = await createPipelineMutation(
+          name,
+          currentWorkspace.id,
+        );
         if (newPipeline) {
           toast.success("Pipeline created");
           await invalidateAndRefetch();
@@ -112,7 +115,7 @@ export const usePipeline = () => {
       }
       return null;
     },
-    [createPipelineMutation, invalidateAndRefetch, currentWorkspace]
+    [createPipelineMutation, invalidateAndRefetch, currentWorkspace],
   );
 
   return {

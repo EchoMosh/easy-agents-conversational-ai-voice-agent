@@ -29,6 +29,7 @@ interface LeadDetailsDialogProps {
   lead: Lead | null;
   onClose: () => void;
   columns: PipelineColumn[];
+  onLeadUpdated?: () => void;
 }
 
 interface Activity {
@@ -42,6 +43,7 @@ export function LeadDetailsDialog({
   lead,
   onClose,
   columns,
+  onLeadUpdated,
 }: LeadDetailsDialogProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -119,6 +121,7 @@ export function LeadDetailsDialog({
         title: "Lead removed",
         description: "Lead has been removed from pipeline",
       });
+      onLeadUpdated?.();
       onClose();
     } catch (error) {
       console.error("Error removing lead:", error);

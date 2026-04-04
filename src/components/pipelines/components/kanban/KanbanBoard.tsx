@@ -360,7 +360,7 @@ export function KanbanBoard({
           (l) => l.id !== leadId,
         );
         newCols[targetColumnTitle] = [
-          ...prev[targetColumnTitle],
+          ...(prev[targetColumnTitle] || []),
           { ...lead, status: targetColumnTitle },
         ];
         return newCols;
@@ -415,13 +415,22 @@ export function KanbanBoard({
         ))}
 
         <button
-          onClick={() =>
+          onClick={() => {
+            const existingTitles = new Set(
+              pipeline.columns.map((c) => c.title),
+            );
+            let title = "New Stage";
+            let counter = 2;
+            while (existingTitles.has(title)) {
+              title = `New Stage ${counter}`;
+              counter++;
+            }
             onAddStage({
               id: String(Date.now()),
-              title: "New Stage",
+              title,
               color: "bg-blue-500",
-            })
-          }
+            });
+          }}
           className="flex items-center justify-center w-[270px] shrink-0 h-20 self-start mt-[3px] border-2 border-dashed border-muted-foreground/20 rounded-lg text-muted-foreground/50 hover:border-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
         >
           <Plus className="h-5 w-5 mr-1" />

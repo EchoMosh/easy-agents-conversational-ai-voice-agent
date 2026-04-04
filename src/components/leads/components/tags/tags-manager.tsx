@@ -1,28 +1,13 @@
-import { useState, useEffect } from "react";
-import { PlusCircle } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { TagForm } from "./tag-form";
 import { TagBadge } from "./tag-badge";
 import { Tag } from "@/types/tag-types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "./empty-state";
 import { useWorkspace } from "@/context/workspace-context";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface TagsManagerProps {
   leadId: string;

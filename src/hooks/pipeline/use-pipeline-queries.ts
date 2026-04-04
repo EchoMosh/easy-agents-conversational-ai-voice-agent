@@ -4,15 +4,11 @@ import { toast } from "sonner";
 import { Pipeline, convertJsonToPipeline } from "@/types/pipeline";
 import { Lead } from "@/pages/dashboard/leads";
 import { useWorkspace } from "@/context/workspace-context";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 export function usePipelineQueries(selectedPipelineId?: string) {
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
-  const [page, setPage] = useState(1);
-  const [hasMoreLeads, setHasMoreLeads] = useState(true);
-  const pageSize = 10;
-  const accumulatedLeadsRef = useRef<Lead[]>([]);
   const [totalFilteredCount, setTotalFilteredCount] = useState<number | null>(
     null,
   );
@@ -113,11 +109,11 @@ export function usePipelineQueries(selectedPipelineId?: string) {
   }, [currentWorkspace?.id, selectedPipelineId]);
 
   const {
-    data: currentPageLeads = [],
+    data: leads = [],
     isLoading: isLeadsLoading,
     refetch: refetchLeads,
   } = useQuery({
-    queryKey: ["leads", selectedPipelineId, currentWorkspace?.id, page],
+    queryKey: ["leads", selectedPipelineId, currentWorkspace?.id],
     queryFn: async () => {
       if (!currentWorkspace?.id) {
         return [];
@@ -143,9 +139,7 @@ export function usePipelineQueries(selectedPipelineId?: string) {
           query = query.eq("pipeline_id", selectedPipelineId);
         }
 
-        query = query
-          .order("created_at", { ascending: false })
-          .range((page - 1) * pageSize, page * pageSize - 1);
+        query = query.order("created_at", { ascending: false });
 
         const { data, error } = await query;
 
@@ -154,9 +148,6 @@ export function usePipelineQueries(selectedPipelineId?: string) {
           toast.error("Failed to load leads");
           throw error;
         }
-
-        const hasMore = data.length === pageSize;
-        setHasMoreLeads(hasMore);
 
         if (data.length === 0) {
           return [];
@@ -237,60 +228,14 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     enabled: !!currentWorkspace?.id,
   });
 
-  useEffect(() => {
-    if (currentPageLeads && currentPageLeads.length > 0) {
-      if (page === 1) {
-        accumulatedLeadsRef.current = [...currentPageLeads];
-      } else {
-        const existingIds = new Set(
-          accumulatedLeadsRef.current.map((lead) => lead.id),
-        );
-        const newLeads = currentPageLeads.filter(
-          (lead) => !existingIds.has(lead.id),
-        );
-
-        if (newLeads.length > 0) {
-          accumulatedLeadsRef.current = [
-            ...accumulatedLeadsRef.current,
-            ...newLeads,
-          ];
-        }
-      }
-    } else {
-      if (page === 1) {
-        accumulatedLeadsRef.current = [];
-      }
-    }
-  }, [currentPageLeads, page]);
-
-  const leads = accumulatedLeadsRef.current || [];
-
   const isLoading = isPipelinesLoading || isLeadsLoading || isTagsLoading;
 
   const invalidateAndRefetch = async () => {
-    accumulatedLeadsRef.current = [];
-    setPage(1);
-    setHasMoreLeads(true);
-
     await queryClient.invalidateQueries({ queryKey: ["pipelines"] });
     await queryClient.invalidateQueries({ queryKey: ["leads"] });
     await queryClient.invalidateQueries({ queryKey: ["tags"] });
     await refetchPipelines();
     await refetchLeads();
-  };
-
-  const loadMoreLeads = async () => {
-    if (!hasMoreLeads) {
-      return;
-    }
-
-    setPage((prev) => prev + 1);
-
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, 100);
-    });
   };
 
   return {
@@ -303,8 +248,6 @@ export function usePipelineQueries(selectedPipelineId?: string) {
     refetchPipelines,
     refetchLeads,
     invalidateAndRefetch,
-    hasMoreLeads,
-    loadMoreLeads,
     totalFilteredCount,
   };
 }

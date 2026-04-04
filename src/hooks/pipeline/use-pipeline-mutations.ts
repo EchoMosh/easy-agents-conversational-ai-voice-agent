@@ -81,15 +81,15 @@ export function usePipelineMutations() {
 
   const deletePipeline = async (id: string, targetPipelineId?: string) => {
     try {
-      // If a target pipeline is specified, move all leads to it
-      if (targetPipelineId) {
-        const { error: updateError } = await supabase
-          .from("leads")
-          .update({ pipeline_id: targetPipelineId })
-          .eq("pipeline_id", id);
+      // Always detach leads before deleting the pipeline to prevent CASCADE deletion.
+      // If a target pipeline is specified, move leads there; otherwise orphan them.
+      const newPipelineId = targetPipelineId || null;
+      const { error: updateError } = await supabase
+        .from("leads")
+        .update({ pipeline_id: newPipelineId })
+        .eq("pipeline_id", id);
 
-        if (updateError) throw updateError;
-      }
+      if (updateError) throw updateError;
 
       // Delete the pipeline
       const { error } = await supabase.from("pipelines").delete().eq("id", id);

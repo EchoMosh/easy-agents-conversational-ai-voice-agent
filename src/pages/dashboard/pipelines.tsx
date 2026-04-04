@@ -223,6 +223,7 @@ function PipelinesPage() {
         lead={selectedLead}
         onClose={() => setSelectedLead(null)}
         columns={pipelineColumns}
+        onLeadUpdated={invalidateAndRefetch}
       />
 
       <DeletePipelineDialog
