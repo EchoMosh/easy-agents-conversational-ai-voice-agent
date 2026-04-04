@@ -77,68 +77,50 @@ serve(async (req) => {
       throw new Error("VAPI_API_KEY is not set in environment variables");
     }
 
+    const vapiPayload = {
+      name: agentName,
+      transcriber: {
+        provider: "deepgram",
+        model: "nova-2",
+        language: language || "en",
+      },
+      model: {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        temperature: 0.3,
+        maxTokens: 250,
+        messages: [
+          {
+            role: "system",
+            content: `You are a ${role}.`,
+          },
+        ],
+      },
+      voice: {
+        provider: "vapi",
+        voiceId: "Elliot",
+      },
+      backgroundDenoisingEnabled: true,
+      backgroundSound: "office",
+      silenceTimeoutSeconds: 30,
+      maxDurationSeconds: 600,
+    };
+
+    console.log("Creating VAPI assistant:", JSON.stringify(vapiPayload));
+
     const response = await fetch("https://api.vapi.ai/assistant", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${vapiApiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        name: agentName,
-        transcriber: {
-          provider: "deepgram",
-          model: "nova-2",
-          language: language || "en",
-          smartFormat: true,
-        },
-        model: {
-          provider: "groq",
-          model: "llama-3.3-70b-versatile",
-          temperature: 0.3,
-          maxTokens: 250,
-          messages: [
-            {
-              role: "system",
-              content: `You are a ${role}.`,
-            },
-          ],
-        },
-        voice: {
-          provider: "vapi",
-          voiceId: "Elliot",
-          chunkPlan: {
-            enabled: true,
-            minCharacters: 30,
-            punctuationBoundaries: [".", "!", "?", ","],
-          },
-        },
-        startSpeakingPlan: {
-          waitSeconds: 0.4,
-          smartEndpointingEnabled: true,
-          transcriptionEndpointingPlan: {
-            onPunctuationSeconds: 0.1,
-            onNoPunctuationSeconds: 0.8,
-            onNumberSeconds: 0.4,
-          },
-        },
-        stopSpeakingPlan: {
-          numWords: 2,
-          voiceSeconds: 0.2,
-          backoffSeconds: 1.0,
-        },
-        backgroundDenoisingEnabled: true,
-        backgroundSound: "office",
-        silenceTimeoutSeconds: 30,
-        maxDurationSeconds: 600,
-        voicemailDetection: {
-          provider: "google",
-        },
-      }),
+      body: JSON.stringify(vapiPayload),
     });
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`Failed to create Vapi agent: ${errorBody}`);
+      console.error("VAPI API error:", response.status, errorBody);
+      throw new Error(`VAPI API error (${response.status}): ${errorBody}`);
     }
 
     const responseData = await response.json();
