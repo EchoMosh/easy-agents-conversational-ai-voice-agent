@@ -149,13 +149,6 @@ export function NewLeadForm({ onSuccess }: NewLeadFormProps) {
         .limit(1)
         .maybeSingle();
 
-      // Normalize phone to E.164 format (ensure + prefix)
-      const normalizedPhone = phone
-        ? phone.startsWith("+")
-          ? phone
-          : `+${phone}`
-        : null;
-
       const { data: leadData, error: leadError } = await supabase
         .from("leads")
         .insert([
