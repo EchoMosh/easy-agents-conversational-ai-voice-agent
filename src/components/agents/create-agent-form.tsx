@@ -8,7 +8,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CreateAgentProgress } from "./create-agent-progress";
 import { NameStep } from "./form-steps/name-step";
 import { TemplateStep } from "./form-steps/template-step";
-import { PhoneNumberStep } from "./form-steps/phone-number-step";
+import { ScriptStep } from "./form-steps/script-step";
 import { getDefaultFlow } from "./utils/default-flow";
 import { AIVoiceLoader } from "./ai-voice-loader";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -27,9 +27,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [creationStatus, setCreationStatus] = useState<string | null>(null);
   const [vAgentId, setVAgentId] = useState<string | null>(null);
-  const [selectedPhoneNumberId, setSelectedPhoneNumberId] = useState<
-    string | null
-  >(null);
+  const [scriptText, setScriptText] = useState("");
   const [newAgent, setNewAgent] = useState<{
     name: string;
     role: Agent["role"];
@@ -41,7 +39,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   });
 
   const handleNextFromTemplate = async () => {
-    // Just proceed to phone number step - no agent creation here
+    // Proceed to script upload step
     setStep(3);
   };
 
@@ -129,10 +127,45 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
       console.log("Voice agent created with ID:", createdVAgentId);
 
-      // Step 2: Create database record
-      setCreationStatus("Creating agent in database...");
+      // Step 2: Generate flow from script or use default
+      let flow = getDefaultFlow();
 
-      const flow = getDefaultFlow();
+      if (scriptText.trim()) {
+        setCreationStatus("Analyzing script...");
+        try {
+          const { data: flowData, error: flowError } =
+            await supabase.functions.invoke("generate-agent-flow", {
+              body: {
+                scriptText,
+                agentName: newAgent.name,
+                role: newAgent.role,
+              },
+            });
+
+          if (flowError) {
+            console.error("Error generating flow from script:", flowError);
+            toast({
+              title: "Warning",
+              description:
+                "Could not generate flow from script. Using default flow instead.",
+              variant: "default",
+            });
+          } else if (flowData?.flow) {
+            flow = flowData.flow;
+          }
+        } catch (flowGenError) {
+          console.error("Error invoking generate-agent-flow:", flowGenError);
+          toast({
+            title: "Warning",
+            description:
+              "Could not generate flow from script. Using default flow instead.",
+            variant: "default",
+          });
+        }
+      }
+
+      // Step 3: Create database record
+      setCreationStatus("Creating agent in database...");
 
       const { data: agentData, error: agentError } = await supabase
         .from("agents")
@@ -156,26 +189,6 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
         throw new Error(
           `Failed to create agent in database: ${agentError.message}`,
         );
-      }
-
-      // Step 3: If a phone number was selected, assign it
-      if (selectedPhoneNumberId) {
-        setCreationStatus("Assigning phone number...");
-
-        const { error: phoneError } = await supabase
-          .from("phone_numbers")
-          .update({ inbound_agent_id: agentData.id })
-          .eq("id", selectedPhoneNumberId);
-
-        if (phoneError) {
-          console.error("Error assigning phone number:", phoneError);
-          // Don't fail the entire creation, just warn
-          toast({
-            title: "Warning",
-            description: "Agent created but phone number assignment failed",
-            variant: "default",
-          });
-        }
       }
 
       setCreationStatus("Agent created successfully, redirecting...");
@@ -285,13 +298,13 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           />
         )}
 
-        {step === 3 && currentWorkspace && (
-          <PhoneNumberStep
-            workspaceId={currentWorkspace.id}
-            selectedPhoneNumberId={selectedPhoneNumberId}
-            onPhoneNumberSelect={setSelectedPhoneNumberId}
+        {step === 3 && (
+          <ScriptStep
+            scriptText={scriptText}
+            onScriptChange={setScriptText}
             onNext={() => handleCreateAgent()}
             onBack={() => setStep(2)}
+            isProcessing={isCreating}
           />
         )}
       </div>

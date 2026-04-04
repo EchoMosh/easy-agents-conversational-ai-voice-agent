@@ -1,16 +1,23 @@
-
 import { motion } from "framer-motion";
+
+const STEP_LABELS = ["Name", "Role", "Script"];
 
 interface CreateAgentProgressProps {
   currentStep: number;
   totalSteps: number;
 }
 
-export const CreateAgentProgress = ({ currentStep, totalSteps }: CreateAgentProgressProps) => {
+export const CreateAgentProgress = ({
+  currentStep,
+  totalSteps,
+}: CreateAgentProgressProps) => {
   return (
     <div className="w-full space-y-2">
       <div className="flex justify-between text-sm text-muted-foreground">
-        <span>Step {currentStep} of {totalSteps}</span>
+        <span>
+          Step {currentStep} of {totalSteps}:{" "}
+          {STEP_LABELS[currentStep - 1] ?? ""}
+        </span>
         <span>{Math.round((currentStep / totalSteps) * 100)}%</span>
       </div>
       <div className="w-full bg-muted rounded-full h-2">
