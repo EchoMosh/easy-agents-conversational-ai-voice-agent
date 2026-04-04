@@ -156,10 +156,29 @@ serve(async (req) => {
       });
     }
 
+    // Try GROQ first, fall back to OpenAI-compatible via workspace integration
     const groqApiKey = Deno.env.get("GROQ_API_KEY");
-    if (!groqApiKey) {
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+
+    let llmUrl: string;
+    let llmKey: string;
+    let llmModel: string;
+
+    if (groqApiKey) {
+      llmUrl = "https://api.groq.com/openai/v1/chat/completions";
+      llmKey = groqApiKey;
+      llmModel = "llama-3.3-70b-versatile";
+    } else if (openaiApiKey) {
+      llmUrl = "https://api.openai.com/v1/chat/completions";
+      llmKey = openaiApiKey;
+      llmModel = "gpt-4o-mini";
+    } else {
+      // No LLM key available - return a helpful error
       return new Response(
-        JSON.stringify({ error: "GROQ_API_KEY not configured" }),
+        JSON.stringify({
+          error:
+            "No LLM API key configured. Add GROQ_API_KEY or OPENAI_API_KEY in Supabase secrets.",
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -177,31 +196,29 @@ Sales script:
 ${scriptText}
 ---`;
 
-    // Call Groq API
-    const groqResponse = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${groqApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: userPrompt },
-          ],
-          temperature: 0.3,
-          max_tokens: 4096,
-          response_format: { type: "json_object" },
-        }),
-      },
-    );
+    console.log(`Using LLM: ${llmModel} at ${llmUrl}`);
 
-    if (!groqResponse.ok) {
-      const errorBody = await groqResponse.text();
-      console.error("Groq API error:", errorBody);
+    const llmResponse = await fetch(llmUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${llmKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: llmModel,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 4096,
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    if (!llmResponse.ok) {
+      const errorBody = await llmResponse.text();
+      console.error("LLM API error:", llmResponse.status, errorBody);
       return new Response(
         JSON.stringify({
           error: "Failed to generate flow from LLM",
@@ -214,8 +231,8 @@ ${scriptText}
       );
     }
 
-    const groqData = await groqResponse.json();
-    const rawContent = groqData?.choices?.[0]?.message?.content;
+    const llmData = await llmResponse.json();
+    const rawContent = llmData?.choices?.[0]?.message?.content;
 
     if (!rawContent) {
       console.error("No content in Groq response:", JSON.stringify(groqData));
