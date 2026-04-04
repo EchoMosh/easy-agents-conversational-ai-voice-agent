@@ -1,4 +1,3 @@
-
 import { Lead } from "@/pages/dashboard/leads";
 
 export interface LeadsTableProps {
@@ -31,7 +30,7 @@ export interface LeadTableHeaderProps {
   onToggleSelectAll: () => void;
   isAllSelected: boolean;
   isDeleting: boolean;
-  selectAllMode?: 'visible' | 'all';
+  selectAllMode?: "visible" | "all";
   visibleCount?: number;
   totalCount?: number | null;
   onSelectAllMatching?: () => void;
@@ -50,8 +49,12 @@ export interface BulkActionsDialogProps {
   selectedLeads?: any[];
   onAssignTags?: () => Promise<void>;
   onRemoveTags?: () => Promise<void>;
-  onChangePipeline?: (leadIds: string[], pipelineId: string) => Promise<void>;
-  onChangeStatus?: () => Promise<void>;
+  onChangePipeline?: (
+    leadIds: string[],
+    pipelineId: string,
+    stage?: string,
+  ) => Promise<void>;
+  onChangeStatus?: (leadIds: string[], status: string) => Promise<void>;
   onDeleteLeads?: () => Promise<void>;
   pipelines?: { id: string; name: string }[];
 }
@@ -62,5 +65,5 @@ export const statusColors = {
   contacted: "bg-purple-500",
   qualified: "bg-amber-500",
   converted: "bg-green-500",
-  lost: "bg-red-500"
+  lost: "bg-red-500",
 };

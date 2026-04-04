@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BulkActionsDialog } from "@/components/leads/components/bulk-actions-dialog";
@@ -18,7 +17,7 @@ interface SelectionHeaderProps {
   onMoveToPipeline: (pipelineId: string) => void;
   onAddVariables: () => void;
   pipelines: Array<{ id: string; name: string }>;
-  selectAllMode?: 'visible' | 'all';
+  selectAllMode?: "visible" | "all";
 }
 
 export function SelectionHeader({
@@ -28,7 +27,7 @@ export function SelectionHeader({
   onMoveToPipeline,
   onAddVariables,
   pipelines,
-  selectAllMode = 'visible',
+  selectAllMode = "visible",
 }: SelectionHeaderProps) {
   const [isBulkActionsOpen, setIsBulkActionsOpen] = useState(false);
 
@@ -39,7 +38,7 @@ export function SelectionHeader({
       <div className="flex justify-between items-center">
         <div className="font-medium flex items-center gap-1">
           {selectedCount} lead{selectedCount !== 1 ? "s" : ""} selected
-          {selectAllMode === 'all' && (
+          {selectAllMode === "all" && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -49,7 +48,8 @@ export function SelectionHeader({
                 </TooltipTrigger>
                 <TooltipContent side="right">
                   <p className="text-xs max-w-[250px]">
-                    All leads matching your current filter are selected, even if not all have been loaded yet.
+                    All leads matching your current filter are selected, even if
+                    not all have been loaded yet.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -65,7 +65,7 @@ export function SelectionHeader({
             <ClipboardCheck className="h-4 w-4 mr-2" />
             Bulk Actions
           </Button>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -94,9 +94,11 @@ export function SelectionHeader({
         onLeadsUpdated={() => {}}
         onAssignTags={async () => {}}
         onRemoveTags={async () => {}}
-        onChangeStatus={async () => {}}
+        onChangeStatus={async (_leadIds, _status) => {}}
         onDeleteLeads={async () => onDelete()}
-        onChangePipeline={async (leadIds, pipelineId) => onMoveToPipeline(pipelineId)}
+        onChangePipeline={async (leadIds, pipelineId) =>
+          onMoveToPipeline(pipelineId)
+        }
         pipelines={pipelines}
       />
     </div>
