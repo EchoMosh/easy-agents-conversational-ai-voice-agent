@@ -289,23 +289,40 @@ ${scriptText}
     }
 
     // ---- SERVER-SIDE NORMALIZATION ----
-    // Ensure all nodes have required fields
-    flow.nodes = flow.nodes.map((node, i) => ({
-      ...node,
-      id: node.id || `${node.type}-${i}`,
-      position: node.position || { x: 100 + i * 400, y: 250 },
-      draggable: true,
-      data: {
-        ...node.data,
-        // Ensure greetingNodes have outcomes array
-        ...(node.type === "greetingNode" && {
-          outcomes: Array.isArray(node.data?.outcomes)
-            ? node.data.outcomes
-            : [],
-          actions: Array.isArray(node.data?.actions) ? node.data.actions : [],
-        }),
-      },
-    }));
+    // Fix common LLM type name variations
+    const typeMap: Record<string, string> = {
+      start: "startNode",
+      startnode: "startNode",
+      startNode: "startNode",
+      greeting: "greetingNode",
+      greetingnode: "greetingNode",
+      greetingNode: "greetingNode",
+      speak: "greetingNode",
+      speakNode: "greetingNode",
+      end: "endNode",
+      endnode: "endNode",
+      endNode: "endNode",
+    };
+
+    flow.nodes = flow.nodes.map((node, i) => {
+      const normalizedType = typeMap[node.type] || node.type;
+      return {
+        ...node,
+        type: normalizedType,
+        id: node.id || `${normalizedType}-${i}`,
+        position: node.position || { x: 100 + i * 400, y: 250 },
+        draggable: true,
+        data: {
+          ...node.data,
+          ...(normalizedType === "greetingNode" && {
+            outcomes: Array.isArray(node.data?.outcomes)
+              ? node.data.outcomes
+              : [],
+            actions: Array.isArray(node.data?.actions) ? node.data.actions : [],
+          }),
+        },
+      };
+    });
 
     // Normalize ALL edges to buttonEdge type with required properties
     flow.edges = flow.edges.map((edge) => ({
