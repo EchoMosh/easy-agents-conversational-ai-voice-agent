@@ -54,6 +54,7 @@ const nodeTypes: NodeTypes = {
 
 const edgeTypes = {
   buttonEdge: ButtonEdge,
+  default: ButtonEdge,
 };
 
 interface FlowProps {
