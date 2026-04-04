@@ -15,6 +15,7 @@ export function useFlowManagement(
     nodes: [],
     edges: [],
   });
+  const initialLoadDone = useRef(false);
   const { generateMermaidFromFlow, sanitizeMermaidChart } = useMermaidChart();
 
   const saveFlowMutation = useMutation({
@@ -70,6 +71,7 @@ export function useFlowManagement(
 
         console.log("[AgentFlowPage] Parsed flow data:", flowData);
         setFlowState(flowData as FlowData);
+        initialLoadDone.current = true;
 
         let mermaidChartStr = generateMermaidFromFlow(flowData as FlowData);
         mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
@@ -114,7 +116,7 @@ export function useFlowManagement(
 
   const handleNodesChange = useCallback(
     (newNodes: Node[]) => {
-      if (!agent) return;
+      if (!agent || !initialLoadDone.current) return;
       try {
         setFlowState((prevState) => {
           const newState = {
@@ -133,7 +135,7 @@ export function useFlowManagement(
 
   const handleEdgesChange = useCallback(
     (newEdges: Edge[]) => {
-      if (!agent) return;
+      if (!agent || !initialLoadDone.current) return;
       try {
         setFlowState((prevState) => {
           const newState = {
