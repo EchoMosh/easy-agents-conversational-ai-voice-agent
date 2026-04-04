@@ -3,8 +3,12 @@ import { KnowledgeDocument } from "@/types/supabase-extended";
 
 // Helper function to call Supabase Edge Functions
 async function callSupabaseFunction(functionName: string, body: any) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const { data, error } = await supabase.functions.invoke(functionName, {
     body,
+    headers: { Authorization: `Bearer ${session?.access_token}` },
   });
 
   if (error) throw error;

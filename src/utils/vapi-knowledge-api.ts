@@ -34,12 +34,16 @@ export async function uploadFileToVapi(file: File): Promise<VapiFile> {
   const uint8Array = new Uint8Array(arrayBuffer);
   const base64 = btoa(String.fromCharCode(...uint8Array));
 
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const { data, error } = await supabase.functions.invoke("upload-vapi-file", {
     body: {
       fileName: file.name,
       fileData: base64,
       mimeType: file.type,
     },
+    headers: { Authorization: `Bearer ${session?.access_token}` },
   });
 
   if (error) throw error;
@@ -52,6 +56,9 @@ export async function createTrieveDataset(
   name: string,
   agentId: string,
 ): Promise<TrieveDataset> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const { data, error } = await supabase.functions.invoke(
     "create-trieve-dataset",
     {
@@ -59,6 +66,7 @@ export async function createTrieveDataset(
         name,
         agent_id: agentId,
       },
+      headers: { Authorization: `Bearer ${session?.access_token}` },
     },
   );
 
