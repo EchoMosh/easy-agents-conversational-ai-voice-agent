@@ -107,22 +107,32 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       setCreationStatus("Creating AI agent...");
       console.log("Creating voice agent with name:", newAgent.name);
 
-      const { data: vapiData, error: vapiError } =
-        await supabase.functions.invoke("create-vapi-agent", {
-          body: {
-            agentName: newAgent.name,
-            role: newAgent.role,
-            language: "en",
-          },
-        });
+      try {
+        const { data: vapiData, error: vapiError } =
+          await supabase.functions.invoke("create-vapi-agent", {
+            body: {
+              agentName: newAgent.name,
+              role: newAgent.role,
+              language: "en",
+            },
+          });
 
-      if (vapiError) {
-        throw new Error(`Failed to create voice agent: ${vapiError.message}`);
+        if (vapiError) {
+          console.error("VAPI creation error:", vapiError);
+        } else {
+          createdVAgentId = vapiData?.v_agent_id || null;
+        }
+      } catch (vapiErr) {
+        console.error(
+          "VAPI creation failed, continuing without voice:",
+          vapiErr,
+        );
       }
 
-      createdVAgentId = vapiData?.v_agent_id;
       if (!createdVAgentId) {
-        throw new Error("No agent ID returned from create-agent function");
+        console.warn(
+          "No VAPI agent created - agent will be created without voice sync",
+        );
       }
 
       console.log("Voice agent created with ID:", createdVAgentId);
