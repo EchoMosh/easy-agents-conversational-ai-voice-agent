@@ -29,7 +29,7 @@ interface TagsManagerProps {
   tags: Tag[];
   existingTags: Tag[];
   isNewLead?: boolean;
-  onAddTagForNewLead?: (name:string) => void;
+  onAddTagForNewLead?: (name: string) => void;
   onRemoveTagForNewLead?: (id: string) => void;
 }
 
@@ -54,11 +54,6 @@ export function TagsManager({
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
 
-  useEffect(() => {
-    console.log("DEBUG_TAGS_MANAGER - tags prop:", tags.map((t) => t.name));
-    console.log("DEBUG_TAGS_MANAGER - existingTags prop:", existingTags.map((t) => t.name));
-  }, [tags, existingTags]);
-
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["leads"] });
     queryClient.invalidateQueries({ queryKey: ["lead_activities", leadId] });
@@ -81,7 +76,7 @@ export function TagsManager({
     }
 
     const isDuplicate = tags.some(
-      (tag) => tag.name.toLowerCase() === trimmedName.toLowerCase()
+      (tag) => tag.name.toLowerCase() === trimmedName.toLowerCase(),
     );
 
     if (isDuplicate) {
@@ -95,7 +90,7 @@ export function TagsManager({
       // Handle both new and existing leads consistently
       if (onAddTagForNewLead) {
         onAddTagForNewLead(trimmedName);
-        setTagInputValue(''); // Ensure input is cleared
+        setTagInputValue(""); // Ensure input is cleared
         setIsAddingTag(false);
         setIsSubmitting(false);
         return;
@@ -152,7 +147,6 @@ export function TagsManager({
       setIsSubmitting(false);
     }
   };
-
 
   const handleDeleteTag = async (tagId: string) => {
     if (isSubmitting) return;
@@ -224,9 +218,6 @@ export function TagsManager({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-base font-medium text-gray-800">Lead Tags</h3>
-      </div>
       <div className="mb-3">
         <div className="relative flex gap-2">
           <Input
@@ -243,10 +234,7 @@ export function TagsManager({
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && e.currentTarget.value) {
-                console.log("DEBUG_TAGS_MANAGER - tags before create:", tags.map(t => t.name));
-                console.log("DEBUG_TAGS_MANAGER - input value:", tagInputValue);
                 handleCreateTag({ name: e.currentTarget.value });
-                console.log("DEBUG_TAGS_MANAGER - tags after create call:", tags.map(t => t.name));
                 setTagInputValue("");
                 setIsAddingTag(false);
                 e.preventDefault();
@@ -271,14 +259,20 @@ export function TagsManager({
           {isAddingTag && existingTags.length > 0 && (
             <div className="absolute top-10 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-sm max-h-60 overflow-auto z-50">
               {existingTags
-                .filter(tag => !tags.some(t => t.id === tag.id) && tag.name.toLowerCase().includes(tagInputValue.toLowerCase()))
+                .filter(
+                  (tag) =>
+                    !tags.some((t) => t.id === tag.id) &&
+                    tag.name
+                      .toLowerCase()
+                      .includes(tagInputValue.toLowerCase()),
+                )
                 .map((tag) => (
                   <div
                     key={tag.id}
                     className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     onClick={() => {
                       handleSelectExistingTag(tag);
-                      setTagInputValue('');
+                      setTagInputValue("");
                       setIsAddingTag(false);
                     }}
                   >
@@ -303,7 +297,6 @@ export function TagsManager({
       ) : (
         <EmptyState onAddClick={openAddTagDialog} />
       )}
-
     </div>
   );
 }
