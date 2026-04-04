@@ -392,6 +392,17 @@ export function Flow({
   // Only sync from props on initial load -- not on every prop change,
   // because our own drag callbacks propagate changes to parent which
   // flow back as props, causing a stale-position "bounce back" effect.
+  // Normalize edges: ensure all edges use "buttonEdge" type (the only registered type)
+  const normalizeEdges = useCallback((edges: Edge[]) => {
+    return edges.map((edge) => ({
+      ...edge,
+      type: "buttonEdge",
+      sourceHandle: edge.sourceHandle || "default",
+      animated: edge.animated ?? true,
+      style: edge.style || { strokeWidth: 3, stroke: "#94a3b8" },
+    }));
+  }, []);
+
   const initialSyncDone = useRef(false);
   useEffect(() => {
     if (!initialSyncDone.current && propsNodes && propsNodes.length > 0) {
@@ -399,10 +410,17 @@ export function Flow({
         Array.isArray(propsNodes) ? propsNodes : [],
       );
       setNodes(normalizedNodes);
-      setEdges(Array.isArray(propsEdges) ? propsEdges : []);
+      setEdges(normalizeEdges(Array.isArray(propsEdges) ? propsEdges : []));
       initialSyncDone.current = true;
     }
-  }, [propsNodes, propsEdges, setNodes, setEdges, normalizeNodes]);
+  }, [
+    propsNodes,
+    propsEdges,
+    setNodes,
+    setEdges,
+    normalizeNodes,
+    normalizeEdges,
+  ]);
 
   // Re-sync if the number of nodes changes (e.g. node added/deleted externally)
   const prevNodeCount = useRef(0);
@@ -413,10 +431,17 @@ export function Flow({
         Array.isArray(propsNodes) ? propsNodes : [],
       );
       setNodes(normalizedNodes);
-      setEdges(Array.isArray(propsEdges) ? propsEdges : []);
+      setEdges(normalizeEdges(Array.isArray(propsEdges) ? propsEdges : []));
       prevNodeCount.current = count;
     }
-  }, [propsNodes, propsEdges, setNodes, setEdges, normalizeNodes]);
+  }, [
+    propsNodes,
+    propsEdges,
+    setNodes,
+    setEdges,
+    normalizeNodes,
+    normalizeEdges,
+  ]);
 
   // Effect to focus on a specific node when focusNodeId changes
   useEffect(() => {
