@@ -151,6 +151,9 @@ export function TestAgentDialog({
       const mermaidChart = currentAgentData.mermaid_chart || "";
 
       // Use Supabase Edge Function instead of direct API calls
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke(
         "update-vapi-agent",
         {
@@ -168,6 +171,7 @@ export function TestAgentDialog({
                 : currentAgentData.background_sound || "office",
             knowledge_base_id: currentAgentData.vapi_knowledge_base_id,
           },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
         },
       );
 

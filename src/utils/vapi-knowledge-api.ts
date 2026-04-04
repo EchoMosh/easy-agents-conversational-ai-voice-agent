@@ -81,6 +81,9 @@ export async function uploadToTrieve(
   datasetId: string,
   files: Array<{ name: string; content: string; type: string }>,
 ): Promise<any> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const results = [];
   for (const file of files) {
     const { data, error } = await supabase.functions.invoke(
@@ -97,6 +100,7 @@ export async function uploadToTrieve(
             },
           },
         },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
       },
     );
 
@@ -120,6 +124,9 @@ export async function createVapiKnowledgeBase(
     scoreThreshold?: number;
   },
 ): Promise<VapiKnowledgeBase> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const { data, error } = await supabase.functions.invoke(
     "create-vapi-knowledge-base",
     {
@@ -129,6 +136,7 @@ export async function createVapiKnowledgeBase(
         agentId,
         ...options,
       },
+      headers: { Authorization: `Bearer ${session?.access_token}` },
     },
   );
 

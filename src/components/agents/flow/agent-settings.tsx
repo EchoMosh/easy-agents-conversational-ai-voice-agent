@@ -526,6 +526,9 @@ export function AgentSettings({
       // Update Vapi agent if v_agent_id exists
       if (vapiAgentId) {
         try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
           const response = await supabase.functions.invoke(
             "update-vapi-agent",
             {
@@ -543,6 +546,7 @@ export function AgentSettings({
                 background_sound: loadedAgentData?.background_sound || "office",
                 knowledge_base_id: vapiKnowledgeBaseId,
               },
+              headers: { Authorization: `Bearer ${session?.access_token}` },
             },
           );
 
@@ -620,6 +624,9 @@ export function AgentSettings({
       console.log("Generating voice preview for:", voiceName);
 
       // Use Supabase Edge Function for voice sample
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke(
         "get-elevenlabs-voice-sample",
         {
@@ -627,6 +634,7 @@ export function AgentSettings({
             voice_id: selectedVoice,
             text: previewText,
           },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
         },
       );
 

@@ -124,6 +124,9 @@ export function LaunchAgentDialog({
       const cleanedFirstMessage = rawFirstMessage.replace(/<[^>]*>?/gm, "");
       const mermaidChart = currentAgentData.mermaid_chart || "";
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke(
         "update-vapi-agent",
         {
@@ -141,6 +144,7 @@ export function LaunchAgentDialog({
                 : currentAgentData.background_sound || "office",
             knowledge_base_id: currentAgentData.vapi_knowledge_base_id,
           },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
         },
       );
 

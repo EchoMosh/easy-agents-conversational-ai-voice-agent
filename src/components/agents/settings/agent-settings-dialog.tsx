@@ -234,6 +234,9 @@ export function AgentSettings({
 
       // Sync full settings to VAPI in background (only if agent has been pushed to VAPI)
       if (agentMeta.v_agent_id) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         supabase.functions
           .invoke("update-vapi-agent", {
             body: {
@@ -272,6 +275,7 @@ export function AgentSettings({
               stop_speaking_backoff_seconds:
                 settings.stopSpeakingBackoffSeconds,
             },
+            headers: { Authorization: `Bearer ${session?.access_token}` },
           })
           .catch((err) => {
             console.error("VAPI sync failed (settings saved to DB):", err);

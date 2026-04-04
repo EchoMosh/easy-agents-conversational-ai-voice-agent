@@ -108,12 +108,18 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       console.log("Creating voice agent with name:", newAgent.name);
 
       try {
+        const {
+          data: { session: vapiSession },
+        } = await supabase.auth.getSession();
         const { data: vapiData, error: vapiError } =
           await supabase.functions.invoke("create-vapi-agent", {
             body: {
               agentName: newAgent.name,
               role: newAgent.role,
               language: "en",
+            },
+            headers: {
+              Authorization: `Bearer ${vapiSession?.access_token}`,
             },
           });
 
@@ -143,12 +149,18 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       if (scriptText.trim()) {
         setCreationStatus("Analyzing script...");
         try {
+          const {
+            data: { session: flowSession },
+          } = await supabase.auth.getSession();
           const { data: flowData, error: flowError } =
             await supabase.functions.invoke("generate-agent-flow", {
               body: {
                 scriptText,
                 agentName: newAgent.name,
                 role: newAgent.role,
+              },
+              headers: {
+                Authorization: `Bearer ${flowSession?.access_token}`,
               },
             });
 

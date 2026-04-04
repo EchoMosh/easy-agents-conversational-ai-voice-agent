@@ -217,6 +217,9 @@ export function BulkCallView({
     setCampaignState("running");
     setProgress({ done: 0, total: leads.length, errors: 0 });
 
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     let errors = 0;
     for (let i = 0; i < leads.length; i++) {
       const lead = leads[i] as LeadRecord;
@@ -237,6 +240,7 @@ export function BulkCallView({
               customer_name: lead.name || undefined,
               language: agent.language || undefined,
             },
+            headers: { Authorization: `Bearer ${session?.access_token}` },
           },
         );
         if (callError || !data?.success) {

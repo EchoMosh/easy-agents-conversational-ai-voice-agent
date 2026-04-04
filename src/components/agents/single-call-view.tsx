@@ -149,6 +149,9 @@ export function SingleCallView({
     setCallState("calling");
     setCallError("");
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke(
         "initiate-vapi-call",
         {
@@ -159,6 +162,7 @@ export function SingleCallView({
             customer_name: customerName.trim() || undefined,
             language: agent.language || undefined,
           },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
         },
       );
 
