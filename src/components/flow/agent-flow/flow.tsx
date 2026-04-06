@@ -203,7 +203,11 @@ export function Flow({
       const isEditingText =
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
-        target.isContentEditable;
+        target.isContentEditable ||
+        target.closest(".react-flow__node") !== null ||
+        target.closest("[data-tiptap-editor]") !== null ||
+        target.closest(".tiptap") !== null ||
+        target.getAttribute("role") === "textbox";
 
       if (
         (event.key === "Delete" || event.key === "Backspace") &&
