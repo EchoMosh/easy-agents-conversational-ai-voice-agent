@@ -28,6 +28,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [creationStatus, setCreationStatus] = useState<string | null>(null);
   const [vAgentId, setVAgentId] = useState<string | null>(null);
   const [scriptText, setScriptText] = useState("");
+  const [selectedModel, setSelectedModel] = useState(
+    "anthropic/claude-sonnet-4",
+  );
   const [newAgent, setNewAgent] = useState<{
     name: string;
     role: Agent["role"];
@@ -179,6 +182,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
                   agentName: newAgent.name,
                   role: newAgent.role,
                   openRouterKey,
+                  model: selectedModel,
                 },
                 headers: {
                   Authorization: `Bearer ${flowSession?.access_token}`,
@@ -355,6 +359,8 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           <ScriptStep
             scriptText={scriptText}
             onScriptChange={setScriptText}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
             onNext={() => handleCreateAgent()}
             onBack={() => setStep(1)}
             isProcessing={isCreating}

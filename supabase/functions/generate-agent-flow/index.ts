@@ -128,10 +128,16 @@ serve(async (req) => {
       });
     }
 
-    const { scriptText, agentName, role, openRouterKey } =
-      (await req.json()) as GenerateAgentFlowRequest & {
-        openRouterKey?: string;
-      };
+    const {
+      scriptText,
+      agentName,
+      role,
+      openRouterKey,
+      model: requestedModel,
+    } = (await req.json()) as GenerateAgentFlowRequest & {
+      openRouterKey?: string;
+      model?: string;
+    };
 
     if (!scriptText || !scriptText.trim()) {
       return new Response(JSON.stringify({ error: "scriptText is required" }), {
@@ -159,8 +165,8 @@ serve(async (req) => {
 
     if (openRouterKey) {
       llmUrl = "https://openrouter.ai/api/v1/chat/completions";
+      llmModel = requestedModel || "anthropic/claude-sonnet-4";
       llmKey = openRouterKey;
-      llmModel = "anthropic/claude-sonnet-4";
     } else {
       const groqApiKey = Deno.env.get("GROQ_API_KEY");
       const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
@@ -331,14 +337,24 @@ ${scriptText}
       };
     });
 
-    // Normalize ALL edges to buttonEdge type with required properties
-    flow.edges = flow.edges.map((edge) => ({
-      ...edge,
-      type: "buttonEdge",
-      sourceHandle: edge.sourceHandle || "default",
-      animated: true,
-      style: { strokeWidth: 3, stroke: "#94a3b8" },
-    }));
+    // Build a map of node IDs to their data for edge normalization
+    const nodeMap = new Map(flow.nodes.map((n) => [n.id, n]));
+
+    // Normalize ALL edges to buttonEdge type with correct sourceHandle
+    // If source node has outcomes, use "outcome-0" (first outcome handle)
+    // If source node has no outcomes, use "default"
+    flow.edges = flow.edges.map((edge) => {
+      const sourceNode = nodeMap.get(edge.source);
+      const hasOutcomes =
+        sourceNode?.data?.outcomes && sourceNode.data.outcomes.length > 0;
+      return {
+        ...edge,
+        type: "buttonEdge",
+        sourceHandle: hasOutcomes ? "outcome-0" : "default",
+        animated: true,
+        style: { strokeWidth: 3, stroke: "#94a3b8" },
+      };
+    });
 
     // Verify all edges reference valid node IDs
     const nodeIds = new Set(flow.nodes.map((n) => n.id));
@@ -357,12 +373,15 @@ ${scriptText}
       console.log("No valid edges, creating sequential connections");
       flow.edges = [];
       for (let i = 0; i < flow.nodes.length - 1; i++) {
+        const srcNode = flow.nodes[i];
+        const hasOc =
+          srcNode?.data?.outcomes && srcNode.data.outcomes.length > 0;
         flow.edges.push({
-          id: `edge-${flow.nodes[i].id}-${flow.nodes[i + 1].id}`,
-          source: flow.nodes[i].id,
+          id: `edge-${srcNode.id}-${flow.nodes[i + 1].id}`,
+          source: srcNode.id,
           target: flow.nodes[i + 1].id,
           type: "buttonEdge",
-          sourceHandle: "default",
+          sourceHandle: hasOc ? "outcome-0" : "default",
           animated: true,
           style: { strokeWidth: 3, stroke: "#94a3b8" },
         });

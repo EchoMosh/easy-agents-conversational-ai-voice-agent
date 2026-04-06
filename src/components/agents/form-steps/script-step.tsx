@@ -1,11 +1,60 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+
+const AI_MODELS = [
+  {
+    id: "anthropic/claude-sonnet-4",
+    name: "Claude Sonnet 4",
+    provider: "Anthropic",
+    tag: "Recommended",
+  },
+  {
+    id: "anthropic/claude-opus-4",
+    name: "Claude Opus 4",
+    provider: "Anthropic",
+    tag: "Most powerful",
+  },
+  {
+    id: "google/gemini-2.5-flash",
+    name: "Gemini 2.5 Flash",
+    provider: "Google",
+    tag: "Fast",
+  },
+  {
+    id: "openai/gpt-4o",
+    name: "GPT-4o",
+    provider: "OpenAI",
+    tag: "",
+  },
+  {
+    id: "openai/gpt-4o-mini",
+    name: "GPT-4o Mini",
+    provider: "OpenAI",
+    tag: "Budget",
+  },
+  {
+    id: "meta-llama/llama-3.3-70b-instruct",
+    name: "Llama 3.3 70B",
+    provider: "Meta",
+    tag: "Free",
+  },
+] as const;
 
 interface ScriptStepProps {
   scriptText: string;
   onScriptChange: (text: string) => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
   onNext: () => void;
   onBack: () => void;
   isProcessing: boolean;
@@ -14,6 +63,8 @@ interface ScriptStepProps {
 export function ScriptStep({
   scriptText,
   onScriptChange,
+  selectedModel,
+  onModelChange,
   onNext,
   onBack,
   isProcessing,
@@ -44,9 +95,37 @@ Is now a good time to chat for a quick minute?
 Great! So we've been able to get you approved for..."
         value={scriptText}
         onChange={(e) => onScriptChange(e.target.value)}
-        className="min-h-[220px] resize-y text-sm"
+        className="min-h-[200px] resize-y text-sm"
         disabled={isProcessing}
       />
+
+      {scriptText.trim() && (
+        <div className="space-y-1.5">
+          <Label className="text-sm">AI Model for Script Analysis</Label>
+          <Select value={selectedModel} onValueChange={onModelChange}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {AI_MODELS.map((model) => (
+                <SelectItem key={model.id} value={model.id}>
+                  <span className="flex items-center gap-2">
+                    <span>{model.name}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {model.provider}
+                    </span>
+                    {model.tag && (
+                      <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                        {model.tag}
+                      </span>
+                    )}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button
