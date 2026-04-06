@@ -168,7 +168,7 @@ serve(async (req) => {
                   Authorization: `Bearer ${vapiApiKey}`,
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ assistantId: null }),
+                body: JSON.stringify({ assistantId: "" }),
               },
             );
 

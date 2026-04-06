@@ -295,8 +295,8 @@ ${mermaid_chart}`;
             content: systemPrompt,
           },
         ],
-        ...(knowledge_base_id && { knowledgeBaseId: knowledge_base_id }),
       },
+      ...(knowledge_base_id && { knowledgeBaseId: knowledge_base_id }),
     };
 
     // Get Vapi API key from environment
