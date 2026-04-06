@@ -37,7 +37,7 @@ export const LLM_PROVIDERS: LLMProvider[] = [
       { id: "gpt-4o", name: "GPT-4o", contextWindow: 128000 },
       { id: "gpt-4o-mini", name: "GPT-4o Mini", contextWindow: 128000 },
     ],
-    requiresApiKey: true,
+    requiresApiKey: false,
   },
   {
     id: "anthropic",
@@ -54,7 +54,7 @@ export const LLM_PROVIDERS: LLMProvider[] = [
         contextWindow: 200000,
       },
     ],
-    requiresApiKey: true,
+    requiresApiKey: false,
   },
   {
     id: "together-ai",
@@ -76,7 +76,7 @@ export const LLM_PROVIDERS: LLMProvider[] = [
         contextWindow: 32768,
       },
     ],
-    requiresApiKey: true,
+    requiresApiKey: false,
   },
 ];
 

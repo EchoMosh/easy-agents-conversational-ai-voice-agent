@@ -60,7 +60,7 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
   {
     id: "cartesia",
     name: "Cartesia",
-    requiresApiKey: true,
+    requiresApiKey: false,
     models: [
       { id: "sonic-2", name: "Sonic 2", latency: "low" },
       { id: "sonic", name: "Sonic", latency: "low" },
@@ -127,7 +127,7 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
   {
     id: "elevenlabs",
     name: "ElevenLabs",
-    requiresApiKey: true,
+    requiresApiKey: false,
     models: [
       { id: "eleven_turbo_v2_5", name: "Turbo v2.5", latency: "low" },
       { id: "eleven_turbo_v2", name: "Turbo v2", latency: "low" },
@@ -207,7 +207,7 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
   {
     id: "openai",
     name: "OpenAI",
-    requiresApiKey: true,
+    requiresApiKey: false,
     models: [
       { id: "tts-1", name: "TTS-1", latency: "low" },
       { id: "tts-1-hd", name: "TTS-1 HD", latency: "medium" },
@@ -232,7 +232,7 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
   {
     id: "playht",
     name: "PlayHT",
-    requiresApiKey: true,
+    requiresApiKey: false,
     models: [
       { id: "PlayHT2.0-turbo", name: "PlayHT 2.0 Turbo", latency: "low" },
       { id: "PlayHT2.0", name: "PlayHT 2.0", latency: "medium" },
@@ -274,7 +274,7 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
   {
     id: "rime-ai",
     name: "Rime AI",
-    requiresApiKey: true,
+    requiresApiKey: false,
     models: [
       { id: "mist", name: "Mist", latency: "low" },
       { id: "v1", name: "V1", latency: "medium" },
@@ -296,7 +296,7 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
   {
     id: "deepgram",
     name: "Deepgram",
-    requiresApiKey: true,
+    requiresApiKey: false,
     models: [{ id: "aura", name: "Aura", latency: "low" }],
     voices: [
       {

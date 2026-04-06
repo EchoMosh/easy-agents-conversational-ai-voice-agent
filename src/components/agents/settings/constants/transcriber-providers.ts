@@ -27,7 +27,7 @@ export const TRANSCRIBER_PROVIDERS: TranscriberProvider[] = [
       { id: "nova-3", name: "Nova 3" },
       { id: "nova-2", name: "Nova 2" },
     ],
-    requiresApiKey: true,
+    requiresApiKey: false,
     description:
       "High-accuracy real-time transcription with low latency. Supports multiple languages.",
   },
@@ -35,7 +35,7 @@ export const TRANSCRIBER_PROVIDERS: TranscriberProvider[] = [
     id: "gladia",
     name: "Gladia",
     models: [{ id: "default", name: "Default" }],
-    requiresApiKey: true,
+    requiresApiKey: false,
     description:
       "Enterprise-grade speech-to-text with speaker diarization and real-time processing.",
   },
@@ -46,7 +46,7 @@ export const TRANSCRIBER_PROVIDERS: TranscriberProvider[] = [
       { id: "best", name: "Best" },
       { id: "nano", name: "Nano" },
     ],
-    requiresApiKey: true,
+    requiresApiKey: false,
     description:
       "AI-powered transcription with built-in content moderation and topic detection.",
   },
