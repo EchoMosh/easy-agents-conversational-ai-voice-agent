@@ -308,7 +308,7 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
   return (
     <div className="space-y-6 py-6">
-      <CreateAgentProgress currentStep={step} totalSteps={3} />
+      <CreateAgentProgress currentStep={step} totalSteps={2} />
 
       {error && (
         <Alert variant="destructive">
@@ -324,30 +324,17 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
           <NameStep
             name={newAgent.name}
             onNameChange={(name) => setNewAgent((prev) => ({ ...prev, name }))}
-            onNext={() => setStep(2)} // Proceed to TemplateStep
+            onNext={() => setStep(2)} // Proceed to ScriptStep
             onBack={() => onCancel()}
           />
         )}
 
         {step === 2 && (
-          <TemplateStep
-            selectedTemplate={newAgent.template}
-            onTemplateSelect={(templateId, role) => {
-              setNewAgent((prev) => ({ ...prev, template: templateId, role }));
-            }}
-            onNext={handleNextFromTemplate}
-            onBack={() => setStep(1)} // Go back to NameStep
-            showOnlyScratch={true}
-            agentName={newAgent.name}
-          />
-        )}
-
-        {step === 3 && (
           <ScriptStep
             scriptText={scriptText}
             onScriptChange={setScriptText}
             onNext={() => handleCreateAgent()}
-            onBack={() => setStep(2)}
+            onBack={() => setStep(1)}
             isProcessing={isCreating}
           />
         )}

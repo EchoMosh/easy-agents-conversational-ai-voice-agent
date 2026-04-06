@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-const STEP_LABELS = ["Name", "Role", "Script"];
+const STEP_LABELS = ["Name", "Script"];
 
 interface CreateAgentProgressProps {
   currentStep: number;
