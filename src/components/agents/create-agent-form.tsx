@@ -149,54 +149,76 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
       if (scriptText.trim()) {
         setCreationStatus("Analyzing script...");
         try {
-          const {
-            data: { session: flowSession },
-          } = await supabase.auth.getSession();
-          const { data: flowData, error: flowError } =
-            await supabase.functions.invoke("generate-agent-flow", {
-              body: {
-                scriptText,
-                agentName: newAgent.name,
-                role: newAgent.role,
-              },
-              headers: {
-                Authorization: `Bearer ${flowSession?.access_token}`,
-              },
-            });
+          // Fetch OpenRouter key from workspace integrations
+          let openRouterKey: string | null = null;
+          if (currentWorkspace?.id) {
+            const { data: orIntegration } = await supabase
+              .from("workspace_integrations")
+              .select("api_key")
+              .eq("workspace_id", currentWorkspace.id)
+              .eq("provider", "openrouter")
+              .maybeSingle();
+            openRouterKey = orIntegration?.api_key || null;
+          }
 
-          if (flowError) {
-            console.error("Error generating flow from script:", flowError);
+          if (!openRouterKey) {
             toast({
-              title: "Script Analysis Failed",
-              description: `Could not analyze script: ${flowError.message || "Unknown error"}. Using default flow.`,
-              variant: "destructive",
-            });
-          } else if (flowData?.flow) {
-            console.log("Generated flow from script:", flowData.flow);
-            // Normalize edges to use buttonEdge type (required by flow editor)
-            const generatedFlow = flowData.flow;
-            if (generatedFlow.edges) {
-              generatedFlow.edges = generatedFlow.edges.map((edge: any) => ({
-                ...edge,
-                type: "buttonEdge",
-                animated: true,
-                style: { strokeWidth: 3, stroke: "#94a3b8" },
-              }));
-            }
-            flow = generatedFlow;
-            toast({
-              title: "Script Analyzed",
+              title: "OpenRouter Key Required",
               description:
-                "Your conversation flow has been built from the script.",
+                "Add your OpenRouter API key in Settings -> Integrations to enable script analysis.",
+              variant: "destructive",
             });
           } else {
-            console.error("No flow in response:", flowData);
-            toast({
-              title: "Script Analysis Failed",
-              description: "No flow returned. Using default flow.",
-              variant: "destructive",
-            });
-          }
+            const {
+              data: { session: flowSession },
+            } = await supabase.auth.getSession();
+            const { data: flowData, error: flowError } =
+              await supabase.functions.invoke("generate-agent-flow", {
+                body: {
+                  scriptText,
+                  agentName: newAgent.name,
+                  role: newAgent.role,
+                  openRouterKey,
+                },
+                headers: {
+                  Authorization: `Bearer ${flowSession?.access_token}`,
+                },
+              });
+
+            if (flowError) {
+              console.error("Error generating flow from script:", flowError);
+              toast({
+                title: "Script Analysis Failed",
+                description: `Could not analyze script: ${flowError.message || "Unknown error"}. Using default flow.`,
+                variant: "destructive",
+              });
+            } else if (flowData?.flow) {
+              console.log("Generated flow from script:", flowData.flow);
+              // Normalize edges to use buttonEdge type (required by flow editor)
+              const generatedFlow = flowData.flow;
+              if (generatedFlow.edges) {
+                generatedFlow.edges = generatedFlow.edges.map((edge: any) => ({
+                  ...edge,
+                  type: "buttonEdge",
+                  animated: true,
+                  style: { strokeWidth: 3, stroke: "#94a3b8" },
+                }));
+              }
+              flow = generatedFlow;
+              toast({
+                title: "Script Analyzed",
+                description:
+                  "Your conversation flow has been built from the script.",
+              });
+            } else {
+              console.error("No flow in response:", flowData);
+              toast({
+                title: "Script Analysis Failed",
+                description: "No flow returned. Using default flow.",
+                variant: "destructive",
+              });
+            }
+          } // close openRouterKey else block
         } catch (flowGenError) {
           console.error("Error invoking generate-agent-flow:", flowGenError);
           toast({

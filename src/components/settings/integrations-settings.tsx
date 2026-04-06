@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWorkspace } from "@/context/workspace-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Brain, Cpu, Zap, Phone } from "lucide-react";
+import { Loader2, Brain, Cpu, Zap, Phone, Route } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApiKeyIntegrationCard } from "./api-key-integration-card";
 import { TwilioIntegrationSettings } from "./twilio-integration-settings";
@@ -43,6 +43,16 @@ const PROVIDERS = [
     placeholder: "gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     helpText: "Get your API key from console.groq.com/keys",
     docsUrl: "https://console.groq.com",
+  },
+  {
+    provider: "openrouter",
+    name: "OpenRouter",
+    description: "Required for AI script analysis when creating agents",
+    icon: Route,
+    iconColor: "text-pink-500",
+    placeholder: "sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    helpText: "Get your API key from openrouter.ai/keys",
+    docsUrl: "https://openrouter.ai",
   },
 ] as const;
 

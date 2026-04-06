@@ -128,8 +128,10 @@ serve(async (req) => {
       });
     }
 
-    const { scriptText, agentName, role } =
-      (await req.json()) as GenerateAgentFlowRequest;
+    const { scriptText, agentName, role, openRouterKey } =
+      (await req.json()) as GenerateAgentFlowRequest & {
+        openRouterKey?: string;
+      };
 
     if (!scriptText || !scriptText.trim()) {
       return new Response(JSON.stringify({ error: "scriptText is required" }), {
@@ -150,34 +152,39 @@ serve(async (req) => {
       });
     }
 
-    // Try GROQ first, fall back to OpenAI-compatible via workspace integration
-    const groqApiKey = Deno.env.get("GROQ_API_KEY");
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-
+    // Priority: OpenRouter key from user > GROQ env > OpenAI env
     let llmUrl: string;
     let llmKey: string;
     let llmModel: string;
 
-    if (groqApiKey) {
-      llmUrl = "https://api.groq.com/openai/v1/chat/completions";
-      llmKey = groqApiKey;
-      llmModel = "llama-3.3-70b-versatile";
-    } else if (openaiApiKey) {
-      llmUrl = "https://api.openai.com/v1/chat/completions";
-      llmKey = openaiApiKey;
-      llmModel = "gpt-4o-mini";
+    if (openRouterKey) {
+      llmUrl = "https://openrouter.ai/api/v1/chat/completions";
+      llmKey = openRouterKey;
+      llmModel = "anthropic/claude-sonnet-4";
     } else {
-      // No LLM key available - return a helpful error
-      return new Response(
-        JSON.stringify({
-          error:
-            "No LLM API key configured. Add GROQ_API_KEY or OPENAI_API_KEY in Supabase secrets.",
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      const groqApiKey = Deno.env.get("GROQ_API_KEY");
+      const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+
+      if (groqApiKey) {
+        llmUrl = "https://api.groq.com/openai/v1/chat/completions";
+        llmKey = groqApiKey;
+        llmModel = "llama-3.3-70b-versatile";
+      } else if (openaiApiKey) {
+        llmUrl = "https://api.openai.com/v1/chat/completions";
+        llmKey = openaiApiKey;
+        llmModel = "gpt-4o-mini";
+      } else {
+        return new Response(
+          JSON.stringify({
+            error:
+              "No AI key configured. Add your OpenRouter API key in Settings -> Integrations.",
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
     }
 
     const userPrompt = `Agent name: "${agentName}"
