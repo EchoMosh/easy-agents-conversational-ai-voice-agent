@@ -364,13 +364,18 @@ export function Flow({
   );
 
   // Wrapper for onNodesChangeInternal to propagate to parent
+  // IMPORTANT: call parent setState AFTER the updater, not inside it
   const onNodesChangeInternal = useCallback(
     (changes: any) => {
+      let updatedNodes: any[] = [];
       setNodes((nds) => {
-        const newNodes = applyNodeChanges(changes, nds);
-        onNodesChange(newNodes);
-        return newNodes;
+        updatedNodes = applyNodeChanges(changes, nds);
+        return updatedNodes;
       });
+      // Defer parent update to avoid setState-during-render
+      setTimeout(() => {
+        if (updatedNodes.length > 0) onNodesChange(updatedNodes);
+      }, 0);
     },
     [setNodes, onNodesChange],
   );
@@ -378,11 +383,14 @@ export function Flow({
   // Wrapper for onEdgesChangeInternal to propagate to parent
   const onEdgesChangeInternal = useCallback(
     (changes: any) => {
+      let updatedEdges: any[] = [];
       setEdges((eds) => {
-        const newEdges = applyEdgeChanges(changes, eds);
-        onEdgesChange(newEdges);
-        return newEdges;
+        updatedEdges = applyEdgeChanges(changes, eds);
+        return updatedEdges;
       });
+      setTimeout(() => {
+        if (updatedEdges.length > 0) onEdgesChange(updatedEdges);
+      }, 0);
     },
     [setEdges, onEdgesChange],
   );

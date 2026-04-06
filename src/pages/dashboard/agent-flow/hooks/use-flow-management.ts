@@ -50,7 +50,8 @@ export function useFlowManagement(
 
         console.log("[AgentFlowPage] Supabase update response:", data);
 
-        await refetch();
+        // Don't refetch - local state is already correct and refetch would
+        // overwrite it with potentially stale DB data before the write completes
         return data;
       } catch (error) {
         console.error("[AgentFlowPage] Error in saveFlowMutation:", error);
