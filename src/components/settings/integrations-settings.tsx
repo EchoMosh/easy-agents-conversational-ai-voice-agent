@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWorkspace } from "@/context/workspace-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Brain, Cpu, Zap, Phone, Route } from "lucide-react";
+import { Loader2, Phone, Route } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApiKeyIntegrationCard } from "./api-key-integration-card";
 import { TwilioIntegrationSettings } from "./twilio-integration-settings";
@@ -25,42 +25,6 @@ const PROVIDERS = [
     helpText:
       "Required to use 'Paste Script' when creating agents. Get a key at openrouter.ai/keys",
     docsUrl: "https://openrouter.ai",
-  },
-  {
-    provider: "elevenlabs",
-    name: "ElevenLabs",
-    description:
-      "Unlocks premium AI voices (e.g. realistic human voices) for your agents instead of the built-in free voices",
-    icon: Zap,
-    iconColor: "text-amber-500",
-    placeholder: "sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    helpText:
-      "Optional. Only needed if you want ElevenLabs voices. Get a key at elevenlabs.io/app/settings/api-keys",
-    docsUrl: "https://elevenlabs.io",
-  },
-  {
-    provider: "openai",
-    name: "OpenAI",
-    description:
-      "Use GPT models as the brain behind your agent's conversations (alternative to the default Groq model)",
-    icon: Brain,
-    iconColor: "text-emerald-500",
-    placeholder: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    helpText:
-      "Optional. Only needed if you want to use GPT-4o instead of the default model. Get a key at platform.openai.com/api-keys",
-    docsUrl: "https://platform.openai.com",
-  },
-  {
-    provider: "groq",
-    name: "Groq",
-    description:
-      "Ultra-fast AI model provider for your agent's conversations. Used by default if no OpenAI key is set",
-    icon: Cpu,
-    iconColor: "text-orange-500",
-    placeholder: "gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    helpText:
-      "Optional. The system uses Groq by default. Only add if you want to use your own key. Get one at console.groq.com/keys",
-    docsUrl: "https://console.groq.com",
   },
 ] as const;
 
