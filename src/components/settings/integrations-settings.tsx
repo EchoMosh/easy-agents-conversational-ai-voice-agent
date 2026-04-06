@@ -15,44 +15,52 @@ interface Integration {
 
 const PROVIDERS = [
   {
+    provider: "openrouter",
+    name: "OpenRouter",
+    description:
+      "Powers the AI script analysis that auto-builds your agent's conversation flow when you paste a script during agent creation",
+    icon: Route,
+    iconColor: "text-pink-500",
+    placeholder: "sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    helpText:
+      "Required to use 'Paste Script' when creating agents. Get a key at openrouter.ai/keys",
+    docsUrl: "https://openrouter.ai",
+  },
+  {
     provider: "elevenlabs",
     name: "ElevenLabs",
-    description: "Premium AI voices with natural speech and emotion",
+    description:
+      "Unlocks premium AI voices (e.g. realistic human voices) for your agents instead of the built-in free voices",
     icon: Zap,
     iconColor: "text-amber-500",
     placeholder: "sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    helpText: "Get your API key from elevenlabs.io/app/settings/api-keys",
+    helpText:
+      "Optional. Only needed if you want ElevenLabs voices. Get a key at elevenlabs.io/app/settings/api-keys",
     docsUrl: "https://elevenlabs.io",
   },
   {
     provider: "openai",
     name: "OpenAI",
-    description: "GPT models for advanced conversation intelligence",
+    description:
+      "Use GPT models as the brain behind your agent's conversations (alternative to the default Groq model)",
     icon: Brain,
     iconColor: "text-emerald-500",
     placeholder: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    helpText: "Create an API key at platform.openai.com/api-keys",
+    helpText:
+      "Optional. Only needed if you want to use GPT-4o instead of the default model. Get a key at platform.openai.com/api-keys",
     docsUrl: "https://platform.openai.com",
   },
   {
     provider: "groq",
     name: "Groq",
-    description: "Ultra-fast LLM inference for real-time voice conversations",
+    description:
+      "Ultra-fast AI model provider for your agent's conversations. Used by default if no OpenAI key is set",
     icon: Cpu,
     iconColor: "text-orange-500",
     placeholder: "gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    helpText: "Get your API key from console.groq.com/keys",
+    helpText:
+      "Optional. The system uses Groq by default. Only add if you want to use your own key. Get one at console.groq.com/keys",
     docsUrl: "https://console.groq.com",
-  },
-  {
-    provider: "openrouter",
-    name: "OpenRouter",
-    description: "Required for AI script analysis when creating agents",
-    icon: Route,
-    iconColor: "text-pink-500",
-    placeholder: "sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    helpText: "Get your API key from openrouter.ai/keys",
-    docsUrl: "https://openrouter.ai",
   },
 ] as const;
 
