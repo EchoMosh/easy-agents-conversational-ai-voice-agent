@@ -268,7 +268,7 @@ export const PhoneNumbersPage = () => {
                       formatPhoneNumber(phoneNumber.twilio_phone_number)
                     ) : (
                       <span className="text-muted-foreground text-sm">
-                        Virtual (outbound only)
+                        Virtual Number
                       </span>
                     )}
                   </TableCell>

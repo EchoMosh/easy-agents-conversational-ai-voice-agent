@@ -131,10 +131,8 @@ export function BulkCallView({
   const [leadCount, setLeadCount] = useState(0);
   const [isFetchingCount, setIsFetchingCount] = useState(false);
 
-  // Only real (Twilio) phone numbers can make outbound calls — VAPI virtual numbers cannot
-  const validPhones = phoneNumbers.filter(
-    (p) => p.vapi_phone_number_id && p.twilio_phone_number,
-  );
+  // Any phone number with a VAPI ID can make outbound calls
+  const validPhones = phoneNumbers.filter((p) => p.vapi_phone_number_id);
   const [selectedPhoneId, setSelectedPhoneId] = useState(
     validPhones.length === 1 ? (validPhones[0].vapi_phone_number_id ?? "") : "",
   );

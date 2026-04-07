@@ -64,13 +64,8 @@ export function SingleCallView({
 
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
-  // Only real (Twilio) phone numbers can make outbound calls — VAPI virtual numbers cannot
-  const validPhones = phoneNumbers.filter(
-    (p) => p.vapi_phone_number_id && p.twilio_phone_number,
-  );
-  const hasOnlyVirtualNumbers =
-    validPhones.length === 0 &&
-    phoneNumbers.some((p) => p.vapi_phone_number_id && !p.twilio_phone_number);
+  // Any phone number with a VAPI ID can make outbound calls
+  const validPhones = phoneNumbers.filter((p) => p.vapi_phone_number_id);
   const [selectedPhoneId, setSelectedPhoneId] = useState(
     validPhones.length === 1 ? (validPhones[0].vapi_phone_number_id ?? "") : "",
   );
@@ -411,9 +406,7 @@ export function SingleCallView({
         </Label>
         {validPhones.length === 0 ? (
           <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-            {hasOnlyVirtualNumbers
-              ? "Virtual numbers cannot make outbound calls. Connect Twilio in Settings to purchase a real number."
-              : "No phone numbers configured for outbound calls. Add one in Phone Numbers settings."}
+            No phone numbers available. Add one in Phone Numbers settings.
           </p>
         ) : (
           <Select value={selectedPhoneId} onValueChange={setSelectedPhoneId}>
