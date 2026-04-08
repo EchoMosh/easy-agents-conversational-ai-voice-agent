@@ -241,10 +241,70 @@ serve(async (req) => {
       timeZoneName: "short",
     });
 
+    // Build dynamic voice payload based on provider (computed early so
+    // we can use it to build a provider-aware system prompt).
+    const effectiveVoiceProvider = voice_provider || "vapi";
+
+    // Provider-aware expressive guidance. Different TTS engines express
+    // emotion in different ways:
+    //   • Cartesia Sonic 3: emotion comes from (a) experimentalControls
+    //     in the voice payload, and (b) natural speech PATTERNS in the
+    //     text — ellipses, CAPS for emphasis, filler words, stuttering.
+    //     Cartesia does NOT render bracketed tags like [laughs].
+    //   • ElevenLabs v3 / Flash v2.5: DOES render inline bracketed tags
+    //     as real acoustic events.
+    //   • Everything else: plain text, no special chars.
+    const isCartesiaExpressive =
+      effectiveVoiceProvider === "cartesia" &&
+      (voice_model === "sonic-3" || voice_model === "sonic-2");
+    const isElevenExpressive =
+      effectiveVoiceProvider === "elevenlabs" &&
+      (voice_model === "eleven_v3" ||
+        voice_model === "eleven_flash_v2_5" ||
+        voice_model === "eleven_turbo_v2_5");
+
+    let expressiveSection = "";
+    if (isCartesiaExpressive) {
+      expressiveSection = `
+CARTESIA VOICE REALISM (use NATURAL speech patterns — this engine does not render bracketed tags):
+- Use ellipses (...) for dramatic pauses: "I... I'm not sure about that."
+- Use CAPITAL letters sparingly to emphasize a single key word: "That's AMAZING."
+- Add filler words naturally: "well,", "uh,", "you know,", "I mean,", "like,"
+- Use stuttering for hesitation on important moments: "I-I-I think so."
+- Trail off when thinking: "Hmm, let me... let me check."
+- React before answering: "Oh wow. Okay, yeah, so..."
+
+GOOD: "Oh... well, that's a tough one. I mean... I-I think so, but..."
+GOOD: "Honestly? That's AMAZING. I'm so glad to hear it."
+GOOD: "Hmm... let me think. Yeah, yeah, that works."
+DO NOT use [laughs], [sighs], [whispers] or any other bracketed tags — Cartesia renders them as literal text, which sounds terrible.`;
+    } else if (isElevenExpressive) {
+      expressiveSection = `
+EXPRESSIVE DELIVERY (ElevenLabs supports inline audio tags — USE THEM SPARINGLY):
+The TTS engine renders these bracketed tags as real acoustic events:
+- [laughs] — a real chuckle, for "Oh [laughs] that's funny!"
+- [chuckles] — softer than [laughs]
+- [sighs] — a genuine sigh before a reluctant or tired response
+- [gasps] — brief surprise
+- [whispers] ... — whispered delivery for asides
+- [excited] — energetic delivery
+- [sad] — heavier, slower delivery
+
+Use one tag per 2-3 turns at most. Place them at the start of a sentence or between clauses, never inside a word.
+
+GOOD: "[laughs] Oh man, that's a good question."
+GOOD: "[sighs] Yeah, I hear you."
+BAD: "I [laughs] went to the store" (mid-sentence interruption)`;
+    } else {
+      expressiveSection = `
+Respond with nothing except for your natural response. Do not include any additional text or special characters. Only periods, commas, question marks, and exclamation points are allowed.
+Never respond with hyphens or newline characters.`;
+    }
+
     // Construct the system prompt based on the provided template
     const systemPrompt = `You are conducting a Sales phone call in ${language}
 Instructions:
-Use this script as a guide to conduct the phone call. You may deviate from the script as long as you achieve the objective of the phone call. Respond only with normal human speech. Do not use any special characters or phrases.
+Use this script as a guide to conduct the phone call. You may deviate from the script as long as you achieve the objective of the phone call. Respond only with normal human speech.
 Objective:
 Conduct a Sales phone call with the caller.
 Rules:
@@ -253,12 +313,11 @@ Keep your responses short and concise. Focus on verbal austerity / laconic speak
 NEVER mention that you're an AI.
 Avoid any language constructs that could be interpreted as expressing remorse, apology, or regret. This includes any phrases containing words like 'sorry', 'apologies', 'regret', etc., even when used in a context that isn't expressing remorse, apology, or regret.
 If a user response is unclear or ambiguous, ask them to speak up. You may ask for more details to confirm your understanding before answering.
-Speak realistically.Use filler words like Well, So, Anyway, Actually, Basically, I mean, Right, Hmm, Ah, Oh, Um, Like, You know, Okay, Right, Sure, Hmm, Ah, Oh, etc, to add flow and natural pauses to your speech. etc.. when appropriate.
-Respond with nothing except for your natural response. Do not include any additional text or special characters. Only periods, commas, question marks, and exclamation points are allowed.
-Never respond with hyphens or newline characters.
+Speak realistically. Use filler words like Well, So, Anyway, Actually, Basically, I mean, Right, Hmm, Ah, Oh, Um, Like, You know, Okay, Right, Sure, to add flow and natural pauses to your speech when appropriate.
+${expressiveSection}
 Use natural humor when appropriate. Speak like a human on a phone call.
 Your response will be read directly to the user unedited, so do not provide placeholder values or any other text that is not a natural part of the conversation.
-Never respond with place holders like [User Name], [insert date], "STEP 1," etc. Only respond with natural language.
+Never respond with placeholders like [User Name], [insert date], "STEP 1," etc. Only respond with natural language. (These restrictions do NOT apply to the expressive tags listed above, if any — those ARE allowed.)
 Spell all numbers, times, and currency phonetically. For example, "12:30 PM" should be "twelve thirty PM," or "half past twelve."
 No Matter What the Prospect Says ALWAYS stick to the script and its goals. DO NOT LET WHAT THE PERSON SAYS DERAIL YOU, ACKNOWLEDGE WHAT THEY SAID AND THEN TIE IT BACK INTO THE SCRIPT.
 If a link is present in the instructions, ensure to return it exactly how it is written. Do not hyperlink the URL, just return the plain text URL.
@@ -272,8 +331,6 @@ The following is a flowchart written in Mermaid. It is a visual representation o
 
 ${mermaid_chart}`;
 
-    // Build dynamic voice payload based on provider
-    const effectiveVoiceProvider = voice_provider || "vapi";
     const effectiveVoiceId =
       effectiveVoiceProvider === "vapi"
         ? ACTIVE_VAPI_VOICES.has(voice_id)
@@ -302,18 +359,35 @@ ${mermaid_chart}`;
       if (voice_similarity_boost !== undefined)
         voicePayload.similarityBoost = voice_similarity_boost;
     } else if (effectiveVoiceProvider === "cartesia") {
-      // Cartesia — speed and emotion go inside experimentalControls,
-      // NOT top-level. Sending top-level `speed` returns 400.
-      const experimentalControls: Record<string, unknown> = {};
+      // Cartesia — all expressive controls go inside experimentalControls,
+      // NOT top-level. Sending top-level `speed` returns 400
+      // "voice.property speed should not exist".
+      //
+      // Available fields (per VAPI changelog 2025-04-05):
+      //   • speed: number (-1 to 1) OR "slow" | "normal" | "fast"
+      //   • emotion: string[] e.g. ["cheerful", "confident"]
+      //   • emphasis: number 0-1 (affects word-level stress)
+      //   • energy: "low" | "normal" | "high" (overall liveliness)
+      //
+      // We always set quality defaults because Cartesia's default is
+      // flatter than its own demo — users were asking why the demo on
+      // cartesia.ai sounds better than our integration. These defaults
+      // match a lively, engaged phone-call delivery.
+      const experimentalControls: Record<string, unknown> = {
+        emphasis: 0.8,
+        energy: "normal",
+      };
       if (voice_speed !== undefined) {
         experimentalControls.speed = voice_speed;
       }
       if (voice_emotion?.length) {
         experimentalControls.emotion = voice_emotion;
+      } else {
+        // Sensible default emotion stack for phone agents — warmth
+        // and confidence read well in short sales/support turns.
+        experimentalControls.emotion = ["friendly", "confident"];
       }
-      if (Object.keys(experimentalControls).length > 0) {
-        voicePayload.experimentalControls = experimentalControls;
-      }
+      voicePayload.experimentalControls = experimentalControls;
     } else if (effectiveVoiceProvider === "playht") {
       // PlayHT — speed and emotion are top-level per VAPI schema.
       if (voice_speed !== undefined) voicePayload.speed = voice_speed;

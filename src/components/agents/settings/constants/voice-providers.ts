@@ -136,52 +136,121 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
         latency: "medium",
       },
     ],
+    // Voices pulled live from https://api.elevenlabs.io/v1/voices on
+    // 2026-04-09. All 21 entries are current premade voices — none are
+    // on ElevenLabs' 2026-12-31 deprecation list. To refresh this list
+    // later, run: curl https://api.elevenlabs.io/v1/voices (no auth
+    // required for the premade catalog).
     voices: [
+      // Females
       {
-        id: "21m00Tcm4TlvDq8ikWAM",
-        name: "Rachel",
-        gender: "female",
-        accent: "american",
-      },
-      {
-        id: "AZnzlk1XvdvUeBnXmlld",
-        name: "Domi",
-        gender: "female",
-        accent: "american",
-      },
-      {
-        // Verified against live https://api.elevenlabs.io/v1/voices —
-        // this UUID resolves to "Sarah", not "Bella". The name "Bella"
-        // now belongs to a different voice ID on ElevenLabs' current
-        // premade list (hpp4J3VqNfWAUOO0d1Us).
         id: "EXAVITQu4vr4xnSDxMaL",
         name: "Sarah",
         gender: "female",
         accent: "american",
       },
       {
-        id: "ErXwobaYiN019PkySvjV",
-        name: "Antoni",
-        gender: "male",
-        accent: "american",
-      },
-      {
-        id: "MF3mGyEYCl7XYWbV9V6O",
-        name: "Elli",
+        id: "FGY2WhTYpPnrIDTdsKH5",
+        name: "Laura",
         gender: "female",
         accent: "american",
       },
       {
-        id: "TxGEqnHWrfWFTfGW9XjX",
-        name: "Josh",
+        id: "XrExE9yKIg1WjnnlVkGX",
+        name: "Matilda",
+        gender: "female",
+        accent: "american",
+      },
+      {
+        id: "cgSgspJ2msm6clMCkdW9",
+        name: "Jessica",
+        gender: "female",
+        accent: "american",
+      },
+      {
+        id: "hpp4J3VqNfWAUOO0d1Us",
+        name: "Bella",
+        gender: "female",
+        accent: "american",
+      },
+      {
+        id: "Xb7hH8MSUJpSbSDYk0k2",
+        name: "Alice",
+        gender: "female",
+        accent: "british",
+      },
+      {
+        id: "pFZP5JQG7iQjIQuC4Bku",
+        name: "Lily",
+        gender: "female",
+        accent: "british",
+      },
+      // Males
+      {
+        id: "CwhRBWXzGAHq8TQ4Fs17",
+        name: "Roger",
         gender: "male",
         accent: "american",
       },
       {
-        id: "VR6AewLTigWG4xSOukaG",
-        name: "Arnold",
+        id: "IKne3meq5aSn9XLyUdCD",
+        name: "Charlie",
+        gender: "male",
+        accent: "australian",
+      },
+      {
+        id: "JBFqnCBsd6RMkjVDRZzb",
+        name: "George",
+        gender: "male",
+        accent: "british",
+      },
+      {
+        id: "N2lVS1w4EtoT3dr4eOWO",
+        name: "Callum",
         gender: "male",
         accent: "american",
+      },
+      {
+        id: "SOYHLrjzK2X1ezoPC6cr",
+        name: "Harry",
+        gender: "male",
+        accent: "american",
+      },
+      {
+        id: "TX3LPaxmHKxFdv7VOQHJ",
+        name: "Liam",
+        gender: "male",
+        accent: "american",
+      },
+      {
+        id: "bIHbv24MWmeRgasZH58o",
+        name: "Will",
+        gender: "male",
+        accent: "american",
+      },
+      {
+        id: "cjVigY5qzO86Huf0OWal",
+        name: "Eric",
+        gender: "male",
+        accent: "american",
+      },
+      {
+        id: "iP95p4xoKVk53GoZ742B",
+        name: "Chris",
+        gender: "male",
+        accent: "american",
+      },
+      {
+        id: "nPczCjzI2devNBz1zQrb",
+        name: "Brian",
+        gender: "male",
+        accent: "american",
+      },
+      {
+        id: "onwK4e9ZLuTAKqWW03F9",
+        name: "Daniel",
+        gender: "male",
+        accent: "british",
       },
       {
         id: "pNInz6obpgDQGcFmaJgB",
@@ -190,9 +259,16 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
         accent: "american",
       },
       {
-        id: "yoZ06aMxZJJ28mfd3POQ",
-        name: "Sam",
+        id: "pqHfZKP75CvOlQylNhV4",
+        name: "Bill",
         gender: "male",
+        accent: "american",
+      },
+      // Neutral
+      {
+        id: "SAz9YHcvj6GT2YYXdXww",
+        name: "River",
+        gender: "neutral",
         accent: "american",
       },
     ],
