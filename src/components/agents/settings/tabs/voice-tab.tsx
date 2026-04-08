@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -64,16 +65,48 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
     [settings.voiceProvider],
   );
 
+  // Filter voices by the currently selected model. Voices declare which
+  // models they're compatible with via `compatibleModels`. If the list is
+  // omitted we show the voice regardless (backward compat with providers
+  // that don't have per-model voice variants, e.g. ElevenLabs, OpenAI).
+  const filteredVoices = useMemo(() => {
+    if (!provider) return [];
+    if (!settings.voiceModel) return provider.voices;
+    return provider.voices.filter(
+      (v) =>
+        !v.compatibleModels ||
+        v.compatibleModels.includes(settings.voiceModel!),
+    );
+  }, [provider, settings.voiceModel]);
+
+  // If the currently-selected voice is not in the filtered list (because
+  // the user just switched to an incompatible model), auto-select the
+  // first compatible voice so the saved state is never invalid.
+  React.useEffect(() => {
+    if (!provider || filteredVoices.length === 0) return;
+    const currentIsValid = filteredVoices.some(
+      (v) => v.id === settings.voiceId,
+    );
+    if (!currentIsValid) {
+      onChange({ voiceId: filteredVoices[0].id });
+    }
+  }, [filteredVoices, settings.voiceId, provider, onChange]);
+
   const handleProviderChange = (providerId: string) => {
     const newProvider = getProvider(providerId);
     if (!newProvider) return;
 
-    const firstVoice = newProvider.voices[0];
     const firstModel = newProvider.models?.[0];
+    const firstCompatibleVoice = newProvider.voices.find(
+      (v) =>
+        !v.compatibleModels ||
+        !firstModel ||
+        v.compatibleModels.includes(firstModel.id),
+    );
 
     onChange({
       voiceProvider: providerId,
-      voiceId: firstVoice?.id ?? "",
+      voiceId: firstCompatibleVoice?.id ?? newProvider.voices[0]?.id ?? "",
       voiceModel: firstModel?.id ?? "",
       voiceSpeed: 1.0,
       voiceStability: 0.5,
@@ -138,7 +171,7 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
             <SelectValue placeholder="Select voice" />
           </SelectTrigger>
           <SelectContent>
-            {provider.voices.map((voice) => (
+            {filteredVoices.map((voice) => (
               <SelectItem key={voice.id} value={voice.id} className="py-2.5">
                 <span className="flex items-center gap-2">
                   <span>{voice.name}</span>
@@ -153,6 +186,14 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
                       )}
                     >
                       {voice.gender}
+                    </Badge>
+                  )}
+                  {voice.accent && voice.accent !== "american" && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-1.5 py-0 text-muted-foreground"
+                    >
+                      {voice.accent}
                     </Badge>
                   )}
                 </span>

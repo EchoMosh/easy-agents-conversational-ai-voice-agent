@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,7 @@ export function KnowledgeTextEntry({ onSuccess }: KnowledgeTextEntryProps) {
     try {
       await uploadTextDocument(textContent, {
         title: textTitle,
-        description: textDescription || undefined
+        description: textDescription || undefined,
       });
 
       toast({
@@ -55,15 +54,21 @@ export function KnowledgeTextEntry({ onSuccess }: KnowledgeTextEntryProps) {
       setTextTitle("");
       setTextContent("");
       setTextDescription("");
-      
+
       // Call success callback
       onSuccess();
     } catch (error) {
-      console.error("Error saving text:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : (error as { message?: string })?.message || JSON.stringify(error);
+      console.error("Error saving text:", errorMessage, error);
       toast({
         variant: "destructive",
         title: "Save failed",
-        description: "There was an error saving your text",
+        description: errorMessage || "Unknown error",
       });
     } finally {
       setIsUploading(false);

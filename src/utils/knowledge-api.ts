@@ -156,7 +156,8 @@ export async function uploadTextDocument(
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Convert text to blob and upload
+  // 1. Upload blob to storage. Label errors with the step that failed so
+  //    the caller's toast shows WHICH stage broke instead of "Object".
   const textBlob = new Blob([content], { type: "text/plain" });
   const filePath = `${crypto.randomUUID()}.txt`;
 
@@ -164,41 +165,52 @@ export async function uploadTextDocument(
     .from("knowledge")
     .upload(filePath, textBlob);
 
-  if (uploadError) throw uploadError;
+  if (uploadError) {
+    throw new Error(
+      `Storage upload failed: ${uploadError.message}. ` +
+        `Check that the "knowledge" storage bucket exists and your account has insert permissions.`,
+    );
+  }
 
-  let trieveDatasetId = null;
+  // 2. Create Trieve dataset + upload chunk. This is BEST-EFFORT — we log
+  //    but do not fail the save if Trieve breaks, because the document
+  //    still lives in Supabase storage and knowledge_documents.
+  let trieveDatasetId: string | null = null;
 
   try {
-    // Create Trieve dataset for this document
     const trieveResponse = await callSupabaseFunction("create-trieve-dataset", {
       name: metadata.title,
       description: metadata.description || `Text document: ${metadata.title}`,
     });
 
-    trieveDatasetId = trieveResponse.dataset_id;
+    trieveDatasetId = trieveResponse?.dataset_id ?? null;
 
-    // Upload content to Trieve
-    await callSupabaseFunction("upload-to-trieve", {
-      dataset_id: trieveDatasetId,
-      chunk_data: {
-        chunk_html: content,
-        metadata: {
-          title: metadata.title,
-          description: metadata.description,
-          file_type: "text/plain",
-          file_size: textBlob.size,
+    if (trieveDatasetId) {
+      await callSupabaseFunction("upload-to-trieve", {
+        dataset_id: trieveDatasetId,
+        chunk_data: {
+          chunk_html: content,
+          metadata: {
+            title: metadata.title,
+            description: metadata.description,
+            file_type: "text/plain",
+            file_size: textBlob.size,
+          },
         },
-      },
-    });
+      });
+    }
   } catch (trieveError) {
-    console.warn(
-      "Trieve integration failed, continuing without it:",
-      trieveError,
-    );
-    // Continue without Trieve integration if it fails
+    const msg =
+      trieveError instanceof Error
+        ? trieveError.message
+        : JSON.stringify(trieveError);
+    // Log loudly. Do NOT swallow into console.warn — the previous behaviour
+    // made it impossible to diagnose Trieve shape drift.
+    console.error("[knowledge] Trieve integration failed:", msg, trieveError);
+    // Continue: the DB insert below still works, just without retrieval.
   }
 
-  // Save document metadata
+  // 3. Insert metadata row. If THIS fails, that's user-visible save failure.
   const { data, error: dbError } = await supabase
     .from("knowledge_documents")
     .insert({
@@ -213,7 +225,9 @@ export async function uploadTextDocument(
     .select()
     .single();
 
-  if (dbError) throw dbError;
+  if (dbError) {
+    throw new Error(`Saving document metadata failed: ${dbError.message}`);
+  }
 
   return data as KnowledgeDocument;
 }

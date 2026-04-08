@@ -88,15 +88,19 @@ serve(async (req) => {
         "TR-Organization": trieveOrgId,
         "Content-Type": "application/json",
       },
+      // Current Trieve API (2026) uses UPPERCASE snake_case keys in
+      // server_configuration and rejects unknown fields with 400. It also no
+      // longer accepts organization_id in the body (header-only: TR-Organization).
       body: JSON.stringify({
         dataset_name: name,
-        organization_id: trieveOrgId,
-        description: description || `Dataset for ${name}`,
+        tracking_id: `kb-${crypto.randomUUID()}`,
         server_configuration: {
-          // Default configuration for the dataset
-          search_type: "semantic",
-          use_qdrant_for_search: true,
-          reranker_enabled: true,
+          SEMANTIC_ENABLED: true,
+          FULLTEXT_ENABLED: true,
+          BM25_ENABLED: true,
+          EMBEDDING_MODEL_NAME: "text-embedding-3-small",
+          EMBEDDING_SIZE: 1536,
+          DISTANCE_METRIC: "cosine",
         },
       }),
     });

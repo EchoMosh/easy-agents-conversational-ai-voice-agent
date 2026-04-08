@@ -28,8 +28,12 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
   const [creationStatus, setCreationStatus] = useState<string | null>(null);
   const [vAgentId, setVAgentId] = useState<string | null>(null);
   const [scriptText, setScriptText] = useState("");
+  // Default to Claude Haiku 4.5 — benchmarked at 15.65s for a complex
+  // pizza script vs Sonnet 4.6 at 51.7s. Haiku produces high-quality
+  // branching flows (10 nodes, 29 outcome-N edges) and stays well
+  // under Supabase's 150s edge function wall-clock limit.
   const [selectedModel, setSelectedModel] = useState(
-    "anthropic/claude-sonnet-4",
+    "anthropic/claude-haiku-4.5",
   );
   const [newAgent, setNewAgent] = useState<{
     name: string;
@@ -112,9 +116,9 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
 
       try {
         const {
-          data: { session: vapiSession },
+          data: { session: voiceSession },
         } = await supabase.auth.getSession();
-        const { data: vapiData, error: vapiError } =
+        const { data: voiceData, error: voiceError } =
           await supabase.functions.invoke("create-vapi-agent", {
             body: {
               agentName: newAgent.name,
@@ -122,116 +126,122 @@ export function CreateAgentForm({ onSuccess, onCancel }: CreateAgentFormProps) {
               language: "en",
             },
             headers: {
-              Authorization: `Bearer ${vapiSession?.access_token}`,
+              Authorization: `Bearer ${voiceSession?.access_token}`,
             },
           });
 
-        if (vapiError) {
-          console.error("VAPI creation error:", vapiError);
+        if (voiceError) {
+          console.error("Voice agent creation error:", voiceError);
         } else {
-          createdVAgentId = vapiData?.v_agent_id || null;
+          createdVAgentId = voiceData?.v_agent_id || null;
         }
-      } catch (vapiErr) {
+      } catch (voiceErr) {
         console.error(
-          "VAPI creation failed, continuing without voice:",
-          vapiErr,
+          "Voice agent creation failed, continuing without voice:",
+          voiceErr,
         );
       }
 
       if (!createdVAgentId) {
         console.warn(
-          "No VAPI agent created - agent will be created without voice sync",
+          "No voice agent created — will be created without voice sync",
         );
       }
 
       console.log("Voice agent created with ID:", createdVAgentId);
 
-      // Step 2: Generate flow from script or use default
+      // Step 2: Generate flow from script or use default.
+      //
+      // IMPORTANT: If the user provided a script, script generation MUST
+      // succeed. If it fails, we ABORT agent creation instead of silently
+      // falling back to an empty default flow — the previous behaviour
+      // made users think their script was ignored when actually the
+      // generate-agent-flow call was failing (stale model slugs, 401 on
+      // verify_jwt, etc.) and the error was swallowed into a toast.
       let flow = getDefaultFlow();
 
       if (scriptText.trim()) {
         setCreationStatus("Analyzing script...");
-        try {
-          // Fetch OpenRouter key from workspace integrations
-          let openRouterKey: string | null = null;
-          if (currentWorkspace?.id) {
-            const { data: orIntegration } = await supabase
-              .from("workspace_integrations")
-              .select("api_key")
-              .eq("workspace_id", currentWorkspace.id)
-              .eq("provider", "openrouter")
-              .maybeSingle();
-            openRouterKey = orIntegration?.api_key || null;
-          }
 
-          if (!openRouterKey) {
-            toast({
-              title: "OpenRouter Key Required",
-              description:
-                "Add your OpenRouter API key in Settings -> Integrations to enable script analysis.",
-              variant: "destructive",
-            });
-          } else {
-            const {
-              data: { session: flowSession },
-            } = await supabase.auth.getSession();
-            const { data: flowData, error: flowError } =
-              await supabase.functions.invoke("generate-agent-flow", {
-                body: {
-                  scriptText,
-                  agentName: newAgent.name,
-                  role: newAgent.role,
-                  openRouterKey,
-                  model: selectedModel,
-                },
-                headers: {
-                  Authorization: `Bearer ${flowSession?.access_token}`,
-                },
-              });
-
-            if (flowError) {
-              console.error("Error generating flow from script:", flowError);
-              toast({
-                title: "Script Analysis Failed",
-                description: `Could not analyze script: ${flowError.message || "Unknown error"}. Using default flow.`,
-                variant: "destructive",
-              });
-            } else if (flowData?.flow) {
-              console.log("Generated flow from script:", flowData.flow);
-              // Normalize edges to use buttonEdge type (required by flow editor)
-              const generatedFlow = flowData.flow;
-              if (generatedFlow.edges) {
-                generatedFlow.edges = generatedFlow.edges.map((edge: any) => ({
-                  ...edge,
-                  type: "buttonEdge",
-                  animated: true,
-                  style: { strokeWidth: 3, stroke: "#94a3b8" },
-                }));
-              }
-              flow = generatedFlow;
-              toast({
-                title: "Script Analyzed",
-                description:
-                  "Your conversation flow has been built from the script.",
-              });
-            } else {
-              console.error("No flow in response:", flowData);
-              toast({
-                title: "Script Analysis Failed",
-                description: "No flow returned. Using default flow.",
-                variant: "destructive",
-              });
-            }
-          } // close openRouterKey else block
-        } catch (flowGenError) {
-          console.error("Error invoking generate-agent-flow:", flowGenError);
-          toast({
-            title: "Warning",
-            description:
-              "Could not generate flow from script. Using default flow instead.",
-            variant: "default",
-          });
+        // Best-effort: fetch a workspace-level OpenRouter key if the user
+        // added one. Not required — the edge function has a server-side
+        // OPENROUTER_API_KEY secret and will use it when the body omits
+        // the key.
+        let openRouterKey: string | null = null;
+        if (currentWorkspace?.id) {
+          const { data: orIntegration } = await supabase
+            .from("workspace_integrations")
+            .select("api_key")
+            .eq("workspace_id", currentWorkspace.id)
+            .eq("provider", "openrouter")
+            .maybeSingle();
+          openRouterKey = orIntegration?.api_key || null;
         }
+
+        // supabase-js auto-attaches JWT with refresh — do not pass a
+        // manual Authorization header (stale sessions send "Bearer
+        // undefined" and the gateway returns 401).
+        const { data: flowData, error: flowError } =
+          await supabase.functions.invoke("generate-agent-flow", {
+            body: {
+              scriptText,
+              agentName: newAgent.name,
+              role: newAgent.role,
+              openRouterKey,
+              model: selectedModel,
+            },
+          });
+
+        // supabase-js will set flowError for network/5xx errors. The edge
+        // function itself now always returns 200 with { success: false,
+        // message } on any handled error, so the real reason is in flowData.
+        if (flowError) {
+          console.error("Network error generating flow:", flowError);
+          throw new Error(
+            `Script analysis failed (network): ${flowError.message || "Unknown error"}. Agent NOT created. ` +
+              `If you want an empty flow, clear the script box and click Skip & Create Agent.`,
+          );
+        }
+
+        const fd = flowData as {
+          success?: boolean;
+          flow?: unknown;
+          error?: string;
+          message?: string;
+        } | null;
+
+        if (fd && fd.success === false) {
+          const reason = fd.message || fd.error || "unknown error";
+          console.error("Flow generation rejected:", fd);
+          throw new Error(
+            `Script analysis failed: ${reason}. Agent NOT created. ` +
+              `If you want an empty flow, clear the script box and click Skip & Create Agent.`,
+          );
+        }
+
+        if (!fd?.flow) {
+          console.error("No flow in response:", flowData);
+          throw new Error(
+            `Script analysis returned no flow. Agent NOT created.`,
+          );
+        }
+
+        console.log("Generated flow from script:", flowData.flow);
+        // Normalize edges to buttonEdge type (required by flow editor)
+        const generatedFlow = flowData.flow;
+        if (generatedFlow.edges) {
+          generatedFlow.edges = generatedFlow.edges.map((edge: any) => ({
+            ...edge,
+            type: "buttonEdge",
+            animated: true,
+            style: { strokeWidth: 3, stroke: "#94a3b8" },
+          }));
+        }
+        flow = generatedFlow;
+        toast({
+          title: "Script Analyzed",
+          description: "Your conversation flow has been built from the script.",
+        });
       }
 
       // Step 3: Create database record

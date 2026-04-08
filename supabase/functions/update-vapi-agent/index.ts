@@ -54,6 +54,7 @@ interface UpdateVapiAgentRequest {
   voice_style_prompt?: string;
   transcriber_provider?: string;
   transcriber_model?: string;
+  transcriber_language?: string;
   llm_provider?: string;
   llm_model?: string;
   llm_temperature?: number;
@@ -70,6 +71,24 @@ interface UpdateVapiAgentRequest {
   stop_speaking_backoff_seconds?: number;
 }
 
+// Helper to always return 200 with structured success/error so the client
+// can surface the real reason via result.message instead of a generic
+// "Edge Function returned non-2xx status code" from supabase-js.
+function jsonOk(body: Record<string, unknown>): Response {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function jsonFail(
+  message: string,
+  extra: Record<string, unknown> = {},
+): Response {
+  console.error("update-vapi-agent failing:", message, extra);
+  return jsonOk({ success: false, error: message, message, ...extra });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -79,13 +98,7 @@ serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "No authorization header" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return jsonFail("No authorization header on request");
     }
 
     // Verify the user is authenticated using the service role key
@@ -100,35 +113,41 @@ serve(async (req) => {
       error: authError,
     } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return jsonFail("Unauthorized — your session may have expired", {
+        authError: authError?.message,
       });
     }
 
     const body = (await req.json()) as UpdateVapiAgentRequest;
-    const {
-      agent_id,
-      v_agent_id,
+    // `let` (not const) because the defense-in-depth block below may
+    // rehydrate these from agents.voice_config/transcriber_config/model_config
+    // when the caller didn't include them in the request body.
+    let {
       voice_id,
-      language,
-      first_message,
-      mermaid_chart,
-      max_duration_seconds,
-      background_sound,
-      knowledge_base_id,
       voice_provider,
       voice_model,
       voice_speed,
       voice_stability,
       voice_similarity_boost,
       voice_emotion,
+      voice_style_prompt,
       transcriber_provider,
       transcriber_model,
+      transcriber_language,
       llm_provider,
       llm_model,
       llm_temperature,
       llm_max_tokens,
+    } = body;
+    const {
+      agent_id,
+      v_agent_id,
+      language,
+      first_message,
+      mermaid_chart,
+      max_duration_seconds,
+      background_sound,
+      knowledge_base_id,
       background_denoising_enabled,
       silence_timeout_seconds,
       start_speaking_wait_seconds,
@@ -150,17 +169,64 @@ serve(async (req) => {
     });
 
     if (!v_agent_id) {
-      console.error("No Vapi agent ID provided in request");
-      return new Response(
-        JSON.stringify({
-          error: "No Vapi agent ID provided",
-          message: "v_agent_id is required to update the assistant",
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+      return jsonFail(
+        "This agent has not been deployed yet (no upstream assistant id). " +
+          "Create/launch the agent first, then try updating settings.",
+        { agent_id, received_v_agent_id: v_agent_id },
       );
+    }
+
+    // DEFENSE IN DEPTH: If voice_provider is missing from the body, load
+    // voice_config / transcriber_config / model_config JSONB columns from
+    // the agents row and hydrate the request. This prevents a long-standing
+    // class of bug where callers (test-agent-dialog, launch-agent-dialog,
+    // etc.) only send voice_id and the function would silently default
+    // voice_provider to "vapi" → coerce unknown voice_ids → "Elliot" male.
+    // No matter which caller invokes this function, the full saved config
+    // is the source of truth.
+    if (!voice_provider && agent_id) {
+      try {
+        const { data: agentRow } = await supabaseAdmin
+          .from("agents")
+          .select("voice_config, transcriber_config, model_config")
+          .eq("id", agent_id)
+          .maybeSingle();
+        if (agentRow) {
+          const vc = (agentRow.voice_config as Record<string, unknown>) || {};
+          const tc =
+            (agentRow.transcriber_config as Record<string, unknown>) || {};
+          const mc = (agentRow.model_config as Record<string, unknown>) || {};
+          voice_provider = (vc.provider as string) ?? voice_provider;
+          voice_model = (vc.model as string) ?? voice_model;
+          voice_speed = (vc.speed as number) ?? voice_speed;
+          voice_stability = (vc.stability as number) ?? voice_stability;
+          voice_similarity_boost =
+            (vc.similarityBoost as number) ?? voice_similarity_boost;
+          voice_emotion = (vc.emotion as string[]) ?? voice_emotion;
+          voice_style_prompt = (vc.stylePrompt as string) ?? voice_style_prompt;
+          if (!voice_id) voice_id = vc.voiceId as string;
+          transcriber_provider =
+            (tc.provider as string) ?? transcriber_provider;
+          transcriber_model = (tc.model as string) ?? transcriber_model;
+          transcriber_language =
+            (tc.language as string) ?? transcriber_language;
+          llm_provider = (mc.provider as string) ?? llm_provider;
+          llm_model = (mc.model as string) ?? llm_model;
+          llm_temperature = (mc.temperature as number) ?? llm_temperature;
+          llm_max_tokens = (mc.maxTokens as number) ?? llm_max_tokens;
+          console.log("Hydrated missing config from agents row:", {
+            agent_id,
+            voice_provider,
+            voice_id,
+          });
+        }
+      } catch (err) {
+        console.error(
+          "Failed to hydrate config from agents row:",
+          err instanceof Error ? err.message : String(err),
+        );
+        // Don't fail — fall through with whatever was in the body
+      }
     }
 
     // Get the current timestamp for dynamic prompt generation
@@ -225,31 +291,49 @@ ${mermaid_chart}`;
       },
     };
     if (voice_model) voicePayload.model = voice_model;
+
+    // Per-provider shape. VAPI rejects unknown properties with 400
+    // ("voice.property X should not exist"), so each provider gets a
+    // very narrow, documented field set.
     if (effectiveVoiceProvider === "elevenlabs") {
+      // ElevenLabs — top-level stability/similarityBoost.
       if (voice_stability !== undefined)
         voicePayload.stability = voice_stability;
       if (voice_similarity_boost !== undefined)
         voicePayload.similarityBoost = voice_similarity_boost;
+    } else if (effectiveVoiceProvider === "cartesia") {
+      // Cartesia — speed and emotion go inside experimentalControls,
+      // NOT top-level. Sending top-level `speed` returns 400.
+      const experimentalControls: Record<string, unknown> = {};
+      if (voice_speed !== undefined) {
+        experimentalControls.speed = voice_speed;
+      }
+      if (voice_emotion?.length) {
+        experimentalControls.emotion = voice_emotion;
+      }
+      if (Object.keys(experimentalControls).length > 0) {
+        voicePayload.experimentalControls = experimentalControls;
+      }
+    } else if (effectiveVoiceProvider === "playht") {
+      // PlayHT — speed and emotion are top-level per VAPI schema.
+      if (voice_speed !== undefined) voicePayload.speed = voice_speed;
+      if (voice_emotion?.length) voicePayload.emotion = voice_emotion;
+    } else if (effectiveVoiceProvider === "openai") {
+      // OpenAI — speed is top-level; instructions (from stylePrompt).
+      if (voice_speed !== undefined) voicePayload.speed = voice_speed;
+      if (voice_style_prompt && voice_style_prompt.trim().length > 0) {
+        voicePayload.instructions = voice_style_prompt;
+      }
     }
-    if (
-      voice_speed !== undefined &&
-      ["cartesia", "playht", "openai"].includes(effectiveVoiceProvider)
-    ) {
-      voicePayload.speed = voice_speed;
-    }
-    if (
-      voice_emotion?.length &&
-      ["cartesia", "playht"].includes(effectiveVoiceProvider)
-    ) {
-      voicePayload.emotion = voice_emotion;
-    }
+    // Rime, vapi built-in, deepgram: accept only provider, voiceId, model.
+    // Sending extra properties triggers "should not exist" 400s.
 
     // Prepare the Vapi update payload with optimized call quality settings
     const vapiPayload = {
       transcriber: {
         provider: transcriber_provider || "talkscriber",
         model: transcriber_model || "whisper",
-        language: language || "en",
+        language: transcriber_language || language || "en",
       },
       voice: voicePayload,
       firstMessage:
@@ -260,7 +344,11 @@ ${mermaid_chart}`;
       },
       startSpeakingPlan: {
         waitSeconds: start_speaking_wait_seconds ?? 0.4,
-        smartEndpointingEnabled: smart_endpointing_enabled ?? true,
+        // VAPI deprecated the boolean smartEndpointingEnabled in favor of
+        // smartEndpointingPlan. Only include when enabled; omit otherwise.
+        ...(smart_endpointing_enabled !== false && {
+          smartEndpointingPlan: { provider: "livekit" },
+        }),
         transcriptionEndpointingPlan: {
           onPunctuationSeconds: on_punctuation_seconds ?? 0.1,
           onNoPunctuationSeconds: on_no_punctuation_seconds ?? 0.8,
@@ -288,23 +376,17 @@ ${mermaid_chart}`;
             content: systemPrompt,
           },
         ],
+        // knowledgeBaseId lives INSIDE model per VAPI schema, not top-level.
+        // Top-level placement caused VAPI to reject with 400.
+        ...(knowledge_base_id && { knowledgeBaseId: knowledge_base_id }),
       },
-      ...(knowledge_base_id && { knowledgeBaseId: knowledge_base_id }),
     };
 
     // Get Vapi API key from environment
     const vapiApiKey = Deno.env.get("VAPI_API_KEY");
     if (!vapiApiKey) {
-      console.error("VAPI_API_KEY environment variable not found");
-      return new Response(
-        JSON.stringify({
-          error: "Vapi API key not configured",
-          message: "VAPI_API_KEY environment variable is missing",
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+      return jsonFail(
+        "Server misconfiguration: VAPI_API_KEY secret is not set on this project.",
       );
     }
 
@@ -327,48 +409,56 @@ ${mermaid_chart}`;
 
     console.log("Vapi response status:", vapiResponse.status);
 
-    // If assistant not found (404), return error
+    // If assistant not found (404), return a 200 with structured error
+    // so the client can surface the real reason instead of a generic
+    // "Edge Function returned non-2xx" error from supabase-js.
     if (vapiResponse.status === 404) {
-      console.error("Assistant not found in Vapi:", v_agent_id);
+      console.error("Assistant not found upstream:", v_agent_id);
 
       return new Response(
         JSON.stringify({
-          error: "Vapi assistant not found",
-          message: `The Vapi assistant with ID ${v_agent_id} does not exist. Please ensure the agent has been properly created in Vapi.`,
+          success: false,
+          error: "Assistant not found",
+          message: `The assistant with ID ${v_agent_id} does not exist upstream. It may have been deleted.`,
           v_agent_id: v_agent_id,
-          status: 404,
+          upstream_status: 404,
         }),
         {
-          status: 404,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
 
-    // If other error occurred during update
+    // Any other upstream error — return the actual rejection reason.
     if (!vapiResponse.ok) {
       const errorText = await vapiResponse.text();
-      console.error("Vapi API error response:", errorText);
-      console.error("Vapi API status:", vapiResponse.status);
+      console.error("Upstream error response:", errorText);
+      console.error("Upstream status:", vapiResponse.status);
 
-      let parsedError;
+      let parsedError: { message?: string } & Record<string, unknown>;
       try {
         parsedError = JSON.parse(errorText);
       } catch {
         parsedError = { message: errorText };
       }
 
+      // VAPI error messages can be an array of strings; join them.
+      const upstreamMessage = Array.isArray(parsedError.message)
+        ? parsedError.message.join("; ")
+        : parsedError.message || errorText;
+
       return new Response(
         JSON.stringify({
-          error: "Failed to update Vapi agent",
-          message: parsedError.message || errorText,
-          details: parsedError,
           success: false,
-          status: vapiResponse.status,
+          error: "Failed to update assistant",
+          message: upstreamMessage,
+          details: parsedError,
+          upstream_status: vapiResponse.status,
           v_agent_id: v_agent_id,
         }),
         {
-          status: vapiResponse.status,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
@@ -387,10 +477,9 @@ ${mermaid_chart}`;
       },
     );
   } catch (error) {
-    console.error("Error updating Vapi agent:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("Unhandled exception in update-vapi-agent:", message, stack);
+    return jsonFail(`Unhandled server error: ${message}`, { stack });
   }
 });

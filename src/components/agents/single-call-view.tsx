@@ -64,7 +64,7 @@ export function SingleCallView({
 
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
-  // Any phone number with a VAPI ID can make outbound calls
+  // Any phone number with a provider ID can make outbound calls
   const validPhones = phoneNumbers.filter((p) => p.vapi_phone_number_id);
   const [selectedPhoneId, setSelectedPhoneId] = useState(
     validPhones.length === 1 ? (validPhones[0].vapi_phone_number_id ?? "") : "",

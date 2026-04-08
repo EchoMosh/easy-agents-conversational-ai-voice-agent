@@ -150,17 +150,26 @@ export function TestAgentDialog({
       // Get mermaid chart from agent data
       const mermaidChart = currentAgentData.mermaid_chart || "";
 
-      // Use Supabase Edge Function instead of direct API calls
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      // CRITICAL: We must pass the FULL voice/transcriber/model config
+      // from agents.voice_config / transcriber_config / model_config JSONB
+      // columns. If we only send voice_id, the edge function defaults
+      // voice_provider to "vapi" and coerces unknown voice_ids (like a
+      // Rime voice "luna") to "Elliot" — silently reverting the user's
+      // voice selection on every Test / Launch.
+      const vc =
+        (currentAgentData.voice_config as Record<string, unknown>) || {};
+      const tc =
+        (currentAgentData.transcriber_config as Record<string, unknown>) || {};
+      const mc =
+        (currentAgentData.model_config as Record<string, unknown>) || {};
+
       const { data, error } = await supabase.functions.invoke(
         "update-vapi-agent",
         {
           body: {
             agent_id: currentAgentData.id,
             v_agent_id: vapiId,
-            voice_id: voiceIdForPayload,
+            voice_id: (vc.voiceId as string) || voiceIdForPayload,
             language: currentAgentData.language || "en",
             first_message: cleanedFirstMessage,
             mermaid_chart: mermaidChart,
@@ -170,8 +179,21 @@ export function TestAgentDialog({
                 ? "off"
                 : currentAgentData.background_sound || "office",
             knowledge_base_id: currentAgentData.vapi_knowledge_base_id,
+            voice_provider: vc.provider as string | undefined,
+            voice_model: vc.model as string | undefined,
+            voice_speed: vc.speed as number | undefined,
+            voice_stability: vc.stability as number | undefined,
+            voice_similarity_boost: vc.similarityBoost as number | undefined,
+            voice_emotion: vc.emotion as string[] | undefined,
+            voice_style_prompt: vc.stylePrompt as string | undefined,
+            transcriber_provider: tc.provider as string | undefined,
+            transcriber_model: tc.model as string | undefined,
+            transcriber_language: tc.language as string | undefined,
+            llm_provider: mc.provider as string | undefined,
+            llm_model: mc.model as string | undefined,
+            llm_temperature: mc.temperature as number | undefined,
+            llm_max_tokens: mc.maxTokens as number | undefined,
           },
-          headers: { Authorization: `Bearer ${session?.access_token}` },
         },
       );
 

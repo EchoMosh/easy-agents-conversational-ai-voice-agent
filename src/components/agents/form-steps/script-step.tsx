@@ -11,16 +11,32 @@ import {
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
+// Model slugs verified live against https://openrouter.ai/api/v1/models
+// as of April 2026. The previous entries (claude-sonnet-4, claude-opus-4,
+// gpt-4o, gpt-4o-mini) no longer exist on OpenRouter and returned 400
+// "model not found".
+//
+// NOTE: Kimi K2.5 was briefly the default but it's a reasoning model —
+// it returns content:null with the actual answer in a separate
+// `reasoning` field, which breaks JSON generation. Claude Sonnet 4.6 is
+// the Recommended default because it's non-reasoning and reliable at
+// structured JSON output.
 const AI_MODELS = [
   {
-    id: "anthropic/claude-sonnet-4",
-    name: "Claude Sonnet 4",
+    id: "anthropic/claude-haiku-4.5",
+    name: "Claude Haiku 4.5",
     provider: "Anthropic",
     tag: "Recommended",
   },
   {
-    id: "anthropic/claude-opus-4",
-    name: "Claude Opus 4",
+    id: "anthropic/claude-sonnet-4.6",
+    name: "Claude Sonnet 4.6",
+    provider: "Anthropic",
+    tag: "Higher quality (slower)",
+  },
+  {
+    id: "anthropic/claude-opus-4.6",
+    name: "Claude Opus 4.6",
     provider: "Anthropic",
     tag: "Most powerful",
   },
@@ -28,19 +44,7 @@ const AI_MODELS = [
     id: "google/gemini-2.5-flash",
     name: "Gemini 2.5 Flash",
     provider: "Google",
-    tag: "Fast",
-  },
-  {
-    id: "openai/gpt-4o",
-    name: "GPT-4o",
-    provider: "OpenAI",
-    tag: "",
-  },
-  {
-    id: "openai/gpt-4o-mini",
-    name: "GPT-4o Mini",
-    provider: "OpenAI",
-    tag: "Budget",
+    tag: "Fastest",
   },
   {
     id: "meta-llama/llama-3.3-70b-instruct",

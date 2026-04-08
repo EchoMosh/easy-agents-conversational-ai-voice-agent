@@ -313,7 +313,7 @@ export function AgentSettings({
     null,
   );
 
-  // Vapi Knowledge Base states
+  // Knowledge Base states
   const [uploadedFiles, setUploadedFiles] = React.useState<
     Array<{ name: string; content: string; type: string }>
   >([]);
@@ -469,7 +469,7 @@ export function AgentSettings({
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // If a knowledge base is selected and we don't have a Vapi knowledge base yet, create one
+      // If a knowledge base is selected and we don't have one yet, create one
       if (knowledgeBase && knowledgeBase !== "none" && !vapiKnowledgeBaseId) {
         try {
           const result = await createKnowledgeBaseFromDocuments(
@@ -523,19 +523,27 @@ export function AgentSettings({
         throw new Error(`Database error: ${error.message}`);
       }
 
-      // Update Vapi agent if v_agent_id exists
+      // Update voice agent if v_agent_id exists
       if (vapiAgentId) {
         try {
-          const {
-            data: { session },
-          } = await supabase.auth.getSession();
+          // Load full voice/transcriber/model config from the agents row
+          // so we don't silently wipe the saved voice back to Elliot.
+          const vc =
+            (loadedAgentData?.voice_config as Record<string, unknown>) || {};
+          const tc =
+            (loadedAgentData?.transcriber_config as Record<string, unknown>) ||
+            {};
+          const mc =
+            (loadedAgentData?.model_config as Record<string, unknown>) || {};
+
+          // supabase-js auto-attaches the current JWT and handles refresh.
           const response = await supabase.functions.invoke(
             "update-vapi-agent",
             {
               body: {
                 agent_id: agentId,
                 v_agent_id: vapiAgentId,
-                voice_id: selectedVoice,
+                voice_id: (vc.voiceId as string) || selectedVoice,
                 language: language,
                 first_message:
                   firstMessage ||
@@ -545,8 +553,23 @@ export function AgentSettings({
                   loadedAgentData?.max_duration_seconds || 600,
                 background_sound: loadedAgentData?.background_sound || "office",
                 knowledge_base_id: vapiKnowledgeBaseId,
+                voice_provider: vc.provider as string | undefined,
+                voice_model: vc.model as string | undefined,
+                voice_speed: vc.speed as number | undefined,
+                voice_stability: vc.stability as number | undefined,
+                voice_similarity_boost: vc.similarityBoost as
+                  | number
+                  | undefined,
+                voice_emotion: vc.emotion as string[] | undefined,
+                voice_style_prompt: vc.stylePrompt as string | undefined,
+                transcriber_provider: tc.provider as string | undefined,
+                transcriber_model: tc.model as string | undefined,
+                transcriber_language: tc.language as string | undefined,
+                llm_provider: mc.provider as string | undefined,
+                llm_model: mc.model as string | undefined,
+                llm_temperature: mc.temperature as number | undefined,
+                llm_max_tokens: mc.maxTokens as number | undefined,
               },
-              headers: { Authorization: `Bearer ${session?.access_token}` },
             },
           );
 
@@ -561,8 +584,8 @@ export function AgentSettings({
           } else {
             console.log("Voice agent updated successfully");
           }
-        } catch (vapiError) {
-          console.error("Error updating voice agent:", vapiError);
+        } catch (syncError) {
+          console.error("Error updating voice agent:", syncError);
           toast({
             title: "Warning",
             description:
@@ -747,7 +770,7 @@ export function AgentSettings({
         );
       }
 
-      // Step 3: Create Vapi knowledge base using Trieve dataset
+      // Step 3: Create knowledge base using Trieve dataset
       const kb = await createVapiKnowledgeBase(
         `${agentId}-knowledge-base`,
         dataset.id,

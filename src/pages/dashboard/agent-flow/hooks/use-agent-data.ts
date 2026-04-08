@@ -80,51 +80,19 @@ export function useAgentData(
     }
   }, [isError, navigate, toast]);
 
-  // Add real-time subscription for agent flow updates
-  useEffect(() => {
-    if (!id) return;
-
-    console.log(
-      "[AgentFlowPage] Setting up real-time subscription for agent:",
-      id,
-    );
-
-    const channel = supabase
-      .channel(`agent-flow-${id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "agents",
-          filter: `id=eq.${id}`,
-        },
-        (payload) => {
-          console.log("[AgentFlowPage] Real-time update received:", payload);
-
-          // Only refetch if the flow data actually changed
-          if (
-            payload.new &&
-            payload.old &&
-            JSON.stringify(payload.new.flow) !==
-              JSON.stringify(payload.old.flow)
-          ) {
-            console.log(
-              "[AgentFlowPage] Flow data changed, refetching agent data",
-            );
-            refetch();
-          }
-        },
-      )
-      .subscribe((status) => {
-        console.log("[AgentFlowPage] Real-time subscription status:", status);
-      });
-
-    return () => {
-      console.log("[AgentFlowPage] Cleaning up real-time subscription");
-      supabase.removeChannel(channel);
-    };
-  }, [id, refetch]);
+  // Real-time subscription DISABLED.
+  //
+  // Previously this subscribed to postgres_changes on the agents row and
+  // called refetch() on every UPDATE. Because saving the flow is what
+  // produces the UPDATE, the refetch fed a new `agent` reference back
+  // through use-flow-management → setFlowState → ReactFlow re-render → a
+  // fresh save → another UPDATE → refetch → ... producing a tight infinite
+  // loop that made the canvas visibly blink and spam the console.
+  //
+  // Local state is already authoritative after a save (saveFlowMutation
+  // returns the updated row), so refetching our own writes has no value.
+  // Multi-tab / collaborative editing would require a proper origin-tagged
+  // dedup mechanism before re-enabling this.
 
   const handleUpdateSettings = async (settings: {
     voiceId?: string;

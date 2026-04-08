@@ -24,27 +24,17 @@ export function FlowContextMenu({
   onDeleteNode,
   nodes, // Destructure nodes
 }: FlowContextMenuProps) {
-  console.log(
-    "FlowContextMenu rendering with rightClickedNodeId:",
-    rightClickedNodeId,
-  );
-
-  const startNodeExists = nodes.some(node => node.type === 'startNode');
+  const startNodeExists = nodes.some((node) => node.type === "startNode");
 
   let availableWidgets = widgets;
   // Only filter for pane context menu (no rightClickedNodeId)
   if (!rightClickedNodeId && startNodeExists) {
-    availableWidgets = widgets.filter(widget => widget.type !== 'startNode');
+    availableWidgets = widgets.filter((widget) => widget.type !== "startNode");
   }
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger
-        className="flex w-full h-full"
-        onContextMenu={(e) => {
-          console.log("ContextMenuTrigger onContextMenu fired");
-        }}
-      >
+      <ContextMenuTrigger className="flex w-full h-full">
         {children}
       </ContextMenuTrigger>
 

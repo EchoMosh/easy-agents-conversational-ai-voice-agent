@@ -90,6 +90,10 @@ serve(async (req) => {
         "TR-Dataset": dataset_id,
         "Content-Type": "application/json",
       },
+      // Current Trieve chunk API changed semantic_boost / fulltext_boost from
+      // floats to objects ({phrase, distance_factor}). Passing a float returns
+      // 400 with a type mismatch. They aren't needed for basic ingestion, so
+      // drop them entirely.
       body: JSON.stringify({
         chunk_html: chunk_data.chunk_html,
         tracking_id: `${dataset_id}-${chunk_data.metadata.title}`,
@@ -98,10 +102,6 @@ serve(async (req) => {
           uploaded_at: new Date().toISOString(),
         },
         tag_set: [chunk_data.metadata.file_type, "knowledge-base"],
-        // Enable semantic search on this chunk
-        semantic_boost: 1.0,
-        // Make it searchable
-        fulltext_boost: 1.0,
       }),
     });
 

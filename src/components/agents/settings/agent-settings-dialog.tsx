@@ -219,26 +219,17 @@ export function AgentSettings({
         throw error;
       }
 
-      setOriginalSettings(settings);
-      toast({ title: "Settings saved" });
-      setOpen(false);
-
-      // Call the parent's onUpdateSettings in background (syncs basic fields to DB)
-      onUpdateSettings({
-        voiceId: settings.voiceId,
-        language: settings.language,
-        maxDurationSeconds: settings.maxDurationSeconds,
-      }).catch((err) => {
-        console.error("Voice service sync failed (settings saved to DB):", err);
-      });
-
-      // Sync full settings to VAPI in background (only if agent has been pushed to VAPI)
+      // Sync full settings to the voice backend — BLOCKING so the user sees
+      // real errors instead of a fake "Settings saved" toast over a silently
+      // failed sync.
       if (agentMeta.v_agent_id) {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        supabase.functions
-          .invoke("update-vapi-agent", {
+        // Do NOT manually set Authorization — supabase-js auto-attaches the
+        // current session's JWT and refreshes it if expired. Setting
+        // `Bearer ${session?.access_token}` manually sends literal
+        // "Bearer undefined" when the stale session is null, which causes
+        // Supabase's Functions gateway to reject with 401.
+        const { data: syncResult, error: syncError } =
+          await supabase.functions.invoke("update-vapi-agent", {
             body: {
               agent_id: agentId,
               v_agent_id: agentMeta.v_agent_id,
@@ -257,8 +248,10 @@ export function AgentSettings({
               voice_stability: settings.voiceStability,
               voice_similarity_boost: settings.voiceSimilarityBoost,
               voice_emotion: settings.voiceEmotions,
+              voice_style_prompt: settings.voiceStylePrompt,
               transcriber_provider: settings.transcriberProvider,
               transcriber_model: settings.transcriberModel,
+              transcriber_language: settings.transcriberLanguage,
               llm_provider: settings.llmProvider,
               llm_model: settings.llmModel,
               llm_temperature: settings.llmTemperature,
@@ -275,12 +268,52 @@ export function AgentSettings({
               stop_speaking_backoff_seconds:
                 settings.stopSpeakingBackoffSeconds,
             },
-            headers: { Authorization: `Bearer ${session?.access_token}` },
-          })
-          .catch((err) => {
-            console.error("VAPI sync failed (settings saved to DB):", err);
           });
+
+        if (syncError) {
+          console.error("Agent sync error:", syncError);
+          throw new Error(
+            `Saved locally but upstream sync failed: ${syncError.message}`,
+          );
+        }
+        const result = syncResult as {
+          success?: boolean;
+          error?: string;
+          message?: string;
+          details?: unknown;
+        } | null;
+        if (result && result.success === false) {
+          console.error("Upstream rejected update:", result);
+          const reason = result.message || result.error || "unknown error";
+          throw new Error(
+            `Saved locally but agent update was rejected: ${reason}`,
+          );
+        }
+      } else {
+        console.warn(
+          "Agent has no upstream ID — saved locally only, skipping remote sync",
+        );
+        toast({
+          title: "Saved locally",
+          description:
+            "This agent hasn't been deployed yet, so changes are only stored locally.",
+        });
       }
+
+      setOriginalSettings(settings);
+      if (agentMeta.v_agent_id) {
+        toast({ title: "Settings saved" });
+      }
+      setOpen(false);
+
+      // Fire parent sync (non-critical, local-only fields)
+      onUpdateSettings({
+        voiceId: settings.voiceId,
+        language: settings.language,
+        maxDurationSeconds: settings.maxDurationSeconds,
+      }).catch((err) => {
+        console.error("Parent onUpdateSettings failed:", err);
+      });
     } catch (err) {
       const errorMsg =
         err instanceof Error
@@ -304,6 +337,13 @@ export function AgentSettings({
 
   const hasChanges =
     JSON.stringify(settings) !== JSON.stringify(originalSettings);
+
+  // Save button is also enabled when there are no local changes but the
+  // agent has been deployed upstream — this lets the user force a re-sync
+  // of the already-saved DB state to the voice backend, which is critical
+  // when earlier syncs silently failed (e.g. from the 401 JWT bug) and
+  // left the upstream assistant out of date.
+  const canSave = hasChanges || !!agentMeta.v_agent_id;
 
   if (!isOpen) return null;
 
@@ -393,14 +433,16 @@ export function AgentSettings({
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
+              <Button onClick={handleSave} disabled={isSaving || !canSave}>
                 {isSaving ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Saving...
                   </>
-                ) : (
+                ) : hasChanges ? (
                   "Save Changes"
+                ) : (
+                  "Re-sync to Backend"
                 )}
               </Button>
             </div>

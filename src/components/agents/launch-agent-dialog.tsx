@@ -124,16 +124,24 @@ export function LaunchAgentDialog({
       const cleanedFirstMessage = rawFirstMessage.replace(/<[^>]*>?/gm, "");
       const mermaidChart = currentAgentData.mermaid_chart || "";
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      // CRITICAL: Pass the FULL voice/transcriber/model config from the
+      // JSONB columns. Sending only voice_id causes the edge function to
+      // default provider to "vapi" and coerce unknown voice_ids to
+      // "Elliot" — silently reverting the user's custom voice.
+      const vc =
+        (currentAgentData.voice_config as Record<string, unknown>) || {};
+      const tc =
+        (currentAgentData.transcriber_config as Record<string, unknown>) || {};
+      const mc =
+        (currentAgentData.model_config as Record<string, unknown>) || {};
+
       const { data, error } = await supabase.functions.invoke(
         "update-vapi-agent",
         {
           body: {
             agent_id: currentAgentData.id,
             v_agent_id: vapiId,
-            voice_id: voiceIdForPayload,
+            voice_id: (vc.voiceId as string) || voiceIdForPayload,
             language: currentAgentData.language || "en",
             first_message: cleanedFirstMessage,
             mermaid_chart: mermaidChart,
@@ -143,8 +151,21 @@ export function LaunchAgentDialog({
                 ? "off"
                 : currentAgentData.background_sound || "office",
             knowledge_base_id: currentAgentData.vapi_knowledge_base_id,
+            voice_provider: vc.provider as string | undefined,
+            voice_model: vc.model as string | undefined,
+            voice_speed: vc.speed as number | undefined,
+            voice_stability: vc.stability as number | undefined,
+            voice_similarity_boost: vc.similarityBoost as number | undefined,
+            voice_emotion: vc.emotion as string[] | undefined,
+            voice_style_prompt: vc.stylePrompt as string | undefined,
+            transcriber_provider: tc.provider as string | undefined,
+            transcriber_model: tc.model as string | undefined,
+            transcriber_language: tc.language as string | undefined,
+            llm_provider: mc.provider as string | undefined,
+            llm_model: mc.model as string | undefined,
+            llm_temperature: mc.temperature as number | undefined,
+            llm_max_tokens: mc.maxTokens as number | undefined,
           },
-          headers: { Authorization: `Bearer ${session?.access_token}` },
         },
       );
 

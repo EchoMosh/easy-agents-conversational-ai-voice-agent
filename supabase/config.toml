@@ -1,0 +1,31 @@
+# Supabase project config. Created to pin verify_jwt=false for edge
+# functions that do their own admin-client auth via getUser(token).
+# Without this, Supabase's gateway tries to verify JWTs and returns 401
+# before the function ever runs — including when callers accidentally
+# pass "Bearer undefined" (stale session).
+
+project_id = "uonkwurvaeicfmhfctkq"
+
+[functions.update-vapi-agent]
+verify_jwt = false
+
+[functions.create-vapi-agent]
+verify_jwt = false
+
+[functions.create-trieve-dataset]
+verify_jwt = false
+
+[functions.upload-to-trieve]
+verify_jwt = false
+
+[functions.create-vapi-knowledge-base]
+verify_jwt = false
+
+[functions.upload-vapi-file]
+verify_jwt = false
+
+[functions.generate-agent-flow]
+verify_jwt = false
+
+[functions.initiate-vapi-call]
+verify_jwt = false

@@ -3,6 +3,14 @@ export interface VoiceOption {
   name: string;
   gender: "male" | "female" | "neutral";
   accent?: string;
+  /**
+   * Which model IDs (from the same provider's `models` array) this voice
+   * is valid for. If omitted, the voice is assumed to work with any model
+   * in the provider. REQUIRED for providers where voices are
+   * model-specific (e.g. Rime Arcana voices are incompatible with Rime
+   * Mist and vice versa).
+   */
+  compatibleModels?: string[];
 }
 
 export interface VoiceModel {
@@ -62,6 +70,7 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
     name: "Cartesia",
     requiresApiKey: false,
     models: [
+      { id: "sonic-3", name: "Sonic 3", latency: "low" },
       { id: "sonic-2", name: "Sonic 2", latency: "low" },
       { id: "sonic", name: "Sonic", latency: "low" },
     ],
@@ -129,8 +138,15 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
     name: "ElevenLabs",
     requiresApiKey: false,
     models: [
+      { id: "eleven_flash_v2_5", name: "Flash v2.5", latency: "low" },
+      { id: "eleven_flash_v2", name: "Flash v2", latency: "low" },
       { id: "eleven_turbo_v2_5", name: "Turbo v2.5", latency: "low" },
       { id: "eleven_turbo_v2", name: "Turbo v2", latency: "low" },
+      {
+        id: "eleven_v3",
+        name: "v3 (expressive, higher latency)",
+        latency: "high",
+      },
       {
         id: "eleven_multilingual_v2",
         name: "Multilingual v2",
@@ -209,12 +225,21 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
     name: "OpenAI",
     requiresApiKey: false,
     models: [
+      {
+        id: "gpt-4o-mini-tts",
+        name: "GPT-4o Mini TTS (steerable)",
+        latency: "low",
+      },
       { id: "tts-1", name: "TTS-1", latency: "low" },
       { id: "tts-1-hd", name: "TTS-1 HD", latency: "medium" },
     ],
     voices: [
+      { id: "marin", name: "Marin", gender: "female" },
+      { id: "cedar", name: "Cedar", gender: "male" },
+      { id: "verse", name: "Verse", gender: "neutral" },
       { id: "alloy", name: "Alloy", gender: "neutral" },
       { id: "ash", name: "Ash", gender: "male" },
+      { id: "ballad", name: "Ballad", gender: "male" },
       { id: "coral", name: "Coral", gender: "female" },
       { id: "echo", name: "Echo", gender: "male" },
       { id: "fable", name: "Fable", gender: "male" },
@@ -234,9 +259,10 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
     name: "PlayHT",
     requiresApiKey: false,
     models: [
+      { id: "Play3.0-mini", name: "Play 3.0 Mini", latency: "low" },
+      { id: "PlayDialog", name: "PlayDialog", latency: "medium" },
       { id: "PlayHT2.0-turbo", name: "PlayHT 2.0 Turbo", latency: "low" },
       { id: "PlayHT2.0", name: "PlayHT 2.0", latency: "medium" },
-      { id: "Play3.0-mini", name: "Play 3.0 Mini", latency: "low" },
     ],
     voices: [
       {
@@ -276,16 +302,196 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
     name: "Rime AI",
     requiresApiKey: false,
     models: [
+      { id: "arcana", name: "Arcana (most human)", latency: "low" },
+      { id: "mistv2", name: "Mist v2", latency: "low" },
       { id: "mist", name: "Mist", latency: "low" },
-      { id: "v1", name: "V1", latency: "medium" },
     ],
+    // Voices verified against https://users.rime.ai/data/voices/voice_details.json
+    // (fetched April 9, 2026). Every gender, model compatibility and accent
+    // here comes directly from that live metadata — do NOT guess. Rime has
+    // voices like "fern" that sound like a flower but are actually MALE.
     voices: [
-      { id: "amber", name: "Amber", gender: "female", accent: "american" },
-      { id: "dustin", name: "Dustin", gender: "male", accent: "american" },
-      { id: "grove", name: "Grove", gender: "male", accent: "american" },
-      { id: "sierra", name: "Sierra", gender: "female", accent: "american" },
-      { id: "pearl", name: "Pearl", gender: "female", accent: "british" },
-      { id: "marsh", name: "Marsh", gender: "male", accent: "british" },
+      // === ARCANA voices — females ===
+      {
+        id: "luna",
+        name: "Luna",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "celeste",
+        name: "Celeste",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "astra",
+        name: "Astra",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["arcana", "mistv2"],
+      },
+      {
+        id: "andromeda",
+        name: "Andromeda",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "lyra",
+        name: "Lyra",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "estelle",
+        name: "Estelle",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "esther",
+        name: "Esther",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "moss",
+        name: "Moss",
+        gender: "female",
+        accent: "singaporean",
+        compatibleModels: ["arcana"],
+      },
+      // === ARCANA voices — males ===
+      {
+        id: "orion",
+        name: "Orion",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "eliphas",
+        name: "Eliphas",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "fern",
+        name: "Fern",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "albion",
+        name: "Albion",
+        gender: "male",
+        accent: "english",
+        compatibleModels: ["arcana"],
+      },
+      {
+        id: "bond",
+        name: "Bond",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["arcana"],
+      },
+
+      // === MIST / MIST v2 voices — females ===
+      {
+        id: "amber",
+        name: "Amber",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      {
+        id: "allison",
+        name: "Allison",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      {
+        id: "brenda",
+        name: "Brenda",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      {
+        id: "marina",
+        name: "Marina",
+        gender: "female",
+        accent: "texan",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      {
+        id: "pearl",
+        name: "Pearl",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      {
+        id: "grove",
+        name: "Grove",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      // === MIST / MIST v2 voices — males ===
+      {
+        id: "elliot",
+        name: "Elliot",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      {
+        id: "marsh",
+        name: "Marsh",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      {
+        id: "rohan",
+        name: "Rohan",
+        gender: "male",
+        accent: "indian",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      {
+        id: "cedar",
+        name: "Cedar",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      {
+        id: "colin",
+        name: "Colin",
+        gender: "male",
+        accent: "new york",
+        compatibleModels: ["mist", "mistv2"],
+      },
+      // === MIST voices — neutral ===
+      {
+        id: "violet",
+        name: "Violet",
+        gender: "neutral",
+        accent: "american",
+        compatibleModels: ["mist", "mistv2"],
+      },
     ],
     supportsEmotion: false,
     supportsSpeed: true,
@@ -297,25 +503,213 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
     id: "deepgram",
     name: "Deepgram",
     requiresApiKey: false,
-    models: [{ id: "aura", name: "Aura", latency: "low" }],
+    // Voice IDs are the full Deepgram model strings with the "aura-2-"
+    // prefix for Aura 2 voices and "aura-" for legacy Aura 1. Using the
+    // bare name (e.g. "thalia-en") fails because Deepgram's API expects
+    // the full model string.
+    models: [
+      { id: "aura-2", name: "Aura 2", latency: "low" },
+      { id: "aura", name: "Aura (legacy)", latency: "low" },
+    ],
     voices: [
+      // === AURA 2 ===
       {
-        id: "asteria-en",
+        id: "aura-2-thalia-en",
+        name: "Thalia",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-andromeda-en",
+        name: "Andromeda",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-helena-en",
+        name: "Helena",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-athena-en",
+        name: "Athena",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-cora-en",
+        name: "Cora",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-cordelia-en",
+        name: "Cordelia",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-luna-en",
+        name: "Luna",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-phoebe-en",
+        name: "Phoebe",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-apollo-en",
+        name: "Apollo",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-arcas-en",
+        name: "Arcas",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-aries-en",
+        name: "Aries",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-atlas-en",
+        name: "Atlas",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-jupiter-en",
+        name: "Jupiter",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-orion-en",
+        name: "Orion",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-zeus-en",
+        name: "Zeus",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura-2"],
+      },
+      {
+        id: "aura-2-draco-en",
+        name: "Draco",
+        gender: "male",
+        accent: "british",
+        compatibleModels: ["aura-2"],
+      },
+      // === AURA 1 (legacy) ===
+      {
+        id: "aura-asteria-en",
         name: "Asteria",
         gender: "female",
         accent: "american",
+        compatibleModels: ["aura"],
       },
-      { id: "luna-en", name: "Luna", gender: "female", accent: "american" },
-      { id: "stella-en", name: "Stella", gender: "female", accent: "american" },
-      { id: "athena-en", name: "Athena", gender: "female", accent: "british" },
-      { id: "hera-en", name: "Hera", gender: "female", accent: "american" },
-      { id: "orion-en", name: "Orion", gender: "male", accent: "american" },
-      { id: "arcas-en", name: "Arcas", gender: "male", accent: "american" },
-      { id: "perseus-en", name: "Perseus", gender: "male", accent: "american" },
-      { id: "angus-en", name: "Angus", gender: "male", accent: "irish" },
-      { id: "orpheus-en", name: "Orpheus", gender: "male", accent: "american" },
-      { id: "helios-en", name: "Helios", gender: "male", accent: "british" },
-      { id: "zeus-en", name: "Zeus", gender: "male", accent: "american" },
+      {
+        id: "aura-luna-en",
+        name: "Luna",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-stella-en",
+        name: "Stella",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-athena-en",
+        name: "Athena",
+        gender: "female",
+        accent: "british",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-hera-en",
+        name: "Hera",
+        gender: "female",
+        accent: "american",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-orion-en",
+        name: "Orion",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-arcas-en",
+        name: "Arcas",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-perseus-en",
+        name: "Perseus",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-angus-en",
+        name: "Angus",
+        gender: "male",
+        accent: "irish",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-orpheus-en",
+        name: "Orpheus",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-helios-en",
+        name: "Helios",
+        gender: "male",
+        accent: "british",
+        compatibleModels: ["aura"],
+      },
+      {
+        id: "aura-zeus-en",
+        name: "Zeus",
+        gender: "male",
+        accent: "american",
+        compatibleModels: ["aura"],
+      },
     ],
     supportsEmotion: false,
     supportsSpeed: false,
