@@ -38,6 +38,10 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
     name: "Built-in (Free)",
     requiresApiKey: false,
     models: [{ id: "default", name: "Default", latency: "low" }],
+    // Verified against docs.vapi.ai/providers/voice/vapi-voices.
+    // Previous list had 9 Orpheus TTS voices (Naina, Leah, Tara, Jess,
+    // Leo, Dan, Mia, Zac, Zoe) that are NOT real VAPI voices — they
+    // would fail at runtime. Removed.
     voices: [
       { id: "Elliot", name: "Elliot", gender: "male" },
       { id: "Clara", name: "Clara", gender: "female" },
@@ -49,15 +53,6 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
       { id: "Kai", name: "Kai", gender: "male" },
       { id: "Sagar", name: "Sagar", gender: "male" },
       { id: "Neil", name: "Neil", gender: "male" },
-      { id: "Naina", name: "Naina", gender: "female" },
-      { id: "Leah", name: "Leah", gender: "female" },
-      { id: "Tara", name: "Tara", gender: "female" },
-      { id: "Jess", name: "Jess", gender: "female" },
-      { id: "Leo", name: "Leo", gender: "male" },
-      { id: "Dan", name: "Dan", gender: "male" },
-      { id: "Mia", name: "Mia", gender: "female" },
-      { id: "Zac", name: "Zac", gender: "male" },
-      { id: "Zoe", name: "Zoe", gender: "female" },
     ],
     supportsEmotion: false,
     supportsSpeed: false,
@@ -74,6 +69,13 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
       { id: "sonic-2", name: "Sonic 2", latency: "low" },
       { id: "sonic", name: "Sonic", latency: "low" },
     ],
+    // Only UUIDs that are independently verified against multiple sources
+    // (SignalWire Cartesia docs, Pipecat, Cartesia calls API docs) remain.
+    // The previous list had 4 unverifiable UUIDs and 1 gender mislabel
+    // (41534e16... was "Reading Lady female" but is actually "1920's
+    // Radioman MALE"). To add more voices, fetch the canonical list from
+    // `GET https://api.cartesia.ai/voices?limit=500` with an API key and
+    // dump straight into this array — do not copy from third-party sites.
     voices: [
       {
         id: "a0e99841-438c-4a64-b679-ae501e7d6091",
@@ -82,34 +84,10 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
         accent: "american",
       },
       {
-        id: "156fb8d2-335b-4950-9cb3-a2d33f2c7052",
-        name: "Confident Woman",
-        gender: "female",
-        accent: "american",
-      },
-      {
         id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
         name: "British Lady",
         gender: "female",
         accent: "british",
-      },
-      {
-        id: "ee7ea9f8-c0c1-498c-9f62-dc2da95a807f",
-        name: "Friendly Sidekick",
-        gender: "male",
-        accent: "american",
-      },
-      {
-        id: "41534e16-2966-4c6b-9670-111411def906",
-        name: "Reading Lady",
-        gender: "female",
-        accent: "american",
-      },
-      {
-        id: "bf991597-6c13-47e4-8a44-df5c3e8b53de",
-        name: "Midwestern Woman",
-        gender: "female",
-        accent: "american",
       },
     ],
     supportsEmotion: true,
@@ -172,8 +150,12 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
         accent: "american",
       },
       {
+        // Verified against live https://api.elevenlabs.io/v1/voices —
+        // this UUID resolves to "Sarah", not "Bella". The name "Bella"
+        // now belongs to a different voice ID on ElevenLabs' current
+        // premade list (hpp4J3VqNfWAUOO0d1Us).
         id: "EXAVITQu4vr4xnSDxMaL",
-        name: "Bella",
+        name: "Sarah",
         gender: "female",
         accent: "american",
       },
@@ -233,20 +215,24 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
       { id: "tts-1", name: "TTS-1", latency: "low" },
       { id: "tts-1-hd", name: "TTS-1 HD", latency: "medium" },
     ],
+    // OpenAI explicitly does NOT publish gender labels for any TTS voice
+    // (platform.openai.com/docs/guides/text-to-speech). Staff direction
+    // is to use system instructions for tone. All voices marked neutral
+    // because no authoritative source labels them otherwise.
     voices: [
-      { id: "marin", name: "Marin", gender: "female" },
-      { id: "cedar", name: "Cedar", gender: "male" },
+      { id: "marin", name: "Marin", gender: "neutral" },
+      { id: "cedar", name: "Cedar", gender: "neutral" },
       { id: "verse", name: "Verse", gender: "neutral" },
       { id: "alloy", name: "Alloy", gender: "neutral" },
-      { id: "ash", name: "Ash", gender: "male" },
-      { id: "ballad", name: "Ballad", gender: "male" },
-      { id: "coral", name: "Coral", gender: "female" },
-      { id: "echo", name: "Echo", gender: "male" },
-      { id: "fable", name: "Fable", gender: "male" },
-      { id: "nova", name: "Nova", gender: "female" },
-      { id: "onyx", name: "Onyx", gender: "male" },
-      { id: "sage", name: "Sage", gender: "female" },
-      { id: "shimmer", name: "Shimmer", gender: "female" },
+      { id: "ash", name: "Ash", gender: "neutral" },
+      { id: "ballad", name: "Ballad", gender: "neutral" },
+      { id: "coral", name: "Coral", gender: "neutral" },
+      { id: "echo", name: "Echo", gender: "neutral" },
+      { id: "fable", name: "Fable", gender: "neutral" },
+      { id: "nova", name: "Nova", gender: "neutral" },
+      { id: "onyx", name: "Onyx", gender: "neutral" },
+      { id: "sage", name: "Sage", gender: "neutral" },
+      { id: "shimmer", name: "Shimmer", gender: "neutral" },
     ],
     supportsEmotion: false,
     supportsSpeed: true,
@@ -264,24 +250,24 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
       { id: "PlayHT2.0-turbo", name: "PlayHT 2.0 Turbo", latency: "low" },
       { id: "PlayHT2.0", name: "PlayHT 2.0", latency: "medium" },
     ],
+    // Verified against PlayHT's own pyht SDK README and
+    // docs.play.ht/reference/list-of-prebuilt-voices.
+    // Previous entries had: a UUID typo on Jennifer (20d1 → 20a1), a
+    // wrong UUID on Adrian (replaced with canonical d99d35e6...), and
+    // an entirely fabricated "Olivia British" that doesn't exist in
+    // PlayHT's prebuilt catalog. Olivia removed.
     voices: [
       {
-        id: "s3://voice-cloning-zero-shot/775ae416-49bb-4fb6-bd45-740f205d20d1/jennifersaad/manifest.json",
+        id: "s3://voice-cloning-zero-shot/775ae416-49bb-4fb6-bd45-740f205d20a1/jennifersaad/manifest.json",
         name: "Jennifer",
         gender: "female",
         accent: "american",
       },
       {
-        id: "s3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/adriansaad/manifest.json",
+        id: "s3://voice-cloning-zero-shot/d99d35e6-e625-4fa4-925a-d65172d358e1/adriansaad/manifest.json",
         name: "Adrian",
         gender: "male",
         accent: "american",
-      },
-      {
-        id: "s3://voice-cloning-zero-shot/e040bd1b-f190-4bdb-83f0-75ef85b18f84/oliviasaad/manifest.json",
-        name: "Olivia",
-        gender: "female",
-        accent: "british",
       },
     ],
     supportsEmotion: true,
