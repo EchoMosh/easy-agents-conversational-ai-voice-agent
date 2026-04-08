@@ -64,10 +64,12 @@ export const VOICE_PROVIDERS: VoiceProvider[] = [
     id: "cartesia",
     name: "Cartesia",
     requiresApiKey: false,
+    // Only sonic-english and sonic-3 are confirmed valid in VAPI's
+    // Cartesia schema (April 2026 docs). sonic-2 and plain "sonic" were
+    // not listed and may be rejected.
     models: [
-      { id: "sonic-3", name: "Sonic 3", latency: "low" },
-      { id: "sonic-2", name: "Sonic 2", latency: "low" },
-      { id: "sonic", name: "Sonic", latency: "low" },
+      { id: "sonic-3", name: "Sonic 3 (latest)", latency: "low" },
+      { id: "sonic-english", name: "Sonic English", latency: "low" },
     ],
     // Only UUIDs that are independently verified against multiple sources
     // (SignalWire Cartesia docs, Pipecat, Cartesia calls API docs) remain.

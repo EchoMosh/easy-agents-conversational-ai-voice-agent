@@ -243,7 +243,48 @@ serve(async (req) => {
 
     // Build dynamic voice payload based on provider (computed early so
     // we can use it to build a provider-aware system prompt).
-    const effectiveVoiceProvider = voice_provider || "vapi";
+    //
+    // PROVIDER NAME TRANSLATION: VAPI's provider IDs differ from our UI.
+    // VAPI expects "11labs" but our UI uses "elevenlabs" (the friendlier
+    // name). Normalize before sending. This was causing silent rejects.
+    const rawProvider = voice_provider || "vapi";
+    const effectiveVoiceProvider =
+      rawProvider === "elevenlabs" ? "11labs" : rawProvider;
+
+    // Cartesia speed translator: UI uses the standard 0.5–2.0 range
+    // that most TTS engines use, but VAPI's Cartesia expects a NUMBER
+    // in [-1, 1] where -1 = slowest, 0 = normal, 1 = fastest.
+    // Piecewise linear mapping preserves the 1.0 = normal pivot.
+    const cartesiaSpeed = (uiSpeed: number | undefined): number | undefined => {
+      if (uiSpeed === undefined) return undefined;
+      if (uiSpeed <= 1.0) return Math.max(-1, (uiSpeed - 1.0) * 2); // [0.5, 1.0] → [-1, 0]
+      return Math.min(1, uiSpeed - 1.0); // (1.0, 2.0] → (0, 1]
+    };
+
+    // Cartesia emotion translator: UI uses plain names ("happy"),
+    // VAPI's Cartesia expects colon format ("positivity:high").
+    const CARTESIA_EMOTION_MAP: Record<string, string> = {
+      happy: "positivity:high",
+      excited: "positivity:highest",
+      enthusiastic: "positivity:highest",
+      grateful: "positivity:high",
+      confident: "positivity:high",
+      calm: "positivity:low",
+      neutral: "positivity:low",
+      sad: "sadness:high",
+      sympathetic: "sadness:low",
+      angry: "anger:high",
+      curious: "curiosity:high",
+      contemplative: "curiosity:low",
+      surprised: "surprise:high",
+      // "sarcastic" has no direct Cartesia mapping — drop it.
+    };
+    const toCartesiaEmotions = (uiEmotions: string[] | undefined): string[] => {
+      if (!uiEmotions?.length) return [];
+      return uiEmotions
+        .map((e) => CARTESIA_EMOTION_MAP[e.toLowerCase()])
+        .filter((e): e is string => typeof e === "string");
+    };
 
     // Provider-aware expressive guidance. Different TTS engines express
     // emotion in different ways:
@@ -255,10 +296,9 @@ serve(async (req) => {
     //     as real acoustic events.
     //   • Everything else: plain text, no special chars.
     const isCartesiaExpressive =
-      effectiveVoiceProvider === "cartesia" &&
-      (voice_model === "sonic-3" || voice_model === "sonic-2");
+      effectiveVoiceProvider === "cartesia" && voice_model === "sonic-3";
     const isElevenExpressive =
-      effectiveVoiceProvider === "elevenlabs" &&
+      effectiveVoiceProvider === "11labs" &&
       (voice_model === "eleven_v3" ||
         voice_model === "eleven_flash_v2_5" ||
         voice_model === "eleven_turbo_v2_5");
@@ -351,51 +391,52 @@ ${mermaid_chart}`;
 
     // Per-provider shape. VAPI rejects unknown properties with 400
     // ("voice.property X should not exist"), so each provider gets a
-    // very narrow, documented field set.
-    if (effectiveVoiceProvider === "elevenlabs") {
-      // ElevenLabs — top-level stability/similarityBoost.
+    // very narrow, documented field set — verified against VAPI's
+    // April 2026 docs and our test rejections.
+    if (effectiveVoiceProvider === "11labs") {
+      // ElevenLabs (VAPI calls it "11labs") — top-level stability,
+      // similarityBoost, speed, style, useSpeakerBoost.
       if (voice_stability !== undefined)
         voicePayload.stability = voice_stability;
       if (voice_similarity_boost !== undefined)
         voicePayload.similarityBoost = voice_similarity_boost;
+      if (voice_speed !== undefined) voicePayload.speed = voice_speed;
     } else if (effectiveVoiceProvider === "cartesia") {
-      // Cartesia — all expressive controls go inside experimentalControls,
-      // NOT top-level. Sending top-level `speed` returns 400
-      // "voice.property speed should not exist".
-      //
-      // Available fields (per VAPI changelog 2025-04-05):
-      //   • speed: number (-1 to 1) OR "slow" | "normal" | "fast"
-      //   • emotion: string[] e.g. ["cheerful", "confident"]
-      //   • emphasis: number 0-1 (affects word-level stress)
-      //   • energy: "low" | "normal" | "high" (overall liveliness)
-      //
-      // We always set quality defaults because Cartesia's default is
-      // flatter than its own demo — users were asking why the demo on
-      // cartesia.ai sounds better than our integration. These defaults
-      // match a lively, engaged phone-call delivery.
-      const experimentalControls: Record<string, unknown> = {
-        emphasis: 0.8,
-        energy: "normal",
-      };
-      if (voice_speed !== undefined) {
-        experimentalControls.speed = voice_speed;
+      // Cartesia — verified accepted fields in experimentalControls:
+      //   • speed: number in [-1, 1] (NOT 0.5-2.0 — different range)
+      //   • emotion: string[] in "<name>:<intensity>" colon format,
+      //     e.g. ["positivity:high", "curiosity:medium"]
+      // Verified REJECTED: emphasis, energy, expressiveness, voice_speed.
+      const experimentalControls: Record<string, unknown> = {};
+      const mappedSpeed = cartesiaSpeed(voice_speed);
+      if (mappedSpeed !== undefined) {
+        experimentalControls.speed = mappedSpeed;
       }
-      if (voice_emotion?.length) {
-        experimentalControls.emotion = voice_emotion;
-      } else {
-        // Sensible default emotion stack for phone agents — warmth
-        // and confidence read well in short sales/support turns.
-        experimentalControls.emotion = ["friendly", "confident"];
+      const mappedEmotions = toCartesiaEmotions(voice_emotion);
+      if (mappedEmotions.length > 0) {
+        experimentalControls.emotion = mappedEmotions;
       }
-      voicePayload.experimentalControls = experimentalControls;
+      if (Object.keys(experimentalControls).length > 0) {
+        voicePayload.experimentalControls = experimentalControls;
+      }
     } else if (effectiveVoiceProvider === "playht") {
-      // PlayHT — speed and emotion are top-level per VAPI schema.
+      // PlayHT — speed is top-level. emotion is a SINGLE string
+      // (not an array) in VAPI's PlayHT schema — we take the first
+      // item if the UI sent an array.
       if (voice_speed !== undefined) voicePayload.speed = voice_speed;
-      if (voice_emotion?.length) voicePayload.emotion = voice_emotion;
+      if (voice_emotion?.length) {
+        voicePayload.emotion = voice_emotion[0];
+      }
     } else if (effectiveVoiceProvider === "openai") {
-      // OpenAI — speed is top-level; instructions (from stylePrompt).
+      // OpenAI — speed is top-level. `instructions` is only honored on
+      // realtime / gpt-4o-mini-tts models; tts-1 and tts-1-hd reject it.
       if (voice_speed !== undefined) voicePayload.speed = voice_speed;
-      if (voice_style_prompt && voice_style_prompt.trim().length > 0) {
+      if (
+        voice_style_prompt &&
+        voice_style_prompt.trim().length > 0 &&
+        voice_model !== "tts-1" &&
+        voice_model !== "tts-1-hd"
+      ) {
         voicePayload.instructions = voice_style_prompt;
       }
     }
