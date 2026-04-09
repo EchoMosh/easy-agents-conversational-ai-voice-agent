@@ -138,13 +138,13 @@ export function TriggerNode({
 
   return (
     <div className="group relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      {/* glow div removed — filter:blur(24px) per node was a massive paint cost */}
 
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-amber-200/50 dark:border-amber-800/50 shadow-[0_8px_16px_-6px_rgba(245,158,11,0.2)] dark:shadow-[0_8px_16px_-6px_rgba(245,158,11,0.3)] p-5 min-w-[300px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(245,158,11,0.4)] dark:hover:shadow-[0_20px_40px_-12px_rgba(245,158,11,0.5)]">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-amber-200/50 dark:border-amber-800/50 shadow-[0_8px_16px_-6px_rgba(245,158,11,0.2)] dark:shadow-[0_8px_16px_-6px_rgba(245,158,11,0.3)] p-5 min-w-[300px] transition-shadow duration-200">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <span className="relative flex h-8 w-8 items-center justify-center">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-amber-400 opacity-20" />
+              <span className="absolute inline-flex h-full w-full rounded-lg bg-amber-400 opacity-20" />
               <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg">
                 <Network className="h-4 w-4" />
               </span>

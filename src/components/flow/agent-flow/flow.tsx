@@ -1,4 +1,11 @@
-import { useCallback, useRef, useState, useEffect, KeyboardEvent } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+  KeyboardEvent,
+} from "react";
 import {
   ReactFlow,
   MiniMap,
@@ -498,55 +505,81 @@ export function Flow({
     }
   }, [nodes, showDemoCursor, reactFlowInstance]);
 
-  // Track selected node & check for variable usage
-  useEffect(() => {
-    const selectedNode = nodes.find((node) => node.selected);
-    setSelectedNodeId(selectedNode ? selectedNode.id : null);
+  // PERF: key these effects on STABLE derived values so they only re-run
+  // when something meaningful changes — not on every drag frame (which
+  // creates a new `nodes` array identity but same content).
 
-    if (!variableTipDismissed) {
-      let hasVariables = false;
-      let hasAnyContent = false;
+  // Derive a signature of node selection IDs. Changes when user selects/
+  // deselects a node, NOT when a node is dragged. O(nodes) per change.
+  const selectionSignature = useMemo(
+    () =>
+      nodes
+        .filter((n) => n.selected)
+        .map((n) => n.id)
+        .join(","),
+    [nodes],
+  );
 
-      nodes.forEach((node) => {
-        if (node.data) {
-          const messageFields = ["firstMessage", "greeting", "message"];
-          for (const field of messageFields) {
-            const content = node.data[field];
-            if (typeof content === "string") {
-              if (content.replace(/<p><\/p>/g, "").trim() !== "") {
-                hasAnyContent = true;
-              }
-              if (
-                content.includes('data-type="variable-mention"') ||
-                /\{\{.*?\}\}/.test(content)
-              ) {
-                hasVariables = true;
-                break;
-              }
-            }
-          }
-        }
-        if (hasVariables) return;
-      });
-
-      if (hasVariables) {
-        setShowVariableTip(false);
-      } else if (nodes.length > 0 && hasAnyContent) {
-        const dismissed = localStorage.getItem(
-          "variableTipDismissed_generic_flow",
-        );
-        if (!dismissed) {
-          setShowVariableTip(true);
-        } else {
-          setShowVariableTip(false);
-        }
-      } else {
-        setShowVariableTip(false);
+  // Derive a signature of message-content fields across all nodes.
+  // Changes when user edits a message, NOT when a node is dragged.
+  const nodeContentSignature = useMemo(() => {
+    const parts: string[] = [];
+    for (const node of nodes) {
+      const d = node.data as Record<string, unknown> | undefined;
+      if (!d) continue;
+      for (const field of ["firstMessage", "greeting", "message"]) {
+        const v = d[field];
+        if (typeof v === "string") parts.push(v);
       }
+    }
+    return parts.join("\u0001"); // cheap delimiter
+  }, [nodes]);
+
+  // Track selected node (stable — only runs on selection change)
+  useEffect(() => {
+    const selectedId = selectionSignature.split(",")[0] || null;
+    setSelectedNodeId(selectedId || null);
+  }, [selectionSignature]);
+
+  // Scan for variable usage (stable — only runs on content change).
+  // Previously this ran on every `nodes` identity change which meant
+  // every drag frame re-executed the O(nodes × 3 fields × regex) scan.
+  useEffect(() => {
+    if (variableTipDismissed) {
+      setShowVariableTip(false);
+      return;
+    }
+    let hasVariables = false;
+    let hasAnyContent = false;
+    for (const node of nodes) {
+      if (!node.data) continue;
+      for (const field of ["firstMessage", "greeting", "message"]) {
+        const content = (node.data as Record<string, unknown>)[field];
+        if (typeof content !== "string") continue;
+        if (content.replace(/<p><\/p>/g, "").trim() !== "")
+          hasAnyContent = true;
+        if (
+          content.includes('data-type="variable-mention"') ||
+          /\{\{.*?\}\}/.test(content)
+        ) {
+          hasVariables = true;
+          break;
+        }
+      }
+      if (hasVariables) break;
+    }
+    if (hasVariables) {
+      setShowVariableTip(false);
+    } else if (nodes.length > 0 && hasAnyContent) {
+      const dismissed = localStorage.getItem(
+        "variableTipDismissed_generic_flow",
+      );
+      setShowVariableTip(!dismissed);
     } else {
       setShowVariableTip(false);
     }
-  }, [nodes, variableTipDismissed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeContentSignature, variableTipDismissed]);
 
   return (
     <NodeUpdateContext.Provider value={{ updateNodeData }}>

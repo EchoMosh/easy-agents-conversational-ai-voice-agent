@@ -266,12 +266,12 @@ export function StartNode({ data, id }: { data: StartNodeData; id: string }) {
   return (
     <TooltipProvider delayDuration={100}>
       <div className="group relative isolate">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-fuchsia-500/20 to-indigo-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-purple-300/60 dark:border-purple-800/60 shadow-[0_8px_16px_-6px_rgba(168,85,247,0.18)] dark:shadow-[0_8px_16px_-6px_rgba(168,85,247,0.28)] p-5 min-w-[320px] max-w-[320px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(168,85,247,0.25)] dark:hover:shadow-[0_20px_40px_-12px_rgba(168,85,247,0.35)]">
+        {/* glow div removed — filter:blur(24px) per node was a massive paint cost */}
+        <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-purple-300/60 dark:border-purple-800/60 shadow-[0_8px_16px_-6px_rgba(168,85,247,0.18)] dark:shadow-[0_8px_16px_-6px_rgba(168,85,247,0.28)] p-5 min-w-[320px] max-w-[320px] transition-shadow duration-200">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
               <span className="relative flex h-8 w-8 items-center justify-center">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-purple-400 opacity-20" />
+                <span className="absolute inline-flex h-full w-full rounded-lg bg-purple-400 opacity-20" />
                 <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500 text-white shadow-lg">
                   <PlayCircle className="h-4 w-4" />
                 </span>

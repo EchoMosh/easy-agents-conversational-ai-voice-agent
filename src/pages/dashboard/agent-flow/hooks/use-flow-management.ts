@@ -95,29 +95,39 @@ export function useFlowManagement(
     }
   }, [agent, generateMermaidFromFlow, sanitizeMermaidChart, setMermaidChart]);
 
+  // PERF CRITICAL: saveFlowMutation is a new object reference on EVERY
+  // render (tanstack-query always returns a fresh object). If we depend
+  // on it directly in useCallback deps, handleNodesChange/handleEdgesChange
+  // get new identities every render too, which cascades through <Flow />
+  // as new props → all memoized callbacks rebuild → ReactFlow's memoized
+  // children re-render on every drag frame → canvas flicker.
+  //
+  // Fix: stash the mutation in a ref so the callbacks never need it as
+  // a dep. Same for agent (it changes identity on every refetch even
+  // when content is unchanged).
+  const saveMutationRef = useRef(saveFlowMutation);
+  saveMutationRef.current = saveFlowMutation;
+  const agentRef = useRef(agent);
+  agentRef.current = agent;
+
   // Debounce save: only persist to DB after dragging stops
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const debouncedSave = useCallback(
-    (flowData: FlowData) => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = setTimeout(() => {
-        saveFlowMutation.mutate(flowData);
-        let mermaidChartStr = generateMermaidFromFlow(flowData);
-        mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
-        setMermaidChart(mermaidChartStr);
-      }, 300);
-    },
-    [
-      saveFlowMutation,
-      generateMermaidFromFlow,
-      sanitizeMermaidChart,
-      setMermaidChart,
-    ],
-  );
+  const debouncedSave = useCallback((flowData: FlowData) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveMutationRef.current.mutate(flowData);
+      let mermaidChartStr = generateMermaidFromFlow(flowData);
+      mermaidChartStr = sanitizeMermaidChart(mermaidChartStr);
+      setMermaidChart(mermaidChartStr);
+    }, 300);
+    // Empty deps: all mutable refs, setMermaidChart is setter (stable),
+    // generate/sanitize are module-level functions (stable imports).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleNodesChange = useCallback(
     (newNodes: Node[]) => {
-      if (!agent || !initialLoadDone.current) return;
+      if (!agentRef.current || !initialLoadDone.current) return;
       try {
         setFlowState((prevState) => {
           const newState = {
@@ -131,12 +141,13 @@ export function useFlowManagement(
         console.error("[AgentFlowPage] Error updating nodes:", error);
       }
     },
-    [agent, debouncedSave],
+    // debouncedSave is now stable (empty-deps useCallback above)
+    [debouncedSave],
   );
 
   const handleEdgesChange = useCallback(
     (newEdges: Edge[]) => {
-      if (!agent || !initialLoadDone.current) return;
+      if (!agentRef.current || !initialLoadDone.current) return;
       try {
         setFlowState((prevState) => {
           const newState = {
@@ -150,7 +161,7 @@ export function useFlowManagement(
         console.error("[AgentFlowPage] Error updating edges:", error);
       }
     },
-    [agent, debouncedSave],
+    [debouncedSave],
   );
 
   const handleNodeDeletion = useCallback(

@@ -181,12 +181,12 @@ export function GreetingNode({
 
   return (
     <div className="group relative isolate">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-sky-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      {/* glow div removed — filter:blur(24px) per node was a massive paint cost */}
 
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-blue-200/50 dark:border-blue-800/50 shadow-[0_8px_16px_-6px_rgba(59,130,246,0.2)] dark:shadow-[0_8px_16px_-6px_rgba(59,130,246,0.3)] p-5 min-w-[320px] max-w-[320px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(59,130,246,0.4)] dark:hover:shadow-[0_20px_40px_-12px_rgba(59,130,246,0.5)]">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-blue-200/50 dark:border-blue-800/50 shadow-[0_8px_16px_-6px_rgba(59,130,246,0.2)] dark:shadow-[0_8px_16px_-6px_rgba(59,130,246,0.3)] p-5 min-w-[320px] max-w-[320px] transition-shadow duration-200">
         <div className="flex items-center gap-3 mb-4">
           <span className="relative flex h-8 w-8 items-center justify-center">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-lg bg-blue-400 opacity-20" />
+            <span className="absolute inline-flex h-full w-full rounded-lg bg-blue-400 opacity-20" />
             <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-sky-500 text-white shadow-lg">
               <MessageSquare className="h-4 w-4" />
             </span>

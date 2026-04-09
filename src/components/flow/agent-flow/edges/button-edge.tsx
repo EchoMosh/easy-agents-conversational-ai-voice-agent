@@ -46,7 +46,9 @@ const ButtonEdgeComponent = ({
           ...style,
           strokeWidth: 3,
           stroke: "#94a3b8",
-          strokeDasharray: "8 4",
+          // strokeDasharray removed — combined with `animated: true` it
+          // produced a 60fps stroke-dashoffset animation that invalidated
+          // the canvas on every frame. Solid stroke instead.
         }}
         markerEnd={markerEnd}
       />

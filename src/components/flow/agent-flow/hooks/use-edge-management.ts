@@ -46,7 +46,11 @@ export function useEdgeManagement() {
 
   const defaultEdgeOptions = {
     type: "buttonEdge" as const,
-    animated: true,
+    // PERF: animated: true enables ReactFlow's dashdraw CSS keyframe
+    // which continuously updates stroke-dashoffset at 60fps on every
+    // edge. Each frame invalidates the SVG paint region which overlaps
+    // node bounding boxes, producing a visible canvas flicker. Off.
+    animated: false,
     style: {
       strokeWidth: 3,
       stroke: "#94a3b8",
