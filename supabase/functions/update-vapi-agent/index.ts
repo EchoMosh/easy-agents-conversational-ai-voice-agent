@@ -443,14 +443,53 @@ ${mermaid_chart}`;
     // Rime, vapi built-in, deepgram: accept only provider, voiceId, model.
     // Sending extra properties triggers "should not exist" 400s.
 
-    // Prepare the Vapi update payload with optimized call quality settings
-    const vapiPayload = {
-      transcriber: {
-        provider: transcriber_provider || "talkscriber",
-        model: transcriber_model || "whisper",
-        language: transcriber_language || language || "en",
-      },
-      voice: voicePayload,
+    // OpenAI Realtime mode detection: these models are speech-to-speech
+    // and MUST have (a) no transcriber block, (b) voice.provider "openai",
+    // (c) voice.voiceId restricted to alloy/echo/shimmer/marin/cedar.
+    const isRealtimeModel =
+      !!llm_model &&
+      /^gpt-(realtime|4o-realtime|4o-mini-realtime)/.test(llm_model);
+    const REALTIME_VOICES = new Set([
+      "alloy",
+      "echo",
+      "shimmer",
+      "marin",
+      "cedar",
+    ]);
+
+    // If realtime, build a clean voice object from scratch — strip
+    // chunkPlan, experimentalControls, stability, etc. which realtime
+    // rejects. Keep only {provider, voiceId}.
+    let finalVoice: Record<string, unknown> = voicePayload;
+    if (isRealtimeModel) {
+      const currentVoiceId = voicePayload.voiceId as string;
+      const safeVoiceId = REALTIME_VOICES.has(currentVoiceId)
+        ? currentVoiceId
+        : "alloy";
+      finalVoice = {
+        provider: "openai",
+        voiceId: safeVoiceId,
+      };
+      console.log(
+        `Realtime mode active (model=${llm_model}). Forced voice to openai/${safeVoiceId}, stripped transcriber.`,
+      );
+    }
+
+    // Prepare the Vapi update payload with optimized call quality settings.
+    // In realtime mode the transcriber block is OMITTED entirely because
+    // the realtime model handles speech-to-speech natively.
+    const vapiPayload: Record<string, unknown> = {
+      voice: finalVoice,
+      // Transcriber is only included when NOT in realtime mode.
+      ...(isRealtimeModel
+        ? {}
+        : {
+            transcriber: {
+              provider: transcriber_provider || "talkscriber",
+              model: transcriber_model || "whisper",
+              language: transcriber_language || language || "en",
+            },
+          }),
       firstMessage:
         first_message ||
         `Hello! This is an AI assistant. How can I help you today?`,

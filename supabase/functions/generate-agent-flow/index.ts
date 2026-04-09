@@ -125,12 +125,20 @@ CRITICAL RULES:
 
 ## LAYOUT
 
-- Position nodes in a branching tree:
-  - startNode at x=100, y=250
-  - Main path greetingNodes at x = 400, 800, 1200, … y=250
-  - Branch/recovery greetingNodes offset vertically: y=450 for "objection" branches, y=50 for "happy path" branches
-  - endNode at the far right of the main path
-- It's OK if layout isn't perfect — users can rearrange. Getting the EDGES right matters more than layout.
+Nodes are ~320px wide and ~280px tall in the editor. Use GENEROUS spacing
+so they don't touch or overlap:
+
+- startNode at x=100, y=400
+- Main-path greetingNodes at x = 600, 1100, 1600, 2100, 2600, … y=400
+  (500px horizontal gap between node centers — leaves a clean ~180px
+  visual gap between cards)
+- Branch/recovery greetingNodes offset vertically:
+  - "objection" / negative branches: y=800 (400px below main path)
+  - "happy path" / positive branches: y=0 (400px above main path)
+- endNode at the far right of the main path, same y as last main-path node
+
+NEVER place two nodes at the same (x, y) — they will overlap. NEVER use
+x spacing less than 500 — nodes will touch.
 
 ## CONTENT
 
@@ -454,7 +462,7 @@ ${scriptText}
         ...node,
         type: normalizedType,
         id: node.id || `${normalizedType}-${i}`,
-        position: node.position || { x: 100 + i * 400, y: 250 },
+        position: node.position || { x: 100 + i * 600, y: 400 },
         draggable: true,
         data: {
           ...node.data,
@@ -467,6 +475,41 @@ ${scriptText}
         },
       };
     });
+
+    // FORCE-RESPACE — the LLM tends to produce nodes that touch or
+    // overlap even when the prompt asks for generous spacing. This
+    // post-processing step lays every node out deterministically:
+    //   • startNode at (100, 400)
+    //   • Each subsequent node at x += 520 (320px wide + 200px gap)
+    //   • If the LLM tried to branch (multiple edges from one source),
+    //     we KEEP the x order but don't attempt smart vertical layout —
+    //     users can rearrange manually. The key invariant is that no
+    //     two nodes share the same (x, y).
+    const X_STEP = 520;
+    const BASE_X = 100;
+    const BASE_Y = 400;
+    // Sort: start first, then greetingNodes in their current order,
+    // then end last. This preserves the LLM's conversational flow
+    // while guaranteeing generous horizontal spacing.
+    const startNodes = flow.nodes.filter((n) => n.type === "startNode");
+    const greetingNodes = flow.nodes.filter((n) => n.type === "greetingNode");
+    const endNodes = flow.nodes.filter((n) => n.type === "endNode");
+    const otherNodes = flow.nodes.filter(
+      (n) =>
+        n.type !== "startNode" &&
+        n.type !== "greetingNode" &&
+        n.type !== "endNode",
+    );
+    const ordered = [
+      ...startNodes,
+      ...greetingNodes,
+      ...otherNodes,
+      ...endNodes,
+    ];
+    ordered.forEach((n, i) => {
+      n.position = { x: BASE_X + i * X_STEP, y: BASE_Y };
+    });
+    flow.nodes = ordered;
 
     // Build a map of node IDs to their data for edge normalization
     const nodeMap = new Map(flow.nodes.map((n) => [n.id, n]));
