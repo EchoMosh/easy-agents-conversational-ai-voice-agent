@@ -109,19 +109,28 @@ export function LaunchAgentDialog({
         );
       }
 
+      // Read firstMessage from the FRESHLY fetched agent row, NOT the
+      // stale `agent` prop (same bug as test-agent-dialog.tsx).
       const defaultFirstMessage = "Hi there! I'm here to help you today.";
       let rawFirstMessage = defaultFirstMessage;
       try {
+        const freshFlow = currentAgentData.flow;
         const flowData =
-          typeof agent.flow === "string" ? JSON.parse(agent.flow) : agent.flow;
-        rawFirstMessage =
-          flowData?.nodes?.find((node: any) => node.type === "startNode")?.data
-            ?.firstMessage || defaultFirstMessage;
+          typeof freshFlow === "string" ? JSON.parse(freshFlow) : freshFlow;
+        const startNode = flowData?.nodes?.find(
+          (node: any) => node.type === "startNode",
+        );
+        const fromNode = startNode?.data?.firstMessage;
+        if (fromNode && String(fromNode).trim().length > 0) {
+          rawFirstMessage = String(fromNode);
+        }
       } catch (parseError) {
-        console.error("Failed to parse agent flow data:", parseError);
+        console.error("Failed to parse fresh agent flow data:", parseError);
       }
 
-      const cleanedFirstMessage = rawFirstMessage.replace(/<[^>]*>?/gm, "");
+      const cleanedFirstMessage = rawFirstMessage
+        .replace(/<[^>]*>?/gm, "")
+        .trim();
       const mermaidChart = currentAgentData.mermaid_chart || "";
 
       // CRITICAL: Pass the FULL voice/transcriber/model config from the

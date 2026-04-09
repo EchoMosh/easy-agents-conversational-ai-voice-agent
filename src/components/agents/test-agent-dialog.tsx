@@ -132,20 +132,40 @@ export function TestAgentDialog({
         );
       }
 
-      // Ensure firstMessageNode is defined and cleaned
+      // CRITICAL: Read firstMessage from the FRESH agent row, not from
+      // the stale `agent` prop. Previously we parsed `agent.flow` which
+      // was the snapshot captured when the dialog first mounted, so any
+      // first-message edits made after opening the flow editor were
+      // silently ignored and the edge function fell back to "Hi this is
+      // an AI assistant, how can I help you today?" (the hardcoded
+      // default in update-vapi-agent).
       const defaultFirstMessage = "Hi there! I'm here to help you today.";
       let rawFirstMessage = defaultFirstMessage;
       try {
+        const freshFlow = currentAgentData.flow;
         const flowData =
-          typeof agent.flow === "string" ? JSON.parse(agent.flow) : agent.flow;
-        rawFirstMessage =
-          flowData?.nodes?.find((node: any) => node.type === "startNode")?.data
-            ?.firstMessage || defaultFirstMessage;
+          typeof freshFlow === "string" ? JSON.parse(freshFlow) : freshFlow;
+        const startNode = flowData?.nodes?.find(
+          (node: any) => node.type === "startNode",
+        );
+        const fromNode = startNode?.data?.firstMessage;
+        if (fromNode && String(fromNode).trim().length > 0) {
+          rawFirstMessage = String(fromNode);
+        }
       } catch (parseError) {
-        console.error("Failed to parse agent flow data:", parseError);
+        console.error("Failed to parse fresh agent flow data:", parseError);
       }
 
-      const cleanedFirstMessage = rawFirstMessage.replace(/<[^>]*>?/gm, "");
+      // Strip HTML tags but NOT square-bracket expressive tags like
+      // [laughs] / [sighs] — those are rendered by ElevenLabs v3.
+      const cleanedFirstMessage = rawFirstMessage
+        .replace(/<[^>]*>?/gm, "")
+        .trim();
+
+      console.log(
+        "TestAgentDialog: firstMessage →",
+        cleanedFirstMessage || "(empty, will fall back to default)",
+      );
 
       // Get mermaid chart from agent data
       const mermaidChart = currentAgentData.mermaid_chart || "";
