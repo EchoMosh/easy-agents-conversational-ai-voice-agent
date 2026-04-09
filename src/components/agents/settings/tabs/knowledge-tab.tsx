@@ -27,7 +27,7 @@ export function KnowledgeTab({ settings, onChange }: KnowledgeTabProps) {
             onChange({ knowledgeBaseId: id === "none" ? undefined : id })
           }
         >
-          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
             <SelectValue placeholder="Select knowledge base" />
           </SelectTrigger>
           <SelectContent>
@@ -39,7 +39,7 @@ export function KnowledgeTab({ settings, onChange }: KnowledgeTabProps) {
       </div>
 
       {/* Info note */}
-      <div className="rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm p-4">
+      <div className="rounded-xl border border-border/50 bg-background/50 p-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
           Knowledge bases let your agent reference uploaded documents during
           conversations. Manage your knowledge bases on the Knowledge Base page,

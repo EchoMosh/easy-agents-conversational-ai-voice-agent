@@ -164,7 +164,7 @@ export function LlmTab({ settings, onChange }: LlmTabProps) {
           onValueChange={handleProviderChange}
           disabled={realtimeActive}
         >
-          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
             <SelectValue placeholder="Select provider" />
           </SelectTrigger>
           <SelectContent className="max-h-[300px]">
@@ -195,7 +195,7 @@ export function LlmTab({ settings, onChange }: LlmTabProps) {
             value={settings.llmModel}
             onValueChange={(id) => onChange({ llmModel: id })}
           >
-            <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+            <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
             <SelectContent className="max-h-[300px]">

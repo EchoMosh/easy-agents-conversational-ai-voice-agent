@@ -145,7 +145,7 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
           value={settings.voiceProvider}
           onValueChange={handleProviderChange}
         >
-          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
             <SelectValue placeholder="Select provider" />
           </SelectTrigger>
           <SelectContent className="max-h-[300px]">
@@ -196,7 +196,7 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
           value={settings.voiceId}
           onValueChange={(id) => onChange({ voiceId: id })}
         >
-          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
             <SelectValue placeholder="Select voice" />
           </SelectTrigger>
           <SelectContent className="max-h-[320px]">
@@ -248,7 +248,7 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
             value={settings.voiceModel}
             onValueChange={(id) => onChange({ voiceModel: id })}
           >
-            <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+            <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
             <SelectContent className="max-h-[280px]">
@@ -347,7 +347,7 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
       {provider.supportsEmotion && provider.emotions && (
         <div className="space-y-3">
           <Label className="text-sm font-medium">Emotions</Label>
-          <div className="grid grid-cols-2 gap-2 rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm p-3">
+          <div className="grid grid-cols-2 gap-2 rounded-xl border border-border/50 bg-background/50 p-3">
             {provider.emotions.map((emotion) => {
               const checked = selectedEmotions.includes(emotion);
               return (
@@ -380,7 +380,7 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
             value={settings.voiceStylePrompt ?? ""}
             onChange={(e) => onChange({ voiceStylePrompt: e.target.value })}
             placeholder="Describe how the voice should sound..."
-            className="min-h-[80px] rounded-xl border-border/50 bg-background/50 backdrop-blur-sm resize-none"
+            className="min-h-[80px] rounded-xl border-border/50 bg-background/50 resize-none"
           />
         </div>
       )}
@@ -392,7 +392,7 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
           value={settings.language ?? "en"}
           onValueChange={(lang) => onChange({ language: lang })}
         >
-          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
             <SelectValue placeholder="Select language" />
           </SelectTrigger>
           <SelectContent className="max-h-[300px]">

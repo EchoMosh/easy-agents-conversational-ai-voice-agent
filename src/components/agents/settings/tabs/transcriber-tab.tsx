@@ -43,7 +43,7 @@ export function TranscriberTab({ settings, onChange }: TranscriberTabProps) {
           value={settings.transcriberProvider}
           onValueChange={handleProviderChange}
         >
-          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+          <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
             <SelectValue placeholder="Select provider" />
           </SelectTrigger>
           <SelectContent>
@@ -80,7 +80,7 @@ export function TranscriberTab({ settings, onChange }: TranscriberTabProps) {
             value={settings.transcriberModel}
             onValueChange={(id) => onChange({ transcriberModel: id })}
           >
-            <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+            <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
             <SelectContent>
@@ -95,7 +95,7 @@ export function TranscriberTab({ settings, onChange }: TranscriberTabProps) {
       )}
 
       {/* Info text */}
-      <div className="rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm p-4">
+      <div className="rounded-xl border border-border/50 bg-background/50 p-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
           The transcriber converts caller speech to text in real-time. The
           default provider works well for most use cases. Only change this if

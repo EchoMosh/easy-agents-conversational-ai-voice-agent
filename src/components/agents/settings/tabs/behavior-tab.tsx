@@ -72,7 +72,7 @@ export function BehaviorTab({ settings, onChange }: BehaviorTabProps) {
                 className={cn(
                   "h-auto flex-col items-start gap-1 py-3 px-3 rounded-xl text-left",
                   !isActive &&
-                    "border-border/50 bg-background/50 backdrop-blur-sm hover:bg-accent/50",
+                    "border-border/50 bg-background/50 hover:bg-accent/50",
                 )}
               >
                 <span className="text-sm font-medium">{preset.name}</span>
@@ -94,7 +94,7 @@ export function BehaviorTab({ settings, onChange }: BehaviorTabProps) {
 
       {/* Advanced Endpointing */}
       <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm px-4 py-3 text-sm font-medium hover:bg-accent/50 transition-colors">
+        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-border/50 bg-background/50 px-4 py-3 text-sm font-medium hover:bg-accent/50 transition-colors">
           <span>Advanced Timing</span>
           <ChevronDown
             className={cn(
@@ -303,7 +303,7 @@ export function BehaviorTab({ settings, onChange }: BehaviorTabProps) {
             value={settings.backgroundSound ?? "off"}
             onValueChange={(val) => onChange({ backgroundSound: val })}
           >
-            <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
+            <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50">
               <SelectValue placeholder="Select sound" />
             </SelectTrigger>
             <SelectContent>
@@ -316,7 +316,7 @@ export function BehaviorTab({ settings, onChange }: BehaviorTabProps) {
           </Select>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm px-4 py-3">
+        <div className="flex items-center justify-between rounded-xl border border-border/50 bg-background/50 px-4 py-3">
           <Label className="text-sm cursor-pointer" htmlFor="bg-denoising">
             Background Denoising
           </Label>

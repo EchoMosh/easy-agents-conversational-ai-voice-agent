@@ -349,11 +349,25 @@ export function AgentSettings({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      style={{
+        // Create a new stacking/paint context so backdrop-filter inside
+        // the dialog can't sample through to the ReactFlow canvas
+        // underneath. Without this, every mouse move on the canvas
+        // forced a repaint of every blurred element inside the dialog
+        // and the user saw the background flickering through.
+        isolation: "isolate",
+      }}
       onClick={handleCancel}
     >
       <div
         className="relative flex flex-col bg-background rounded-2xl shadow-2xl border border-border/50 w-full max-w-2xl max-h-[90vh] mx-4"
+        style={{
+          // GPU-promote the dialog container so its repaints are
+          // isolated from the rest of the page.
+          willChange: "transform",
+          transform: "translateZ(0)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header — fixed */}
