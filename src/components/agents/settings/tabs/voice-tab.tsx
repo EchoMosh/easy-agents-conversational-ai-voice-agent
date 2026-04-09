@@ -1,10 +1,11 @@
 import * as React from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AgentSettingsState } from "@/components/agents/settings/types";
 import {
@@ -65,19 +67,32 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
     [settings.voiceProvider],
   );
 
-  // Filter voices by the currently selected model. Voices declare which
-  // models they're compatible with via `compatibleModels`. If the list is
-  // omitted we show the voice regardless (backward compat with providers
-  // that don't have per-model voice variants, e.g. ElevenLabs, OpenAI).
+  // User-typed search to filter a large voice list (Cartesia has 38,
+  // Deepgram has 45, Rime has 25 — scrolling is painful without search).
+  const [voiceSearch, setVoiceSearch] = useState("");
+
+  // Filter voices by the currently selected model AND the search query.
+  // Voices declare which models they're compatible with via
+  // `compatibleModels`. If omitted we show the voice regardless
+  // (providers without per-model voice variants, e.g. OpenAI).
   const filteredVoices = useMemo(() => {
     if (!provider) return [];
-    if (!settings.voiceModel) return provider.voices;
-    return provider.voices.filter(
+    const byModel = settings.voiceModel
+      ? provider.voices.filter(
+          (v) =>
+            !v.compatibleModels ||
+            v.compatibleModels.includes(settings.voiceModel!),
+        )
+      : provider.voices;
+    const q = voiceSearch.trim().toLowerCase();
+    if (!q) return byModel;
+    return byModel.filter(
       (v) =>
-        !v.compatibleModels ||
-        v.compatibleModels.includes(settings.voiceModel!),
+        v.name.toLowerCase().includes(q) ||
+        v.gender?.toLowerCase().includes(q) ||
+        v.accent?.toLowerCase().includes(q),
     );
-  }, [provider, settings.voiceModel]);
+  }, [provider, settings.voiceModel, voiceSearch]);
 
   // If the currently-selected voice is not in the filtered list (because
   // the user just switched to an incompatible model), auto-select the
@@ -133,7 +148,7 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
           <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
             <SelectValue placeholder="Select provider" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[300px]">
             {VOICE_PROVIDERS.map((p) => (
               <SelectItem key={p.id} value={p.id} className="py-2.5">
                 <span className="flex items-center gap-2">
@@ -160,9 +175,23 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
         </Select>
       </div>
 
-      {/* Voice Selector */}
+      {/* Voice Selector with search */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Voice</Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">Voice</Label>
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            {filteredVoices.length} available
+          </span>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={voiceSearch}
+            onChange={(e) => setVoiceSearch(e.target.value)}
+            placeholder="Search by name, gender, or accent..."
+            className="h-9 rounded-lg border-border/50 bg-background/50 pl-8 text-sm"
+          />
+        </div>
         <Select
           value={settings.voiceId}
           onValueChange={(id) => onChange({ voiceId: id })}
@@ -170,35 +199,43 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
           <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
             <SelectValue placeholder="Select voice" />
           </SelectTrigger>
-          <SelectContent>
-            {filteredVoices.map((voice) => (
-              <SelectItem key={voice.id} value={voice.id} className="py-2.5">
-                <span className="flex items-center gap-2">
-                  <span>{voice.name}</span>
-                  {voice.gender && (
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-[10px] px-1.5 py-0",
-                        voice.gender === "female"
-                          ? "border-pink-400/50 text-pink-500"
-                          : "border-blue-400/50 text-blue-500",
-                      )}
-                    >
-                      {voice.gender}
-                    </Badge>
-                  )}
-                  {voice.accent && voice.accent !== "american" && (
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] px-1.5 py-0 text-muted-foreground"
-                    >
-                      {voice.accent}
-                    </Badge>
-                  )}
-                </span>
-              </SelectItem>
-            ))}
+          <SelectContent className="max-h-[320px]">
+            {filteredVoices.length === 0 ? (
+              <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                No voices match your search
+              </div>
+            ) : (
+              filteredVoices.map((voice) => (
+                <SelectItem key={voice.id} value={voice.id} className="py-2.5">
+                  <span className="flex items-center gap-2">
+                    <span>{voice.name}</span>
+                    {voice.gender && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[10px] px-1.5 py-0",
+                          voice.gender === "female"
+                            ? "border-pink-400/50 text-pink-500"
+                            : voice.gender === "male"
+                              ? "border-blue-400/50 text-blue-500"
+                              : "border-purple-400/50 text-purple-500",
+                        )}
+                      >
+                        {voice.gender}
+                      </Badge>
+                    )}
+                    {voice.accent && voice.accent !== "american" && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 text-muted-foreground"
+                      >
+                        {voice.accent}
+                      </Badge>
+                    )}
+                  </span>
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -214,7 +251,7 @@ export function VoiceTab({ settings, onChange }: VoiceTabProps) {
             <SelectTrigger className="h-11 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[280px]">
               {provider.models?.map((model) => (
                 <SelectItem key={model.id} value={model.id} className="py-2.5">
                   <span className="flex items-center gap-2">
