@@ -629,7 +629,7 @@ export function Flow({
             >
               <Background className="opacity-40" />
               <MiniMap
-                className="!bg-white/60 dark:!bg-gray-900/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden"
+                className="!bg-white/60 dark:!bg-gray-900/60 shadow-lg rounded-2xl overflow-hidden"
                 nodeColor={(node) => {
                   switch (node.type) {
                     case "greetingNode":

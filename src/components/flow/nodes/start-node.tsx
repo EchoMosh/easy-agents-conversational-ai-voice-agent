@@ -267,7 +267,7 @@ export function StartNode({ data, id }: { data: StartNodeData; id: string }) {
     <TooltipProvider delayDuration={100}>
       <div className="group relative isolate">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-fuchsia-500/20 to-indigo-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="relative backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 rounded-2xl border border-purple-300/60 dark:border-purple-800/60 shadow-[0_8px_16px_-6px_rgba(168,85,247,0.18)] dark:shadow-[0_8px_16px_-6px_rgba(168,85,247,0.28)] p-5 min-w-[320px] max-w-[320px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(168,85,247,0.25)] dark:hover:shadow-[0_20px_40px_-12px_rgba(168,85,247,0.35)]">
+        <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-purple-300/60 dark:border-purple-800/60 shadow-[0_8px_16px_-6px_rgba(168,85,247,0.18)] dark:shadow-[0_8px_16px_-6px_rgba(168,85,247,0.28)] p-5 min-w-[320px] max-w-[320px] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_20px_40px_-12px_rgba(168,85,247,0.25)] dark:hover:shadow-[0_20px_40px_-12px_rgba(168,85,247,0.35)]">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
               <span className="relative flex h-8 w-8 items-center justify-center">
@@ -449,7 +449,7 @@ export function StartNode({ data, id }: { data: StartNodeData; id: string }) {
                 {outcomes.map((outcome, index) => (
                   <div key={index} className="group relative animate-fade-in">
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 backdrop-blur-sm bg-white/40 dark:bg-gray-900/40 rounded-xl py-2.5 px-4 text-sm border border-purple-100/50 dark:border-purple-800/50 shadow-sm text-gray-900 dark:text-white/90 overflow-hidden">
+                      <div className="flex-1 bg-white/40 dark:bg-gray-900/40 rounded-xl py-2.5 px-4 text-sm border border-purple-100/50 dark:border-purple-800/50 shadow-sm text-gray-900 dark:text-white/90 overflow-hidden">
                         <div className="truncate">{outcome}</div>
                       </div>
                       <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

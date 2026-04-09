@@ -41,7 +41,12 @@
 .react-flow__edge:hover .react-flow__edge-path {
   stroke-width: 4px;
   stroke: #64748b;
-  transition: all 0.2s ease;
+  /* Only transition the specific properties that change, NOT `all`.
+     `transition: all` captures expensive paint/layout props and can
+     trigger a full composite on every viewport redraw. */
+  transition:
+    stroke 0.2s ease,
+    stroke-width 0.2s ease;
 }
 
 .react-flow__edge-path {
@@ -80,7 +85,12 @@
   text-shadow: 0 1px 0 #000;
 }
 
-/* Ensure React Flow pane is transparent for backdrop-blur to work on nodes */
-.react-flow__pane {
-  background-color: transparent !important;
+/* CRITICAL PERF FIX: previously this was `transparent !important` so the
+   nodes could use backdrop-blur, but that forced every node's
+   backdrop-filter to sample through the pane to the underlying page
+   background on every mouse move — producing a visible flicker.
+   Backdrop-blur has been removed from all node components, so the pane
+   can now have a solid background and isolate its own paint context. */
+.react-flow {
+  isolation: isolate;
 }

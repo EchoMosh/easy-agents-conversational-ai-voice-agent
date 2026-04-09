@@ -38,7 +38,7 @@ export function FlowContextMenu({
         {children}
       </ContextMenuTrigger>
 
-      <ContextMenuContent className="w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg z-50 border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg overflow-hidden">
+      <ContextMenuContent className="w-64 bg-white/95 dark:bg-gray-900/95 z-50 border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg overflow-hidden">
         {rightClickedNodeId ? (
           <>
             <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">

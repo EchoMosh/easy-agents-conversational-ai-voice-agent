@@ -22,15 +22,15 @@ export function CustomContextMenu({
 }: CustomContextMenuProps) {
   const [isVisible, setIsVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  
+
   // Check if a Start Node already exists
-  const startNodeExists = nodes.some(node => node.type === 'startNode');
-  
+  const startNodeExists = nodes.some((node) => node.type === "startNode");
+
   // Filter widgets if needed - for pane context menu only
-  const filteredWidgets = rightClickedNodeId 
+  const filteredWidgets = rightClickedNodeId
     ? widgets // If right-clicking on a node, show all node actions
-    : startNodeExists 
-      ? widgets.filter(widget => widget.type !== 'startNode') // If a Start Node exists and right-clicking on pane, don't show Start Node option
+    : startNodeExists
+      ? widgets.filter((widget) => widget.type !== "startNode") // If a Start Node exists and right-clicking on pane, don't show Start Node option
       : widgets; // If no Start Node and right-clicking on pane, show all nodes
 
   // Prevent event propagation to avoid immediate closing
@@ -69,7 +69,10 @@ export function CustomContextMenu({
 
     // Add click outside listener - capture phase to ensure it runs before other handlers
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as HTMLElement)
+      ) {
         console.log("[ContextMenu] Click outside detected");
         e.preventDefault(); // Prevent other handlers from firing
         e.stopPropagation(); // Stop event bubbling
@@ -79,7 +82,10 @@ export function CustomContextMenu({
 
     // Add right-click listener to close the menu
     const handleRightClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as HTMLElement)
+      ) {
         console.log("[ContextMenu] Right-click outside detected");
         onClose();
       }
@@ -99,7 +105,7 @@ export function CustomContextMenu({
   return (
     <div
       ref={menuRef}
-      className={`custom-context-menu absolute z-50 w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg overflow-hidden transition-opacity duration-150 ${isVisible ? "opacity-100" : "opacity-0"}`}
+      className={`custom-context-menu absolute z-50 w-64 bg-white/95 dark:bg-gray-900/95  border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg overflow-hidden transition-opacity duration-150 ${isVisible ? "opacity-100" : "opacity-0"}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
